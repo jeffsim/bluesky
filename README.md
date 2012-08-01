@@ -11,7 +11,7 @@ All of it.  bluesky is written from scratch, and shares precisely 0 lines of cod
 ## All new code, huh; how're the bugs?
 They're fine, thanks.  Bluesky is sitting at around 100% code coverage.
 ## How do I run the tests?
-Open Tests/BlueskyTests.sln in Visual Studio and press F5.
+Open bluesky.sln in Visual Studio, set the BlueskyTests project as the startup project, and press F5 (or just open Tests/BlueskyTests.sln and hit F5).
 
 Alternatively, if you'd like to run the tests without downloading anything, you can run the Tests by browsing to here: http://tests.bluesky.io/testharness/testharness.html.
 ## Can see it in action?
