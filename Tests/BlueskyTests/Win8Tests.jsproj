@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>ab36e9be-6e81-4385-8f28-fa6aae0edf5c</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).Default.props" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).props" />
+  <PropertyGroup>
+    <TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
+    <TargetPlatformVersion>8.0</TargetPlatformVersion>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <PackageCertificateKeyFile>Win8Tests_TemporaryKey.pfx</PackageCertificateKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppxManifest Include="package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+    <Content Include="images\logo.png" />
+    <Content Include="images\smalllogo.png" />
+    <Content Include="images\splashscreen.png" />
+    <Content Include="images\storelogo.png" />
+    <Content Include="js\jQuery-1.7.2.min.js" />
+    <Content Include="js\jQuery-cookie.js" />
+    <Content Include="testHarness\TestHarness-win8.html" />
+    <Content Include="testHarness\TestHarness.css" />
+    <Content Include="testHarness\TestHarness.js" />
+    <Content Include="Tests\Tests.blueskyUtils.js" />
+    <Content Include="Tests\Tests.WinJS.Application.js" />
+    <Content Include="Tests\Tests.WinJS.Binding.FilteredList.js" />
+    <Content Include="Tests\Tests.WinJS.Binding.GroupedList.js" />
+    <Content Include="Tests\Tests.WinJS.Binding.js" />
+    <Content Include="Tests\Tests.WinJS.Binding.List.js" />
+    <Content Include="Tests\Tests.WinJS.Binding.Template.js" />
+    <Content Include="Tests\Tests.WinJS.js" />
+    <Content Include="Tests\Tests.WinJS.Navigation.js" />
+    <Content Include="Tests\Tests.WinJS.Promise.js" />
+    <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
+    <Content Include="Tests\Tests.WinJS.UI.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Pages.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Rating.js" />
+    <Content Include="Tests\Tests.WinJS.Utilities.js" />
+    <Content Include="Tests\Tests.WinJS.Utilities.QueryCollection.js" />
+    <Content Include="Tests\supportFiles\externalTemplate1.html" />
+    <Content Include="Tests\supportFiles\htmlControl1.html" />
+    <Content Include="Tests\supportFiles\nav1.html" />
+    <Content Include="Tests\supportFiles\nav2.html" />
+    <Content Include="Tests\supportFiles\nav3.html" />
+    <Content Include="Tests\supportFiles\pagesDefine1.js" />
+    <Content Include="Tests\supportFiles\pagesDefine1.html" />
+    <Content Include="Tests\supportFiles\pagesDefine1.css" />
+    <Content Include="Tests\supportFiles\pagesDefineWithWC1.html" />
+    <Content Include="Tests\supportFiles\pagesGet1.html" />
+    <Content Include="Tests\supportFiles\pagesGet2.html" />
+    <Content Include="Tests\supportFiles\pagesRender.html" />
+    <None Include="Win8Tests_TemporaryKey.pfx" />
+  </ItemGroup>
+  <ItemGroup>
+    <SDKReference Include="Microsoft.WinJS.1.0.RC, Version=1.0" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,267 @@
+﻿body
+{
+	font-family: Arial;
+}
+
+.testControl
+{
+	width: 600px;
+	padding: 5px;
+	background-color: #eee;
+	position: absolute;
+	left: 5px;
+	top: 5px;
+	bottom: 5px;
+}
+
+	.testControl .testTitle
+	{
+		font-size: 24pt;
+		padding-bottom: 10px;
+	}
+
+	.testControl .testResultHeader
+	{
+		font-size: 16pt;
+		padding-top: 4px;
+		padding-bottom: 2px;
+		padding-left: 5px;
+		background-color: #bbb;
+		position: absolute;
+		top: 141px;
+		width: 595px;
+		left: 5px;
+		height: 30px;
+		border-bottom: solid 1px #999;
+	}
+
+		.testControl .testResultHeader .finalResults
+		{
+			font-size: 12pt;
+			padding: 5px 8px 5px 8px;
+			float: right;
+			margin: -1px 3px -1px 0px;
+			font-weight: 600;
+			color: yellow;
+			height: 21px;
+			display: none;
+		}
+
+		.testControl .testResultHeader .numAsserts
+		{
+			font-size: 10pt;
+			padding: 3px 8px 6px 8px;
+			margin-top:1px;
+			font-weight: 400;
+			float: right;
+			color:#f5ffd8;
+			background-color: #4a9d47;
+			display: none;
+			margin-right:4px;
+		}
+
+	.testControl .testResults
+	{
+		background-color: #ddd;
+		width: 590px;
+		font-size: 14pt;
+		overflow-y: scroll;
+		overflow-x: hidden;
+		padding: 5px;
+		position: absolute;
+		left: 5px;
+		top: 178px;
+		bottom: 5px;
+	}
+
+	.testControl .testFileSelector
+	{
+		float: right;
+		font-size: 12pt;
+	}
+
+	.testControl .testSelector
+	{
+		float: right;
+		margin-top: -10px;
+	}
+
+	/* Resize dropdown to fit out UI */
+	.testControl option, select
+	{
+		font-size: 14pt !important;
+	}
+
+#startTests
+{
+	background-color: #ccc;
+	padding: 5px 8px 5px 8px;
+	font-size: 18pt;
+}
+
+	#startTests:hover
+	{
+		background-color: #999;
+	}
+
+
+.testsResult
+{
+	margin-bottom: 20px;
+	font-size: 12pt;
+}
+
+.testResult
+{
+	margin-left: 5px;
+	font-size: 12pt;
+	padding-left: 5px;
+	font-weight: 600;
+}
+
+.testPassed
+{
+	color: green;
+}
+
+.testFailed
+{
+	color: yellow;
+	font-weight: 400;
+	background-color: #f00;
+}
+
+.testIncomplete
+{
+	color: yellow;
+	font-weight: 600;
+	background-color: #f00;
+}
+
+.testSkipped
+{
+	color: #404040;
+	font-weight: 600;
+	background-color: orange;
+}
+.skipMessage
+{
+	color: #404040;
+	font-weight: 100;
+    background-color:#ccc;
+}
+
+.testNote
+{
+	font-size: 10pt;
+	margin-left: 25px;
+	background-color: #ccc;
+}
+
+.nyiItem
+{
+	font-size: 10pt;
+	margin-left: 25px;
+	background-color: #bd4747;
+	color: yellow;
+	padding: 2px 0px 2px 5px;
+}
+
+.testIssue
+{
+	font-size: 10pt;
+	font-weight: 400;
+	color: red;
+	margin-left: 30px;
+}
+
+.TestFilesTitle
+{
+	font-weight: 600;
+}
+
+.testFrameTitle
+{
+	font-size: 16pt;
+	position: absolute;
+	top: 10px;
+	left: 650px;
+}
+
+.testFrame
+{
+	background-color: #ddd;
+	height: 400px;
+	width: 600px;
+	position: absolute;
+	border: solid 4px #999;
+	padding: 5px;
+	top: 40px;
+	left: 650px;
+}
+
+.optionsButton
+{
+	cursor: pointer;
+	font-size: 12pt;
+	position: absolute;
+	top: 18px;
+	left: 540px;
+	background-color: #ccc;
+	padding: 6px;
+}
+
+	.optionsButton:hover
+	{
+		background-color: #999;
+	}
+
+
+.optionsFrame
+{
+	background-color: #ddd;
+	border: solid 2px gray;
+	height: 110px;
+	width: 200px;
+	position: absolute;
+	padding: 10px;
+	top: 18px;
+	left: 540px;
+	display: none;
+}
+
+	.optionsFrame .optionsFrameTitle
+	{
+		font-size: 14pt;
+		position: absolute;
+		width: 212px;
+		top: 0px;
+		font-weight: normal;
+		left: 0px;
+		background-color: #ccc;
+		padding: 4px;
+	}
+
+	.optionsFrame .options
+	{
+		position: absolute;
+		top: 40px;
+		left: 10px;
+		line-height: 24px;
+	}
+
+	.optionsFrame .optionsCloseButton
+	{
+		cursor: pointer;
+		font-size: 12pt;
+		position: absolute;
+		top: 90px;
+		left: 160px;
+		background-color: #ccc;
+		padding: 6px 8px;
+	}
+
+		.optionsFrame .optionsCloseButton:hover
+		{
+			background-color: #999;
+		}
