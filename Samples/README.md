@@ -2,6 +2,8 @@
 
 This folder contains samples which demonstrate bluesky in action.  It will contain more samples in R1 when the bulk of the bluesky API comes online.
 
+The navigationTemplate sample is working (details below) - the Win8SDK sample(s) are not yet working.
+
 ## About the navigationTemplate sample
 The navigation sample is an early demonstration of what bluesky will enable: taking a win8 application and publishing it to the web with a minimal amount of effort.  The sample SLN file has two projects, both of which point at the same source code (except for different default.html files) - one project builds for Win8, the other builds for web.  You can make a change in once place, select the project you want, and F5.  
 

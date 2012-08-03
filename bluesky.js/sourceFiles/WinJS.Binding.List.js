@@ -41,12 +41,12 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			WinJS.UI.setOptions(options);
 
-			// initialize our dataSource by creating a binding Source object around our list.  Other components (e.g. ListView)
+			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 
-			// TODO: Is this still necessary?
-
-			//this.dataSource = WinJS.Binding.as(this);
+			// TODO: Not sure what to bind to here.
+			this.dataSource = WinJS.Binding.as(this._items);
+			this.dataSource._list = this;
 		},
 
 		// ================================================================

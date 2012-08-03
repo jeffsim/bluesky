@@ -65,18 +65,30 @@
 			// Mark that we're yielding and waiting for a chance to render.
 			this.isYielding = true;
 
-			// Set a timeout that will occur as soon as it can.  When it does, call our derived class's
-			// doRender function
+			// Set a timeout that will occur as soon as it can.  When it does, call our derived class's doRender function
 			var that = this;
-			setTimeout(function () {
+			return new WinJS.Promise(function(c) {
+				setTimeout(function () {
+					if (that.isYielding) {
+						that._doRender();
 
-				if (that.isYielding) {
-					that._doRender();
+						// Mark that we're no longer yielding
+						that.isYielding = false;
+					}
+					c();
+				}, 0);
+			});
+		},
 
-					// Mark that we're no longer yielding
-					that.isYielding = false;
-				}
-			}, 0);
+
+		// ================================================================
+		//
+		// public Function: WinJS.UI.BaseControl.forceLayout
+		//
+		//		Forces a regeneration of the control
+		//
+		forceLayout: function() {
+			this.render();
 		},
 
 

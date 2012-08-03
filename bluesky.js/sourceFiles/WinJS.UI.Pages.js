@@ -25,9 +25,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 		// Parameter validation
 		if (!pageUri)
 			console.error("WinJS.UI.Pages.render: Undefined or null pageUri specified");
-		if (!targetElement)
-			console.error("WinJS.UI.Pages.render: Undefined or null targetElement specified");
 		/*ENDDEBUG*/
+
+		// Create a placeholder element if no target was specified
+		targetElement = targetElement || $("<div></div>")[0];
 
 		// Get the PageControl constructor for the specified Uri.  This will define the page if it does not yet exist
 		var pageConstructor = this.get(pageUri);
@@ -116,7 +117,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				}
 
 				// First load the page; then when that's done, process it.  Return a promise that this will happen.  Caller then chains on that promise.
-				this.renderPromise = this._loadPage({ Uri: pageUri, targetElement: targetElement })
+				this.renderPromise = this._loadPage({ Uri: pageUri, element: targetElement })
                             .then(function (result) {
                             	return that._processPage(result);
                             });
@@ -218,8 +219,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
 					if (!pageInfo.response)
 						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
-					if (!pageInfo.targetElement)
-						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.targetElement specified", pageInfo);
+					if (!pageInfo.element)
+						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
 					/*ENDDEBUG*/
 
 					// Return a Promise that we'll process the page (Honestly! We will!)
@@ -253,8 +254,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 						$("link[href^='//Microsoft'], link[href^='//microsoft']", $response).remove();
 						$("script[src^='http://Microsoft'], script[src^='http://microsoft']", $response).remove();
 
-						// Replace contents of targetElement with loaded page's html
-						var $newPage = $(pageInfo.targetElement);
+						// Replace contents of element with loaded page's html
+						var $newPage = $(pageInfo.element);
 						$newPage.addClass("pagecontrol");
 
 						// Hide the page until we've loaded style sheets

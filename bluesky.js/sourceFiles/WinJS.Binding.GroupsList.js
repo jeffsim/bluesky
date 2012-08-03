@@ -60,8 +60,11 @@ WinJS.Namespace.define("WinJS.Binding", {
 				}
 			}
 
-			// TODO: Do I still need this?
-			// this.dataSource = WinJS.Binding.as(this);
+			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
+			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
+			// TODO: Not sure what to bind to here.
+			this.dataSource = WinJS.Binding.as(this._groupItems);
+			this.dataSource._list = this;
 		},
 
 		// ================================================================

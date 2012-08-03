@@ -3,7 +3,7 @@
 ## What is bluesky?
 bluesky is an effort to deliver an API, Platform, and Portal that unifies users’ app experiences across all of their devices.  Initial efforts are focused on developers and the API, which will be a ground-up rewrite of WinJS, built for the modern web.  The goal of bringing WinJS to the web is to enable the impending army of WinJS developers to quickly and easily – ideally with just one click - bring their Win8 apps to the web.  Picture taking your Win8 app and publishing it to Facebook or your own web site; or making it available on the iPad...
 ## How complete is the bluesky WinJS API at the moment?
-Not very complete, although we've just hit our API Preview milestone (you can see what that includes in the table below.)
+Not very complete, although we've just hit our API Preview milestone (you can see what that includes in the table below.)  "done" in the table does not mean 100% complete; it means "complete for normal use cases."
 ## How complete will the final bluesky WinJS API be?
 Fairly complete.  The yardstick for bluesky is that a typical Win8/WinJS app works on the web without any changes except where the app relies on a non-cross-browser feature and a polyfill isn’t available (e.g. –ms-grid).  We’ll be using the Win8 SDK samples as a proving ground for the near-term future.  There will be things that just plain never work (e.g. hybrid apps).
 ## How much of bluesky is new code?
@@ -17,7 +17,7 @@ Alternatively, if you'd like to run the tests without downloading anything, you 
 ## Can see it in action?
 You can view a very early sample here: http://navSample.bluesky.io. The sample does basically nothing, but you can pull up the page source and see that, indeed, it's a Win8 application running on the Web.  The sample is the Visual Studio 'WinJS Navigation' template', and the only modifications were to change scripts from WinJS to bluesky, and tweak some styles).   You can read more about this sample in the Samples folder's readme file.  A more robust sample will come with the R1 release.
 
-Another option is to view the Tests running on the web; you can do that here: http://tests.bluesky.io/testharness/testharness.html.
+Another option is to view the Tests running on the web; you can do that here: http://tests.bluesky.io/testharness/testharness.html.  If you really want to hurt your brain, do it on an iPad.
 ## How do I use the API?
 See the readme in the Samples folder for instructions on how the WinJS navigation template was converted to bluesky.  A more robust answer will be part of R1.
 ## What comes when?
@@ -57,9 +57,9 @@ No dates, but here’s a rough staging (everything subject to change):
 		<td>
 			<ul>
 				<li>WinJS.UI.ListView</li>
-				<li>WinJS.UI.FlipView</li>
+				<li>WinJS.UI.FlipView (<b>done</b>)</li>
 				<li>WinJS.UI.Rating (<b>done</b>)</li>
-				<li>WinJS.UI.Animation</li>
+				<li>WinJS.UI.Animation (<b>started</b>)</li>
 				<li>Windows.Storage (local and temp)</li>
 				<li>WinJS.Resources</li>
 				<li>WinJS.UI.AppBar</li>

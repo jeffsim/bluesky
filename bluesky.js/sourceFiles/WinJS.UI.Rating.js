@@ -32,7 +32,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	WinJS.UI.BaseControl.call(this, element, options);
 
         	// initialize the set of event listeners
-        	// TODO: Strip the "on"?
         	this._eventListeners = {
         		onchange: [],
         		onpreviewchange: [],
@@ -52,29 +51,8 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Set any options that were specified.
         	WinJS.UI.setOptions(this, options);
 
-			// TODO: Remove this after event handlers are figured out (specifically the "on" stripping part)
-        	/* if (options) {
-        		if (options.disabled)
-        			this.disabled = options.disabled;
-        		if (options.maxRating)
-        			this.maxRating = options.maxRating;
-        		if (options.averageRating)
-        			this.averageRating = options.averageRating;
-        		if (options.enableClear)
-        			this.enableClear = options.enableClear;
-        		if (options.userRating)
-        			this.userRating = options.userRating;
-        		if (options.onchange)
-        			this.addEventListener("onchange", eval(options.onchange));
-        		if (options.onpreviewchange)
-        			this.addEventListener("onpreviewchange", eval(options.addEventListener));
-        		if (options.oncancel)
-        			this.addEventListener("oncancel", eval(options.oncancel));
-        		//this.onchange = eval(options.onchange);
-        	}*/
-
         	// Force a layout
-        	this.render();
+        	this.render(true);
         },
 
 		// ================================================================

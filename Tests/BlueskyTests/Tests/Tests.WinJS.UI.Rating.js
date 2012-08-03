@@ -50,7 +50,7 @@ testHarness.addTestFile("WinJS.UI.Rating Tests", {
 
 				// test moving the mouse over the control
 				// TODO: This isn't really testing the mouse integration so it isn't a complete test, but it covers the biggest parts of
-				//		 the code, and doesn'avoids requiring user interaction.  Maybe later someone more Test-savvy than I can fix this
+				//		 the code, and avoids requiring user interaction.  Maybe later someone more Test-savvy than I can fix this
 				ratingControl.handleMouseMove({ currentTarget: $stars[1] });
 				test.assert($($stars[0]).hasClass("win-tentative") && $($stars[0]).hasClass("win-full") &&
 							$($stars[1]).hasClass("win-tentative") && $($stars[1]).hasClass("win-full") &&
@@ -64,7 +64,6 @@ testHarness.addTestFile("WinJS.UI.Rating Tests", {
 							$($stars[2]).hasClass("win-tentative") && $($stars[2]).hasClass("win-full") &&
 							$($stars[3]).hasClass("win-tentative") && $($stars[3]).hasClass("win-full") &&
 							$($stars[4]).hasClass("win-empty"), "Failed to set tentative a second time");
-
 
 				// test restoration of average rating on mouseleave
 				var leftSideOfStar = $($stars[3]).offset().left;

@@ -111,5 +111,18 @@ var blueskyUtils = {
 			else
 				seen[txt] = true;
 		});
+	},
+
+
+
+	// ================================================================
+	//
+	// private Function: blueskyUtils._getCssNumericValue
+	//
+	//		Strip the "px" from css attributse like marginLeft.
+	//
+	_getCssNumericValue: function ($element, attr) {
+
+		return $element.css(attr).replace(/[^-\d\.]/g, '');
 	}
 }

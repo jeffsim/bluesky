@@ -59,6 +59,7 @@
     <Content Include="testHarness\TestHarness-win8.html" />
     <Content Include="testHarness\TestHarness.css" />
     <Content Include="testHarness\TestHarness.js" />
+    <Content Include="Tests\supportFiles\flipView\flipView.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
     <Content Include="Tests\Tests.WinJS.Application.js" />
     <Content Include="Tests\Tests.WinJS.Binding.FilteredList.js" />
@@ -69,6 +70,8 @@
     <Content Include="Tests\Tests.WinJS.js" />
     <Content Include="Tests\Tests.WinJS.Navigation.js" />
     <Content Include="Tests\Tests.WinJS.Promise.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Animation.js" />
+    <Content Include="Tests\Tests.WinJS.UI.FlipView.js" />
     <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
     <Content Include="Tests\Tests.WinJS.UI.js" />
     <Content Include="Tests\Tests.WinJS.UI.Pages.js" />
@@ -87,6 +90,10 @@
     <Content Include="Tests\supportFiles\pagesGet1.html" />
     <Content Include="Tests\supportFiles\pagesGet2.html" />
     <Content Include="Tests\supportFiles\pagesRender.html" />
+    <Content Include="Tests\supportFiles\flipView\img1.jpg" />
+    <Content Include="Tests\supportFiles\flipView\img2.jpg" />
+    <Content Include="Tests\supportFiles\flipView\img3.jpg" />
+    <Content Include="Tests\supportFiles\flipView\img4.jpg" />
     <None Include="Win8Tests_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

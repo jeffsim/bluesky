@@ -45,9 +45,6 @@ WinJS.Namespace.define("WinJS.Binding", {
 			this._list.addEventListener("itemremoved", this._itemRemoved.bind(this));
 			this._list.addEventListener("itemchanged", this._itemChanged.bind(this));
 
-			// TODO: Do I still need this?  If so, then Generalize into ListBase.
-			// this.dataSource = WinJS.Binding.as(this);
-
 			// initialize keys and sort
 			this._sortedKeys = [];  // TODO: move into separate SortedListProjection base class
 			for (var i = 0; i < sourceList.length ; i++) {
@@ -63,6 +60,12 @@ WinJS.Namespace.define("WinJS.Binding", {
 				item.groupKey = groupKeySelector(item.data);
 				this._addItem(item);
 			}
+
+			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
+			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
+			// TODO: Not sure what to bind to here.
+			this.dataSource = WinJS.Binding.as(this._groupedItems);
+			this.dataSource._list = this;
 		},
 
 		// ================================================================

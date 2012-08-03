@@ -46,6 +46,12 @@
     <Content Include="TestHarness\testHarness.css" />
     <Content Include="TestHarness\testHarness.html" />
     <Content Include="TestHarness\testHarness.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Animation.js" />
+    <Content Include="Tests\supportFiles\flipView\flipView.html" />
+    <Content Include="Tests\supportFiles\flipView\img2.jpg" />
+    <Content Include="Tests\supportFiles\flipView\img3.jpg" />
+    <Content Include="Tests\supportFiles\flipView\img4.jpg" />
+    <Content Include="Tests\Tests.WinJS.UI.FlipView.js" />
     <Content Include="Tests\supportFiles\nav3.html" />
     <Content Include="Tests\supportFiles\nav2.html" />
     <Content Include="Tests\supportFiles\nav1.html" />
@@ -65,6 +71,7 @@
     <Content Include="Tests\supportFiles\pagesDefineWithWC1.html" />
     <Content Include="Tests\supportFiles\pagesDefine1.html" />
     <Content Include="Tests\supportFiles\pagesDefine1.css" />
+    <Content Include="Tests\supportFiles\flipView\img1.jpg" />
     <Content Include="Tests\Tests.WinJS.UI.Pages.js" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
     <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
