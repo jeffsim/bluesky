@@ -151,7 +151,11 @@
                     var newUrl = select.options[select.selectedIndex].value;
                     WinJS.Navigation.navigate(newUrl).then(function () {
                         setImmediate(function () {
-                            document.getElementById("scenarioSelect").setActive();
+                            // BLUESKY-CHANGE: setActive bug in IE10?
+                            try {
+                                document.getElementById("scenarioSelect").setActive();
+                            } catch (ex) {
+                            }
                         });
                     });
                 }

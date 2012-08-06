@@ -4400,6 +4400,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
                         var $newPage = $(tempDiv).hide();
                         $("script", document).each(function (index, element) {
+                            // TODO: What about script's HEAD (rather than referenced?)
+                            if (element && element.attributes & element.attributes["src"] && element.attributes["src"].value)
                             // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
                             $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
                         });

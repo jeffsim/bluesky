@@ -7,6 +7,10 @@
 
 (function () {
     "use strict";
+    new WinJS.Promise(function (c) {
+        c();
+    }).then();
+
 
     var sampleTitle = "FlipView control sample";
 
@@ -38,8 +42,30 @@
         var host = document.getElementById("contentHost");
         // Call unload method on current scenario, if there is one
         host.winControl && host.winControl.unload && host.winControl.unload();
-        WinJS.Utilities.empty(host);
+
+        //
+        // BLUESKY-CHANGE: Win8 can empty out the contenthost and avoid the flash of emptiness because (I'm 
+        // assuming) the load is happening synchronously (or at least, before the render thread can run) since 
+        // the content being loaded is local.  In bluesky it's remote, so the load happens asynchronously and
+        // you get a momentary flash of emptiness.  To avoid this, we hold off removing the previous page's elements
+        // until rendering is complete.  Since the completion of rendering (and showing of new content) fulfills
+        // the render promise before yielding to the render thread, the user doesn't see a momentary flash of old
+        // and new content.  The proper bluesky/Win8 compatible solution is to just use the bluesky approach below.
+        //
+        // TODO: We still get a very quick flash because scenario-select.html is loaded asynchronously; not sure
+        // how to avoid that without refactoring the app. Investigate not adding *anything* to the DOM until
+        // *everything* is processed and ready for viewing.
+        //
+        if (WinJS.Application.IsBluesky)
+            var $previousPageContent = $(host).children();
+        else
+            WinJS.Utilities.empty(host);
         eventObject.detail.setPromise(WinJS.UI.Pages.render(url, host, eventObject.detail.state).then(function () {
+
+            // Per above; if this is bluesky then remove the old page's content now.
+            if (WinJS.Application.IsBluesky)
+                $previousPageContent.remove();
+
             WinJS.Application.sessionState.lastUrl = url;
         }));
     });

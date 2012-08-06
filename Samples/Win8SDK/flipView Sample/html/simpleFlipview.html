@@ -8,7 +8,16 @@
 <body>
     <div data-win-control="SdkSample.ScenarioInput">
         <p>This FlipView is created using a simple JSON array as a data source and a simple template to create the items.</p>
+        <div style="padding-top:50px;font-size:large;color:red; font-weight:600">
+            Known bluesky issues with all scenarios sample:
+            <ul>
+                <li>Momentarily flash of partial page on scenario select.</li>
+                <li>Layout is slightly different than Win8 (just need to tweak)</li>
+                <li>Animation to 'previous' goes the wrong way</li>
+            </ul>
+        </div>
     </div>
+
     <div data-win-control="SdkSample.ScenarioOutput">
         <div id="simple_ItemTemplate" data-win-control="WinJS.Binding.Template" style="display: none">
             <div class="overlaidItemTemplate">

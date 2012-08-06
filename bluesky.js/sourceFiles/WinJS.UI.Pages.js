@@ -213,130 +213,126 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				//
 				_processPage: function (pageInfo) {
 
-					/*DEBUG*/
-					// Parameter validation
-					if (!pageInfo)
-						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
-					if (!pageInfo.response)
-						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
-					if (!pageInfo.element)
-						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
-					/*ENDDEBUG*/
+				    /*DEBUG*/
+				    // Parameter validation
+				    if (!pageInfo)
+				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
+				    if (!pageInfo.response)
+				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
+				    if (!pageInfo.element)
+				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
+				    /*ENDDEBUG*/
 
-					// Return a Promise that we'll process the page (Honestly! We will!)
-					return new WinJS.Promise(function (pageProcessCompletedCallback) {
+				    // Return a Promise that we'll process the page (Honestly! We will!)
+				    return new WinJS.Promise(function (pageProcessCompletedCallback) {
 
-						// TODO: The entirety of this function makes my skin crawl.
+				        // Parse out the script tags from the response and remove duplicates.  Note that we can't go directly through jQuery for this
+				        // because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
+				        // sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
+				        // $("<div></div>").html(pageInfo.response) won't work for the above reason.
 
-						// Parse out the script tags from the response and remove duplicates.  Note that we can't go directly through jQuery for this
-						// because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
-						// sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
-						// $("<div></div>").html(pageInfo.response) won't work for the above reason.
+				        // 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
+				        var tempDiv = document.createElement("div");
+				        tempDiv.innerHTML = pageInfo.response;
 
-						// 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
-						var tempDiv = document.createElement("div");
-						tempDiv.innerHTML = pageInfo.response;
+				        // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
+				        var $newPage = $(tempDiv).hide();
+				        $("script", document).each(function (index, element) {
+				            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
+				            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
+				        });
 
-						// 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
-						var $response = $(tempDiv);
-						$("script", document).each(function (index, element) {
-							// TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
-							$("script[src='" + element.attributes["src"].value + "']", $response).remove();
-						});
+				        // TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
 
-						// TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
+				        // Remove WinJS scripts.
+				        // TODO: rather than do this on every page process (slow), do it on publish
+				        // TODO: Note that, once I commented this out, some apps started failing; the reason was because those apps had references to //microsoft/winjs.*,
+				        // and the presence of those references makes the css checks below fail because numNewStyleSheets are never fully loaded,
+				        // so it never makes it out of the loop. This will repro with any 'invalid' script or style reference.  See comment below.  
+				        $("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
+				        $("script[src^='http://Microsoft'], script[src^='http://microsoft']", $newPage).remove();
 
-						// Remove WinJS scripts.
-						// TODO: rather than do this on every page process (slow), do it on publish
-						// TODO: Note that, once I commented this out, some apps started failing; the reason was because those apps had references to //microsoft/winjs.*,
-						// and the presence of those references makes the css checks below fail because numNewStyleSheets are never fully loaded,
-						// so it never makes it out of the loop. This will repro with any 'invalid' script or style reference.  See comment below.  
-						$("link[href^='//Microsoft'], link[href^='//microsoft']", $response).remove();
-						$("script[src^='http://Microsoft'], script[src^='http://microsoft']", $response).remove();
+				        // Track the number of styleSheets before the subpage is loaded.  We will need to wait below until
+				        // we're sure that these pages have been completely parsed before we call the subpage's ready() function.
+				        var numStyleSheetsBeforeSubpageAdded = document.styleSheets.length;
 
-						// Replace contents of element with loaded page's html
-						var $newPage = $(pageInfo.element);
-						$newPage.addClass("pagecontrol");
+				        // Replace contents of element with loaded page's html
+				        $newPage.hide();
+				        $(pageInfo.element).addClass("pagecontrol");
+				        $(pageInfo.element).append($newPage);
 
-						// Hide the page until we've loaded style sheets
-						$newPage.hide();
+				        // Do some parsing on the subpage...
+				        // 1. Move meta and title tags to page's <head> element
+				        var $head = $("head", document);
+				        $("meta, title", $newPage).prependTo($head);
 
-						$newPage.append($response.html());
+				        // 2. Move scripts and styles up into the page's <head> element
+				        // TODO: remove any duplicates
+				        $("link, script", $newPage).appendTo($head);
 
-						// Track the number of styleSheets before the subpage is loaded.  We will need to wait below until
-						// we're sure that these pages have been completely parsed before we call the subpage's ready() function.
-						var numStyleSheetsBeforeSubpageAdded = document.styleSheets.length;
+				        // 3. Remove duplicate styles
+				        blueskyUtils.removeDuplicateElements("style", "src", $head);
 
-						// Do some parsing on the subpage...
-						// 1. Move meta and title tags to page's <head> element
-						var $head = $("head", document);
-						$("meta, title", $newPage).prependTo($head);
+				        // 4. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
+				        $("title:not(:first)", $head).remove();
 
-						// 2. Move scripts and styles up into the page's <head> element
-						// TODO: remove any duplicates
-						$("link, script", $newPage).appendTo($head);
+				        // Process the wincontrols in the newly loaded page fragment
+				        WinJS.UI.processAll($newPage[0]);
 
-						// 3. Remove duplicate styles
-						blueskyUtils.removeDuplicateElements("style", "src", $head);
+				        // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
+				        $("[id]").each(function (index, element) {
+				            window[element.id] = element;
+				        });
 
-						// 4. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
-						$("title:not(:first)", $head).remove();
+				        // Calculate how many styles the subpage has added.  We will wait below until they are all loaded.
+				        var numNewStyleSheets = document.styleSheets.length - numStyleSheetsBeforeSubpageAdded;
 
-						// Process the wincontrols in the newly loaded page fragment
-						WinJS.UI.processAll($newPage[0]);
+				        // If the subpage has referenced CSS files, those files may or may not yet be parsed; to ensure that they are before
+				        // the subpage's ready function is called, we set up a timer that every 50 milliseconds checks to see if the CSS Files have
+				        // all been parsed and their rules have been added to document.styleSheets.  If so, then we stop the timer and tell the subpage
+				        // to go for it.  Lacking a "cssHasBeenParsed" notification, this is the best we can do.
+				        var timeSpent = 0;
 
-						// Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
-						$("[id]").each(function (index, element) {
-							window[element.id] = element;
-						});
+				        var handle = window.setInterval(function () {
 
-						// Calculate how many styles the subpage has added.  We will wait below until they are all loaded.
-						var numNewStyleSheets = document.styleSheets.length - numStyleSheetsBeforeSubpageAdded;
+				            // Determine how many of the styles have been loaded and parsed.  The browser (well, FF - need to verify against others)
+				            // immediately adds the stylesheet, but it doesn't set cssRules until they're parsed; thus, check if cssRules is defined
+				            // for all newly loaded styles.
+				            // TODO: This isn't quite sufficient on FF; see http://dev.ckeditor.com/ticket/7784
+				            // TODO: This also doesn't appear to work on iPad; need another solution...
+				            var numStylesParsed = 0;
+				            try {
+				                for (var i = 0; i < numNewStyleSheets; i++) {
+				                    if (document.styleSheets[numStyleSheetsBeforeSubpageAdded + i].cssRules != undefined)
+				                        numStylesParsed++;
+				                }
+				            } catch (ex) {
+				                // TODO: silently catch, ignore, and continue.  See if this works...    
+				            }
 
-						// If the subpage has referenced CSS files, those files may or may not yet be parsed; to ensure that they are before
-						// the subpage's ready function is called, we set up a timer that every 100 milliseconds checks to see if the CSS Files have
-						// all been parsed and their rules have been added to document.styleSheets.  If so, then we stop the timer and tell the subpage
-						// to go for it.  Lacking a "cssHasBeenParsed" notification, this is the best we can do.
-						var timeSpent = 0;
+				            // TODO: find best solution here - see TODO comment above.  if this is the only solution, then make timeOut changable by app
+				            timeSpent += 50;
+				            if (timeSpent > 2000) {
+				                console.warn("Failed to load all style sheets and/or scripts in under 2 seconds; check network log and ensure all stylesheets are valid.");
+				                numStylesParsed = numNewStyleSheets;
+				            }
+				            // Check to see if we've parsed all of the new style sheets
+				            if (numStylesParsed == numNewStyleSheets) {
 
-						var handle = window.setInterval(function () {
+				                // The page's style sheets have all been loaded. Stop the interval timer
+				                window.clearInterval(handle);
 
-							// Determine how many of the styles have been loaded and parsed.  The browser (well, FF - need to verify against others)
-							// immediately adds the stylesheet, but it doesn't set cssRules until they're parsed; thus, check if cssRules is defined
-							// for all newly loaded styles.
-							// TODO: This isn't quite sufficient on FF; see http://dev.ckeditor.com/ticket/7784
-							// TODO: This also doesn't appear to work on iPad; need another solution...
-							var numStylesParsed = 0;
-							try {
-								for (var i = 0; i < numNewStyleSheets; i++) {
-									if (document.styleSheets[numStyleSheetsBeforeSubpageAdded + i].cssRules != undefined)
-										numStylesParsed++;
-								}
-							} catch (ex) {
-								// TODO: silently catch, ignore, and continue.  See if this works...    
-							}
+				                // Show the new page's elements with final style sheets; then move them
+				                // out of the temp div; and then remove the temp newPage element
+				                $newPage.show();
+				                $newPage.children().appendTo(pageInfo.element);
+				                $newPage.remove();
 
-							// TODO: find best solution here - see TODO comment above.  if this is the only solution, then make timeOut changable by app
-							timeSpent += 100;
-							if (timeSpent > 2000) {
-								console.error("Failed to load all style sheets and/or scripts; check network log and ensure all stylesheets are valid.");
-								numStylesParsed = numNewStyleSheets;
-							}
-
-							// Check to see if we've parsed all of the new style sheets
-							if (numStylesParsed == numNewStyleSheets) {
-
-								// The page's style sheets have all been loaded. Stop the interval timer
-								window.clearTimeout(handle);
-
-								// Show the page with final style sheets
-								$newPage.show();
-
-								// Notify that we've fulfilled our Promise to process the page.
-								pageProcessCompletedCallback(pageInfo);
-							}
-						}, 100);
-					});
+				                // Notify that we've fulfilled our Promise to process the page.
+				                pageProcessCompletedCallback(pageInfo);
+				            }
+				        }, 50);
+				    });
 				},
 
 				// renderPromise: A Promise that is fulfilled when we have completed rendering

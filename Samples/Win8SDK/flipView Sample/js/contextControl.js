@@ -45,9 +45,10 @@
         //          flipping the FlipView to the correct page.
         var isFlipping = false;
         function radioButtonClicked(eventObject) {
-            if (eventObject.propertyName !== "checked" || !eventObject.srcElement.checked) {
-                return;
-            }
+            // BLUESKY-CHANGE: Following only works in IE since we came here through different event; commented out.
+            //  if (eventObject.propertyName !== "checked" || !eventObject.srcElement.checked) {
+            //       return;
+            //  }
             if (isFlipping) {
 
                 // Need to set whats check back since we are mid flip.

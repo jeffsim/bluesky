@@ -11,6 +11,13 @@
         <label id="OrientationLabel">Toggle Orientation:</label>
         <button class="action" id="OrientationButton">Vertical</button><br /><br />
         <label id="SpaceLabel">Item Spacing: </label><br /><input type="range" id="SpaceRange" step="5" value="0" aria-labelledby="SpaceLabel" />
+                <div style="padding-top:50px;font-size:large;color:red; font-weight:600">
+            Known bluesky issues with this scenario:
+            <ul>
+                <li>Range control doesn't exist on non-IE10 browsers</li>
+                <li>Item spacing not implemented (not sure what it's for yet!)</li>
+            </ul>
+        </div>
     </div>
     <div data-win-control="SdkSample.ScenarioOutput">
         <div id="orientationAndItemSpacing_ItemTemplate" data-win-control="WinJS.Binding.Template" style="display: none">

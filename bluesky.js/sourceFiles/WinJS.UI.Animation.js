@@ -57,6 +57,9 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
             elements.forEach(function (element) {
 
+                if (!element)
+                    return;
+
                 var $el = $(element);
 
             	// Shift WinJS.UI.Animation._enterExitDistance pixels to the left, then we'll animate back to start
@@ -64,9 +67,9 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
                 	left: $el.offset().left + WinJS.UI.Animation._enterExitDistance
                 });
 
-            	// Set opacity to 0, then we'll animate back to 1.
+            	// Set opacity to 0.5, then we'll animate back to 1.
             	// TODO: should it instead animate back to starting Opacity?  What does win8 do with animating elements with starting opacity of < 1?
-                $el.css("opacity", "0");
+                $el.css("opacity", "0.5");
 
                 $el.delay(delay).animate({
 
@@ -112,6 +115,9 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
     		elements.forEach(function (element) {
 
+    		    if (!element)
+    		        return;
+
     			var $el = $(element);
 
 				// TODO: Oookay.  If I don't do this, then the animation doesn't work.  I need to understand offset() better.
@@ -149,5 +155,5 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 	//
 	//		The number of pixels to animate left/right enterContent/exitContent
 	//
-    _enterExitDistance: 40
+    _enterExitDistance: 20
 });

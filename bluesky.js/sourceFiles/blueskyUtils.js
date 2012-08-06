@@ -18,11 +18,11 @@ var blueskyUtils = {
 
 		// 1. Wrap keywords (keys and values) in single quotes
 		// TODO-I'm wrapping number values in quotes; should I?
-		// Note: the regex is trying to match a-z, a-Z, 0-9, ., and /      <-- Note that we need to match "." to support compounds like "style.backgroundColor"
+		// Note: the regex is trying to match a-z, a-Z, 0-9, -, ., and /      <-- Note that we need to match "." to support compounds like "style.backgroundColor"
 		// TODO: Should the middle / be replaced with \/ or //?  I'm not sure what js's replace does here since "/" seems to delimit the regex, but it seems to be working...
 		// TODO: This doesn't work with string arrays; e.g. "tooltipStrings:['Horrible','Poor','Fair','Good','Excellent','Delete']" borks.
 		dataBindString = dataBindString.replace("\r", "").replace("\n", "").trim();
-		var output = dataBindString.replace(/([a-zA-z0-9\./]+)/g, "'$1'");
+		var output = dataBindString.replace(/([a-zA-z\-0-9\./]+)/g, "'$1'");
 
 		// 1B. The above regex will blindly add quotes to keyword that already have quotes.  Remove them here.
 		// tbd-cleanup: merge this into the above regex.
@@ -125,4 +125,16 @@ var blueskyUtils = {
 
 		return $element.css(attr).replace(/[^-\d\.]/g, '');
 	}
+}
+
+// TODO: Comment
+function msSetImmediate(c) {
+    WinJS.Promise.timeout().then(function () {
+        c();
+    });
+}
+
+// TODO: Comment
+function setImmediate(c) {
+    return msSetImmediate(c);
 }

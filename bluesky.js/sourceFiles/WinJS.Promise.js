@@ -75,11 +75,9 @@ WinJS.Namespace.define("WinJS", {
         	//		TODO: Not handling error or progress callbacks yet
         	//
         	then: function (thenComplete, thenError, thenProgress) {
-        		/*DEBUG*/
-        		// Perform parameter validation
-        		if (!thenComplete)
-        			console.error("WinJS.Promise.then: null or undefined thenComplete function specified.");
-        		/*ENDDEBUG*/
+
+        	    if (!thenComplete)
+        	        return this._completedValue;
 
         		if (this._completed) {
         			return new WinJS.Promise.as(thenComplete(this._completedValue));
@@ -192,8 +190,10 @@ WinJS.Namespace.define("WinJS", {
         		// Perform parameter validation
         		if (!onComplete)
         			console.error("WinJS.Promise.done: null or undefined onComplete function specified.");
-        		console.err("Promise.done is NYI");
-        		/*ENDDEBUG*/
+        	    /*ENDDEBUG*/
+
+        		console.warn("Promise.done is NYI; replacing with .then()");
+        		return this.then(onComplete, onError, onProgress);
         	}
         },
 
@@ -298,3 +298,28 @@ WinJS.Namespace.define("WinJS", {
 		})
 
 });
+
+
+// ================================================================
+//
+// ItemPromise class.
+//
+//      TODO: Hacking this in for now.  
+//
+function ItemPromise(val) {
+    var v = {
+
+        // ================================================================
+        //
+        // Function: ItemPromise.then
+        //
+        //      This is called when the data is ready.
+        //
+        then: function (doneCallback) {
+
+            return doneCallback(this._value);
+        },
+    }
+    v._value = val;
+    return v;
+}

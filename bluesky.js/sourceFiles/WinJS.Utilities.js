@@ -156,3 +156,19 @@ WinJS.Namespace.define("WinJS.Utilities", {
 		return element;
 	}
 });
+
+// ================================================================
+//
+// public function: msSetImmediate
+//
+//		MSDN: TODO
+//
+function setImmediate(callback) {
+
+    // TODO: I'm assuming this is what setImmediate does; essentially just yield the thread, and as soon as
+    // the thread gets a chance, call the callback function
+    // TODO: setImmediate tests.
+    WinJS.Promise.timeout().then(function () {
+        callback();
+    });
+}
