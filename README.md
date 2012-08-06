@@ -1,5 +1,8 @@
 # [bluesky] (http://www.bluesky.io)
 
+### Current test status
+Changes to Page rendering flow today broke a few tests; currently at [122/132 passing](http://tests.bluesky.io/testharness/testharness.html).
+
 ## What is bluesky?
 bluesky is an effort to deliver an API, Platform, and Portal that unifies users’ app experiences across all of their devices.  Initial efforts are focused on developers and the API, which will be a ground-up rewrite of WinJS, built for the modern web.  The goal of bringing WinJS to the web is to enable the impending army of WinJS developers to quickly and easily – ideally with just one click - bring their Win8 apps to the web.  Picture taking your Win8 app and publishing it to Facebook or your own web site; or making it available on the iPad...
 ## How complete is the bluesky WinJS API at the moment?
@@ -15,7 +18,7 @@ Open bluesky.sln in Visual Studio, set the BlueskyTests project as the startup p
 
 Alternatively, if you'd like to run the tests without downloading anything, you can run the Tests by browsing to here: http://tests.bluesky.io/testharness/testharness.html.
 ## Can see it in action?
-You can view a very early sample here: http://navSample.bluesky.io. The sample does basically nothing, but you can pull up the page source and see that, indeed, it's a Win8 application running on the Web.  The sample is the Visual Studio 'WinJS Navigation' template', and the only modifications were to change scripts from WinJS to bluesky, and tweak some styles).   You can read more about this sample in the Samples folder's readme file.  A more robust sample will come with the R1 release.
+You can view the Win8 SDK "FlipView" sample running in bluesky here: http://flipView.bluesky.io.
 
 Another option is to view the Tests running on the web; you can do that here: http://tests.bluesky.io/testharness/testharness.html.  If you really want to hurt your brain, do it on an iPad.
 ## How do I use the API?
