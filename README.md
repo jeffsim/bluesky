@@ -1,7 +1,16 @@
 # [bluesky] (http://www.bluesky.io)
 
 ### Current test status
-Changes to Page rendering flow today broke a few tests; currently at [122/132 passing](http://tests.bluesky.io/testharness/testharness.html).
+<table>
+<tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Firefox (latest)</td><td><b>129 of 132</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
+<tr><td>IE 10</td><td><b>125 of 132</b> tests passing.</td><td>Above, plus Animation tests failing</td></tr>
+<tr><td>Safari (mac)</td><td><b>124 of 132</b> tests passing.</td><td>Above, plus QueryColleciton.listen() test failing</td></tr>
+<tr><td>IE 9</td><td>n/a</td><td>can't test - on vacation!</td></tr>
+<tr><td>Chrome</td><td>n/a</td><td>can't test - on vacation!</td></tr>
+</table>
+
+Run the tests here: http://tests.bluesky.io/testharness/testharness.html
 
 ## What is bluesky?
 bluesky is an effort to deliver an API, Platform, and Portal that unifies users’ app experiences across all of their devices.  Initial efforts are focused on developers and the API, which will be a ground-up rewrite of WinJS, built for the modern web.  The goal of bringing WinJS to the web is to enable the impending army of WinJS developers to quickly and easily – ideally with just one click - bring their Win8 apps to the web.  Picture taking your Win8 app and publishing it to Facebook or your own web site; or making it available on the iPad...
@@ -29,12 +38,12 @@ No dates, but here’s a rough staging (everything subject to change):
   <tr>
 		<td>Release Number</td>
 		<td>Name</td>
-		<td>Summary</td>
+		<td>Release contents</td>
 		<td>Features</td>
 	</tr>
 	<tr>
 		<td>0 (<b>COMPLETE!</b>)</td>
-		<td>API Alpha</td>
+		<td>API Preview</td>
 		<td>A subset of WinJS on the Web<br/><br/>Enough to create simple yet fully functional webapps with WinJS.  This includes largely complete versions of the following objects:</td>
 		<td>
 			<ul>
@@ -55,7 +64,7 @@ No dates, but here’s a rough staging (everything subject to change):
 	</tr>
 	<tr>
 		<td>1</td>
-		<td>API Preview</td>
+		<td>API Beta</td>
 		<td>WinJS on the Web<br/><br/>At this point a complex WinJS application can be run nearly verbatim on the web.  Works across any HTML5 browser on tablet or PC (functions on mobile, but no explicit effort to deal with mobile layout or device challenges).  This includes largely complete versions of the following objects:</td>
 		<td>
 			<ul>
