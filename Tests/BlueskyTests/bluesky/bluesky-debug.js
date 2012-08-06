@@ -4400,8 +4400,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
                         var $newPage = $(tempDiv).hide();
                         $("script", document).each(function (index, element) {
-                            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
-                            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
+                            // TODO: What about script's HEAD (rather than referenced?)
+                            if (element && element.attributes & element.attributes["src"] && element.attributes["src"].value)
+                                // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
+                                $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
                         });
 
                         // TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
@@ -4419,7 +4421,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         var numStyleSheetsBeforeSubpageAdded = document.styleSheets.length;
 
                         // Replace contents of element with loaded page's html
-                        $newPage.hide();
                         $(pageInfo.element).addClass("pagecontrol");
                         $(pageInfo.element).append($newPage);
 
@@ -4486,8 +4487,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                                 // Show the new page's elements with final style sheets; then move them
                                 // out of the temp div; and then remove the temp newPage element
-                                $newPage.show();
-                                $newPage.children().appendTo(pageInfo.element);
+                                $newPage
+                                    .contents()                     // grab contents (instead of children, to get text nodes as well).
+                                    .show()                         // make the contents visible
+                                    .appendTo(pageInfo.element);    // And add them to the DOM
+
                                 $newPage.remove();
 
                                 // Notify that we've fulfilled our Promise to process the page.

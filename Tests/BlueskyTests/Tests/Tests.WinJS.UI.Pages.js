@@ -64,7 +64,7 @@ testHarness.addTestFile("WinJS.UI.Pages Tests", {
 				}
 			});
 
-			// Create the page
+		    // Create the page
 			var testPage = new testPageConstructor($testDiv[0]);
 
 			// Verify we created the page

@@ -579,10 +579,10 @@ $(document).ready(function () {
     // TODO: Cookie these values.
 
     // To select a particular test file, call _setTestFile with the index of the testFile in the test files dropdown, or 'all' for all
-    testHarness._setTestFile(14);
+    testHarness._setTestFile(11);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
-    testHarness._setTest("programmaticCreation");
+    testHarness._setTest("pagesDefine");
 
     // Temp: start the tests now to save me from clicking the button
     $("#startTests").click();
