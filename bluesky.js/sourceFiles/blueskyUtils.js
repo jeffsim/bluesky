@@ -127,15 +127,3 @@ var blueskyUtils = {
 		return $element.css(attr).replace(/[^-\d\.]/g, '');
 	}
 }
-
-// TODO: Comment
-function msSetImmediate(c) {
-    WinJS.Promise.timeout().then(function () {
-        c();
-    });
-}
-
-// TODO: Comment
-function setImmediate(c) {
-    return msSetImmediate(c);
-}

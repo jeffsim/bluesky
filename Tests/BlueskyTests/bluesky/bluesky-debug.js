@@ -5623,16 +5623,46 @@ WinJS.Namespace.define("WinJS.UI", {
 // ============================================================== //
 // ============================================================== //
 
+// ================================================================
+//
+// WinJS.UI.ListLayout
+//
+//		Implementation of the WinJS.UI.ListLayout object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211792.aspx
+//
 WinJS.Namespace.define("WinJS.UI", {
 
-	ListLayout: WinJS.Class.define(function (layoutOptions) {
+	// ================================================================
+	//
+	// public Object: WinJS.UI.ListLayout
+	//
+	ListLayout: WinJS.Class.define(
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.ListLayout constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211791.aspx
+		//
+		function (layoutOptions) {
+
+		// Set typical options
 		WinJS.UI.setOptions(this, layoutOptions);
 
 		// eval groupInfo if it is present
 		if (layoutOptions.groupInfo) {
 			this.groupInfo = eval(layoutOptions.groupInfo);
 		}
-	}, {})
+	},
+
+	// ================================================================
+	// WinJS.UI.ListLayout Member functions
+	// ================================================================
+
+	{
+		// No member functions
+	})
 });
 
 
@@ -5663,7 +5693,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 	// ================================================================
 	//
-	// public Object: WinJS.ListView
+	// public Object: WinJS.UI.ListView
 	//
 	ListView: WinJS.Class.derive(WinJS.UI.BaseControl,
 
@@ -5804,7 +5834,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 					// Get groupInfo (if specified)
         			var groupInfo = that.layout.groupInfo && that.layout.groupInfo();
-        			console.log(templateSize.margins.horizontal);
+
         			// Add the rendered DOM elements to the DOM at the correct positions
         			items.forEach(function (item) {
 
@@ -5821,7 +5851,6 @@ WinJS.Namespace.define("WinJS.UI", {
         					// TODO: Technically this breaks some edge cases - e.g. app has incorrectly (or inconsistently) sized items
         					//		 and is relying on groupInfo to set the right granularity for them.  I'll need to see some failure
         					//		 cases to fully understand the right solution here.
-
 							// TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
 						}
 
@@ -6292,7 +6321,7 @@ WinJS.Namespace.define("WinJS.Utilities", {
 //
 //		MSDN: TODO
 //
-function setImmediate(callback) {
+function msSetImmediate(callback) {
 
     // TODO: I'm assuming this is what setImmediate does; essentially just yield the thread, and as soon as
     // the thread gets a chance, call the callback function
@@ -6300,6 +6329,16 @@ function setImmediate(callback) {
     WinJS.Promise.timeout().then(function () {
         callback();
     });
+}
+
+// ================================================================
+//
+// public function: setImmediate
+//
+//		MSDN: TODO
+//
+function setImmediate(c) {
+	return msSetImmediate(c);
 }
 
 
@@ -6682,16 +6721,4 @@ var blueskyUtils = {
 
 		return $element.css(attr).replace(/[^-\d\.]/g, '');
 	}
-}
-
-// TODO: Comment
-function msSetImmediate(c) {
-    WinJS.Promise.timeout().then(function () {
-        c();
-    });
-}
-
-// TODO: Comment
-function setImmediate(c) {
-    return msSetImmediate(c);
 }

@@ -163,7 +163,7 @@ WinJS.Namespace.define("WinJS.Utilities", {
 //
 //		MSDN: TODO
 //
-function setImmediate(callback) {
+function msSetImmediate(callback) {
 
     // TODO: I'm assuming this is what setImmediate does; essentially just yield the thread, and as soon as
     // the thread gets a chance, call the callback function
@@ -171,4 +171,14 @@ function setImmediate(callback) {
     WinJS.Promise.timeout().then(function () {
         callback();
     });
+}
+
+// ================================================================
+//
+// public function: setImmediate
+//
+//		MSDN: TODO
+//
+function setImmediate(c) {
+	return msSetImmediate(c);
 }
