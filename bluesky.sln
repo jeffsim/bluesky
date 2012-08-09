@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bluesky.js Source", "bluesk
 		bluesky.js\sourceFiles\WinJS.UI.BaseControl.js = bluesky.js\sourceFiles\WinJS.UI.BaseControl.js
 		bluesky.js\sourceFiles\WinJS.UI.FlipView.js = bluesky.js\sourceFiles\WinJS.UI.FlipView.js
 		bluesky.js\sourceFiles\WinJS.UI.HtmlControl.js = bluesky.js\sourceFiles\WinJS.UI.HtmlControl.js
+		bluesky.js\sourceFiles\WinJS.UI.ListLayout.js = bluesky.js\sourceFiles\WinJS.UI.ListLayout.js
+		bluesky.js\sourceFiles\WinJS.UI.ListView.js = bluesky.js\sourceFiles\WinJS.UI.ListView.js
 		bluesky.js\sourceFiles\WinJS.UI.Pages.js = bluesky.js\sourceFiles\WinJS.UI.Pages.js
 		bluesky.js\sourceFiles\WinJS.UI.Rating.js = bluesky.js\sourceFiles\WinJS.UI.Rating.js
 		bluesky.js\sourceFiles\WinJS.UI.js = bluesky.js\sourceFiles\WinJS.UI.js
@@ -49,10 +51,21 @@ EndProject
 Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "navigationTemplate", "Samples\navigationTemplate\navigationTemplate\navigationTemplate.jsproj", "{3C990735-DBA3-490A-8B74-D5CE2D459BEC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Win8SDK", "Win8SDK", "{6A04C81D-820C-4102-B939-748813E8EFBF}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\Win8SDK\sdkCommonStyles.css = Samples\Win8SDK\sdkCommonStyles.css
+	EndProjectSection
 EndProject
 Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "Controls_FlipView", "Samples\Win8SDK\flipView Sample\Controls_FlipView.jsproj", "{9EE3BA23-05BA-402A-A8B6-F3281C3F8B2C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "Samples\Win8SDK\flipView Sample\WebApp.csproj", "{936EFDC2-98B0-4AF8-AEE7-9B469715C223}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "flipView", "flipView", "{3298BF84-E4E0-4436-9107-4695C9FCC05A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "listViewTemplates", "listViewTemplates", "{34B1C474-3A06-4289-A0DC-523B97662F9E}"
+EndProject
+Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "Controls_ListViewItemTemplating", "Samples\Win8SDK\listviewTemplates\Controls_ListViewItemTemplating.jsproj", "{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "Samples\Win8SDK\listviewTemplates\WebApp.csproj", "{12CBF5AC-FCDC-4477-9050-946D81030324}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -66,6 +79,28 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|ARM.ActiveCfg = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|x64.ActiveCfg = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|x86.ActiveCfg = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|ARM.ActiveCfg = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|x64.ActiveCfg = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|x86.ActiveCfg = Release|Any CPU
 		{3C990735-DBA3-490A-8B74-D5CE2D459BEC}.Debug|ARM.ActiveCfg = Debug|ARM
 		{3C990735-DBA3-490A-8B74-D5CE2D459BEC}.Debug|ARM.Build.0 = Debug|ARM
 		{3C990735-DBA3-490A-8B74-D5CE2D459BEC}.Debug|ARM.Deploy.0 = Debug|ARM
@@ -171,14 +206,18 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816} = {34B1C474-3A06-4289-A0DC-523B97662F9E}
+		{12CBF5AC-FCDC-4477-9050-946D81030324} = {34B1C474-3A06-4289-A0DC-523B97662F9E}
+		{3298BF84-E4E0-4436-9107-4695C9FCC05A} = {6A04C81D-820C-4102-B939-748813E8EFBF}
+		{34B1C474-3A06-4289-A0DC-523B97662F9E} = {6A04C81D-820C-4102-B939-748813E8EFBF}
 		{3C990735-DBA3-490A-8B74-D5CE2D459BEC} = {54D9DC3C-4BE7-40AB-8BDE-997DC8990DB5}
 		{3F389AAB-BC93-4566-BFAA-ABDF54A35990} = {79257DB3-6E06-4B4F-9B32-EA91AEC80885}
 		{54D9DC3C-4BE7-40AB-8BDE-997DC8990DB5} = {08811DB0-03F0-4204-A1D9-0FB468322D08}
 		{5BB1836E-5DBD-49A0-AF88-123EE93106B6} = {54D9DC3C-4BE7-40AB-8BDE-997DC8990DB5}
 		{6A04C81D-820C-4102-B939-748813E8EFBF} = {08811DB0-03F0-4204-A1D9-0FB468322D08}
 		{8303B3B9-9DC6-466E-89B7-7337156449B8} = {0F66D8AA-523D-4F9A-9002-D36E4B933B90}
-		{936EFDC2-98B0-4AF8-AEE7-9B469715C223} = {6A04C81D-820C-4102-B939-748813E8EFBF}
-		{9EE3BA23-05BA-402A-A8B6-F3281C3F8B2C} = {6A04C81D-820C-4102-B939-748813E8EFBF}
+		{936EFDC2-98B0-4AF8-AEE7-9B469715C223} = {3298BF84-E4E0-4436-9107-4695C9FCC05A}
+		{9EE3BA23-05BA-402A-A8B6-F3281C3F8B2C} = {3298BF84-E4E0-4436-9107-4695C9FCC05A}
 		{AB36E9BE-6E81-4385-8F28-FA6AAE0EDF5C} = {0F66D8AA-523D-4F9A-9002-D36E4B933B90}
 	EndGlobalSection
 EndGlobal

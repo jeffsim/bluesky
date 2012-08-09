@@ -46,6 +46,12 @@
     <Content Include="TestHarness\testHarness.css" />
     <Content Include="TestHarness\testHarness.html" />
     <Content Include="TestHarness\testHarness.js" />
+    <Content Include="Tests\supportFiles\listView\listView.html" />
+    <Content Include="Tests\supportFiles\listView\img1.jpg" />
+    <Content Include="Tests\supportFiles\listView\img2.jpg" />
+    <Content Include="Tests\supportFiles\listView\img3.jpg" />
+    <Content Include="Tests\supportFiles\listView\img4.jpg" />
+    <Content Include="Tests\Tests.WinJS.UI.ListView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Animation.js" />
     <Content Include="Tests\supportFiles\flipView\flipView.html" />
     <Content Include="Tests\supportFiles\flipView\img2.jpg" />

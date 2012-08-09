@@ -22,11 +22,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
         function (element, options) {
 
-        	/*DEBUG*/
-        	// Parameter validation
-        	if (!element)
-        		console.error("WinJS.UI.Rating constructor: Undefined or null element specified");
-        	/*ENDDEBUG*/
+        	element = element || $("<div></div>")[0];
 
         	// Call into our base class' constructor
         	WinJS.UI.BaseControl.call(this, element, options);
@@ -285,6 +281,28 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		set: function (newUserRating) {
         			this._userRating = newUserRating;
+        			this.render();
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public Variable (and getter/setter): averageRating
+        	//
+        	//		When set, the control is re-rendered automatically.
+        	//
+        	//		MSDN: TODO
+        	//
+        	_averageRating: null,
+        	averageRating: {
+
+        		get: function () {
+        			return this._averageRating;
+        		},
+
+        		set: function (newRating) {
+        			this._averageRating = newRating;
         			this.render();
         		}
         	},

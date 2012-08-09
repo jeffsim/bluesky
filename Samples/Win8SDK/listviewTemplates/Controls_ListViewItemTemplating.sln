@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "Controls_ListViewItemTemplating", "Controls_ListViewItemTemplating.jsproj", "{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp.csproj", "{12CBF5AC-FCDC-4477-9050-946D81030324}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12CBF5AC-FCDC-4477-9050-946D81030324}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

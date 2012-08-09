@@ -119,8 +119,9 @@ var blueskyUtils = {
 	//
 	// private Function: blueskyUtils._getCssNumericValue
 	//
-	//		Strip the "px" from css attributse like marginLeft.
-	//
+	//		Strip the "px" from css attributes like marginLeft.
+    //
+    // TODO: Remove this and just use parseInt
 	_getCssNumericValue: function ($element, attr) {
 
 		return $element.css(attr).replace(/[^-\d\.]/g, '');

@@ -11,7 +11,21 @@
 //      developers that they are using non-cross-browser-compatible features.
 //
 
+
+// ================================================================
+//
+//      IE10 has -ms-grid, so we need to add some helper styles if we're not on IE10.
+//      These samples are demonstrating the delta between Win8 and bluesky; in real apps, just 
+//      don't use -ms-grid, and this won't be necessary.
+//
+$(document).ready(function () {
+    if (!($.browser.msie && $.browser.version == "10.0")) {
+        $("body").addClass("notIE10");
+    }
+});
+
 if (!$.browser.msie) {
+    
     // ================================================================
     //
     // Add srcElement to events

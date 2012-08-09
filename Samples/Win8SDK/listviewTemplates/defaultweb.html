@@ -1,0 +1,58 @@
+<!--
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Copyright (c) Microsoft Corporation. All rights reserved
+-->
+
+<!-- 
+The above license applies to the original Microsoft code found in the Win8 SDK.
+bluesky modifications to this code are licensed under MPL 2.0; see github.com/jeffsim/bluesky 
+for the full license.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>ListView Templates SDK Sample</title>
+
+    <!-- Test references - TBD: remove for ship -->
+    <!-- Uncomment the following lines to enable firebug lite.  Very useful for testing on iOS, WP7, etc -->
+    <!--<html debug='true'></html>-->
+    <!--<script type='text/javascript' src='https://getfirebug.com/firebug-lite.js'></script>-->
+    
+    <!-- External bluesky dependencies -->
+	<script type='text/javascript' src='http://bluesky.io/js/ext/jquery-1.7.2.min.js'></script>
+
+    <!-- bluesky references -->
+    <script src='/bluesky/bluesky-debug.js' type='text/javascript'></script>
+    <script src='/bluesky/bluesky-MiscWinJSPolyfills.js' type='text/javascript'></script>
+	<link href='http://bluesky.io/css/ui-light.css' rel='stylesheet'>
+    <link href='/bluesky/webOverrides-light.css' rel='stylesheet'>
+
+    <!-- SDK sample framework references -->
+    <link rel="stylesheet" href="/sample-utils/sample-utils.css" />
+    <link rel="stylesheet" href="/css/default.css" />
+    <link href='/bluesky/sdkCommonStyles.css' rel='stylesheet'>
+    <script src="/sample-utils/sample-utils.js"></script>
+    <script src="/js/default.js"></script>
+    <style>
+        .regularListIconTextItem-Detail {
+            margin: -70px 5px 5px 75px !important;
+        }
+    </style>
+</head>
+<body role="application">
+    <div id="rootGrid">
+        <div id="header" role="contentinfo" data-win-control="WinJS.UI.HtmlControl" data-win-options="{uri: '/sample-utils/header.html'}"></div>
+        <div id="content">
+            <h1 id="featureLabel"></h1>
+            <div id="contentHost"></div>
+        </div>
+        <div id="footer" data-win-control="WinJS.UI.HtmlControl" data-win-options="{uri: '/sample-utils/footer.html'}"></div>
+    </div>
+</body>
+</html>

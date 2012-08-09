@@ -40,6 +40,8 @@ namespace buildBluesky
                @"\WinJS.UI.HtmlControl.js",
                @"\WinJS.UI.Rating.js",
                @"\WinJS.UI.FlipView.js",
+               @"\WinJS.UI.ListLayout.js",
+               @"\WinJS.UI.ListView.js",
 			   @"\Windows.UI.WebUI.js",
 			   @"\WinJS.Utilities.js",
 			   @"\WinJS.Utilities.QueryCollection.js",
@@ -72,7 +74,13 @@ namespace buildBluesky
 				File.Delete(blueskyTestFile);
 			File.Copy(destFolder + "bluesky-min.js", blueskyTestFile);
 
-			MessageBox.Show("Build complete");
+            // Temp, for development purposes - copy into sample folder
+            var navSampleFile = @"..\..\..\..\..\Samples\Win8SDK\listViewTemplates\bluesky\bluesky-debug.js";
+            if (File.Exists(navSampleFile))
+                File.Delete(navSampleFile);
+            File.Copy(destFolder + "bluesky-debug.js", navSampleFile);
+
+            MessageBox.Show("Build complete");
 		}
 
 		private string addLicense()
