@@ -1,0 +1,67 @@
+<!--
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Copyright (c) Microsoft Corporation. All rights reserved
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Test references - TBD: remove for ship -->
+    <!-- Uncomment the following lines to enable firebug lite.  Very useful for testing on iOS, WP7, etc -->
+    <!--<html debug='true'></html>-->
+    <!--<script type='text/javascript' src='https://getfirebug.com/firebug-lite.js'></script>-->
+    <!-- jQuery scripts -->
+    <script type='text/javascript' src='/js/jquery-1.7.2.min.js'></script>
+    <!-- webWinJS references -->
+    <script type='text/javascript' src='/js/webWinJS/Windows.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Promise.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Utilities.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/webWinJS.Utilities.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Application.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Navigation.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.UI.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.UI.Pages.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.UI.ListView.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.UI.AppBar.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Binding.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Binding.Template.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Binding.List.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Binding.FilteredList.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Binding.GroupedList.js'></script>
+    <script type='text/javascript' src='/js/webWinJS/WinJS.Binding.GroupsList.js'></script>
+    <link href='/css/webWinJS/ui-dark.css' rel='stylesheet'>
+    <link href='/css/webWinJS/webOverrides-ui-dark.css' rel='stylesheet'>
+    <link href='/css/webWinJS/appSpecificStyleOverrides.css' rel='stylesheet'>
+    <script src='/js/webWinJS/history.js'></script>
+    <script src='/js/webWinJS/parseCss.js'></script>
+
+    <meta charset="utf-8" />
+    <title>SDK Sample</title>
+
+    <!-- WinJS references -->
+    <link rel="stylesheet" href="//Microsoft.WinJS.1.0.RC/css/ui-light.css" />
+    <script src="//Microsoft.WinJS.1.0.RC/js/base.js"></script>
+    <script src="//Microsoft.WinJS.1.0.RC/js/ui.js"></script>
+
+    <!-- SDK sample framework references -->
+    <link rel="stylesheet" href="/sample-utils/sample-utils.css" />
+    <link rel="stylesheet" href="/css/default.css" />
+    <script src="/sample-utils/sample-utils.js"></script>
+    <script src="/js/default.js"></script>
+</head>
+<body role="application">
+    <div id="rootGrid">
+        <div id="header" role="contentinfo" data-win-control="WinJS.UI.HtmlControl" data-win-options="{uri: '/sample-utils/header.html'}"></div>
+        <div id="content">
+            <h1 id="featureLabel"></h1>
+            <div id="contentHost"></div>
+        </div>
+        <div id="footer" data-win-control="WinJS.UI.HtmlControl" data-win-options="{uri: '/sample-utils/footer.html'}"></div>
+    </div>
+</body>
+</html>

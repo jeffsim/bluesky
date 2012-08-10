@@ -38,8 +38,6 @@ WinJS.Namespace.define("WinJS.UI", {
 			/*DEBUG*/
 			if (!fieldKey)
 				console.error("WinJS.UI.setOptions: Setting undefined or null field", targetObject, members);
-			if (!fieldValue)
-				console.error("WinJS.UI.setOptions: Setting undefined or null field value", targetObject, members, fieldKey);
 			/*ENDDEBUG*/
 
 			// If the member starts with "on" AND the targetObject is a function that supports addEventListener, then add the fieldValue as an event listener
@@ -109,8 +107,6 @@ WinJS.Namespace.define("WinJS.UI", {
 	//
 	processAll: function (rootElement) {
 
-		// TODO: multi-depth binding isn't working.  See the ListView test in the Ratings WinJS SDK sample for an example.
-
 		return new WinJS.Promise(function (onComplete) {
 
 			// If the caller didn't specify a root element, then process the entire document.
@@ -146,6 +142,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		if (!element)
 			console.error("WinJS.UI._processElement: Undefined or null element specified.");
 		/*ENDDEBUG*/
+
+		// If we've already processed the element in a previous call to process[All], then don't re-process it now.
+		if (element.winControl)
+			return;
 
 		// If data-win-options is specified, then convert Win8's JS-ish data-win-options attribute string 
 		// into a valid JS object before passing to the constructor.

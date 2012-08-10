@@ -43,6 +43,10 @@ WinJS.Namespace.define("WinJS.UI", {
         			this.itemDataSource = eval(options.itemDataSource);
         		if (options.itemTemplate)
         			this.itemTemplate = document.getElementById(options.itemTemplate) || eval(options.itemTemplate);
+        		if (options.groupDataSource)
+        			this.groupDataSource = eval(options.groupDataSource);
+        		if (options.groupHeaderTemplate)
+        			this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
 
         		// Generate our layout definition object.
         		// tbd: what's the right win8 default?
@@ -74,8 +78,10 @@ WinJS.Namespace.define("WinJS.UI", {
         	//			* Support horizontal lists
         	//			* Support cellspanning
         	//			* Hook up window resize
-			//
+        	//
         	_doRender: function () {
+
+        		var items = [], groupedItems = [];
 
         		// Ensure we're fully set up.
         		if (!this.itemDataSource && !this.itemTemplate)
@@ -103,16 +109,18 @@ WinJS.Namespace.define("WinJS.UI", {
                     .attr("role", "listbox")
                     .addClass("win-listview");
 
+        		// Tag the root element with the win-groups class if this is a Grouped ListView.
+        		if (this._groupDataSource)
+        			this.$rootElement.addClass("win-groups");
+
         		// Get the list of items that we'll render.
-        		var items = [];
-        		for (var i = 0; i < this.itemDataSource._list.length ; i++)
+        		for (var i = 0; i < this.itemDataSource._list.length; i++)
         			items.push(this.itemDataSource._list.getItem(i));
 
         		var that = this;
 
-        		var templateSize = {};
-
-        		this._getItemMargins(templateSize);
+        		// Get the margin sizes around items
+        		var templateMargins = this._getItemMargins();
 
         		// Render each list item, and store a Promise for each item; that Promise will be fulfilled when the item has been rendered as is
         		// ready to be inserted into the visible DOM.  We will wait until all of these Promises are fulfilled.
@@ -130,10 +138,22 @@ WinJS.Namespace.define("WinJS.UI", {
         		} else {
 
         			// itemTemplate is a function; create a collection of render promises which we'll wait on below.
-        			// TODO (PERF-MINOR): the itemTemplate function could return synchronously, in which case we're unnecessarily waiting on it as a Promise.
+        			// TODO (PERF-MINOR): An itemTemplate function could return synchronously, in which case we're unnecessarily waiting on it as a Promise.
         			for (var i = 0; i < items.length; i++) {
         				renderPromises.push(this._getItemFunctionRenderPromise(items[i], i));
         			}
+        		}
+
+        		// Set the starting Y for items in the list
+        		if (that._groupDataSource) {
+        			// Get the height of the group header template
+        			// TODO: Support headers on the left instead of top
+        			var $groupHeaderTemplate = $(that.groupHeaderTemplate).clone().hide().appendTo("body");
+        			var topY = $groupHeaderTemplate.outerHeight();
+        			$groupHeaderTemplate.remove();
+
+        		} else {
+        			var topY = 0;
         		}
 
         		// Wait until all of the items have been rendered
@@ -144,13 +164,15 @@ WinJS.Namespace.define("WinJS.UI", {
 
         			// Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
         			// TODO: Does ListView have a horizontal-oriented view?  If so, then use renderMaxX/outerWidth here in that situation.
-        			var renderMaxY = that.$rootElement.parent().outerHeight();
+        			var renderMaxY = that.$rootElement.outerHeight();
 
         			// Keep track of the width of the scrolling surface
         			var surfaceWidth = 0;
 
-					// Get groupInfo (if specified)
+        			// Get groupInfo (if specified)
         			var groupInfo = that.layout.groupInfo && that.layout.groupInfo();
+
+        			var currentGroupKey = null;
 
         			// Add the rendered DOM elements to the DOM at the correct positions
         			items.forEach(function (item) {
@@ -161,24 +183,53 @@ WinJS.Namespace.define("WinJS.UI", {
         				var itemWidth = $(item.element).outerWidth() || $("div", $(item.element)).outerWidth();
         				var itemHeight = $(item.element).outerHeight() || $("div", $(item.element)).outerHeight();
 
-						// If cellspanning/groupinfo specified, then apply it now
+        				// If cellspanning/groupinfo specified, then apply it now
         				if (groupInfo && groupInfo.enableCellSpanning) {
 
         					// NOTE: Since we use item dimensions already, we don't need to do anything for enableCellSpanning.
         					// TODO: Technically this breaks some edge cases - e.g. app has incorrectly (or inconsistently) sized items
         					//		 and is relying on groupInfo to set the right granularity for them.  I'll need to see some failure
         					//		 cases to fully understand the right solution here.
-							// TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
-						}
+        					// TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
+        				}
 
-        				// If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
-        				if (renderCurY + itemHeight >= renderMaxY) {
-        					renderCurY = 0;
+        				// If this is a grouped list and the item is in a different group than the previous item, then output a group header
+        				// and jump to the next column
+        				if (that._groupDataSource && item.groupKey != currentGroupKey) {
+
+        					renderCurY = topY;
         					renderCurX = surfaceWidth;
+
+        					// Output the new group's header
+        					// Clone the group header template, make it visible, and place it.
+        					var $groupHeaderTemplate = $(that.groupHeaderTemplate)
+								.clone()
+								.show()
+        						.css({
+        							"position": "absolute",
+        							"top": "0px",
+        							"left": renderCurX + "px"
+        						});
+
+        					// Perform data binding on the group header template
+        					WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource[item.groupKey].data);
+
+        					// Add the fully realized HTML for the group header to the ListView's DOM element.
+        					$surfaceDiv.append($groupHeaderTemplate);
+
+        					// Track the current group key so that we know when we switch to a new group
+        					currentGroupKey = item.groupKey;
+        				} else {
+
+        					// If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
+        					if (renderCurY + itemHeight >= renderMaxY) {
+        						renderCurY = topY;
+        						renderCurX = surfaceWidth;
+        					}
         				}
 
         				// Keep track of the width of the scrolling surface
-        				surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateSize.margins.horizontal);
+        				surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
 
         				// Create the item container div for the current item and explicitly assign width, height and position
         				var $thisItemContainer = $("<div class='win-container' style='width: " + itemWidth + "px; height: " +
@@ -189,7 +240,7 @@ WinJS.Namespace.define("WinJS.UI", {
         				$surfaceDiv.append($thisItemContainer);
 
         				// Go to the next place to put the next item
-        				renderCurY += itemHeight + templateSize.margins.vertical;
+        				renderCurY += itemHeight + templateMargins.vertical;
         			});
 
         			// Set the final width of the ListView's scrolling surface
@@ -200,7 +251,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			$viewportDiv.append($surfaceDiv);
         			that.$rootElement.append($viewportDiv);
 
-					// use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
+        			// use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
         			WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
         		});
         	},
@@ -210,7 +261,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	//
         	// private Function: WinJS.UI.ListView._getItemMargins
         	//
-        	_getItemMargins: function (templateSize) {
+        	_getItemMargins: function () {
 
         		// Next, calculate the margin that should be added around each list item's win-container DIV.  This is obtained
         		// from the following css selector:     .win-listview > .win-horizontal .win-container
@@ -221,14 +272,17 @@ WinJS.Namespace.define("WinJS.UI", {
 					.appendTo($("body"));
 
         		// Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
-        		templateSize.margins = {
+        		var itemMargins = {
         			vertical: parseInt($("#_cont1").css("marginTop")) +
 							  parseInt($("#_cont1").css("marginBottom")),
         			horizontal: parseInt($("#_cont1").css("marginLeft")) +
 							  parseInt($("#_cont1").css("marginRight"))
         		};
+
         		// Clean up after ourselves and remove the element from the DOM.
         		$container.remove();
+
+        		return itemMargins;
         	},
 
 
@@ -318,8 +372,6 @@ WinJS.Namespace.define("WinJS.UI", {
         				this._itemDataSource._list.removeEventListener("itemchanged", renderMe);
         			}
 
-        			var previousDataSource = this._itemDataSource;
-
         			// Store a reference to the new data source in our owning ListView
         			this._itemDataSource = newDataSource;
 
@@ -345,12 +397,31 @@ WinJS.Namespace.define("WinJS.UI", {
         		// groupDataSource.setter: Used to set a new group data source
         		set: function (newDataSource) {
 
+        			var that = this;
+
+        			// This event handler is called when an event that does not change our datasource count has occurred
+        			var renderMe = function () {
+        				// TODO: leaving this wrapper in case I need to send events; if not, then just bind to render.
+        				that.render(true);
+        			};
+
+        			// Unbind from previous list (if any)
+        			if (this._groupDataSource && this._groupDataSource._list) {
+        				this._groupDataSource._list.removeEventListener("itemremoved", renderMe);
+        				this._groupDataSource._list.removeEventListener("iteminserted", renderMe);
+        			}
+
+        			var previousGroupDataSource = this._groupDataSource;
+
         			// Store a reference to the new data source in our owning ListView
         			this._groupDataSource = newDataSource;
 
-        			// TODO: Use the same model as with itemDataSource for binding.
+        			// Listen to changes to the list.
+        			// TODO: Encapsulate all of this in the datasource object as "bindOnAnyChange"
+        			this._groupDataSource._list.addEventListener("itemremoved", renderMe);
+        			this._groupDataSource._list.addEventListener("iteminserted", renderMe);
 
-        			// Refresh our in-page appearance to show the new groupdatasource's items.
+        			// Refresh our in-page appearance to show the new datasource's items.
         			this.render();
         		}
         	},
