@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<meta charset="utf-8" />
+	<title>gridAppTemplate</title>
+
+	<!-- bluesky references -->
+	<script type='text/javascript' src='http://bluesky.io/js/ext/jquery-1.7.2.min.js'></script>
+	<script src='/bluesky/bluesky-debug.js' type='text/javascript'></script>
+	<script src='/bluesky/bluesky-MiscWinJSPolyfills.js' type='text/javascript'></script>
+	<link href='http://bluesky.io/css/ui-dark.css' rel='stylesheet'>
+	<link href='/bluesky/webOverrides-dark.css' rel='stylesheet'>
+
+	<!-- gridAppTemplate references -->
+	<link href="/css/default.css" rel="stylesheet" />
+	<script src="/js/data.js"></script>
+	<script src="/js/navigator.js"></script>
+	<script src="/js/default.js"></script>
+
+	<!-- include bluesky styles that override the app's styles -->
+	<link href="/bluesky/appOverrides.css" rel="stylesheet" />
+
+</head>
+<body>
+	<div id="contenthost" data-win-control="Application.PageControlNavigator" data-win-options="{home: '/pages/groupedItems/groupedItems.html'}"></div>
+	<!-- <div id="appbar" data-win-control="WinJS.UI.AppBar">
+        <button data-win-control="WinJS.UI.AppBarCommand" data-win-options="{id:'cmd', label:'Command', icon:'placeholder'}"></button>
+    </div> -->
+</body>
+</html>

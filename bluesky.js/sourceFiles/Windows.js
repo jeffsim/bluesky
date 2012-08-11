@@ -25,8 +25,14 @@ WinJS.Namespace.define("Windows", {
             ApplicationViewState: {
 
             	view: {
-					value: null,
-            	}
+					value: this.filled,
+            	},
+
+            	// Enumeration
+            	fullScreenLandscape: 0,
+            	filled: 1,
+            	snapped: 2,
+				fullScreenPortrait: 3
             }
         }
     },

@@ -33,14 +33,8 @@ WinJS.Namespace.define("WinJS.Binding", {
 					this._filteredKeys.push(item.key);
 			}
 
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemchanged: [],
-				itemmoved: [],
-				itemmutated: [],
-				reload: []
-			};
+			// Initialize the set of event listeners
+			this._eventListeners = [];
 
 			// Listen for changes on our source list
 			this._list.addEventListener("iteminserted", this._itemInserted.bind(this));

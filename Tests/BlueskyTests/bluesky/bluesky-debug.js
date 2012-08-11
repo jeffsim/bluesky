@@ -304,8 +304,14 @@ WinJS.Namespace.define("Windows", {
             ApplicationViewState: {
 
             	view: {
-					value: null,
-            	}
+					value: this.filled,
+            	},
+
+            	// Enumeration
+            	fullScreenLandscape: 0,
+            	filled: 1,
+            	snapped: 2,
+				fullScreenPortrait: 3
             }
         }
     },
@@ -2131,20 +2137,53 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		// public function: WinJS.Binding.List.addEventListener
 		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700736.aspx
+		//		MSDN: TODO
 		//
 		addEventListener: function (eventName, listener) {
+
+			// Create the list of event listeners for the specified event if it does not yet exist
+			// TODO: Apply this version of addEventListener to other controls.
+			if (!this._eventListeners[eventName])
+				this._eventListeners[eventName] = [];
+
+			// Add the listener to the list of listeners for the specified eventName
+			this._eventListeners[eventName].push(listener);
+
+			// Add DOM element event handlers (e.g. click).
+			// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+			//this.element.addEventListener(eventName, listener);
+		},
+
+
+		// ================================================================
+		//
+		// public function: WinJS.Binding.List.removeEventListener
+		//
+		//		MSDN: TODO
+		//
+		removeEventListener: function (eventName, listener) {
 
 			/*DEBUG*/
 			// Parameter validation
 			if (!this._eventListeners[eventName])
-				console.warn("WinJS.Binding.List.addEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+				console.warn("WinJS.Binding.List.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
 			/*ENDDEBUG*/
 
-			// Add the listener to the list of listeners for the specified eventName
-			this._eventListeners[eventName].push({ listener: listener });
-		},
+			// TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
 
+			// Remove the listener from the list of listeners for the specified eventName
+			var listeners = this._eventListeners[eventName];
+			for (var i = 0; i < listeners.length; i++) {
+				if (listener === listeners[i]) {
+					listeners.splice(i, 1);
+					return;
+				}
+			}
+
+			// Remove DOM element event handlers (e.g. click).
+			// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+		//	this.element.removeEventListener(eventName, listener);
+		},
 
 		// ================================================================
 		//
@@ -2161,7 +2200,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 				detail: eventData
 			};
 			for (var i in this._eventListeners.itemchanged)
-				this._eventListeners.itemchanged[i].listener(eventInfo);
+				this._eventListeners.itemchanged[i](eventInfo);
 		},
 
 
@@ -2179,7 +2218,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 				detail: eventData
 			};
 			for (var i in this._eventListeners.itemremoved)
-				this._eventListeners.itemremoved[i].listener(eventInfo);
+				this._eventListeners.itemremoved[i](eventInfo);
 		},
 
 
@@ -2197,7 +2236,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 				detail: eventData
 			};
 			for (var i in this._eventListeners.iteminserted)
-				this._eventListeners.iteminserted[i].listener(eventInfo);
+				this._eventListeners.iteminserted[i](eventInfo);
 		},
 		// Events
 		oniteminserted: {
@@ -2735,14 +2774,8 @@ WinJS.Namespace.define("WinJS.Binding", {
 					this._filteredKeys.push(item.key);
 			}
 
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemchanged: [],
-				itemmoved: [],
-				itemmutated: [],
-				reload: []
-			};
+			// Initialize the set of event listeners
+			this._eventListeners = [];
 
 			// Listen for changes on our source list
 			this._list.addEventListener("iteminserted", this._itemInserted.bind(this));
@@ -2977,17 +3010,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//		NOTE: Not called directly, but rather as a part of list.createGrouped
 		//
 		function (sourceList, groupKeySelector, groupDataSelector) {
-
-			// Set up our event listeners
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemchanged: [],
-				itemmoved: [],
-				itemmutated: [],
-				reload: []
-			};
-
+			
 			this._groupedItems = [];
 
 			// Our projected list of groups; not actually created until requested
@@ -2998,6 +3021,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			// Keep track of the list which we are projecting
 			this._list = sourceList;
+
+			// Initialize the set of event listeners
+			this._eventListeners = [];
 
 			this._groupKeySelector = groupKeySelector;
 			this._groupDataSelector = groupDataSelector;
@@ -3294,20 +3320,15 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		function (sourceList) {
 
-			// Set up our event listeners
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemmoved: [],
-				reload: []
-			};
-
 			// Keep track of the list (which is a groupedprojection) that we are projecting
 			this._list = sourceList;
 
 			// The list of group items which we are projecting over the source list
 			this._groupItems = [];
 			this._groupKeys = [];
+
+			// Initialize the set of event listeners
+			this._eventListeners = [];
 
 			// Listen for changes on our source list.  Note that we don't have to listen for changes to items in the base list,
 			// as our source groupprojection list will automatically convert changes to insertions/removals.
@@ -4427,7 +4448,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				        tempDiv.innerHTML = pageInfo.response;
 
 				        // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
-				        var $newPage = $(tempDiv).hide();
+				    	// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
+				        var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
 				        $("script", document).each(function (index, element) {
 				            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
 				            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
@@ -5647,21 +5669,85 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (layoutOptions) {
 
-		// Set typical options
-		WinJS.UI.setOptions(this, layoutOptions);
-
-		// eval groupInfo if it is present
-		if (layoutOptions.groupInfo) {
-			this.groupInfo = eval(layoutOptions.groupInfo);
-		}
-	},
+			// eval groupInfo if it is present
+			if (layoutOptions && layoutOptions.groupInfo) {
+				this.groupInfo = eval(layoutOptions.groupInfo);
+			}
+		},
 
 	// ================================================================
 	// WinJS.UI.ListLayout Member functions
 	// ================================================================
 
 	{
-		// No member functions
+		// The horizontal property is always false for ListLayouts
+		horizontal: {
+			get: function () {
+				return false;
+			}
+		}
+	})
+});
+
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.GridLayout.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.GridLayout
+//
+//		Implementation of the WinJS.UI.GridLayout object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211751.aspx
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public Object: WinJS.UI.GridLayout
+	//
+	GridLayout: WinJS.Class.define(
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.GridLayout constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211742.aspx
+		//
+		function (layoutOptions) {
+
+			if (layoutOptions) {
+				// eval groupInfo if it is present
+				if (layoutOptions.groupInfo)
+					this.groupInfo = eval(layoutOptions.groupInfo);
+				this.maxRows = layoutOptions.maxRows;
+			}
+		},
+
+	// ================================================================
+	// WinJS.UI.GridLayout Member functions
+	// ================================================================
+
+	{
+		// The horizontal property is always true for GridLayouts
+		horizontal: {
+			get: function () {
+				return true;
+			}
+		}
 	})
 });
 
@@ -5733,7 +5819,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		// Generate our layout definition object.
         		// tbd: what's the right win8 default?
-        		this.layout = new WinJS.UI.ListLayout(options.layout || {
+        		this.layout = new WinJS.UI.GridLayout(options.layout || {
         			layout: 'WinJS.UI.GridLayout',
         			horizontal: false
         		});
@@ -5777,13 +5863,26 @@ WinJS.Namespace.define("WinJS.UI", {
         		}
         		/*ENDDEBUG*/
 
+        		var $body = $("body");
+
         		// Start by clearing out our root element from previous renders
         		this.$rootElement.empty();
 
         		// Create two DOM elements; a parent Viewport which is static and does not move, and a child surface which is large enough to
         		// contain all items in the list.  Show the currently scrolled-to part of the list (child surface) in the viewport.
-        		var $viewportDiv = $("<div class='win-viewport win-horizontal' role='group'></div>");
+        		var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
+        		var $viewportDiv = $("<div class='win-viewport " + orientation + "' role='group'></div>");
         		var $surfaceDiv = $("<div class='win-surface'></div>");
+
+        		// The surface div has to be sized in order for the group header to obtain a valid size (see calculation of topY below).  Size the
+        		// surface div to match the viewport; we'll increase its size after we render all items and know the final size
+        		$surfaceDiv.css("height", this.$rootElement.outerHeight());
+        		$surfaceDiv.css("width", this.$rootElement.outerWidth());
+
+        		// Add the ListView's scrolling surface to the ListView's static (nonscrolling) viewport, and then add the 
+        		// listView's static viewpoint to the DOM
+        		$viewportDiv.append($surfaceDiv);
+        		this.$rootElement.append($viewportDiv);
 
         		// Set our root element's position to relative so that list items can be absolutely positioned relative to the list
         		// Also add roles and classes to make the listbox look like a Win8 listbox
@@ -5801,9 +5900,6 @@ WinJS.Namespace.define("WinJS.UI", {
         			items.push(this.itemDataSource._list.getItem(i));
 
         		var that = this;
-
-        		// Get the margin sizes around items
-        		var templateMargins = this._getItemMargins();
 
         		// Render each list item, and store a Promise for each item; that Promise will be fulfilled when the item has been rendered as is
         		// ready to be inserted into the visible DOM.  We will wait until all of these Promises are fulfilled.
@@ -5827,18 +5923,6 @@ WinJS.Namespace.define("WinJS.UI", {
         			}
         		}
 
-        		// Set the starting Y for items in the list
-        		if (that._groupDataSource) {
-        			// Get the height of the group header template
-        			// TODO: Support headers on the left instead of top
-        			var $groupHeaderTemplate = $(that.groupHeaderTemplate).clone().hide().appendTo("body");
-        			var topY = $groupHeaderTemplate.outerHeight();
-        			$groupHeaderTemplate.remove();
-
-        		} else {
-        			var topY = 0;
-        		}
-
         		// Wait until all of the items have been rendered
         		WinJS.Promise.join(renderPromises).then(function () {
 
@@ -5857,14 +5941,35 @@ WinJS.Namespace.define("WinJS.UI", {
 
         			var currentGroupKey = null;
 
-        			// Add the rendered DOM elements to the DOM at the correct positions
-        			items.forEach(function (item) {
+        			// Get the spacing to add between groups (if grouped view)
+        			var groupSpacing;
 
-        				// Get the dimensions of the item
-        				// TODO: Yeah, this needs work.  I'm not sure where I'm supposed to get dimensions from; sometimes it's the element, sometimes
-        				// it's the div in it... It's a 2x2 grid with axes template/function and groupinfo/no-groupinfo...
-        				var itemWidth = $(item.element).outerWidth() || $("div", $(item.element)).outerWidth();
-        				var itemHeight = $(item.element).outerHeight() || $("div", $(item.element)).outerHeight();
+        			var topY = 0;
+
+					// Keep track of current row for maxRows comparison
+        			var curRow = -1;
+
+        			// Get the margin sizes around items
+        			var templateMargins = that._getItemMargins();
+
+        			var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
+
+        			// Add the rendered DOM elements to the DOM at the correct positions
+        			for (var i = 0; i < items.length; i++) {
+        				var item = items[i];
+
+        				// TODO (PERF-MINOR): Wrap $itemElement on item creation to avoid rewrapping every time we render.
+        				var $itemElement = $(item.element);
+
+        				// Create the item container div for the current item add the item's element to it, and place the
+        				// itemcontainer in the listview's scrolling surface
+        				var $thisItemContainer = $("<div class='win-container'></div>");
+        				$thisItemContainer.append($itemElement);
+        				$surfaceDiv.append($thisItemContainer);
+
+						// Get the dimensions of the item (force to width of list if not horizontal)
+        				var itemWidth = that.layout.horizontal ? $itemElement.outerWidth() : that.$rootElement.outerWidth();
+        				var itemHeight = $itemElement.outerHeight();
 
         				// If cellspanning/groupinfo specified, then apply it now
         				if (groupInfo && groupInfo.enableCellSpanning) {
@@ -5880,19 +5985,15 @@ WinJS.Namespace.define("WinJS.UI", {
         				// and jump to the next column
         				if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
-        					renderCurY = topY;
-        					renderCurX = surfaceWidth;
+        					// Track the current group key so that we know when we switch to a new group
+        					currentGroupKey = item.groupKey;
 
         					// Output the new group's header
         					// Clone the group header template, make it visible, and place it.
         					var $groupHeaderTemplate = $(that.groupHeaderTemplate)
 								.clone()
-								.show()
-        						.css({
-        							"position": "absolute",
-        							"top": "0px",
-        							"left": renderCurX + "px"
-        						});
+								.addClass("win-groupheader")
+								.show();
 
         					// Perform data binding on the group header template
         					WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource[item.groupKey].data);
@@ -5900,39 +6001,100 @@ WinJS.Namespace.define("WinJS.UI", {
         					// Add the fully realized HTML for the group header to the ListView's DOM element.
         					$surfaceDiv.append($groupHeaderTemplate);
 
-        					// Track the current group key so that we know when we switch to a new group
-        					currentGroupKey = item.groupKey;
+        					// Create the group's header
+        					// TODO (CLEANUP): I can collapse a few lines of the following if/else...
+        					if (groupHeaderOnLeft) {
+
+        						// If we haven't gotten the width of the group header yet, then do so now.
+        						if (topY === undefined) {
+        							topY = 0;
+
+        							// Spacing between groups is (apparently) based on the margins of the group header.
+        							// TODO: What about padding? border?
+        							groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft")) +
+												   $groupHeaderTemplate.outerWidth() +
+												   parseInt($groupHeaderTemplate.css("marginRight"));
+
+        							surfaceWidth = groupSpacing;
+        						} else
+        							surfaceWidth += groupSpacing;
+
+        					} else {
+
+        						// If we haven't gotten the height of the group header yet, then do so now.
+        						if (topY === undefined) {
+        							topY = $groupHeaderTemplate.outerHeight();
+
+        							// Spacing between groups is (apparently) based on the left margin of the group header.
+        							// TODO: What about padding? border?
+        							groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft"));
+
+        							surfaceWidth = groupSpacing;
+        						} else
+        							surfaceWidth += groupSpacing;
+        					}
+
+        					// Start rendering items just below the group header
+        					renderCurY = topY;
+        					renderCurX = surfaceWidth;
+
+							// Keep track of current row for maxRows check
+        					curRow = 0;
+
+        					// Set the header's final position
+        					$groupHeaderTemplate.css({
+        						"position": "absolute",
+        						"top": "0px",
+        						"left": (renderCurX - groupSpacing) + "px"  // step back groupSpacing pixels to account for margin
+        					});
+
         				} else {
 
-        					// If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
-        					if (renderCurY + itemHeight >= renderMaxY) {
-        						renderCurY = topY;
-        						renderCurX = surfaceWidth;
+        					if (that.layout.horizontal) {
+        						// If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
+								// So the same if maxRows is specified and we're about to exceed it
+        						if (renderCurY + itemHeight >= renderMaxY ||
+									that.layout.maxRows && curRow == that.layout.maxRows - 1) {
+        							renderCurY = topY;
+        							renderCurX = surfaceWidth;
+        							curRow = 0;
+        						} else
+        							curRow++;
         					}
         				}
+        				
+        				$thisItemContainer.css({
+        					"top": renderCurY,
+        					"left": renderCurX,
+        					"width": itemWidth,
+        					"height": itemHeight
+        				});
 
         				// Keep track of the width of the scrolling surface
         				surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
 
-        				// Create the item container div for the current item and explicitly assign width, height and position
-        				var $thisItemContainer = $("<div class='win-container' style='width: " + itemWidth + "px; height: " +
-													itemHeight + "px; top: " + renderCurY + "px; left: " + renderCurX + "px'></div>");
-
-        				// Add the item's fully realized HTML to the item container, and then put it in the right place in the DOM
-        				$thisItemContainer.append(item.element);
-        				$surfaceDiv.append($thisItemContainer);
-
         				// Go to the next place to put the next item
         				renderCurY += itemHeight + templateMargins.vertical;
-        			});
 
-        			// Set the final width of the ListView's scrolling surface
-        			$surfaceDiv.css("width", surfaceWidth);
+        				// if oniteminvoked is specified, then bind item click now
+        				if (that.oniteminvoked != null) {
 
-        			// Add the ListView's scrolling surface to the ListView's static (nonscrolling) viewport, and then add the 
-        			// listView's static viewpoint to the DOM
-        			$viewportDiv.append($surfaceDiv);
-        			that.$rootElement.append($viewportDiv);
+        					// store a reference to the item in the itemcontainer
+        					$(".win-item", $thisItemContainer).data("itemIndex", i);
+
+        					// If the user clicks on the item, call our oniteminvoked function
+        					$(".win-item", $thisItemContainer).click(function () {
+        						// Get the index of the clicked item container's item
+        						var itemIndex = $(this).data("itemIndex");
+
+        						// Call the callback
+        						that.oniteminvoked({ detail: { itemIndex: itemIndex } });       // tbd: per above, must remove item
+        					});
+        				}
+        			}
+
+        			// Set the final width of the ListView's scrolling surface, and make it visible
+        			$surfaceDiv.css("width", surfaceWidth).show();
 
         			// use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
         			WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
@@ -5950,7 +6112,8 @@ WinJS.Namespace.define("WinJS.UI", {
         		// from the following css selector:     .win-listview > .win-horizontal .win-container
         		// To do this, create an element in the DOM that matches that selector, and grab it's marginTop/marginBottom values.
         		// TODO: Find a cleaner way of calculating this?
-        		var $container = $("<div class='win-listview'><div class='win-horizontal'><div id='_cont1' class='win-container'></div></div></div>")
+        		var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
+        		var $container = $("<div class='win-listview'><div class='" + orientation +"'><div id='_cont1' class='win-container'></div></div></div>")
 					.hide()
 					.appendTo($("body"));
 
@@ -6092,17 +6255,20 @@ WinJS.Namespace.define("WinJS.UI", {
         			if (this._groupDataSource && this._groupDataSource._list) {
         				this._groupDataSource._list.removeEventListener("itemremoved", renderMe);
         				this._groupDataSource._list.removeEventListener("iteminserted", renderMe);
+        				this._groupDataSource._list.removeEventListener("itemchanged", renderMe);
         			}
 
         			var previousGroupDataSource = this._groupDataSource;
 
-        			// Store a reference to the new data source in our owning ListView
+        			// Store a reference to the new data source
         			this._groupDataSource = newDataSource;
 
-        			// Listen to changes to the list.
-        			// TODO: Encapsulate all of this in the datasource object as "bindOnAnyChange"
-        			this._groupDataSource._list.addEventListener("itemremoved", renderMe);
-        			this._groupDataSource._list.addEventListener("iteminserted", renderMe);
+        			if (this._groupDataSource && this._groupDataSource._list) {
+        				// Listen to changes to the list.
+        				this._groupDataSource._list.addEventListener("itemremoved", renderMe);
+        				this._groupDataSource._list.addEventListener("iteminserted", renderMe);
+        				this._groupDataSource._list.addEventListener("itemchanged", renderMe);
+        			}
 
         			// Refresh our in-page appearance to show the new datasource's items.
         			this.render();

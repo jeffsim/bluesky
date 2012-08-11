@@ -17,6 +17,16 @@
             data source is a WinJS.Binding.List, and the ListView uses a WinJS.Binding.Template
             object to render its items.
         </p>
+		  <div style="padding-top:10px;font-size:large;color:red; font-weight:600">
+            Known bluesky issues with this sample:
+            <ul>
+                <li>scenario 1: Works fine</li>
+                <li>scenario 2: Invoke NYI</li>
+                <li>scenario 3: Works fine</li>
+                <li>scenario 4: ListView Selection NYI</li>
+                <li>scenario 5: App suspension/resumption NYI</li>
+            </ul>
+        </div>
     </div>
     <div data-win-control="SdkSample.ScenarioOutput">
 
@@ -41,7 +51,7 @@
                 selectionMode: 'none', 
                 tapBehavior: 'none', 
                 swipeBehavior: 'none', 
-                layout: { type: WinJS.UI.GridLayout } 
+                layout: { type: WinJS.UI.GridLayout,maxRows:2 } 
             }"
         ></div>
     </div>

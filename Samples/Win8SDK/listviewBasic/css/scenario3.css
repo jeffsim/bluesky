@@ -1,11 +1,11 @@
 ﻿/* Alternate CSS applied to the ListView in this sample */
 .listLayout .smallListIconTextItem
 {
-    width: auto;
+    width: 200px;
 }
     
 #listView.listLayout
 {
-    width: 270px;
+    width: 670px;
     height: 290px;
 }

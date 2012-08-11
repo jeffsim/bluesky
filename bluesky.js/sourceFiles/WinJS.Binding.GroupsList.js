@@ -16,20 +16,15 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		function (sourceList) {
 
-			// Set up our event listeners
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemmoved: [],
-				reload: []
-			};
-
 			// Keep track of the list (which is a groupedprojection) that we are projecting
 			this._list = sourceList;
 
 			// The list of group items which we are projecting over the source list
 			this._groupItems = [];
 			this._groupKeys = [];
+
+			// Initialize the set of event listeners
+			this._eventListeners = [];
 
 			// Listen for changes on our source list.  Note that we don't have to listen for changes to items in the base list,
 			// as our source groupprojection list will automatically convert changes to insertions/removals.

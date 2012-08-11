@@ -18,7 +18,7 @@
 
                     // Create a new List Layout
                     listView.layout = new WinJS.UI.ListLayout();
-
+                   
                     // Apply an alternate CSS class to the ListView
                     WinJS.Utilities.toggleClass(listView.element, "listLayout");
 
@@ -30,7 +30,7 @@
 
                     // Create a new Grid Layout
                     listView.layout = new WinJS.UI.GridLayout();
-
+                   
                     // Apply an alternate CSS class to the ListView
                     WinJS.Utilities.toggleClass(listView.element, "listLayout");
 

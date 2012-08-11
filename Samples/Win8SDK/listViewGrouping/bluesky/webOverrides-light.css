@@ -59,9 +59,3 @@ option {
     padding:12px 6px;
     font-weight: 400;
 }
-
-/* Win8 adds a left margun of -70px to grouped listviews; undo that here.*/
-.win-listview.win-groups > .win-horizontal .win-surface
-{
-	margin-left: 0px;
-}

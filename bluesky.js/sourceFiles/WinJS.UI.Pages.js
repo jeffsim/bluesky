@@ -236,7 +236,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				        tempDiv.innerHTML = pageInfo.response;
 
 				        // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
-				        var $newPage = $(tempDiv).hide();
+				    	// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
+				        var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
 				        $("script", document).each(function (index, element) {
 				            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
 				            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();

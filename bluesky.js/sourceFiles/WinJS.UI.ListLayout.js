@@ -22,21 +22,23 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (layoutOptions) {
 
-		// Set typical options
-		WinJS.UI.setOptions(this, layoutOptions);
-
-		// eval groupInfo if it is present
-		if (layoutOptions.groupInfo) {
-			this.groupInfo = eval(layoutOptions.groupInfo);
-		}
-	},
+			// eval groupInfo if it is present
+			if (layoutOptions && layoutOptions.groupInfo) {
+				this.groupInfo = eval(layoutOptions.groupInfo);
+			}
+		},
 
 	// ================================================================
 	// WinJS.UI.ListLayout Member functions
 	// ================================================================
 
 	{
-		// No member functions
+		// The horizontal property is always false for ListLayouts
+		horizontal: {
+			get: function () {
+				return false;
+			}
+		}
 	})
 });
 

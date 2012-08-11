@@ -15,17 +15,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//		NOTE: Not called directly, but rather as a part of list.createGrouped
 		//
 		function (sourceList, groupKeySelector, groupDataSelector) {
-
-			// Set up our event listeners
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemchanged: [],
-				itemmoved: [],
-				itemmutated: [],
-				reload: []
-			};
-
+			
 			this._groupedItems = [];
 
 			// Our projected list of groups; not actually created until requested
@@ -36,6 +26,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			// Keep track of the list which we are projecting
 			this._list = sourceList;
+
+			// Initialize the set of event listeners
+			this._eventListeners = [];
 
 			this._groupKeySelector = groupKeySelector;
 			this._groupDataSelector = groupDataSelector;
