@@ -27,6 +27,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				if (layoutOptions.groupInfo)
 					this.groupInfo = eval(layoutOptions.groupInfo);
 				this.maxRows = layoutOptions.maxRows;
+				this.groupHeaderPosition = layoutOptions.groupHeaderPosition;
 			}
 		},
 

@@ -5734,6 +5734,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				if (layoutOptions.groupInfo)
 					this.groupInfo = eval(layoutOptions.groupInfo);
 				this.maxRows = layoutOptions.maxRows;
+				this.groupHeaderPosition = layoutOptions.groupHeaderPosition;
 			}
 		},
 
@@ -5944,7 +5945,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			// Get the spacing to add between groups (if grouped view)
         			var groupSpacing;
 
-        			var topY = 0;
+        			var topY;
 
 					// Keep track of current row for maxRows comparison
         			var curRow = -1;
@@ -6050,6 +6051,8 @@ WinJS.Namespace.define("WinJS.UI", {
 
         				} else {
 
+        					if (topY === undefined)
+        						topY = 0;
         					if (that.layout.horizontal) {
         						// If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
 								// So the same if maxRows is specified and we're about to exceed it
@@ -6078,7 +6081,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
         				// if oniteminvoked is specified, then bind item click now
         				if (that.oniteminvoked != null) {
-        					console.log(1);
 
         					// store a reference to the item in the itemcontainer
         					$(".win-item", $thisItemContainer).data("itemIndex", i);
@@ -6087,7 +6089,7 @@ WinJS.Namespace.define("WinJS.UI", {
         					$(".win-item", $thisItemContainer).click(function () {
         						// Get the index of the clicked item container's item
         						var itemIndex = $(this).data("itemIndex");
-        						console.log(2);
+
         						// Call the callback
         						that.oniteminvoked({ detail: { itemIndex: itemIndex } });       // tbd: per above, must remove item
         					});
