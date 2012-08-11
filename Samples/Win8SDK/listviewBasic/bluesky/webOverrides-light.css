@@ -1,21 +1,18 @@
 /* ================================================================
 //
-// webOverrides-dark.css
+// webOverrides-light.css
 //
-//		This file includes css overrides that are necessary to make the default Win8 styles (ui-dark.css) more
-//		web friendly.  See webOverrides-light.css for the partner file for ui-light.css
+//		This file includes css overrides that are necessary to make the default Win8 styles (ui-light.css) more
+//		web friendly.  See webOverrides-dark.css for the partner file for ui-dark.css
 //
 */
-
 /* Select a more web-friendly set of fonts
-	TODO: Figure out what the best set of fonts are. 
-    */
-body, h1, h2, h3, h4, input, textarea, button, select, option
+	TODO: Figure out what the best set of fonts are. */
+body, input, textarea, button, select, option
 {
-	font-family: "Segoe UI", "Helvetica", Verdana;
+	font-family: "Segoe UI", "Helvetica", "Verdana" !important;
 	font-weight: 100;
 }
-
 /* Fix ratings control.  Sigh; no html entity for star.  Using heart instead.  See: http://www.evotech.net/blog/2007/04/named-html-entities-in-numeric-order/  
 	TODO: &#9733;  == star, but (1) I'm not sure if that's websafe, and (2) you can't seem to use that formt in css content.
 	TODO: use background-image instead?
@@ -51,17 +48,39 @@ button
 /* dropdowns */
 option, select
 {
-	font-size: 11pt;
+	font-size: 16pt !important;
 	line-height: 2;
 }
 
-option {
-    padding:12px 6px;
-    font-weight: 400;
+option
+{
+	padding: 12px 6px;
+	font-weight: 400;
 }
 
-/* Win8 adds a left margun of -70px to grouped listviews; undo that here.*/
-.win-listview.win-groups > .win-horizontal .win-surface
+.win-backbutton::before
 {
-	margin-left: 0px;
+	content: "<"; /* Was "\E0D5"; */
+	font-size: 20pt; /* TBD: was ?*/
+}
+
+.win-backbutton:lang(ar)::before, .win-backbutton:lang(dv)::before, .win-backbutton:lang(fa)::before, .win-backbutton:lang(he)::before, .win-backbutton:lang(ku-Arab)::before, .win-backbutton:lang(pa-Arab)::before, .win-backbutton:lang(prs)::before, .win-backbutton:lang(ps)::before, .win-backbutton:lang(sd-Arab)::before, .win-backbutton:lang(syr)::before, .win-backbutton:lang(ug)::before, .win-backbutton:lang(ur)::before, .win-backbutton:lang(qps-plocm)::before
+{
+	content: "<"; /* Was "\E0AE"; */
+	font-size: 20pt; /* TBD: was ?*/
+}
+
+/* Give clickable listview headers a pointer cursor */
+.win-listview .win-groupheader p[role="link"]
+{
+	cursor: pointer;
+}
+
+/* Disallow drag-select of DOM elements in listviews and flipviews */
+.win-listview, .win-flipview
+{
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
 }

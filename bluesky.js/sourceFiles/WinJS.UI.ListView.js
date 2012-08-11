@@ -31,6 +31,11 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Call into our base class' constructor
         	WinJS.UI.BaseControl.call(this, element, options);
 
+			// Set default options
+        	this.tapBehavior = WinJS.UI.TapBehavior.invokeOnly;
+        	this.swipeBehavior = WinJS.UI.SwipeBehavior.select;
+        	this.selectionMode = WinJS.UI.SelectionMode.multi;
+
         	// Set any options that were specified.
         	if (options) {
         		if (options.selectionMode)
@@ -310,18 +315,30 @@ WinJS.Namespace.define("WinJS.UI", {
         				renderCurY += itemHeight + templateMargins.vertical;
 
         				// if oniteminvoked is specified, then bind item click now
-        				if (that.oniteminvoked != null) {
+        				if ((that.tapBehavior == "invoke" || that.tapBehavior == "invokeOnly") && that.oniteminvoked != null) {
 
         					// store a reference to the item in the itemcontainer
         					$(".win-item", $thisItemContainer).data("itemIndex", i);
 
         					// If the user clicks on the item, call our oniteminvoked function
         					$(".win-item", $thisItemContainer).click(function () {
+
         						// Get the index of the clicked item container's item
         						var itemIndex = $(this).data("itemIndex");
 
+								// Create a Promise with the clicked item
+        						var promise = new WinJS.Promise(function (c) { c(items[itemIndex]); });
+
         						// Call the callback
-        						that.oniteminvoked({ detail: { itemIndex: itemIndex } });       // tbd: per above, must remove item
+        						that._notifyItemInvoked({
+        							srcElement: this.parentNode,
+        							target: this.parentNode,
+									currentTarget: that.$rootElement,
+        							detail: {
+        								itemIndex: itemIndex,
+        								itemPromise: promise
+        							}
+        						});
         					});
         				}
         			}
@@ -537,8 +554,6 @@ WinJS.Namespace.define("WinJS.UI", {
         		}
         	},
 
-        	// oniteminvoked: event to fire when the user clicks on an item in the list.
-        	oniteminvoked: null,
 
         	// on Window resize, re-render ourselves
         	// tbd-perf: consider batching these
@@ -548,6 +563,86 @@ WinJS.Namespace.define("WinJS.UI", {
         		//var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
         		this.render();
         		//anim.execute();
-        	}
+        	},
+
+
+
+
+
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._notifyItemInvoked
+        	//
+        	_notifyItemInvoked: function (eventData) {
+
+        		eventData.type = "iteminvoked";
+
+        		for (var i in this._eventListeners.iteminvoked)
+        			this._eventListeners.iteminvoked[i](eventData);
+        	},
+
+        	// ================================================================
+        	//
+        	// public event: WinJS.ListView.oniteminvoked
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211827.aspx
+        	//
+        	oniteminvoked: {
+        		get: function () { return this._eventListeners["iteminvoked"]; },
+        		set: function (callback) { this.addEventListener("iteminvoked", callback); }
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public function: WinJS.ListView.addEventListener
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229659.aspx
+        	//
+        	addEventListener: function (eventName, listener) {
+
+        		// Create the list of event listeners for the specified event if it does not yet exist
+        		// TODO: Apply this version of addEventListener to other controls.
+        		if (!this._eventListeners[eventName])
+        			this._eventListeners[eventName] = [];
+
+        		// Add the listener to the list of listeners for the specified eventName
+        		this._eventListeners[eventName].push(listener);
+
+        		// Add DOM element event handlers (e.g. click).
+        		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+        		this.element.addEventListener(eventName, listener);
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public function: WinJS.ListView.removeEventListener
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211843.aspx
+        	//
+        	removeEventListener: function (eventName, listener) {
+
+        		/*DEBUG*/
+        		// Parameter validation
+        		if (!this._eventListeners[eventName])
+        			console.warn("WinJS.ListView.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+        		/*ENDDEBUG*/
+
+        		// TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
+
+        		// Remove the listener from the list of listeners for the specified eventName
+        		var listeners = this._eventListeners[eventName];
+        		for (var i = 0; i < listeners.length; i++) {
+        			if (listener === listeners[i]) {
+        				listeners.splice(i, 1);
+        				return;
+        			}
+        		}
+
+        		// Remove DOM element event handlers (e.g. click).
+        		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+        		this.element.removeEventListener(eventName, listener);
+        	},
         })
 });

@@ -6123,14 +6123,28 @@ WinJS.Namespace.define("WinJS.UI", {
         				// Go to the next place to put the next item
         				renderCurY += itemHeight + templateMargins.vertical;
 
+        				// Add pressed handler
+        				var $winItem = $(".win-item", $thisItemContainer);
+
+        				$thisItemContainer
+							.mousedown(function () {
+								$(this).addClass("win-pressed");
+							})
+							.mouseup(function () {
+								$(this).removeClass("win-pressed");
+							})
+							.mouseleave(function () {
+								$(this).removeClass("win-pressed");
+							});
+
         				// if oniteminvoked is specified, then bind item click now
         				if ((that.tapBehavior == "invoke" || that.tapBehavior == "invokeOnly") && that.oniteminvoked != null) {
 
         					// store a reference to the item in the itemcontainer
-        					$(".win-item", $thisItemContainer).data("itemIndex", i);
+        					$winItem.data("itemIndex", i);
 
         					// If the user clicks on the item, call our oniteminvoked function
-        					$(".win-item", $thisItemContainer).click(function () {
+        					$winItem.click(function () {
 
         						// Get the index of the clicked item container's item
         						var itemIndex = $(this).data("itemIndex");

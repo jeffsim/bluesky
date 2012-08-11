@@ -76,7 +76,7 @@ namespace buildBluesky
 			File.Copy(destFolder + "bluesky-min.js", blueskyTestFile);
 
             // Temp, for development purposes - copy into sample folder
-            var navSampleFile = @"..\..\..\..\..\Samples\Win8SDK\listviewBasic\bluesky\bluesky-debug.js";
+            var navSampleFile = @"..\..\..\..\..\Samples\Win8SDK\listviewInteractionModel\bluesky\bluesky-debug.js";
             if (File.Exists(navSampleFile))
                 File.Delete(navSampleFile);
             File.Copy(destFolder + "bluesky-debug.js", navSampleFile);

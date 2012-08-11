@@ -72,7 +72,7 @@ var myStoreData = new WinJS.Binding.List([
             }
 
             function itemInvokedHandler(eventObject) {
-                eventObject.detail.itemPromise.done(function (invokedItem) {
+            	eventObject.detail.itemPromise.done(function (invokedItem) {
                     var itemData = invokedItem.data;
                     WinJS.log("You have been navigated to the product detail page for " + itemData.title + " - " + itemData.text, "sample", "status");
                 });

@@ -122,7 +122,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				// Process the element
 				WinJS.UI._processElement(this);
 			});
-			
+
 			// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
 			setTimeout(function () { onComplete(); }, 0);
 		});
@@ -174,5 +174,44 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		// Create a reference from the wincontrol back to its source element
 		element.winControl.element = element;
+	},
+
+
+	// ================================================================
+	//
+	// public enumeration: WinJS.UI.TapBehavior
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701303.aspx
+	//
+	TapBehavior: {
+		directSelect: "directSelect",
+		toggleSelect: "invoke",			// TODO: Why does Win8 have this discrepancy?
+		invokeOnly: "invokeOnly",
+		none: "none"
+	},
+
+
+	// ================================================================
+	//
+	// public enumeration: WinJS.UI.SelectionMode
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229687.aspx
+	//
+	SelectionMode: {
+		none: "none",
+		single: "single",
+		multi: "multi"
+	},
+
+
+	// ================================================================
+	//
+	// public enumeration: WinJS.UI.SwipeBehavior
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701287.aspx
+	//
+	SwipeBehavior: {
+		select: "select",
+		none: "none"
 	}
 });
