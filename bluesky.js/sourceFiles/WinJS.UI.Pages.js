@@ -326,7 +326,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                 // out of the temp div; and then remove the temp newPage element
 				                $newPage
                                     .contents()                     // grab contents (instead of children, to get text nodes as well).
-                                    .show()                         // make the contents visible
                                     .appendTo(pageInfo.element);    // And add them to the DOM
 
 				                // Notify that we've fulfilled our Promise to process the page.

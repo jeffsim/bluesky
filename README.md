@@ -1,5 +1,7 @@
 # [bluesky] (http://www.bluesky.io)
 
+Check out the samples: http://sampleBrowser.bluesky.io
+
 ### Current test status
 <table>
 <tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
@@ -21,16 +23,12 @@ Not very complete, although we've just hit our API Preview milestone (you can se
 Fairly complete.  The yardstick for bluesky is that a typical Win8/WinJS app works on the web without any changes except where the app relies on a non-cross-browser feature and a polyfill isn’t available (e.g. –ms-grid).  We’ll be using the Win8 SDK samples as a proving ground for the near-term future.  There will be things that just plain never work (e.g. hybrid apps).
 ## How much of bluesky is new code?
 All of it.  bluesky is written from scratch, and shares precisely 0 lines of code with Microsoft’s WinJS.  
-## All new code, huh; how're the bugs?
-They're fine, thanks.  Bluesky is sitting at around 100% code coverage.
 ## How do I run the tests?
 Open bluesky.sln in Visual Studio, set the BlueskyTests project as the startup project, and press F5 (or just open Tests/BlueskyTests.sln and hit F5).
 
 Alternatively, if you'd like to run the tests without downloading anything, you can run the Tests by browsing to here: http://tests.bluesky.io/testharness/testharness.html.
 ## Can I see it in action?
-You can view the Win8 SDK "FlipView" sample running in bluesky here: http://flipView.bluesky.io.
-
-You can also see the Visual 2012 "Grid Application" WinJS template app here: http://gridApp.bluesky.io.
+You can view all of the currently ported Win8 SDK samples and Visual Studio templates here: http://sampleBrowser.bluesky.io.
 
 Another option is to view the Tests running on the web; you can do that here: http://tests.bluesky.io/testharness/testharness.html.  If you really want to hurt your brain, do it on an iPad.
 ## How do I use the API?

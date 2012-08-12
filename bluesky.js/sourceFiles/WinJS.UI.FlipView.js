@@ -125,7 +125,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // Get the templatized HTML that we'll populate. 
                         var templateInstance = $(this.itemTemplate)
-												 .hide()		// Hide the template
 												 .clone()		// Clone it so that we don't modify the original template
 												 .addClass("win-template")	// tell our styles it's a template
 												 .show()[0];	// Show the instance we'll populate

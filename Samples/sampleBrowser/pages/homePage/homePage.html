@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>bluesky Sample Browser</title>
+
+	<link href="/pages/homePage/homePage.css" rel="stylesheet" />
+	<script src="/pages/homePage/homePage.js"></script>
+</head>
+<body>
+
+	<!-- context menu. -->
+	<div class="vmenu">
+		<div class="first_li">
+			<span>Launch sample</span>
+		</div>
+		<div class="first_li">
+			<span>View source on github</span>
+		</div>
+		<div class="sep_li msdnOnly">
+		</div>
+		<div class="first_li msdnOnly">
+			<span>View sample on MSDN</span>
+		</div>
+	</div>
+
+	<!-- Templates -->
+	<div class="headerTemplate" data-win-control="WinJS.Binding.Template">
+		<p class="group-title win-type-x-large" style="cursor: default" data-win-bind="textContent: title; groupKey: key" role="link">
+		</p>
+	</div>
+	<div class="sdkTemplate" data-win-control="WinJS.Binding.Template" style="width: 200px; height: 150px; background-color: #069">
+		<img src="#" alt="#" data-win-bind="src: backgroundImage; alt: title" style="width: 200px; height: 146px" />
+		<div style="font-size: 11pt; font-weight: 400; text-align: center; width: 100%; position: absolute; bottom: 0px; background-color: #060; height: 22px; text-align: center" data-win-bind="textContent: DisplayName">app name</div>
+	</div>
+	<div class="vsTemplate" data-win-control="WinJS.Binding.Template" style="width: 200px; height: 150px; background-color: #06c">
+		<img src="#" alt="#" data-win-bind="src: backgroundImage; alt: title" style="width: 200px; height: 146px" />
+		<div style="font-size: 11pt; font-weight: 400; text-align: center; width: 100%; position: absolute; bottom: 0px; background-color: #006; height: 22px; text-align: center" data-win-bind="textContent: DisplayName">app name</div>
+	</div>
+	<div class="welcomeTemplate" data-win-control="WinJS.Binding.Template" style="width: 400px; height: 450px">
+		<div style='font-size: 20pt'>Here you can find a variety of Win8 samples and Visual Studio 2012 WinJS templates which have been ported to bluesky.</div>
+		<div style='font-size: 14pt; margin-top: 30px'>Click an item to launch it; right click an item for more options.</div>
+		<div style='font-size: 14pt; margin-top: 30px'>The source code for all samples is available on <a href='http://www.github.com/jeffsim/bluesky'>Github</a>.</div>
+		<div style='font-size: 14pt; margin-top: 30px'>You can also view the bluesky tests running <a href='http://tests.bluesky.io/testharness/testharness.html'>here</a>.</div>
+	</div>
+
+	<!-- Page content -->
+	<div class="fragment homePage">
+		<!-- Page header -->
+		<header aria-label="Header content" role="banner">
+			<button class="win-backbutton" aria-label="Back" disabled></button>
+			<h1 class="titlearea win-type-ellipsis">
+				<span class="pagetitle">bluesky Sample Browser</span>
+			</h1>
+		</header>
+		<!-- List of apps -->
+		<section aria-label="Main content" role="main">
+			<div class="homePagelist" aria-label="List of samples" data-win-control="WinJS.UI.ListView" data-win-options="{ selectionMode: 'none' }"></div>
+		</section>
+	</div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+
+
+body {
+}
+.homePagelist .win-item .item-overlay {
+    background-color: rgba(0, 0, 0, 0.65);
+    bottom: 0;
+    position: absolute;
+}
+.homePagelist .item-image {
+    height: 150px;
+    width: 150px;
+}
+.homePage .homePagelist .win-horizontal.win-viewport .win-surface {
+    margin-top: 0 !important;
+}
+.smallitemtemplate .item-overlay {
+    height: 150px;
+    width: 150px;
+    background-color: rgba(0,128,0,1) !important;
+	padding-left:10px;
+}
+.mediumitemtemplate img {
+    width: 310px !important;
+}
+.mediumitemtemplate .item-overlay {
+    width: 310px !important;
+}
+.largeitemtemplate img {
+    height: 460px !important;
+    width: 620px !important;
+}
+.largeitemtemplate .item-overlay {
+    width: 620px !important;
+}
+p {
+    margin: 0;
+}
+
+
+/* itemdetail page relies on column-fill (etc), which require vendor prefix on non-IE10 browsers */
+/* Note: this should work on Firefox, chrome, IE10, Opera, Android, and Safari; but it won't work on IE9.  On IE9 it will fallback to a single column of text. */
+.itemdetailpage .content article
+{
+	-moz-column-fill: auto;
+	-moz-column-gap: 80px;
+	-moz-column-width: 480px;
+	-webkit-column-fill: auto;
+	-webkit-column-gap: 80px;
+	-webkit-column-width: 480px;
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+}
+
+/* This addresses the lack of -ms-grid on itemdetails.html */
+.itemdetailpage .content
+{
+	position: absolute !important;
+	top: 120px;
+	height: auto !important;
+	bottom: 0px;
+}
+
+.fragment section
+{
+	position: absolute !important;
+	top: 120px;
+	margin-top: 0px;
+	height: auto !important;
+	bottom: 0px;
+}
+
+.groupeditemslist .win-item .item-overlay
+{
+	position: absolute;
+	bottom: 0px;
+	background-color: rgba(0,0,0,.65);
+}
+
+.win-item
+{
+	cursor: pointer;
+}
+
+.groupeditemslist .item-image
+{
+	height: 250px;
+}
+
+.item-overlay .item-title
+{
+	height: 61px;
+}
+
+/* TODO (BUG): I'm inadvertantly making templates visible somewhere; forcing them to invisible while I work through getting listview working */
+.pagecontrol > .headerTemplate, .pagecontrol > .itemtemplate
+{
+	display: none !important;
+}
+
+.titlearea
+{
+	display: inline-block;
+	margin-left: 20px;
+}
+
+/* Part of above.  */
+.fragment header[role="banner"] .win-backbutton
+{
+	vertical-align: top; /*shift button to top to align */
+	margin-left: 55px; /* shift title to align with body */
+}
+
+/* Account for lack of -ms-grid on pcDetails page; force the header text to render next to the back button, not under*/
+.itemdetailpage .section
+{
+	float: left; /* Make the columns go across instead of down*/
+}
+
+/* part of above. */
+.itemdetailpage section[role="main"] article
+{
+	width: 2400px !important; /* This is hackish; it's forcing the width of the article to 4 columns so that they'll layout out one-after-the-other and not drop. */
+}
+
+	.itemdetailpage section[role="main"] article .section
+	{
+		width: 500px !important;
+		padding-right: 80px; /* Account for lack of -ms-column-gap:80px*/
+	}
+
+	.itemslist .item-image
+	{
+		height: 110px;
+	}
+
+	.itemslist .item-info
+	{
+		margin-top: -110px;
+		margin-left: 120px !important;
+	}

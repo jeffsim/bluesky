@@ -29,6 +29,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// Remember our element
 			this.element = element;
 
+			// Hide the template
+			$(this.element).hide();
+
 			// Set options if specified
 			if (options)
 				WinJS.UI.setOptions(this, options);

@@ -482,8 +482,13 @@ WinJS.Namespace.define("WinJS.UI", {
 
         				// Get the size of the item from the item's element.
         				// TODO (PERF): Avoid the jQuery wrapper here.
-        				item.elementWidth = $(item.element).outerWidth();
-        				item.elementHeight = $(item.element).outerHeight();
+        				var $itemElement = $(item.element);
+        				item.elementWidth = $itemElement.outerWidth();
+        				item.elementHeight = $itemElement.outerHeight();
+
+						// Tag the item's element with win-item
+        				$itemElement.addClass("win-item");
+
         				onComplete();
         			});
         		});

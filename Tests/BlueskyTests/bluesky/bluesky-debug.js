@@ -3544,6 +3544,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// Remember our element
 			this.element = element;
 
+			// Hide the template
+			$(this.element).hide();
+
 			// Set options if specified
 			if (options)
 				WinJS.UI.setOptions(this, options);
@@ -4874,7 +4877,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                 // out of the temp div; and then remove the temp newPage element
 				                $newPage
                                     .contents()                     // grab contents (instead of children, to get text nodes as well).
-                                    .show()                         // make the contents visible
                                     .appendTo(pageInfo.element);    // And add them to the DOM
 
 				                // Notify that we've fulfilled our Promise to process the page.
@@ -5464,7 +5466,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // Get the templatized HTML that we'll populate. 
                         var templateInstance = $(this.itemTemplate)
-												 .hide()		// Hide the template
 												 .clone()		// Clone it so that we don't modify the original template
 												 .addClass("win-template")	// tell our styles it's a template
 												 .show()[0];	// Show the instance we'll populate
@@ -6494,9 +6495,6 @@ WinJS.Namespace.define("WinJS.UI", {
         						that._lastSelectedItemIndex = itemIndex;
         						that._notifySelectionChanged();
         					}
-
-
-        					// if (blueskyUtils.shiftPressed)
         				});
         			}
 

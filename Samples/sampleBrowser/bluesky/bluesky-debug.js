@@ -3544,6 +3544,8 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// Remember our element
 			this.element = element;
 
+			// Hide the template
+			$(this.element).hide();
 			// Set options if specified
 			if (options)
 				WinJS.UI.setOptions(this, options);
@@ -4874,7 +4876,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                 // out of the temp div; and then remove the temp newPage element
 				                $newPage
                                     .contents()                     // grab contents (instead of children, to get text nodes as well).
-                                    .show()                         // make the contents visible
                                     .appendTo(pageInfo.element);    // And add them to the DOM
 
 				                // Notify that we've fulfilled our Promise to process the page.
@@ -6430,7 +6431,6 @@ WinJS.Namespace.define("WinJS.UI", {
         				// Go to the next place to put the next item
         				renderCurY += itemHeight + templateMargins.vertical;
 
-
         				// store a reference to the item in the itemcontainer
         				$(".win-item", $thisItemContainer).data("itemIndex", i);
 
@@ -6438,6 +6438,7 @@ WinJS.Namespace.define("WinJS.UI", {
         				$(".win-item", $thisItemContainer).click(function () {
 
         					// Get the index of the clicked item container's item
+        					console.log(3);
         					var itemIndex = $(this).data("itemIndex");
 
         					// Call invoke
@@ -6593,6 +6594,9 @@ WinJS.Namespace.define("WinJS.UI", {
         				// TODO (PERF): Avoid the jQuery wrapper here.
         				item.elementWidth = $(item.element).outerWidth();
         				item.elementHeight = $(item.element).outerHeight();
+
+        				$(item.element).addClass("win-item");
+
         				onComplete();
         			});
         		});

@@ -1,0 +1,187 @@
+﻿/* This selector is used to prevent ui-dark/light.css from overwriting changes
+   to .win-surface. */
+.homePage .homePagelist .win-horizontal.win-viewport .win-surface {
+    margin-left: 45px;
+    margin-bottom: 60px;
+}
+
+.homePage .homePagelist {
+    height: 100%;
+    position: relative;
+    width: 100%;
+    z-index: 0;
+}
+
+    .homePage .homePagelist .win-groupheader {
+        margin-top: 5px;
+        margin-left: 70px;
+        padding: 0;
+    }
+
+        .homePage .homePagelist .win-groupheader .group-title {
+            margin-bottom: 10px;
+            margin-left: 5px;
+            margin-top: 0;
+            font-size:30pt;
+        }
+
+.homePage .smallitemtemplate
+{
+    width: 150px;
+    height: 150px;
+    overflow: hidden;
+    -ms-grid-columns: 1fr;
+    -ms-grid-rows: 0px 1fr;
+    display: -ms-grid;
+}
+.smallitemtemplate .item-overlay .item-title {
+    position: absolute; 
+    padding-right: 6px;
+    bottom: 10px; 
+    font-size: 16pt;
+}
+.smallitemtemplate .item-overlay .item-subtitle {
+    display: none;
+}
+.homePage .mediumitemtemplate
+{
+    width: 310px;
+    height: 150px;
+    -ms-grid-columns: 1fr;
+    -ms-grid-rows: 1fr 60px;
+    display: -ms-grid;
+    overflow: hidden;
+}       
+.homePage .largeitemtemplate
+{
+    width: 620px !important;
+    height: 460px;
+    overflow: hidden;
+    -ms-grid-columns: 1fr;
+    -ms-grid-rows: 1fr 90px;
+    display: -ms-grid;
+}
+@media screen and (-ms-view-state: fullscreen-landscape), screen and (-ms-view-state: fullscreen-portrait), screen and (-ms-view-state: filled) {
+    .homePage .homePagelist .win-item .item-overlay {
+        background: rgba(0,0,0,0.65);
+    }
+
+        .homePage .homePagelist .win-item .item-overlay .item-title {
+            color: rgba(255,255,255,0.87);
+        }
+
+        .homePage .homePagelist .win-item .item-overlay .item-subtitle {
+            color: rgba(255,255,255,0.6);
+        }
+}
+
+@media screen and (-ms-view-state: snapped) {
+
+    .homePage .homePagelist .win-vertical.win-viewport .win-surface {
+        margin-bottom: 30px;
+        margin-left: 6px;
+    }
+
+    .homePage .homePagelist .win-vertical.win-viewport .win-container {
+        margin-right: 42px;
+        margin-bottom: 15px;
+        padding: 7px;
+    }
+
+    .homePage .homePagelist .win-item {
+        -ms-grid-columns: 60px 1fr;
+        -ms-grid-rows: 1fr;
+        display: -ms-grid;
+        height: 60px;
+        width: 272px;
+    }
+
+        .homePage .homePagelist .win-item .item-image {
+            -ms-grid-column: 1;
+            -ms-grid-row-span: 1;
+            height: 60px;
+            width: 60px;
+        }
+
+        .homePage .homePagelist .win-item .item-overlay {
+            -ms-grid-column: 2;
+            -ms-grid-row: 1;
+            -ms-grid-row-align: stretch;
+            background: transparent;
+            display: inline-block;
+            margin-left: 10px;
+            padding: 0;
+        }
+
+            .homePage .homePagelist .win-item .item-overlay .item-title {
+                margin-top: 4px;
+                max-height: 40px;
+                width: 202px;
+            }
+
+            .homePage .homePagelist .win-item .item-overlay .item-subtitle {
+                opacity: 0.6;
+                width: 202px;
+            }
+}
+
+@media screen and (-ms-view-state: fullscreen-portrait) {
+    .homePage .homePagelist .win-horizontal.win-viewport .win-surface {
+        margin-left: 25px;
+    }
+}
+
+ a {
+            color: #9ff;
+            text-decoration: underline;
+        }
+
+        /* Remove the selected backgrdoun from the welcome item */
+        .homePagelist .win-container:first-child:hover {
+            background-color: transparent !important;
+            outline: solid 0px;
+        }
+        
+        /* context menu */
+        .vmenu
+        {
+            border: 1px solid #aaa;
+            position: absolute;
+            background: #fff;
+            font-size: 0.75em;
+            display:none;
+        }
+
+            .vmenu .first_li span
+            {
+                width: 250px;
+                display: block;
+                padding: 8px 13px;
+                cursor: pointer;
+                color: #404040;
+                font-size: 16pt;
+            }
+
+            .vmenu .inner_li
+            {
+                display: none;
+                margin-left: 120px;
+                position: absolute;
+                border: 1px solid #aaa;
+                border-left: 1px solid #ccc;
+                margin-top: -28px;
+                background: #fff;
+            }
+
+            .vmenu .sep_li
+            {
+                border-top: 1px ridge #aaa;
+                margin: 5px 0;
+            }
+
+            .vmenu .fill_title
+            {
+                font-size: 11px;
+                font-weight: bold;
+                word-wrap: break-word;
+            }
