@@ -17,15 +17,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		function (list, options) {
 
 			// initialize the set of event listeners
-			// TODO: Derive all controls with eventlisteners from some eventlistener-handling base class
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemchanged: [],
-				itemmoved: [],
-				itemmutated: [],
-				reload: []
-			};
+			this._eventListeners = [];
 
 			// Initialize our value set and key array
 			this._items = {};
@@ -39,14 +31,17 @@ WinJS.Namespace.define("WinJS.Binding", {
 					this._addValue(list[i]);
 			}
 
-			WinJS.UI.setOptions(options);
+			if (options) {
+				WinJS.UI.setOptions(options);
+			}
 
 			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 
-			// TODO: Not sure what to bind to here.
-			this.dataSource = WinJS.Binding.as(this._items);
-			this.dataSource._list = this;
+			// TODO: Apply same final solution to other List types
+			this.dataSource = new WinJS.UI.IListDataSource(this, this._items);
+			//WinJS.Binding.as(this._items);
+			//this.dataSource._list = this;
 		},
 
 		// ================================================================

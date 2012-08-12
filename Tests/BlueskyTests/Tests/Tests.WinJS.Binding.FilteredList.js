@@ -22,7 +22,7 @@ testHarness.addTestFile("WinJS.Binding.FilteredList Tests", {
 		var filteredList = list.createFiltered(function (el) {
 			return el % 2;
 		});
-
+		var d = filteredList.dataSource;
 		test.assert(filteredList.getAt(0) == 1 &&
 					filteredList.getAt(1) == 3 &&
 					filteredList.getAt(2) == 5 &&

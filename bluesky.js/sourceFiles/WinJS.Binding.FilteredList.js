@@ -48,8 +48,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 
 			// TODO: Not sure what to bind to here.
-			this.dataSource = WinJS.Binding.as(this._filteredKeys);
-			this.dataSource._list = this;
+			this.dataSource = new WinJS.UI.IListDataSource(this, this._filteredKeys);
+//			this.dataSource = WinJS.Binding.as(this._filteredKeys);
+	//		this.dataSource._list = this;
 		},
 
 		// ================================================================

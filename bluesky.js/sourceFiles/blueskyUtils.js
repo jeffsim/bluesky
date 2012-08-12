@@ -113,17 +113,21 @@ var blueskyUtils = {
 		});
 	},
 
+	shiftPressed: false,
+	controlPressed: false,
 
-
-	// ================================================================
-	//
-	// private Function: blueskyUtils._getCssNumericValue
-	//
-	//		Strip the "px" from css attributes like marginLeft.
-    //
-    // TODO: Remove this and just use parseInt
-	_getCssNumericValue: function ($element, attr) {
-
-		return $element.css(attr).replace(/[^-\d\.]/g, '');
-	}
+	// TODO: remove this after .done is implemented.
+	_warnedDoneNYI: false,
 }
+
+// Determine if shift key is currently pressed
+$(document).keydown(function (e) {
+
+	blueskyUtils.shiftPressed = e.shiftKey;
+	blueskyUtils.controlPressed = e.ctrlKey;
+});
+$(document).keyup(function (e) {
+
+	blueskyUtils.shiftPressed = e.shiftKey;
+	blueskyUtils.controlPressed = e.ctrlKey;
+});

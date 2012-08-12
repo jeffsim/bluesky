@@ -29,8 +29,8 @@ Open bluesky.sln in Visual Studio, set the BlueskyTests project as the startup p
 Alternatively, if you'd like to run the tests without downloading anything, you can run the Tests by browsing to here: http://tests.bluesky.io/testharness/testharness.html.
 ## Can I see it in action?
 You can view the Win8 SDK "FlipView" sample running in bluesky here: http://flipView.bluesky.io.
-You can also see the Visual 2012 "Grid Application" WinJS template app here: http://gridApp.bluesky.io.
 
+You can also see the Visual 2012 "Grid Application" WinJS template app here: http://gridApp.bluesky.io.
 
 Another option is to view the Tests running on the web; you can do that here: http://tests.bluesky.io/testharness/testharness.html.  If you really want to hurt your brain, do it on an iPad.
 ## How do I use the API?

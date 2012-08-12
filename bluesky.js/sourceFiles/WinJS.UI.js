@@ -213,5 +213,306 @@ WinJS.Namespace.define("WinJS.UI", {
 	SwipeBehavior: {
 		select: "select",
 		none: "none"
-	}
+	},
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.IListDataSource
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211786.aspx
+	//
+	IListDataSource: WinJS.Class.define(function (sourceList, listItems) {
+
+		this._list = sourceList;
+		//this._items = WinJS.Binding.as(listItems);
+	},
+
+		// ================================================================
+		// WinJS.UI.IListDataSource members
+		// ================================================================
+
+		{
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.getCount
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700660.aspx
+			//
+			getCount: function () {
+
+				return WinJS.Promise.wrap(this._list.length);
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.itemFromKey
+			//
+			//		MSDN: TODO
+			//
+			itemFromKey: function (itemKey) {
+				return WinJS.Promise.wrap(this._list.getItemFromKey(itemKey));
+			},
+
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.itemFromIndex
+			//
+			//		MSDN: TODO
+			//
+			itemFromIndex: function (itemIndex) {
+				return WinJS.Promise.wrap(this._list.getAt(itemIndex));
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.UI.IListDataSource.list
+			//
+			//		MSDN: TODO
+			//
+			list: {
+				get: function () {
+					return this._list;
+				}
+			},
+		}),
+
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.ISelection
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872204.aspx
+	//
+	ISelection: WinJS.Class.define(function (sourceList) {
+
+		this._list = sourceList;
+		this._selectedItems = [];
+	},
+
+		// ================================================================
+		// WinJS.UI.ISelection members
+		// ================================================================
+
+		{
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.add
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
+			//
+			add: function (items) {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+
+					// If items is not an array, then convert it into one for simplicity
+					if (items.length === undefined)
+						items = [items];
+					else {
+						// Arrays must contain an object that implements ISelectionRange, which is NYI
+						console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+					}
+
+					// We want to get values from our listview's actual databound list.
+					var curList = that._list.itemDataSource._list;
+					
+					items.forEach(function (value) {
+						var item;
+						if (typeof value === "number") {
+							// value is an index
+							item = curList.getItem(value);
+						} else {
+							// value is an object that contains either index or key.  Use key if both are present
+							if (value.key !== undefined) {
+								item = curList.getItemFromKey(value);
+							} else if (value.index !== undefined) {
+								item = curList.getItem(value);
+							}
+								/*DEBUG*/
+							else {
+								console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
+							}
+							/*ENDDEBUG*/
+						}
+
+						if (that._selectedItems.indexOf(item) == -1)
+							that._selectedItems.push(item);
+					});
+
+					// TODO: Notify our list
+					that._list._selectionChanged();
+
+					c(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.remove
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872205.aspx
+			//
+			remove: function (items) {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+
+					// If items is not an array, then convert it into one for simplicity
+					if (items.length === undefined)
+						items = [items];
+					else {
+						// Arrays must contain an object that implements ISelectionRange, which is NYI
+						console.error("Passing an array of objects to WinJS.UI.ISelection.remove, but ISelectionRange is NYI");
+					}
+
+					// We want to get values from our listview's actual databound list.
+					var curList = that._list.itemDataSource._list;
+
+					items.forEach(function (value) {
+						var item;
+						if (typeof value === "number") {
+							// value is an index
+							item = curList.getItem(value);
+						} else {
+							// value is an object that contains either index or key.  Use key if both are present
+							if (value.key !== undefined) {
+								item = curList.getItemFromKey(value);
+							} else if (value.index !== undefined) {
+								item = curList.getItem(value);
+							}
+								/*DEBUG*/
+							else {
+								console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
+							}
+							/*ENDDEBUG*/
+						}
+
+						var indexOfItem = that._selectedItems.indexOf(item);
+						if (indexOfItem != -1)
+							that._selectedItems.splice(indexOfItem, 1);
+					});
+
+					// TODO: Notify our list
+					that._list._selectionChanged();
+
+					c(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.remove
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872199.aspx
+			//
+			clear: function () {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+					that._selectedItems = [];
+					// Notify our list
+					that._list._selectionChanged();
+					c();
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.count
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872200.aspx
+			//
+			count: function () {
+				return this._selectedItems.length;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getIndices
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+			//
+			getIndices: function () {
+				var indices = [];
+				this._selectedItems.forEach(function (item) {
+					indices.push(item.index);
+				});
+				return indices;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.isEverything
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872203.aspx
+			//
+			isEverything: function () {
+
+				return this.count == this._list.length;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getItems
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872201.aspx
+			//
+			getItems: function () {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+					c(that._selectedItems);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.set
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872207.aspx
+			//
+			set: function (items) {
+				var that = this;
+				return this.clear().then(function () {
+					return that.add(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.selectAll
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872206.aspx
+			//
+			selectAll: function () {
+				var that = this;
+				this.clear.then(function () {
+					for (var i = 0; i < this._list.length; i++) {
+						that.add(this._list.getItem(i));
+					}
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getRanges
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872202.aspx
+			//
+			getRanges: function () {
+				return new WinJS.Promise(function (c) {
+					console.error("WinJS.UI.ISelection.getRanges is NYI");
+					c([]);
+				});
+			}
+		})
 });

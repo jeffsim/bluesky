@@ -35,7 +35,7 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 		// Return a function that generates an observable class with the properties in the specified data object
 		var newClass = WinJS.Class.define(function (initialState) {
 
-			// set initial data
+			// Set initial data
 			this.sourceData = initialState || {};
 			for (var key in initialState) {
 
@@ -48,6 +48,10 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 				}
 			}
 		},
+
+		// ================================================================
+		// WinJS.Binding.BoundClass members
+		// ================================================================
 
 		{
 			// ================================================================

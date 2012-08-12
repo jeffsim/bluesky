@@ -1393,9 +1393,14 @@ WinJS.Namespace.define("WinJS", {
         			console.error("WinJS.Promise.done: null or undefined onComplete function specified.");
         	    /*ENDDEBUG*/
 
-        		console.warn("Promise.done is NYI; replacing with .then()");
+        		// TODO: remove this after .done is implemented.
+        		if (!blueskyUtils._warnedDoneNYI) {
+        			console.warn("Promise.done is NYI; replacing with .then()");
+        			blueskyUtils._warnedDoneNYI = true;
+        		}
+
         		return this.then(onComplete, onError, onProgress);
-        	}
+        	},
         },
 
 		// ================================================================
@@ -1403,6 +1408,7 @@ WinJS.Namespace.define("WinJS", {
 		// ================================================================
 
 		{
+
 			// ================================================================
 			//
 			// public Function: Promise.timeout
@@ -1435,6 +1441,19 @@ WinJS.Namespace.define("WinJS", {
 					return value;
 
 				// The specified value isn't a Promise; create a new Promise that wraps it and return it now
+				return new WinJS.Promise(function (c) { c(value); });
+			},
+
+
+			// ================================================================
+			//
+			// public Function: Promise.wrap
+			//
+			//		MSDN: TODO
+			//
+			wrap: function (value) {
+
+				// TODO: Make sure this is what wrap is supposed to do; the difference between .as and .wrap
 				return new WinJS.Promise(function (c) { c(value); });
 			},
 
@@ -1501,31 +1520,6 @@ WinJS.Namespace.define("WinJS", {
 });
 
 
-// ================================================================
-//
-// ItemPromise class.
-//
-//      TODO: Hacking this in for now.  
-//
-function ItemPromise(val) {
-    var v = {
-
-        // ================================================================
-        //
-        // Function: ItemPromise.then
-        //
-        //      This is called when the data is ready.
-        //
-        then: function (doneCallback) {
-
-            return doneCallback(this._value);
-        },
-    }
-    v._value = val;
-    return v;
-}
-
-
 
 
 
@@ -1577,7 +1571,7 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 		// Return a function that generates an observable class with the properties in the specified data object
 		var newClass = WinJS.Class.define(function (initialState) {
 
-			// set initial data
+			// Set initial data
 			this.sourceData = initialState || {};
 			for (var key in initialState) {
 
@@ -1590,6 +1584,10 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 				}
 			}
 		},
+
+		// ================================================================
+		// WinJS.Binding.BoundClass members
+		// ================================================================
 
 		{
 			// ================================================================
@@ -2383,15 +2381,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		function (list, options) {
 
 			// initialize the set of event listeners
-			// TODO: Derive all controls with eventlisteners from some eventlistener-handling base class
-			this._eventListeners = {
-				itemremoved: [],
-				iteminserted: [],
-				itemchanged: [],
-				itemmoved: [],
-				itemmutated: [],
-				reload: []
-			};
+			this._eventListeners = [];
 
 			// Initialize our value set and key array
 			this._items = {};
@@ -2405,14 +2395,17 @@ WinJS.Namespace.define("WinJS.Binding", {
 					this._addValue(list[i]);
 			}
 
-			WinJS.UI.setOptions(options);
+			if (options) {
+				WinJS.UI.setOptions(options);
+			}
 
 			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 
-			// TODO: Not sure what to bind to here.
-			this.dataSource = WinJS.Binding.as(this._items);
-			this.dataSource._list = this;
+			// TODO: Apply same final solution to other List types
+			this.dataSource = new WinJS.UI.IListDataSource(this, this._items);
+			//WinJS.Binding.as(this._items);
+			//this.dataSource._list = this;
 		},
 
 		// ================================================================
@@ -2789,8 +2782,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 
 			// TODO: Not sure what to bind to here.
-			this.dataSource = WinJS.Binding.as(this._filteredKeys);
-			this.dataSource._list = this;
+			this.dataSource = new WinJS.UI.IListDataSource(this, this._filteredKeys);
+//			this.dataSource = WinJS.Binding.as(this._filteredKeys);
+	//		this.dataSource._list = this;
 		},
 
 		// ================================================================
@@ -3052,8 +3046,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 			// TODO: Not sure what to bind to here.
-			this.dataSource = WinJS.Binding.as(this._groupedItems);
-			this.dataSource._list = this;
+			this.dataSource = new WinJS.UI.IListDataSource(this, this._groupedItems);
+//			this.dataSource = WinJS.Binding.as(this._groupedItems);
+	//		this.dataSource._list = this;
 		},
 
 		// ================================================================
@@ -3362,8 +3357,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
 			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
 			// TODO: Not sure what to bind to here.
-			this.dataSource = WinJS.Binding.as(this._groupItems);
-			this.dataSource._list = this;
+			this.dataSource = new WinJS.UI.IListDataSource(this, this._groupItems);
+			//this.dataSource = WinJS.Binding.as(this._groupItems);
+			//this.dataSource._list = this;
 		},
 
 		// ================================================================
@@ -3905,7 +3901,308 @@ WinJS.Namespace.define("WinJS.UI", {
 	SwipeBehavior: {
 		select: "select",
 		none: "none"
-	}
+	},
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.IListDataSource
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211786.aspx
+	//
+	IListDataSource: WinJS.Class.define(function (sourceList, listItems) {
+
+		this._list = sourceList;
+		//this._items = WinJS.Binding.as(listItems);
+	},
+
+		// ================================================================
+		// WinJS.UI.IListDataSource members
+		// ================================================================
+
+		{
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.getCount
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700660.aspx
+			//
+			getCount: function () {
+
+				return WinJS.Promise.wrap(this._list.length);
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.itemFromKey
+			//
+			//		MSDN: TODO
+			//
+			itemFromKey: function (itemKey) {
+				return WinJS.Promise.wrap(this._list.getItemFromKey(itemKey));
+			},
+
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.itemFromIndex
+			//
+			//		MSDN: TODO
+			//
+			itemFromIndex: function (itemIndex) {
+				return WinJS.Promise.wrap(this._list.getAt(itemIndex));
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.UI.IListDataSource.list
+			//
+			//		MSDN: TODO
+			//
+			list: {
+				get: function () {
+					return this._list;
+				}
+			},
+		}),
+
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.ISelection
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872204.aspx
+	//
+	ISelection: WinJS.Class.define(function (sourceList) {
+
+		this._list = sourceList;
+		this._selectedItems = [];
+	},
+
+		// ================================================================
+		// WinJS.UI.ISelection members
+		// ================================================================
+
+		{
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.add
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
+			//
+			add: function (items) {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+
+					// If items is not an array, then convert it into one for simplicity
+					if (items.length === undefined)
+						items = [items];
+					else {
+						// Arrays must contain an object that implements ISelectionRange, which is NYI
+						console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+					}
+
+					// We want to get values from our listview's actual databound list.
+					var curList = that._list.itemDataSource._list;
+					
+					items.forEach(function (value) {
+						var item;
+						if (typeof value === "number") {
+							// value is an index
+							item = curList.getItem(value);
+						} else {
+							// value is an object that contains either index or key.  Use key if both are present
+							if (value.key !== undefined) {
+								item = curList.getItemFromKey(value);
+							} else if (value.index !== undefined) {
+								item = curList.getItem(value);
+							}
+								/*DEBUG*/
+							else {
+								console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
+							}
+							/*ENDDEBUG*/
+						}
+
+						if (that._selectedItems.indexOf(item) == -1)
+							that._selectedItems.push(item);
+					});
+
+					// TODO: Notify our list
+					that._list._selectionChanged();
+
+					c(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.remove
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872205.aspx
+			//
+			remove: function (items) {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+
+					// If items is not an array, then convert it into one for simplicity
+					if (items.length === undefined)
+						items = [items];
+					else {
+						// Arrays must contain an object that implements ISelectionRange, which is NYI
+						console.error("Passing an array of objects to WinJS.UI.ISelection.remove, but ISelectionRange is NYI");
+					}
+
+					// We want to get values from our listview's actual databound list.
+					var curList = that._list.itemDataSource._list;
+
+					items.forEach(function (value) {
+						var item;
+						if (typeof value === "number") {
+							// value is an index
+							item = curList.getItem(value);
+						} else {
+							// value is an object that contains either index or key.  Use key if both are present
+							if (value.key !== undefined) {
+								item = curList.getItemFromKey(value);
+							} else if (value.index !== undefined) {
+								item = curList.getItem(value);
+							}
+								/*DEBUG*/
+							else {
+								console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
+							}
+							/*ENDDEBUG*/
+						}
+
+						var indexOfItem = that._selectedItems.indexOf(item);
+						if (indexOfItem != -1)
+							that._selectedItems.splice(indexOfItem, 1);
+					});
+
+					// TODO: Notify our list
+					that._list._selectionChanged();
+
+					c(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.remove
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872199.aspx
+			//
+			clear: function () {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+					that._selectedItems = [];
+					// Notify our list
+					that._list._selectionChanged();
+					c();
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.count
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872200.aspx
+			//
+			count: function () {
+				return this._selectedItems.length;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getIndices
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+			//
+			getIndices: function () {
+				var indices = [];
+				this._selectedItems.forEach(function (item) {
+					indices.push(item.index);
+				});
+				return indices;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.isEverything
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872203.aspx
+			//
+			isEverything: function () {
+
+				return this.count == this._list.length;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getItems
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872201.aspx
+			//
+			getItems: function () {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+					c(that._selectedItems);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.set
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872207.aspx
+			//
+			set: function (items) {
+				var that = this;
+				return this.clear().then(function () {
+					return that.add(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.selectAll
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872206.aspx
+			//
+			selectAll: function () {
+				var that = this;
+				this.clear.then(function () {
+					for (var i = 0; i < this._list.length; i++) {
+						that.add(this._list.getItem(i));
+					}
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getRanges
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872202.aspx
+			//
+			getRanges: function () {
+				return new WinJS.Promise(function (c) {
+					console.error("WinJS.UI.ISelection.getRanges is NYI");
+					c([]);
+				});
+			}
+		})
 });
 
 
@@ -5840,10 +6137,23 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Call into our base class' constructor
         	WinJS.UI.BaseControl.call(this, element, options);
 
-			// Set default options
+        	// Create our selection manager
+        	this.selection = new WinJS.UI.ISelection(this);
+
+        	// Set default options
         	this.tapBehavior = WinJS.UI.TapBehavior.invokeOnly;
         	this.swipeBehavior = WinJS.UI.SwipeBehavior.select;
         	this.selectionMode = WinJS.UI.SelectionMode.multi;
+        	// Generate our layout definition object.
+        	// tbd: what's the right win8 default?
+        	this.layout = new WinJS.UI.GridLayout((options && options.layout) || {
+        		layout: 'WinJS.UI.GridLayout',
+        	});
+
+        	this.items = [];
+
+        	// Track last selected item for shift-click multiselect.
+        	this._lastSelectedItemIndex = 0;
 
         	// Set any options that were specified.
         	if (options) {
@@ -5861,13 +6171,6 @@ WinJS.Namespace.define("WinJS.UI", {
         			this.groupDataSource = eval(options.groupDataSource);
         		if (options.groupHeaderTemplate)
         			this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
-
-        		// Generate our layout definition object.
-        		// tbd: what's the right win8 default?
-        		this.layout = new WinJS.UI.GridLayout(options.layout || {
-        			layout: 'WinJS.UI.GridLayout',
-        			horizontal: false
-        		});
         	}
         },
 
@@ -5895,15 +6198,14 @@ WinJS.Namespace.define("WinJS.UI", {
         	//
         	_doRender: function () {
 
-        		var items = [], groupedItems = [];
-
         		// Ensure we're fully set up.
         		if (!this.itemDataSource && !this.itemTemplate)
         			return;
 
         		/*DEBUG*/
-        		if (this._itemDataSource.bind == undefined) {
-        			console.error("ListView.itemDataSource is not a databound object.  Wrap it with WinJS.Binding.as first.", this, this._itemDataSource);
+
+        		if (this._itemDataSource.getCount == undefined) {
+        			console.error("ListView.itemDataSource is not a databound object.", this, this._itemDataSource);
         			return;
         		}
         		/*ENDDEBUG*/
@@ -5941,8 +6243,9 @@ WinJS.Namespace.define("WinJS.UI", {
         			this.$rootElement.addClass("win-groups");
 
         		// Get the list of items that we'll render.
+        		this.items = [];
         		for (var i = 0; i < this.itemDataSource._list.length; i++)
-        			items.push(this.itemDataSource._list.getItem(i));
+        			this.items.push(this.itemDataSource._list.getItem(i));
 
         		var that = this;
 
@@ -5952,7 +6255,7 @@ WinJS.Namespace.define("WinJS.UI", {
         		if (typeof this.itemTemplate !== "function") {
 
         			// itemTemplate is not a function
-        			items.forEach(function (item) {
+        			this.items.forEach(function (item) {
         				that._renderItemTemplate(item);
         			});
 
@@ -5963,8 +6266,8 @@ WinJS.Namespace.define("WinJS.UI", {
 
         			// itemTemplate is a function; create a collection of render promises which we'll wait on below.
         			// TODO (PERF-MINOR): An itemTemplate function could return synchronously, in which case we're unnecessarily waiting on it as a Promise.
-        			for (var i = 0; i < items.length; i++) {
-        				renderPromises.push(this._getItemFunctionRenderPromise(items[i], i));
+        			for (var i = 0; i < this.items.length; i++) {
+        				renderPromises.push(this._getItemFunctionRenderPromise(this.items[i], i));
         			}
         		}
 
@@ -5991,7 +6294,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         			var topY;
 
-					// Keep track of current row for maxRows comparison
+        			// Keep track of current row for maxRows comparison
         			var curRow = -1;
 
         			// Get the margin sizes around items
@@ -6000,8 +6303,8 @@ WinJS.Namespace.define("WinJS.UI", {
         			var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
 
         			// Add the rendered DOM elements to the DOM at the correct positions
-        			for (var i = 0; i < items.length; i++) {
-        				var item = items[i];
+        			for (var i = 0; i < that.items.length; i++) {
+        				var item = that.items[i];
 
         				// TODO (PERF-MINOR): Wrap $itemElement on item creation to avoid rewrapping every time we render.
         				var $itemElement = $(item.element);
@@ -6012,7 +6315,7 @@ WinJS.Namespace.define("WinJS.UI", {
         				$thisItemContainer.append($itemElement);
         				$surfaceDiv.append($thisItemContainer);
 
-						// Get the dimensions of the item (force to width of list if not horizontal)
+        				// Get the dimensions of the item (force to width of list if not horizontal)
         				var itemWidth = that.layout.horizontal ? $itemElement.outerWidth() : that.$rootElement.outerWidth();
         				var itemHeight = $itemElement.outerHeight();
 
@@ -6041,7 +6344,9 @@ WinJS.Namespace.define("WinJS.UI", {
 								.show();
 
         					// Perform data binding on the group header template
-        					WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource[item.groupKey].data);
+        					// TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
+        					//		 code to allow that to return asychronously...
+        					WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
 
         					// Add the fully realized HTML for the group header to the ListView's DOM element.
         					$surfaceDiv.append($groupHeaderTemplate);
@@ -6083,7 +6388,7 @@ WinJS.Namespace.define("WinJS.UI", {
         					renderCurY = topY;
         					renderCurX = surfaceWidth;
 
-							// Keep track of current row for maxRows check
+        					// Keep track of current row for maxRows check
         					curRow = 0;
 
         					// Set the header's final position
@@ -6099,7 +6404,7 @@ WinJS.Namespace.define("WinJS.UI", {
         						topY = 0;
         					if (that.layout.horizontal) {
         						// If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
-								// So the same if maxRows is specified and we're about to exceed it
+        						// So the same if maxRows is specified and we're about to exceed it
         						if (renderCurY + itemHeight >= renderMaxY ||
 									that.layout.maxRows && curRow == that.layout.maxRows - 1) {
         							renderCurY = topY;
@@ -6109,7 +6414,7 @@ WinJS.Namespace.define("WinJS.UI", {
         							curRow++;
         					}
         				}
-        				
+
         				$thisItemContainer.css({
         					"top": renderCurY,
         					"left": renderCurX,
@@ -6123,33 +6428,73 @@ WinJS.Namespace.define("WinJS.UI", {
         				// Go to the next place to put the next item
         				renderCurY += itemHeight + templateMargins.vertical;
 
-        				// if oniteminvoked is specified, then bind item click now
-        				if ((that.tapBehavior == "invoke" || that.tapBehavior == "invokeOnly") && that.oniteminvoked != null) {
 
-        					// store a reference to the item in the itemcontainer
-        					$(".win-item", $thisItemContainer).data("itemIndex", i);
+        				// store a reference to the item in the itemcontainer
+        				$(".win-item", $thisItemContainer).data("itemIndex", i);
 
-        					// If the user clicks on the item, call our oniteminvoked function
-        					$(".win-item", $thisItemContainer).click(function () {
+        				// If the user clicks on the item, call our oniteminvoked function
+        				$(".win-item", $thisItemContainer).click(function () {
 
-        						// Get the index of the clicked item container's item
-        						var itemIndex = $(this).data("itemIndex");
+        					// Get the index of the clicked item container's item
+        					var itemIndex = $(this).data("itemIndex");
 
-								// Create a Promise with the clicked item
-        						var promise = new WinJS.Promise(function (c) { c(items[itemIndex]); });
+        					// Call invoke
+        					if ((that.tapBehavior != "none") && that.oniteminvoked != null) {
+
+        						// Create a Promise with the clicked item
+        						var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
 
         						// Call the callback
         						that._notifyItemInvoked({
         							srcElement: this.parentNode,
         							target: this.parentNode,
-									currentTarget: that.$rootElement,
+        							currentTarget: that.$rootElement,
         							detail: {
         								itemIndex: itemIndex,
         								itemPromise: promise
         							}
         						});
-        					});
-        				}
+        					}
+
+        					// Handle selection
+        					if ((that.tapBehavior == "directSelect" || that.tapBehavior == "toggleSelect" ||
+								blueskyUtils.shiftPressed || blueskyUtils.controlPressed) && (that.selectionMode != "none")) {
+
+        						var $containerNode = $(this.parentNode)
+
+        						// Check to see if user shift-clicked a collection of items
+        						if (that.selectionMode == "multi" && blueskyUtils.shiftPressed) {
+        							var startIndex = Math.min(itemIndex, that._lastSelectedItemIndex);
+        							var endIndex = Math.max(itemIndex, that._lastSelectedItemIndex);
+        							var itemIndicesToSelect = [];
+        							for (var i = startIndex; i <= endIndex; i++)
+        								itemIndicesToSelect.push(i);
+        							that.selection.set(itemIndicesToSelect);
+        						} else {
+        							if (that.tapBehavior == "directSelect") {
+
+        								// TODO: Does Win8 re-fire selection for already selected item?
+        								if (that.selectionMode == "single")
+        									that.selection.set(itemIndex);
+        								else
+        									that.selection.add(itemIndex);
+        							} else {
+        								if ($containerNode.hasClass("win-selected"))
+        									that.selection.remove(itemIndex);// remove selection
+        								else
+        									if (that.selectionMode == "single")
+        										that.selection.set(itemIndex);
+        									else
+        										that.selection.add(itemIndex);
+        							}
+        						}
+        						that._lastSelectedItemIndex = itemIndex;
+        						that._notifySelectionChanged();
+        					}
+
+
+        					// if (blueskyUtils.shiftPressed)
+        				});
         			}
 
         			// Set the final width of the ListView's scrolling surface, and make it visible
@@ -6172,7 +6517,7 @@ WinJS.Namespace.define("WinJS.UI", {
         		// To do this, create an element in the DOM that matches that selector, and grab it's marginTop/marginBottom values.
         		// TODO: Find a cleaner way of calculating this?
         		var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
-        		var $container = $("<div class='win-listview'><div class='" + orientation +"'><div id='_cont1' class='win-container'></div></div></div>")
+        		var $container = $("<div class='win-listview'><div class='" + orientation + "'><div id='_cont1' class='win-container'></div></div></div>")
 					.hide()
 					.appendTo($("body"));
 
@@ -6375,7 +6720,19 @@ WinJS.Namespace.define("WinJS.UI", {
         	},
 
 
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._notifySelectionChanged
+        	//
+        	_notifySelectionChanged: function () {
 
+        		var eventData = {
+        			type: "selectionchanged"
+        		};
+
+        		for (var i in this._eventListeners.selectionchanged)
+        			this._eventListeners.selectionchanged[i](eventData);
+        	},
 
 
         	// ================================================================
@@ -6390,6 +6747,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			this._eventListeners.iteminvoked[i](eventData);
         	},
 
+
         	// ================================================================
         	//
         	// public event: WinJS.ListView.oniteminvoked
@@ -6399,6 +6757,17 @@ WinJS.Namespace.define("WinJS.UI", {
         	oniteminvoked: {
         		get: function () { return this._eventListeners["iteminvoked"]; },
         		set: function (callback) { this.addEventListener("iteminvoked", callback); }
+        	},
+
+        	// ================================================================
+        	//
+        	// public event: WinJS.ListView.selectionchanged
+        	//
+        	//		MSDN: TODO
+        	//
+        	onselectionchanged: {
+        		get: function () { return this._eventListeners["selectionchanged"]; },
+        		set: function (callback) { this.addEventListener("selectionchanged", callback); }
         	},
 
 
@@ -6453,6 +6822,47 @@ WinJS.Namespace.define("WinJS.UI", {
         		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
         		this.element.removeEventListener(eventName, listener);
         	},
+
+
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._selectionChanged
+        	//
+        	//		This is called by our selection manager when selection has been updated.  Update all
+        	//		of our items to display their current selected/unselected state.
+        	//
+        	_selectionChanged: function () {
+
+        		var that = this;
+        		this.items.forEach(function (item) {
+
+        			var $containerNode = $(item.element.parentNode);
+        			var itemWasSelected = $containerNode.hasClass("win-selected");
+        			var itemIsNowSelected = that.selection._selectedItems.indexOf(item) >= 0;
+
+        			if (itemWasSelected && !itemIsNowSelected) {
+
+        				// remove selection
+        				$containerNode.removeClass("win-selected");
+        				$(".win-selectionbackground, .win-selectioncheckmarkbackground, .win-selectioncheckmark", $containerNode).remove();
+
+        			} else if (!itemWasSelected && itemIsNowSelected) {
+
+        					// add selection
+        					// TODO (PERF-MINOR): Precreate and clone these DIVs
+        				$containerNode.addClass("win-selected");
+        				$(item.element).before($("<div class='win-selectionbackground'></div>"))
+									   .after($("<div class='win-selectionbordercontainer'>" +
+												"<div class='win-selectionborder win-selectionbordertop'></div>" +
+												"<div class='win-selectionborder win-selectionborderright'></div>" +
+												"<div class='win-selectionborder win-selectionborderbottom'></div>" +
+												"<div class='win-selectionborder win-selectionborderleft'></div>" +
+												"</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'>X&nbsp;</div>"
+										));
+        			}
+        		});
+        	}
+
         })
 });
 
@@ -7082,17 +7492,21 @@ var blueskyUtils = {
 		});
 	},
 
+	shiftPressed: false,
+	controlPressed: false,
 
-
-	// ================================================================
-	//
-	// private Function: blueskyUtils._getCssNumericValue
-	//
-	//		Strip the "px" from css attributes like marginLeft.
-    //
-    // TODO: Remove this and just use parseInt
-	_getCssNumericValue: function ($element, attr) {
-
-		return $element.css(attr).replace(/[^-\d\.]/g, '');
-	}
+	// TODO: remove this after .done is implemented.
+	_warnedDoneNYI: false,
 }
+
+// Determine if shift key is currently pressed
+$(document).keydown(function (e) {
+
+	blueskyUtils.shiftPressed = e.shiftKey;
+	blueskyUtils.controlPressed = e.ctrlKey;
+});
+$(document).keyup(function (e) {
+
+	blueskyUtils.shiftPressed = e.shiftKey;
+	blueskyUtils.controlPressed = e.ctrlKey;
+});

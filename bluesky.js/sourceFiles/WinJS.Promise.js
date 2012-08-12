@@ -192,9 +192,14 @@ WinJS.Namespace.define("WinJS", {
         			console.error("WinJS.Promise.done: null or undefined onComplete function specified.");
         	    /*ENDDEBUG*/
 
-        		console.warn("Promise.done is NYI; replacing with .then()");
+        		// TODO: remove this after .done is implemented.
+        		if (!blueskyUtils._warnedDoneNYI) {
+        			console.warn("Promise.done is NYI; replacing with .then()");
+        			blueskyUtils._warnedDoneNYI = true;
+        		}
+
         		return this.then(onComplete, onError, onProgress);
-        	}
+        	},
         },
 
 		// ================================================================
@@ -202,6 +207,7 @@ WinJS.Namespace.define("WinJS", {
 		// ================================================================
 
 		{
+
 			// ================================================================
 			//
 			// public Function: Promise.timeout
@@ -234,6 +240,19 @@ WinJS.Namespace.define("WinJS", {
 					return value;
 
 				// The specified value isn't a Promise; create a new Promise that wraps it and return it now
+				return new WinJS.Promise(function (c) { c(value); });
+			},
+
+
+			// ================================================================
+			//
+			// public Function: Promise.wrap
+			//
+			//		MSDN: TODO
+			//
+			wrap: function (value) {
+
+				// TODO: Make sure this is what wrap is supposed to do; the difference between .as and .wrap
 				return new WinJS.Promise(function (c) { c(value); });
 			},
 
@@ -298,28 +317,3 @@ WinJS.Namespace.define("WinJS", {
 		})
 
 });
-
-
-// ================================================================
-//
-// ItemPromise class.
-//
-//      TODO: Hacking this in for now.  
-//
-function ItemPromise(val) {
-    var v = {
-
-        // ================================================================
-        //
-        // Function: ItemPromise.then
-        //
-        //      This is called when the data is ready.
-        //
-        then: function (doneCallback) {
-
-            return doneCallback(this._value);
-        },
-    }
-    v._value = val;
-    return v;
-}

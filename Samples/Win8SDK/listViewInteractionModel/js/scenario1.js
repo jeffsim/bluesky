@@ -39,7 +39,7 @@ var myStoreData = new WinJS.Binding.List([
             // Adds the items that have been selected in the ListView to the cart
             function addSelectionToCart() {
 
-                // Check for selection
+            	// Check for selection
                 if (listView.selection.count() === 0) {
                     WinJS.log("No Items Selected!", "sample", "error");
 

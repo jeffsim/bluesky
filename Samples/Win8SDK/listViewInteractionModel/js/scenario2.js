@@ -33,10 +33,9 @@ var myMessageData = new WinJS.Binding.List([
             var messageBody = element.querySelector("#inboxMessage_Body");
             var listView = element.querySelector("#listView2").winControl;
             listView.forceLayout();
-
             function selectionChangedHandler() {
 
-                // Check for selection
+            	// Check for selection
                 var selectionCount = listView.selection.count();
                 if (selectionCount === 1) {
 
