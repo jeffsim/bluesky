@@ -40,9 +40,10 @@ WinJS.Namespace.define("WinJS.UI", {
         	this.selectionMode = WinJS.UI.SelectionMode.multi;
         	// Generate our layout definition object.
         	// tbd: what's the right win8 default?
-        	this.layout = new WinJS.UI.GridLayout((options && options.layout) || {
-        		layout: 'WinJS.UI.GridLayout',
-        	});
+        	if (options && options.layout && options.layout.type == "WinJS.UI.ListLayout")
+        		this.layout = new WinJS.UI.ListLayout(options.layout);
+        	else
+        		this.layout = new WinJS.UI.GridLayout(options.layout);
 
         	this.items = [];
 
@@ -117,8 +118,8 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		// The surface div has to be sized in order for the group header to obtain a valid size (see calculation of topY below).  Size the
         		// surface div to match the viewport; we'll increase its size after we render all items and know the final size
-        		$surfaceDiv.css("height", this.$rootElement.outerHeight());
-        		$surfaceDiv.css("width", this.$rootElement.outerWidth());
+        		$surfaceDiv.css("height", this.$rootElement.innerHeight());
+        		$surfaceDiv.css("width", this.$rootElement.innerWidth());
 
         		// Add the ListView's scrolling surface to the ListView's static (nonscrolling) viewport, and then add the 
         		// listView's static viewpoint to the DOM
@@ -172,8 +173,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			var renderCurX = 0, renderCurY = 0;
 
         			// Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
-        			// TODO: Does ListView have a horizontal-oriented view?  If so, then use renderMaxX/outerWidth here in that situation.
-        			var renderMaxY = that.$rootElement.outerHeight();
+        			var renderMaxY = that.$rootElement.innerHeight();
 
         			// Keep track of the width of the scrolling surface
         			var surfaceWidth = 0;
@@ -196,6 +196,8 @@ WinJS.Namespace.define("WinJS.UI", {
 
         			var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
 
+        			var listWidth = that.$rootElement.innerWidth();
+
         			// Add the rendered DOM elements to the DOM at the correct positions
         			for (var i = 0; i < that.items.length; i++) {
         				var item = that.items[i];
@@ -203,15 +205,15 @@ WinJS.Namespace.define("WinJS.UI", {
         				// TODO (PERF-MINOR): Wrap $itemElement on item creation to avoid rewrapping every time we render.
         				var $itemElement = $(item.element);
 
-        				// Create the item container div for the current item add the item's element to it, and place the
+        				// Create the item container div for the current item, add the item's element to it, and place the
         				// itemcontainer in the listview's scrolling surface
         				var $thisItemContainer = $("<div class='win-container'></div>");
         				$thisItemContainer.append($itemElement);
         				$surfaceDiv.append($thisItemContainer);
 
         				// Get the dimensions of the item (force to width of list if not horizontal)
-        				var itemWidth = that.layout.horizontal ? $itemElement.outerWidth() : that.$rootElement.outerWidth();
-        				var itemHeight = $itemElement.outerHeight();
+        				var itemWidth = that.layout.horizontal ? $itemElement.innerWidth() : listWidth;
+        				var itemHeight = $itemElement.innerHeight();
 
         				// If cellspanning/groupinfo specified, then apply it now
         				if (groupInfo && groupInfo.enableCellSpanning) {
@@ -368,26 +370,24 @@ WinJS.Namespace.define("WinJS.UI", {
         							if (that.tapBehavior == "directSelect") {
 
         								// TODO: Does Win8 re-fire selection for already selected item?
-        								if (that.selectionMode == "single")
-        									that.selection.set(itemIndex);
-        								else
+        								if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
         									that.selection.add(itemIndex);
+        								else
+        									that.selection.set(itemIndex);
         							} else {
         								if ($containerNode.hasClass("win-selected"))
         									that.selection.remove(itemIndex);// remove selection
         								else
-        									if (that.selectionMode == "single")
-        										that.selection.set(itemIndex);
-        									else
+        									if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
         										that.selection.add(itemIndex);
+        									else
+        										that.selection.set(itemIndex);
         							}
         						}
+
         						that._lastSelectedItemIndex = itemIndex;
         						that._notifySelectionChanged();
         					}
-
-
-        					// if (blueskyUtils.shiftPressed)
         				});
         			}
 

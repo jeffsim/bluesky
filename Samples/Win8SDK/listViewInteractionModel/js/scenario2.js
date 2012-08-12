@@ -34,9 +34,9 @@ var myMessageData = new WinJS.Binding.List([
             var listView = element.querySelector("#listView2").winControl;
             listView.forceLayout();
             function selectionChangedHandler() {
-
+            	
             	// Check for selection
-                var selectionCount = listView.selection.count();
+            	var selectionCount = listView.selection.count();
                 if (selectionCount === 1) {
 
                     // Only one item is selected, show the message
