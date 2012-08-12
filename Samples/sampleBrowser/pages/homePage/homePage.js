@@ -64,7 +64,7 @@
 		itemInvoked: function (args) {
 			console.log(args);
 			args.detail.itemPromise.then(function (item) {
-				console.log(2, item);
+				if (item.groupKey != "1welcome")
 				document.location.href = item.data.url;
 			});
 		},
@@ -93,8 +93,7 @@
 
 				// add a right-click context menu for the item (but not for the welcome column)
 				$(templateInstance).bind('contextmenu', function (e) {
-
-					if (currentItem.data.group.key != "1welcome")
+					if (currentItem.data.groupKey != "1welcome")
 						return homePage.showContextMenu(currentItem.data, e.pageX, e.pageY);
 				});
 

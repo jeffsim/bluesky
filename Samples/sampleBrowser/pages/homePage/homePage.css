@@ -61,6 +61,19 @@
     -ms-grid-rows: 1fr 90px;
     display: -ms-grid;
 }
+.welcomeTemplate
+{
+	cursor: default;
+}
+	.welcomeTemplate a
+	{
+		cursor: pointer;
+	}
+		.welcomeTemplate a:hover
+		{
+			color:#006;
+		}
+	
 @media screen and (-ms-view-state: fullscreen-landscape), screen and (-ms-view-state: fullscreen-portrait), screen and (-ms-view-state: filled) {
     .homePage .homePagelist .win-item .item-overlay {
         background: rgba(0,0,0,0.65);
