@@ -273,6 +273,87 @@ var WinJS = {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.xhr.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.xhr.js
+//
+//		Implementation of the WinJS.xhr function
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229787.aspx
+//
+WinJS.Namespace.define("WinJS", {
+
+	// ================================================================
+	//
+	// public function: WinJS.xhr
+	//
+	xhr: function (options) {
+
+		var request;
+		var requestType = options.type || "GET";
+
+		return new WinJS.Promise(function (onComplete, onError, onProgress) {
+			var requestCompleted = false;
+			request = new XMLHttpRequest();
+			request.onreadystatechange = function () {
+
+				// If the request was cancelled, then just break out
+				if (request._canceled || requestCompleted)
+					return;
+
+				// Request completed?
+				if (request.readyState === 4) {
+
+					// Successful completion or failure?
+					if (request.status >= 200 && request.status < 300)
+						onComplete(request);
+					else
+						onError(request);
+
+					// Ignore subsequent changes
+					requestCompleted = true;
+				} else {
+					// Report progress
+					onProgress(request);
+				}
+			};
+
+			request.open(requestType, options.url, true);
+//			request.responseType = options.responseType || "";
+
+			// Add request headers
+			if (options && options.headers) {
+				Object.keys(options.headers).forEach(function (key) {
+					request.setRequestHeader(key, options.headers[key]);
+				});
+			}
+
+			// Finally, send the request
+			request.send(options.data);
+		},
+			// Error handler
+		function () {
+			request._canceled = true;
+			request.abort();
+		});
+	}
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: Windows.js
 // ==                                                          == //
 // ============================================================== //
@@ -5508,26 +5589,6 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Append the rendered item to our container (which was added to the DOM earlier)
                             $subContainer.appendChild(element);
                         });
-
-                        /*
-        			    // Call the function that will populate a template with the current data item
-        				$subContainer = $("<div class='win-item'></div>");
-        				var s = $subContainer;
-        				var result = this.itemTemplate(promise);
-        				promise.then(function (item) {
-        				    debugger;
-        				    s.append(templateInstance);
-        				});
-
-
-        				// For perf, grab a jquery wrapper ref. (TODO: don't use jquery in this inner loop).
-        				var $result = $(result);
-
-        				// Make the item template a "win-item" class type.
-        				$result.addClass("win-item");
-
-        				// Assign the listitem role to the item
-        				$result.attr("role", "listitem");*/
                     }
 
                     $itemContainer.append($subContainer);
@@ -6193,9 +6254,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	//			* I'm rendering the list twice initially.
         	//			* Do DOM element generation once, and then do subsequent renders by updating classes (etc) instead of rerendering the entire control.
         	//			* Implement virtualized data; as of now, if user fills list with 10k items then we render 10k items...
-        	//			* Support List and Grid layouts
-        	//			* Support horizontal lists
-        	//			* Support cellspanning
         	//			* Hook up window resize
         	//
         	_doRender: function () {
@@ -6589,8 +6647,13 @@ WinJS.Namespace.define("WinJS.UI", {
 
         				// Get the size of the item from the item's element.
         				// TODO (PERF): Avoid the jQuery wrapper here.
-        				item.elementWidth = $(item.element).outerWidth();
-        				item.elementHeight = $(item.element).outerHeight();
+        				var $itemElement = $(item.element);
+        				item.elementWidth = $itemElement.outerWidth();
+        				item.elementHeight = $itemElement.outerHeight();
+
+						// Tag the item's element with win-item
+        				$itemElement.addClass("win-item");
+
         				onComplete();
         			});
         		});

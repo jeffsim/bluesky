@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <result>
+    <DynamicSymbology>
+      <Symbol>{stock}</Symbol>
+      <CompanyName>{stock}</CompanyName>
+      <Country>US</Country>
+      <LocalCompanyName>{stock}</LocalCompanyName>
+      <Type>Equity</Type>
+    </DynamicSymbology>
+    <Dynamic>
+      <AHChange>0</AHChange>
+      <AHLastPrice>0</AHLastPrice>
+      <AHVolume>0</AHVolume>
+      <AHTimeOfLastSale></AHTimeOfLastSale>
+      <Ask>28.2</Ask>
+      <AskSize>19200</AskSize>
+      <Bid>28.19</Bid>
+      <BidSize>21300</BidSize>
+      <Change>-0.0549984</Change>
+      <Close>28.255</Close>
+      <Currency>USD</Currency>
+      <DividendExDate>2/14/2012 8:00:00 AM</DividendExDate>
+      <DividendPayDate>3/8/2012 8:00:00 AM</DividendPayDate>
+      <EPS>2.75</EPS>
+      <ExpirationDate></ExpirationDate>
+      <ForwardPE>9.337749</ForwardPE>
+      <High>28.4</High>
+      <High52Week>29.46</High52Week>
+      <Low>27.97</Low>
+      <Low52Week>23.65</Low52Week>
+      <Last>28.2</Last>
+      <MarketCap>237223567017.986</MarketCap>
+      <Open>28.31</Open>
+      <OpenInterest></OpenInterest>
+      <PERatio>10.25455</PERatio>
+      <PercentChange>-0.1946501</PercentChange>
+      <QuoteDelay>15</QuoteDelay>
+      <RTChange>-0.1349983</RTChange>
+      <RTPercentChange>-0.4777856</RTPercentChange>
+      <RTLast>28.12</RTLast>
+      <RTTimeOfLastSale>1/18/2012 6:45:53 PM</RTTimeOfLastSale>
+      <TotalSharesOutstanding>1202379408</TotalSharesOutstanding>
+      <StreamingInterval>0</StreamingInterval>
+      <StrikePrice></StrikePrice>
+      <TimeOfLastSale>1/18/2012 6:30:52 PM</TimeOfLastSale>
+      <Volume>41605316</Volume>
+      <Yield></Yield>
+      <IsNewsAvailable></IsNewsAvailable>
+    </Dynamic>
+  </result>
+</root>

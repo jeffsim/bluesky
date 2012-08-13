@@ -273,6 +273,93 @@ var WinJS = {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.xhr.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.xhr.js
+//
+//		Implementation of the WinJS.xhr function
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229787.aspx
+//
+WinJS.Namespace.define("WinJS", {
+
+	// ================================================================
+	//
+	// public function: WinJS.xhr
+	//
+	xhr: function (options) {
+
+		var request;
+		var requestType = options && options.type || "GET";
+
+		return new WinJS.Promise(function (onComplete, onError, onProgress) {
+
+			// track if we've completed the request already
+			var requestCompleted = false;
+
+			// Create the request
+			request = new XMLHttpRequest();
+
+			// Listen for changes
+			request.onreadystatechange = function () {
+
+				// If the request was cancelled, then just break out
+				if (request.cancelled || requestCompleted)
+					return;
+
+				// Request completed?
+				if (request.readyState == 4) {
+
+					// Successful completion or failure?
+					if (request.status >= 200 && request.status < 300)
+						onComplete(request);
+					else
+						onError(request);
+
+					// Ignore subsequent changes
+					requestCompleted = true;
+				} else {
+					// Report progress (TODO: Promise doesn't support progress yet)
+					// onProgress(request);
+				}
+			};
+
+			// Open the request
+			request.open(requestType, options.url, true);
+
+			// Add request headers
+			if (options.headers)
+				options.headers.forEach(function (header) {
+					request.setRequestHeader(key, header);
+				});
+
+			// Finally, send the request
+			request.send(options.data);
+		},
+
+		// Error handler
+		function () {
+			request.cancelled = true;
+			request.abort();
+		});
+	}
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: Windows.js
 // ==                                                          == //
 // ============================================================== //
@@ -354,6 +441,112 @@ WinJS.Namespace.define("Windows", {
     	}
     },
 
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Foundation.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// =========================================================
+//
+// Minimalist implementation of Windows.Foundation to unblock stockSample
+//
+WinJS.Namespace.define("Windows.Foundation", {
+
+	// =========================================================
+	//
+	//		TODO: Stub function
+	//
+	Uri: WinJS.Class.define(function (uri) {
+		this.uri = uri;
+	},
+	{
+	})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Globalization.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// =========================================================
+//
+// Minimalist implementation of Globalization to unblock stockSample
+//
+WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
+
+    // =========================================================
+	//
+	//	WinJS.Globalization.DateTimeFormatting.DateTimeFormatter
+	//
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.globalization.datetimeformatting.datetimeformatter
+    //
+	DateTimeFormatter: WinJS.Class.define(function (formatTemplate) {
+
+		this._formatTemplate = formatTemplate;
+	},
+    {
+    	format: function (date) {
+    		// TODO: Parse the format string.  For now, hardcoded to what stockSample needs
+    		if (this._formatTemplate == "hour minute")
+    			return date.toLocaleFormat();
+    		else
+    			return "";
+    	}
+    })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.System.Launcher.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// =========================================================
+//
+// Minimalist implementation of Windows.System.Launcher to unblock stockSample
+//
+WinJS.Namespace.define("Windows.System.Launcher", {
+
+	// =========================================================
+	//
+	//		TODO: Stub function
+	//
+	launchUriAsync: function (uri) {
+
+		// TODO: App suspension?
+		document.location.href = uri.uri;
+	}
 });
 
 
@@ -3773,19 +3966,22 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		return new WinJS.Promise(function (onComplete) {
 
-			// IE9 doesn't automagically populate dataset for us; fault it in if necessary
-			blueskyUtils.ensureDatasetReady(element);
+			// Add winControl objects to all elements tagged as data-win-control
+			$("[data-win-control]", element).each(function () {
 
-			// Process the element if a data-win-control was specified on it
-			if (element.dataset && element.dataset.winControl) {
+				// IE9 doesn't automagically populate dataset for us; fault it in if necessary
+				blueskyUtils.ensureDatasetReady(this);
 
-				WinJS.UI._processElement(element);
+				// Process the element
+				if (this.dataset && this.dataset.winControl)
+					WinJS.UI._processElement(this);
+			});
 
-				// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
-				setTimeout(function () { onComplete(element.winControl); }, 0);
-			}
+			// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
+			setTimeout(function () { onComplete(element.winControl); }, 0);
 		});
 	},
+
 
 
 	// ================================================================
@@ -5508,26 +5704,6 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Append the rendered item to our container (which was added to the DOM earlier)
                             $subContainer.appendChild(element);
                         });
-
-                        /*
-        			    // Call the function that will populate a template with the current data item
-        				$subContainer = $("<div class='win-item'></div>");
-        				var s = $subContainer;
-        				var result = this.itemTemplate(promise);
-        				promise.then(function (item) {
-        				    debugger;
-        				    s.append(templateInstance);
-        				});
-
-
-        				// For perf, grab a jquery wrapper ref. (TODO: don't use jquery in this inner loop).
-        				var $result = $(result);
-
-        				// Make the item template a "win-item" class type.
-        				$result.addClass("win-item");
-
-        				// Assign the listitem role to the item
-        				$result.attr("role", "listitem");*/
                     }
 
                     $itemContainer.append($subContainer);
@@ -6193,15 +6369,12 @@ WinJS.Namespace.define("WinJS.UI", {
         	//			* I'm rendering the list twice initially.
         	//			* Do DOM element generation once, and then do subsequent renders by updating classes (etc) instead of rerendering the entire control.
         	//			* Implement virtualized data; as of now, if user fills list with 10k items then we render 10k items...
-        	//			* Support List and Grid layouts
-        	//			* Support horizontal lists
-        	//			* Support cellspanning
         	//			* Hook up window resize
         	//
         	_doRender: function () {
 
         		// Ensure we're fully set up.
-        		if (!this.itemDataSource && !this.itemTemplate)
+        		if (!this.itemDataSource || !this.itemTemplate)
         			return;
 
         		/*DEBUG*/
@@ -6589,8 +6762,13 @@ WinJS.Namespace.define("WinJS.UI", {
 
         				// Get the size of the item from the item's element.
         				// TODO (PERF): Avoid the jQuery wrapper here.
-        				item.elementWidth = $(item.element).outerWidth();
-        				item.elementHeight = $(item.element).outerHeight();
+        				var $itemElement = $(item.element);
+        				item.elementWidth = $itemElement.outerWidth();
+        				item.elementHeight = $itemElement.outerHeight();
+
+						// Tag the item's element with win-item
+        				$itemElement.addClass("win-item");
+
         				onComplete();
         			});
         		});

@@ -82,19 +82,22 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		return new WinJS.Promise(function (onComplete) {
 
-			// IE9 doesn't automagically populate dataset for us; fault it in if necessary
-			blueskyUtils.ensureDatasetReady(element);
+			// Add winControl objects to all elements tagged as data-win-control
+			$("[data-win-control]", element).each(function () {
 
-			// Process the element if a data-win-control was specified on it
-			if (element.dataset && element.dataset.winControl) {
+				// IE9 doesn't automagically populate dataset for us; fault it in if necessary
+				blueskyUtils.ensureDatasetReady(this);
 
-				WinJS.UI._processElement(element);
+				// Process the element
+				if (this.dataset && this.dataset.winControl)
+					WinJS.UI._processElement(this);
+			});
 
-				// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
-				setTimeout(function () { onComplete(element.winControl); }, 0);
-			}
+			// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
+			setTimeout(function () { onComplete(element.winControl); }, 0);
 		});
 	},
+
 
 
 	// ================================================================

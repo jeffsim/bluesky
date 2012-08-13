@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <link href="/css/dashboard.css" rel="stylesheet" type="text/css" />        
+        <script src="/js/chart.js" type="text/javascript"></script>
+        <script src="/js/news.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <div id="content">
+            <div class="header">
+                <div class="titleArea">
+                    <div class="title">Stocks</div>
+                    <img class="appglyph" src="/images/appglyph.png" alt="Stocks" />
+                </div>
+            </div>
+            <div class="info">
+                <div class="stockPanel">
+                    <ul class="myStocks"></ul>
+                    <div class="chartArea">
+                        <canvas id="chartCanvas" width="1000" height="295"></canvas>
+                        <div class="range">
+                            <input type="radio" name="rangeGroup" value="1w" class="oneWeek rangeOption" />
+                            <input type="radio" name="rangeGroup" value="1m" class="oneMonth rangeOption"/>
+                            <input type="radio" name="rangeGroup" value="1y" class="oneYear rangeOption"/>
+                        </div>
+                    </div>
+                    <div class="details">
+                        <div class="grid"></div>
+                        <div id="stockInfoTemplate" data-win-control="WinJS.Binding.Template">
+                            <div class="changeLabel">Change</div>
+                            <div class="change"><div class='changeValue'><span class='arrow' data-win-bind="textContent: changeArrow"></span><span data-win-bind="textContent: change"></span></div></div>
+                            <div class="lastTradeLabel">Last trade</div>
+                            <div class="value lastTrade" data-win-bind="textContent: lastSale"></div>
+                            <div class="lastTradeTimeLabel">Last trade time</div>
+                            <div class='value lastTradeTime' data-win-bind="textContent: lastSaleTime"></div>
+                            <div class="openLabel">Open</div>
+                            <div class="value open" data-win-bind="textContent: open"></div>
+                            <div class="daysRangeLabel">Day's range</div>
+                            <div class="value daysRange" data-win-bind="textContent: daysRange"></div>
+                            <div class="yearRangeLabel">52 week range</div>
+                            <div class="value yearRange" data-win-bind="textContent: fiftyTwoWeekRange"></div>
+                            <div class="volumeLabel">Vol. (Mil)</div>
+                            <div class="value volume" data-win-bind="textContent: volume"></div>
+                            <div class='value lastRefresh'>This sample uses test data for demonstration purposes.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="marketNewsItemTemplate" data-win-control="WinJS.Binding.Template">
+                    <div class="itemTitle" data-win-bind="textContent: title"></div>
+                    <div class="itemDescription" data-win-bind="textContent: snippet"></div>
+                </div>
+
+                <div id="marketNews" class="marketNews">
+                    <div id="marketNewsTitle" class="title">Market news</div>
+                    <div id="marketNewsList"
+                        class="list"
+                        data-win-control="WinJS.UI.ListView"
+                        data-win-options="{layout: {type: WinJS.UI.GridLayout}, selectionMode: 'none'}"
+                        aria-label="Collections">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="allInOne">
+            <div class="header">
+                <div class="titleArea">
+                    <div class="title">Stocks</div>
+                    <img class="appglyph" src="/images/appglyph.png" alt="Stocks" />
+                </div>
+            </div>
+            <div class="info">
+            </div>
+            <div id="allInOneItemTemplate" data-win-control="WinJS.Binding.Template">
+                <div class="item">                    
+                    <div class="nameLabel" data-win-bind="innerText: stockName"></div>                    
+                    <div class="chart"><canvas width="300" height="300" data-win-bind="id: chartID"></canvas></div>
+                    <div class="changeLabel">Change</div>
+                    <div class="change" data-win-bind="innerText: changeArrow"></div>
+                    <div class="value changeValue" data-win-bind="innerText: change"></div>
+                    <div class="lastTradeLabel">Last trade</div>
+                    <div class="value lastTrade" data-win-bind="innerText: lastSale"></div>
+                    <div class="percentageLabel">% change</div>
+                    <div class="value percentage" data-win-bind="innerText: percent"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

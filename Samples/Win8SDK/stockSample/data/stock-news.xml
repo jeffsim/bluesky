@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<?pageview_candidate ?>
+<SearchResponse xmlns="http://schemas.microsoft.com/LiveSearch/2008/04/XML/element" Version="2.0">
+  <Query>
+    <SearchTerms>stock</SearchTerms>
+  </Query>
+  <news:News xmlns:news="http://schemas.microsoft.com/LiveSearch/2008/04/XML/news">
+    <news:Total>6640</news:Total>
+    <news:Offset>0</news:Offset>
+    <news:RelatedSearches>
+      <news:NewsRelatedSearch>
+        <news:Title>Stock Market</news:Title>
+        <news:Url>http://www.bing.com/news/search?q=stock&amp;FORM=QSNR1</news:Url>
+      </news:NewsRelatedSearch>
+    </news:RelatedSearches>
+    <news:Results>
+      <news:NewsResult>
+        <news:Title>Earnings Preview: {stock} reports Q4 results on Thursday</news:Title>
+        <news:Url>http://www.bing.com/news/search?q={stock}</news:Url>
+        <news:Source></news:Source>
+        <news:Snippet>{stock} is scheduled to release last fiscal quarter's results after the....</news:Snippet>
+        <news:Date>2012-01-17T20:38:42Z</news:Date>
+        <news:BreakingNews>0</news:BreakingNews>
+      </news:NewsResult>
+      <news:NewsResult>
+        <news:Title>Analysts' Weekly Ratings Changes for {stock}</news:Title>
+        <news:Url>http://www.bing.com/news/search?q={stock}</news:Url>
+        <news:Source></news:Source>
+        <news:Snippet>A number of equity research firms have modified their stock ratings...</news:Snippet>
+        <news:Date>2012-01-17T15:52:22Z</news:Date>
+        <news:BreakingNews>0</news:BreakingNews>
+      </news:NewsResult>
+      <news:NewsResult>
+        <news:Title>Unusual Trading Activity for {stock}</news:Title>
+        <news:Url>http://www.bing.com/news/search?q={stock}</news:Url>
+        <news:Source></news:Source>
+        <news:Snippet>NEW YORK - {stock} options set a new 90-day record for the...</news:Snippet>
+        <news:Date>2012-01-08T10:12:17Z</news:Date>
+        <news:BreakingNews>0</news:BreakingNews>
+        <news:NewsCollections>
+          <news:NewsCollection>
+            <news:Name>RelatedTextArticles</news:Name>
+          </news:NewsCollection>
+        </news:NewsCollections>
+      </news:NewsResult>
+      <news:NewsResult>
+        <news:Title>Adding Another Undervalued Stock</news:Title>
+        <news:Url>http://www.bing.com/news/search?q={stock}</news:Url>
+        <news:Source></news:Source>
+        <news:Snippet>Consensus estimates for {stock}'s EPS forecast that it will grow by...</news:Snippet>
+        <news:Date>2012-01-18T02:07:58Z</news:Date>
+        <news:BreakingNews>0</news:BreakingNews>
+      </news:NewsResult>
+      <news:NewsResult>
+        <news:Title>10 stocks to watch in the week ahead</news:Title>
+        <news:Url>http://www.bing.com/news/search?q={stock}</news:Url>
+        <news:Source></news:Source>
+        <news:Snippet>{stock} tops the list of recommended stocks in the week...</news:Snippet>
+        <news:Date>2012-01-11T14:04:57Z</news:Date>
+        <news:BreakingNews>0</news:BreakingNews>
+      </news:NewsResult>
+      <news:NewsResult>
+        <news:Title>{stock} is considered one of the most promising stocks this year due to...</news:Title>
+        <news:Url>http://www.bing.com/news/search?q={stock}</news:Url>
+        <news:Source></news:Source>
+        <news:Snippet>Reports say that {stock}, has launched a major campaign to...</news:Snippet>
+        <news:Date>2012-01-18T17:52:52Z</news:Date>
+        <news:BreakingNews>0</news:BreakingNews>
+      </news:NewsResult>
+    </news:Results>
+  </news:News>
+</SearchResponse>

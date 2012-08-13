@@ -1,0 +1,615 @@
+﻿#content
+{
+    height:100%;
+    width:100%;
+    display: -ms-grid;
+    -ms-grid-columns: 1fr;
+    -ms-grid-rows: auto 1fr;
+    margin-top:-5px;
+}
+
+#content .header
+{
+    margin-top:42px;
+    display:-ms-grid;
+    -ms-grid-columns:100px 1fr;
+    -ms-grid-rows:1fr;
+}
+
+#content .header .title
+{
+    font-size:42pt;
+    line-height: 48pt;
+    font-family:'Segoe UI Light';
+    float:left;
+}
+
+#content .header .appglyph
+{
+    margin-top:15px;
+    margin-left:20px;
+}
+
+#content .header .titleArea
+{
+    display:none;
+    -ms-grid-row: 1;
+    -ms-grid-column: 2;
+}
+
+#content .info
+{
+    -ms-grid-row: 2;
+    -ms-grid-column: 1;
+    position: relative;
+    z-index: 0;
+    margin-top:5px;
+    height:100%;
+    display: -ms-grid;
+    -ms-grid-columns: 100px 900px 80px 840px;
+    -ms-grid-rows: 1fr;
+    overflow-x:scroll;
+    overflow-y:hidden;
+    width:100%;
+}
+
+#content .info .stockPanel
+{
+    -ms-grid-row: 1;
+    -ms-grid-column: 2;
+    display:-ms-grid;
+    -ms-grid-rows: auto auto auto;
+    -ms-grid-columns:auto;
+}
+
+#content .info .marketNews
+{
+    margin-top:16px;
+    height:100%;
+    -ms-grid-row: 1;
+    -ms-grid-column: 4;
+}
+
+#content .info .stockPanel .myStocks
+{
+    font-family: Segoe UI Semilight;
+    color:rgba(255,255,255, 0.5);
+    display:-ms-box;
+    -ms-box-orient:horizontal;
+    list-style-type: none;
+    height:55px;
+    width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    white-space:nowrap;
+    margin-left:0;
+    padding-left:0;
+    margin-bottom:2px;
+}
+
+#content .info .stockPanel .chartArea {
+    -ms-grid-row:2;
+    vertical-align: bottom;
+    padding-top: 16px;
+}
+
+#content .info .stockPanel .details
+{
+    display: -ms-grid;
+    -ms-grid-columns: auto 1fr;
+    -ms-grid-rows: auto;
+    margin-top:30px;
+    -ms-grid-row:3;
+}
+
+#content .info .chart .range
+{
+    clear:both;
+    margin-bottom:10px;
+    padding-top:20px;
+}
+
+#content .info .chart .range button
+{
+    padding:0;
+    border:0;
+    margin:0;
+    display: inline-block; 
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    margin-right:20px;
+}
+
+#content .info input[type="radio"].rangeOption, #content .info input[type="radio"].rangeOption::-ms-check, #content .info input[type="radio"].rangeOption:hover::-ms-check, #content .info input[type="radio"].rangeOption:active::-ms-check, #content .info input[type="radio"].rangeOption:hover:active::-ms-check, #content .info input[type="radio"].rangeOption:hover:active:disabled::-ms-check
+{
+    color: transparent;
+    border: 0px;
+    background-color: transparent;
+    padding: 0px;
+    margin: 0px;
+}
+
+#content .info .range input[type="radio"]
+{
+    width:32px;
+    height:32px;
+    margin-right:20px;
+    margin-top:20px;
+}
+
+#content .info .range input[type="radio"].oneWeek
+{
+    background: transparent url('/images/stocks_1w_glyph.png') no-repeat; 
+}
+
+#content .info .range input[type="radio"].oneWeek:checked
+{
+    background: transparent url('/images/stocks_1w_active_glyph.png') no-repeat; 
+}
+
+
+#content .info .range input[type="radio"].oneMonth
+{
+    background: transparent url('/images/stocks_1m_glyph.png') no-repeat; 
+} 
+ 
+#content .info .range input[type="radio"].oneMonth:checked
+{ 
+    background: transparent url('/images/stocks_1m_active_glyph.png') no-repeat; 
+}
+
+#content .info .range input[type="radio"].oneYear
+{
+    background: transparent url('/images/stocks_1y_glyph.png') no-repeat; 
+} 
+ 
+#content .info .range input[type="radio"].oneYear:checked
+{ 
+    background: transparent url('/images/stocks_1y_active_glyph.png') no-repeat; 
+}
+
+#content .info .stockPanel .details .grid
+{
+    font-size:15pt;
+    font-family: 'Segoe UI Semilight';
+    display: -ms-grid;
+    -ms-grid-row: 1;
+    -ms-grid-column-span: 2;
+    -ms-grid-columns: 300px 50px 100px auto 40px 150px 200px 20px;
+    -ms-grid-rows: auto 22px auto 7px auto;
+}
+
+#content .info .stockPanel .details .grid .value
+{
+    color:rgba(255,255,255,0.8);
+}
+
+#content .info .stockPanel .details .grid .changeLabel
+{
+    -ms-grid-row: 1;
+    -ms-grid-column: 1;
+    margin-top: -1px;
+}
+
+#content .info .stockPanel .details .grid .change
+{
+    font-size:60pt;
+    line-height:74pt;
+    font-family:'Segoe UI Light';
+    -ms-grid-row: 3;
+    -ms-grid-column: 1;
+    -ms-grid-row-span: 3;
+    margin-top:-3px;
+}
+
+#content .info .stockPanel .details .grid .lastTradeLabel
+{
+    -ms-grid-column: 3;
+}
+
+#content .info .stockPanel .details .grid .lastTrade
+{
+    -ms-grid-column: 4;
+}
+
+#content .info .stockPanel .details .grid .lastTradeTimeLabel
+{
+    -ms-grid-column: 6;
+}
+
+#content .info .stockPanel .details .grid .lastTradeTime
+{
+    -ms-grid-column: 7;
+}
+
+#content .info .stockPanel .details .grid .open
+{
+    -ms-grid-row: 3;
+    -ms-grid-column: 4;
+    margin-top:-5px;
+}
+
+#content .info .stockPanel .details .grid label
+{
+    display:block;
+}
+
+#content .info .stockPanel .details .grid .openLabel
+{
+    -ms-grid-row: 3;
+    -ms-grid-column: 3;
+    margin-top:-5px;
+}
+
+#content .info .stockPanel .details .grid .daysRangeLabel
+{
+    -ms-grid-row: 3;
+    -ms-grid-column: 6;
+    margin-top:-5px;
+}
+
+#content .info .stockPanel .details .grid .daysRange
+{
+    -ms-grid-row: 3;
+    -ms-grid-column: 7;
+    margin-top:-5px;
+}
+
+#content .info .stockPanel .details .grid .yearRangeLabel
+{
+    -ms-grid-row: 5;
+    -ms-grid-column: 6;
+    margin-top:-8px;
+}
+
+#content .info .stockPanel .details .grid .yearRange
+{
+    -ms-grid-row: 5;
+    -ms-grid-column: 7;
+    margin-top: -8px;
+}
+
+#content .info .stockPanel .details .grid .volumeLabel
+{
+    -ms-grid-row: 5;
+    -ms-grid-column: 3;
+    margin-top:-8px;
+}
+
+#content .info .stockPanel .details .grid .volume
+{
+    -ms-grid-row: 5;
+    -ms-grid-column: 4;
+    margin-top:-8px;
+}
+
+#content .info .stockPanel .details .grid .changeValue
+{
+    margin-top:-29px;
+}
+
+#content .info .stockPanel .details .grid .changeGlyph
+{
+    margin-right:20px;
+    float:left;
+}
+
+#content .info .stockPanel .details .arrow
+{
+    font-size:35pt;
+    line-height:54pt;
+    margin-top:15px;
+    margin-right:10px;
+    display:block;
+    float:left;
+}
+
+#content .info .stockPanel .details .lastRefresh
+{
+    -ms-grid-row: 6;
+    -ms-grid-column-span: 8;
+    font-size:10pt;
+    color:silver;
+}
+#content .info .stockPanel .myStocks li
+{
+    cursor:pointer;
+    display:inline;
+    font-size:20pt;
+    line-height: 24pt;
+    float:left;
+    margin-right:40px;
+}
+
+#content .info .stockPanel .myStocks li a
+{
+    color:rgba(255, 255, 255, 0.5);
+}
+
+
+#content .info .stockPanel .myStocks .selectedAction a
+{
+    color:rgba(255, 255, 255, 1)!important;
+    font-family:'Segoe UI Semibold'
+}
+
+#content .info .stockPanel .myStocks li a:hover
+{
+    background-color:transparent;
+    color:rgba(255, 255, 255, 1);
+}
+
+#content .info .marketNews .list
+{
+    height:100%;
+    vertical-align: top;
+}
+
+#content .info .marketNews .title
+{
+    font-family: "Segoe UI Semilight";
+    font-size:20pt;
+    line-height: 24pt;
+    margin-bottom:35px;
+}
+
+#content .info .marketNews .list .win-item {
+    width: 252px;
+    height: 252px;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    background-color:#418c0b;
+    display: -ms-grid;
+    -ms-grid-columns: 1fr;
+    padding:2px;
+    -ms-grid-rows: 1fr 50px;
+}
+
+#content .info .marketNews .win-item .itemTitle
+{
+    font-family:'Segoe UI Semibold';
+    font-size:20pt;
+    line-height: 24pt;
+    padding:10px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    -ms-grid-row:1;
+    -ms-grid-column:1;
+}
+
+#content .info .marketNews .win-item .itemDescription
+{
+    color:rgba(255, 255, 255, 0.7);
+    margin:4px 4px 6px 4px;
+    padding-left:6px;
+    padding-right:6px;
+    padding-top:1px;
+    padding-top:2px;
+    height:44px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    -ms-grid-row:2;
+    -ms-grid-column:1;
+    background-color:#418c0b;
+}
+
+#allInOne {
+    display:none;
+}
+
+@media screen and (-ms-view-state: snapped)
+{
+    #content {
+        display:none;
+    }
+
+    #allInOne {
+        display:block;
+        display:-ms-grid;
+        -ms-grid-columns:auto;
+        -ms-grid-rows:auto 1fr;
+        height:100%;
+    }
+
+    #allInOne .header
+    {
+        margin:20px;
+    }
+    
+    #allInOne .header .title
+    {
+        font-size:32pt;
+        font-family:'Segoe UI Light';
+        float:left;
+    }
+
+    #allInOne .header .appglyph
+    {
+        margin-top:10px;
+        margin-left:20px;
+    }
+
+    #allInOne .info
+    {
+        padding:25px 45px 25px 25px;
+        clear:both;
+        overflow-y:scroll;
+        -ms-grid-row:2;
+    }
+
+    #allInOne .item
+    { 
+        margin-right:20px;
+        padding-bottom:20px;
+        display: -ms-grid;
+        -ms-grid-columns: 80px 40px 30px 80px 1fr;
+        -ms-grid-rows: auto 20px auto 20px auto 10px auto auto;
+        font-family: 'Segoe UI Semilight';
+    }
+
+    #allInOne .item .nameLabel
+    {
+        -ms-grid-column-span: 4;
+        font-size:20pt;
+        line-height: 24pt;
+    }
+    
+    #allInOne .item .chart
+    {
+        z-index:0;
+        width:290px;
+        margin-left:-7px;
+        height:330px;
+        -ms-grid-column-span: 4;
+        -ms-grid-row: 3;
+    }
+
+    #allInOne .item .changeLabel
+    {
+        font-size: 16pt;
+        -ms-grid-column: 1;
+        -ms-grid-row: 5;
+    }
+
+    #allInOne .item .change
+    {
+        font-size:12pt;
+        -ms-grid-column: 3;
+        -ms-grid-row: 5;
+    }
+
+    #allInOne .item .changeValue
+    {
+        font-size:16pt;
+        -ms-grid-column: 4;
+        -ms-grid-row: 5;
+        text-align:right;
+    }
+
+    #allInOne .item .lastTradeLabel
+    {
+        -ms-grid-row: 7;
+    }
+
+    #allInOne .item .lastTrade
+    {
+        -ms-grid-column: 4;
+        -ms-grid-row: 7;
+        text-align:right;
+    }
+
+    #allInOne .item .percentageLabel 
+    {
+        -ms-grid-row: 8;
+    }
+
+    #allInOne .item .percentage
+    {
+        -ms-grid-column: 4; 
+        -ms-grid-row: 8;
+        text-align:right;
+    }
+}
+
+@media screen and (-ms-view-state: fullscreen-portrait)
+{
+    #content .info
+    {
+        -ms-grid-columns: 40px 1fr 40px;
+        -ms-grid-rows: 1px 1fr 240px 2fr;
+        overflow-y: hidden;
+        overflow-x: hidden;
+    }
+    
+    #content .header
+    {
+        margin-top:22px;
+    }
+    
+    #content .info .marketNews .list .win-item {
+        width: 698px;
+        height: 90px;
+    }
+    
+    #content .info .marketNews .list
+    {
+        margin-top:-10px;
+    }
+    
+    #content .info .stockPanel .details .lastRefresh
+    {
+        margin-top:-20px;
+    }
+
+    #content .header .titleArea
+    {
+        margin-left:20px;
+    }
+
+    #content .info .stockPanel .details .grid
+    {
+        width: 300px;
+    }
+
+    #content .info .stockPanel .details .grid
+    {
+        font-size: 12pt;
+        -ms-grid-columns: 200px 30px 100px auto 40px 120px 150px;
+    }
+
+    #content .header .title
+    {
+        margin-left: -80px;
+    }
+
+    #content .info .stockPanel .details .grid .change
+    {
+        font-size: 30pt;
+    }
+
+    #content .info .stockPanel .details .grid .changeValue
+    {
+        padding-top:17px;
+    }
+
+    #content .info .stockPanel
+    {
+        -ms-grid-row: 2;
+        -ms-grid-column: 2;
+    }
+    
+
+    #content .info .marketNews
+    {
+        -ms-grid-row: 4;
+        -ms-grid-column: 2;
+    }
+}
+
+@media screen and (min-width: 800px) and (max-width: 1024px)
+{
+    #content .info
+    {
+        -ms-grid-columns: 40px 900px 80px 900px;
+    }
+    
+    #content .header
+    {
+        -ms-grid-columns:40px 1fr;
+    }
+}
+
+@media screen and (-ms-view-state: filled)
+{    
+    #content .info
+    {
+        -ms-grid-columns: 40px 900px 80px 900px;
+    }
+    
+    #content .header
+    {
+        -ms-grid-columns:40px 1fr;
+    }
+}

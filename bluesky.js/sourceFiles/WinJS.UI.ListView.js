@@ -86,15 +86,12 @@ WinJS.Namespace.define("WinJS.UI", {
         	//			* I'm rendering the list twice initially.
         	//			* Do DOM element generation once, and then do subsequent renders by updating classes (etc) instead of rerendering the entire control.
         	//			* Implement virtualized data; as of now, if user fills list with 10k items then we render 10k items...
-        	//			* Support List and Grid layouts
-        	//			* Support horizontal lists
-        	//			* Support cellspanning
         	//			* Hook up window resize
         	//
         	_doRender: function () {
 
         		// Ensure we're fully set up.
-        		if (!this.itemDataSource && !this.itemTemplate)
+        		if (!this.itemDataSource || !this.itemTemplate)
         			return;
 
         		/*DEBUG*/

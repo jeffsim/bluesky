@@ -1,0 +1,77 @@
+﻿html, body
+{
+    cursor:default;
+    background:transparent url('/images/background.png') top left;
+    background-size:cover;
+    background-color:#49990c;
+    height:100%;
+    color:#FFF;
+}
+
+body
+{
+    -ms-grid-columns: 1fr;
+    -ms-grid-rows: 1fr;
+    display: -ms-grid;
+}
+
+img
+{
+    border:0;
+}
+
+a:focus 
+{
+    outline: 0;
+}
+
+.clr
+{
+    clear:both;
+    display:block;
+}
+
+.win-flyout
+{
+    border-color: #316a09;
+    background-color: #367709;
+    height: 100%;
+}
+
+#appBar
+{
+    background-color:#367709;
+}
+
+#appBar hr {
+    background-color:#808080;
+}
+
+#addStockFlyout
+{
+    height:120px;
+    width:260px!important;
+    max-width:280px;
+    overflow:hidden;
+}
+
+#addStockText
+{
+    width:218px;
+    background-color:rgba(255,255,255, 1)
+}
+
+#deleteLimitFlyout
+{
+    height:20px;
+    color:rgba(255, 255, 255, 1.0);
+}
+
+#addStockFlyoutMessage
+{
+    color:rgba(255, 255, 255, 1.0);
+    padding:5px 0;
+    height:15px;
+    width:218px;
+    text-overflow:ellipsis;
+}

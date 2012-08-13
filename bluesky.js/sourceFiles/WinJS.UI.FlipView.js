@@ -167,26 +167,6 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Append the rendered item to our container (which was added to the DOM earlier)
                             $subContainer.appendChild(element);
                         });
-
-                        /*
-        			    // Call the function that will populate a template with the current data item
-        				$subContainer = $("<div class='win-item'></div>");
-        				var s = $subContainer;
-        				var result = this.itemTemplate(promise);
-        				promise.then(function (item) {
-        				    debugger;
-        				    s.append(templateInstance);
-        				});
-
-
-        				// For perf, grab a jquery wrapper ref. (TODO: don't use jquery in this inner loop).
-        				var $result = $(result);
-
-        				// Make the item template a "win-item" class type.
-        				$result.addClass("win-item");
-
-        				// Assign the listitem role to the item
-        				$result.attr("role", "listitem");*/
                     }
 
                     $itemContainer.append($subContainer);
