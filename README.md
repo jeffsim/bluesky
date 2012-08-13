@@ -24,7 +24,7 @@ Fairly complete.  The yardstick for bluesky is that a typical Win8/WinJS app wor
 ## How much of bluesky is new code?
 All of it.  bluesky is written from scratch, and shares precisely 0 lines of code with Microsoft’s WinJS.  
 ## How do I run the tests?
-Open bluesky.sln in Visual Studio, set the BlueskyTests project as the startup project, and press F5 (or just open Tests/BlueskyTests.sln and hit F5).
+Open bluesky.sln in Visual Studio, and in the BlueskyTests solution folder select the "BlueskyTests" project as the startup project and press F5.  You can also test the tests themselves on Win8 by setting the "Win8Tests" project as the startup project.
 
 Alternatively, if you'd like to run the tests without downloading anything, you can run the Tests by browsing to here: http://tests.bluesky.io/testharness/testharness.html.
 ## Can I see it in action?
@@ -69,14 +69,16 @@ No dates, but here’s a rough staging (everything subject to change):
 		<td>WinJS on the Web<br/><br/>At this point a complex WinJS application can be run nearly verbatim on the web.  Works across any HTML5 browser on tablet or PC (functions on mobile, but no explicit effort to deal with mobile layout or device challenges).  This includes largely complete versions of the following objects:</td>
 		<td>
 			<ul>
-				<li>WinJS.UI.ListView</li>
+				<li>WinJS.UI.ListView (<b>almost done</b>)</li>
 				<li>WinJS.UI.FlipView (<b>done</b>)</li>
 				<li>WinJS.UI.Rating (<b>done</b>)</li>
 				<li>WinJS.UI.Animation (<b>started</b>)</li>
+				<li>WinJS.xhr (<b>done</b>)</li>
 				<li>Windows.Storage (local and temp)</li>
 				<li>WinJS.Resources</li>
 				<li>WinJS.UI.AppBar</li>
 				<li>WinJS.UI.SemanticZoom</li>
+				<li>bluesky Sample browser (<b>done</b>)</li>
 				<li>bluesky apps work on any HTML5 browser (tablet/desktop)</li>
 				<li>Adapt WinJS.Navigation to the web</li>
 			</ul>
