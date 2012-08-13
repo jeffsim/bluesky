@@ -46,9 +46,10 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
             // Start on the first page; yield first to allow caller to finish setup
+            var that = this;
             msSetImmediate(function () {
-                if (this.currentPage == -1)
-                    this.currentPage = 0;
+            	if (that.currentPage == -1)
+                	that.currentPage = 0;
             });
         },
 
@@ -72,7 +73,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     return;
 
                 /*DEBUG*/
-                if (!this.itemDataSource.bind) {
+                if (this.itemDataSource.getCount === undefined) {
                     console.log("FlipView.itemDataSource is not a databound object.  Wrap it with WinJS.Binding first.", this, this._itemDataSource);
                     return;
                 }

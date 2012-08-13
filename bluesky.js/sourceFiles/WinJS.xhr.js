@@ -34,10 +34,10 @@ WinJS.Namespace.define("WinJS", {
 
 				// Request completed?
 				if (request.readyState == 4) {
-
 					// Successful completion or failure?
-					if (request.status >= 200 && request.status < 300)
+					if (request.status >= 200 && request.status < 300) {
 						onComplete(request);
+					}
 					else
 						onError(request);
 

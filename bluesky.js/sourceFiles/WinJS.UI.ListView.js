@@ -41,9 +41,9 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Generate our layout definition object.
         	// tbd: what's the right win8 default?
         	if (options && options.layout && options.layout.type == "WinJS.UI.ListLayout")
-        		this.layout = new WinJS.UI.ListLayout(options.layout);
+        		this.layout = new WinJS.UI.ListLayout(options && options.layout);
         	else
-        		this.layout = new WinJS.UI.GridLayout(options.layout);
+        		this.layout = new WinJS.UI.GridLayout(options && options.layout);
 
         	this.items = [];
 
@@ -599,7 +599,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		set: function (newLayout) {
 
-        			this._layout = newLayout;
+        			this._layout = new WinJS.UI.GridLayout(newLayout);
         			this.render();
         		}
         	},
