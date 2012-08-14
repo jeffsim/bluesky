@@ -93,3 +93,4 @@
 	})
 });
 
+WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);

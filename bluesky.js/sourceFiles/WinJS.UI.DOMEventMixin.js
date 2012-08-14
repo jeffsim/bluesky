@@ -6,7 +6,7 @@
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-    DOMEventMixin: WinJS.Class.define(null, {
+    DOMEventMixin:{
 
         // ================================================================
         //
@@ -79,19 +79,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	});
         	
         	return defaultPrevented;
-        },
-        
-        
-        // ================================================================
-        //
-        // public function: WinJS.DOMEventMixin.dispatchEvent
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh768233.aspx
-        //
-        setOptions: function(control, options) {
-        
-        	// TODO (CLEANUP): Can WinJS.UI.setOptions mixin this object, and move its logic to here?
-        	WinJS.UI.setOptions(control, options);
-        }
-	})
+        }        
+	}
 });

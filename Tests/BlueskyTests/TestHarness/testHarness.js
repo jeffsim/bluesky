@@ -618,7 +618,7 @@ $(document).ready(function () {
     // TODO: Cookie these values.
 
     // To select a particular test file, call _setTestFile with the index of the testFile in the test files dropdown, or 'all' for all
-   // testHarness._setTestFile(15);
+    testHarness._setTestFile(10);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
     testHarness._setTest("eventHandlers");
