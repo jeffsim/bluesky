@@ -442,6 +442,11 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		// Let WinJS binding do all the heavy lifting for us.
         		WinJS.Binding.processAll(item.element, item.data);
+
+        	    // Remove the no-longer necessary data-win-control attribute
+        	    // TODO (CLEANUP): I shouldn't need to do this, but without this, subsequent calls to WinJS.UI.processAll cause ListView
+                // items to be hidden.  Repro in the listViewBasic (essentials) sample, scenario 1.
+        		$(item.element).removeAttr("data-win-control");
         	},
 
 
