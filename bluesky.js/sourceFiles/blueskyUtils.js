@@ -131,3 +131,13 @@ $(document).keyup(function (e) {
 	blueskyUtils.shiftPressed = e.shiftKey;
 	blueskyUtils.controlPressed = e.ctrlKey;
 });
+
+// Add easeOut easing
+jQuery.extend(jQuery.easing,
+{
+    def: 'easeOut',
+    easeOut: function (x, curTime, startValue, deltaValue, elapsedTime) {
+        curTime = curTime / elapsedTime - 1;
+        return startValue + deltaValue * curTime * curTime * curTime * curTime * curTime + 1;
+    }
+});

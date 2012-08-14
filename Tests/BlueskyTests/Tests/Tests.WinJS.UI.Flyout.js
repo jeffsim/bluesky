@@ -22,22 +22,26 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
 
             var $anchor = testHarness.addTestElement("<div id='testAnchor' style='position: absolute;top:10px;left:200px;background-color:#a00;width:100px;height:100px'>anchor</div>");
             var $flyout = testHarness.addTestElement('<div id="testFlyout" data-win-control="WinJS.UI.Flyout" style="display: none;background-color:#aaa;width:200px;height:200px">Hello there</div>');
-
+            $flyout.css("opacity", ".25");
             var flyout = new WinJS.UI.Flyout($flyout[0]);
-
-            flyout.onaftershow = function (e) {
+            var after = function (e) {
 
                 // Verify the flyout is visible and where we expect it to be
                 var $flyoutDiv = $(".win-flyout");
                 test.assert($flyoutDiv.length == 1, "Flyout not present in DOM");
                 test.assert($flyoutDiv.css("visibility") == "visible", "Flyout not visible");
                 test.assert($flyout.html().indexOf("Hello there") >= 0, "flyout inner html incorrect");
+
                 flyout.hide();
+            }
+
+            flyout.onafterhide = function (e) {
                 // Need to explicitly remove flyout from DOM since it's not in the testFrame
                 $(flyout.element).remove();
                 onTestComplete(test);
             }
 
+            flyout.onaftershow = after;
             flyout.show($anchor[0], "bottom");
         });
     },
@@ -59,6 +63,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
             var flyout = new WinJS.UI.Flyout($flyout[0]);
             var eventOrder = [];
             var beforeShowValue, beforeHideValue, afterShowValue, afterHideValue;
+
             flyout.onbeforeshow = function (e) {
                 test.assert(e.type == "beforeshow", "Incorrect event type specified in onbeforeshow");
                 test.assert(e.target.id == "testFlyout", "Incorrect target specified in onbeforeshow");
@@ -179,7 +184,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                 testHarness.clearTestSpace();
                 var screenHeight = $("html").outerHeight();
 
-                var $anchor = testHarness.addTestElement("<div id='testAnchor' style='position: absolute;top:10px;left:150px;background-color:#a00;width:100px;height:"  +screenHeight + "px'>anchor</div>");
+                var $anchor = testHarness.addTestElement("<div id='testAnchor' style='position: absolute;top:10px;left:150px;background-color:#a00;width:100px;height:" + screenHeight + "px'>anchor</div>");
                 var $flyout = testHarness.addTestElement('<div id="testFlyout" data-win-control="WinJS.UI.Flyout" style="display: none;background-color:#aaa;width:20px;height:20px">Foo</div>');
                 var flyout = new WinJS.UI.Flyout($flyout[0]);
 
@@ -539,13 +544,12 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
 
                     // Verify the flyout is not visible and where we expect it to be
                     test.assert($flyout.css("visibility") == "hidden", "Flyout visible, should be hidden");
+                    $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
                     onComplete();
                 }
 
                 flyout.onaftershow = function (e) {
                     flyout.hide();
-                    $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
-
                 }
 
                 flyout.show($anchor[0]);

@@ -110,22 +110,20 @@ WinJS.Namespace.define("WinJS.UI", {
                     .appendTo($("body"))
                     .css({
                         "left": dest.left,
-                        top: dest.top,
-                        visibility: "visible"
+                        "top": dest.top,
+                        "z-index": "10000",
+                        "visibility": "visible"
                     });
 
-		        // Enable light dismiss
-		        var that = this;
-		        $('body').bind('click', this._lightDimissHandler.bind(this));
 
-		        // click inside flyout -- event.stopPropagation
-
+		        // Hide it
 		        this._hidden = false;
-
-		        // TODO: Animate it in. 
-		        // new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(aftershow);
-
-		        this.dispatchEvent("aftershow", { type: "aftershow", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        var that = this;
+		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
+		            // Enable light dismiss
+		            $('body').one('click', that._lightDismissHandler.bind(that));
+		            that.dispatchEvent("aftershow", { type: "aftershow", target: that.element, currentTarget: that.element, srcElement: that.element });
+		        });
 
 		    },
 
@@ -144,20 +142,15 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        // Remove the light dismiss handler (only needed if hide() is called - light dismiss works w/o it)
 		        // TODO: Test - does this work even though we did a bind(this) above?
-		        $('body').unbind('click', this._lightDimissHandler);
+		        $('body').unbind('click', this._lightDismissHandler);
 
 		        this.dispatchEvent("beforehide", { type: "beforehide", target: this.element, currentTarget: this.element, srcElement: this.element });
 
-		        // hide
+		        // Animate the flyout out. 
 		        this._hidden = true;
-
-		        var $flyout = $(this.element);
 		        var that = this;
-
-		        // TODO: Animate it out. 
-		        // new WinJS.UI.Animation.hidePopup(this.element, function() { $flyout.remove(); });
-		        $flyout.fadeOut(200, function () {
-		            $flyout.css("visibility", "hidden");
+		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
+		            $(that.element).css("visibility", "hidden");
 		            that.dispatchEvent("afterhide", { type: "afterhide", target: that.element, currentTarget: that.element, srcElement: that.element });
 		        });
 
@@ -170,11 +163,11 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._lightDimissHandler
+		    // private function: WinJS.Flyout._lightDismissHandler
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
-		    _lightDimissHandler: function () {
+		    _lightDismissHandler: function () {
 
 		        // Hide our Flyout
 		        this.hide();
@@ -249,7 +242,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        left = Math.max(0, left);
 		        left = Math.min(info.screenWidth - info.flyoutWidth - info.flyoutLeftMargin - info.flyoutLeftMargin, left);
 
-		        return { left: left, top: top, animLeft: "40px", animTop: "0px" };
+		        return { left: left, top: top, animLeft: "0px", animTop: "-10px" };
 		    },
 
 

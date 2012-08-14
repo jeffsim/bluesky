@@ -400,13 +400,13 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Fade out the current page
                     $(this._items[this._currentPage]).fadeOut("fast");
 
-                    // Notify listeners that the previous page is no longer visible
-                    this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                    // Notify listeners that the new page is visible
+                    this._notifyPageVisibilityChanged({ source: this.element, visible: true });
 
                     this._currentPage = pageIndex;
 
-                    // Notify listeners that the new page is visible
-                    that._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                    // Notify listeners that the previous page is no longer visible
+                    that._notifyPageVisibilityChanged({ source: this.element, visible: false });
 
                     // Notify listeners that the page has been selected
                     this._notifyPageSelected({ source: this.element });

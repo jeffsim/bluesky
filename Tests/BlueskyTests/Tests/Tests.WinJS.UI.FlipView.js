@@ -263,7 +263,6 @@
 						selected.push(eventData);
 					}
 					var onVisChanged = function (eventData) {
-					    console.log(eventData);
 						vischanged.push(eventData);
 					}
 

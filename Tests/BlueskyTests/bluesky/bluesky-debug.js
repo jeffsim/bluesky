@@ -1553,13 +1553,6 @@ WinJS.Namespace.define("WinJS.Resources", {}, {
     }
 });
 
-// inject addEventListener (et al) into WinJS.resources
-// TODO: Test this actually works
-//WinJS.Class.mix(WinJS.Resources, WinJS.UI.DOMEventMixin);
-console.warn("do this");
-
-
-
 
 
 
@@ -4615,12 +4608,12 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     // public function: WinJS.UI.Animation.enterPage
     //
-    //		MSDN: TODO
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212672.aspx
     //
     enterPage: function (elements, offset) {
 
         // TODO: is there a difference between enterPage and enterContent?
-        return this.enterContent(elements, offset);
+        return WinJS.UI.Animation.enterContent(elements, offset);
     },
 
 
@@ -4628,12 +4621,49 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     // public function: WinJS.UI.Animation.exitPage
     //
-    //		MSDN: TODO
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701586.aspx
     //
     exitPage: function (elements, offset) {
 
         // TODO: is there a difference between exitPage and exitContent?
-        return this.exitContent(elements, offset);
+        return WinJS.UI.Animation.exitContent(elements, offset);
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.Animation.showPopup
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br230468.aspx
+    //
+    showPopup: function (elements, offset) {
+
+        return WinJS.UI.Animation._doShowAnimation(elements, offset, 250, "easeOut");
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.Animation.hidePopup
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212678.aspx
+    //
+    hidePopup: function (elements) {
+
+        return new WinJS.Promise(function (onComplete) {
+            if (!elements) {
+                onComplete();
+                return;
+            }
+            // Convert to array if only one element
+            if (!elements.length)
+                elements = [elements];
+
+            // Fade out all of the elements
+            $(elements).fadeOut("fast").promise().done(function () {
+                onComplete();
+            });
+        });
     },
 
 
@@ -4641,58 +4671,93 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     // public function: WinJS.UI.Animation.enterContent
     //
-    //		MSDN: TODO
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701582.aspx
     //
     enterContent: function (elements, offset) {
+        return WinJS.UI.Animation._doShowAnimation(elements, offset, 150, "easeOut");
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.UI.Animation._doShowAnimation
+    //
+    _doShowAnimation: function (elements, offset, timeToAnimate, easing) {
 
         return new WinJS.Promise(function (onComplete, e, p) {
 
             // keep track of the amount of time to delay between each element
             var delay = 0;
 
-            // TODO: Not applying 'offset' parameter
+            // If no offset was specified then use our default
+            offset = offset || {
+                top: "0px",
+                left: WinJS.UI.Animation._enterExitDistance + "px"
+            };
 
-            // Convert to array if only one element
+            // Convert to array if only one element; do same for offset
             if (!elements.length)
                 elements = [elements];
+            if (!offset.length)
+                offset = [offset];
 
             var numAnimations = elements.length;
+            for (var i = 0; i < elements.length; i++) {
 
-            elements.forEach(function (element) {
+                var element = elements[i];
 
-                if (!element)
+                // If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
+                if (!element) {
+                    numAnimations--;
                     return;
+                }
 
                 var $el = $(element);
 
-                // Shift WinJS.UI.Animation._enterExitDistance pixels to the left, then we'll animate back to start
+                // Store initial position type, since setting offset below will force it to relative
+                var originalPosition = $el.css("position");
+
+                // Get the amount that we'll offset the current element before animating back to start position
+                var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
+                var offsetTop = parseInt(elementOffset.top);
+                var offsetLeft = parseInt(elementOffset.left);
+
+                // Move element to starting animation position
+                var initialPosition = $el.offset();
                 $el.offset({
-                    left: $el.offset().left + WinJS.UI.Animation._enterExitDistance
+                    top: initialPosition.top + offsetTop,
+                    left: initialPosition.left + offsetLeft
                 });
 
-                // Set opacity to 0.5, then we'll animate back to 1.
-                // TODO: should it instead animate back to starting Opacity?  What does win8 do with animating elements with starting opacity of < 1?
+                // Set opacity to 0.5, then we'll animate back to 1 (note that Win8 does not appear to reset to initial opacity, so neither do we)
                 $el.css("opacity", "0.5");
 
+                // Animate top/left back to initial position
                 $el.delay(delay).animate({
 
                     opacity: "1",
+                    top: (offsetTop > 0 ? "-" : "+") + "=" + Math.abs(offsetTop),
+                    left: (offsetLeft > 0 ? "-" : "+") + "=" + Math.abs(offsetLeft)
 
-                    // TODO: I'd've thought that this should animate back to $el.offset().left, but if I do that it goes
-                    // all wonky; test this with elements that have left != 0 -- what does Win8 do?
-                    // Note: Apply same change (if any) to exitContent
-                    left: 0
+                }, {
+                    duration: timeToAnimate,
+                    easing: easing || "linear",
+                    complete: function () {
 
-                }, 150, function () {
+                        // Restore original css position
+                        $el.css("position", originalPosition);
 
-                    if (--numAnimations == 0) {
-                        if (onComplete)
-                            onComplete();
+                        // When an animation completes, check if it was the last one and if so fulfill the promise.
+                        if (--numAnimations == 0) {
+
+                            if (onComplete)
+                                onComplete();
+                        }
                     }
                 });
 
                 delay += WinJS.UI.Animation._staggerDelay;
-            });
+            }
         });
     },
 
@@ -4710,35 +4775,62 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
             // keep track of the amount of time to delay between each element
             var delay = 0;
 
-            // Convert to array if only one element
+            // If no offset was specified then use our default
+            offset = offset || {
+                top: "0px",
+                left: -WinJS.UI.Animation._enterExitDistance + "px"
+            };
+
+            // Convert to array if only one element; do same for offset
             if (!elements.length)
                 elements = [elements];
+            if (!offset.length)
+                offset = [offset];
 
             var numAnimations = elements.length;
 
-            elements.forEach(function (element) {
+            for (var i = 0; i < elements.length; i++) {
 
-                if (!element)
+                var element = elements[i];
+
+                // If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
+                if (!element) {
+                    numAnimations--;
                     return;
+                }
 
                 var $el = $(element);
+                var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
+                var offsetTop = parseInt(elementOffset.top);
+                var offsetLeft = parseInt(elementOffset.left);
 
-                // TODO: Oookay.  If I don't do this, then the animation doesn't work.  I need to understand offset() better.
-                $el.offset({ left: $el.offset().left });
+                // Store initial position type, since we need to force it to relative and will need to restore it
+                var originalPosition = $el.css("position");
 
+                // Force position to relative so that left/top animation works
+                $el.css("position", "relative");
+
+                // Perform the animation
                 $el.delay(delay).animate({
                     opacity: "0",
-                    left: -WinJS.UI.Animation._enterExitDistance
+                    left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
+                    top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
                 }, 100, function () {
 
+                    // Restore original css position
+                    $el.css("position", originalPosition);
+
+                    // When an animation completes, check if it was the last one and if so fulfill the promise.
+                    // TODO (CLEANUP): Consider using jQuery's promise (but that then means I need to track an array anyways)...
                     if (--numAnimations == 0) {
+
                         if (onComplete)
                             onComplete();
                     }
                 });
 
                 delay += WinJS.UI.Animation._staggerDelay;
-            });
+            }
         });
     },
 
@@ -4749,7 +4841,7 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     //		Defines the amount of time to pause before starting the next element when animating a collection of element
     //
-    _staggerDelay: 50,
+    _staggerDelay: 30,
 
 
     // ================================================================
@@ -5995,7 +6087,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._placement = placement;
 		        this._alignment = alignment;
 
-		        this.dispatchEvent("beforeshow", {type: "beforeshow", target: this.element, currentTarget: this.element, srcElement: this.element});
+		        this.dispatchEvent("beforeshow", { type: "beforeshow", target: this.element, currentTarget: this.element, srcElement: this.element });
 
 		        // show
 		        var $anchor = $(anchor);
@@ -6043,22 +6135,20 @@ WinJS.Namespace.define("WinJS.UI", {
                     .appendTo($("body"))
                     .css({
                         "left": dest.left,
-                        top: dest.top,
-                        visibility: "visible"
+                        "top": dest.top,
+                        "z-index": "10000",
+                        "visibility": "visible"
                     });
 
-		        // Enable light dismiss
-		        var that = this;
-		        $('body').bind('click', this._lightDimissHandler.bind(this));
 
-		        // click inside flyout -- event.stopPropagation
-
+		        // Hide it
 		        this._hidden = false;
-
-		        // TODO: Animate it in. 
-		        // new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(aftershow);
-
-		        this.dispatchEvent("aftershow", { type: "aftershow", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        var that = this;
+		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
+		            // Enable light dismiss
+		            $('body').one('click', that._lightDismissHandler.bind(that));
+		            that.dispatchEvent("aftershow", { type: "aftershow", target: that.element, currentTarget: that.element, srcElement: that.element });
+		        });
 
 		    },
 
@@ -6077,20 +6167,15 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        // Remove the light dismiss handler (only needed if hide() is called - light dismiss works w/o it)
 		        // TODO: Test - does this work even though we did a bind(this) above?
-		        $('body').unbind('click', this._lightDimissHandler);
+		        $('body').unbind('click', this._lightDismissHandler);
 
 		        this.dispatchEvent("beforehide", { type: "beforehide", target: this.element, currentTarget: this.element, srcElement: this.element });
 
-		        // hide
+		        // Animate the flyout out. 
 		        this._hidden = true;
-
-		        var $flyout = $(this.element);
 		        var that = this;
-
-		        // TODO: Animate it out. 
-		        // new WinJS.UI.Animation.hidePopup(this.element, function() { $flyout.remove(); });
-		        $flyout.fadeOut(200, function () {
-		            $flyout.css("visibility", "hidden");
+		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
+		            $(that.element).css("visibility", "hidden");
 		            that.dispatchEvent("afterhide", { type: "afterhide", target: that.element, currentTarget: that.element, srcElement: that.element });
 		        });
 
@@ -6103,11 +6188,11 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._lightDimissHandler
+		    // private function: WinJS.Flyout._lightDismissHandler
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
-		    _lightDimissHandler: function () {
+		    _lightDismissHandler: function () {
 
 		        // Hide our Flyout
 		        this.hide();
@@ -6175,14 +6260,14 @@ WinJS.Namespace.define("WinJS.UI", {
 		    _getBottomPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutLeftMargin + (info.anchorWidth - info.flyoutWidth) / 2;
 		        var top = info.anchorTop + info.anchorHeight;
-                
+
 		        if (failIfNoRoom && top > info.screenHeight - (info.flyoutHeight + info.flyoutBottomMargin + info.flyoutTopMargin))
 		            return null;
 		        // constrain to screen
 		        left = Math.max(0, left);
 		        left = Math.min(info.screenWidth - info.flyoutWidth - info.flyoutLeftMargin - info.flyoutLeftMargin, left);
 
-		        return { left: left, top: top, animLeft: "40px", animTop: "0px" };
+		        return { left: left, top: top, animLeft: "0px", animTop: "-10px" };
 		    },
 
 
@@ -7078,12 +7163,12 @@ WinJS.Namespace.define("WinJS.UI", {
                     $(this._items[this._currentPage]).fadeOut("fast");
 
                     // Notify listeners that the previous page is no longer visible
-                    this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                    this._notifyPageVisibilityChanged({ source: this.element, visible: true });
 
                     this._currentPage = pageIndex;
 
                     // Notify listeners that the new page is visible
-                    that._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                    that._notifyPageVisibilityChanged({ source: this.element, visible: false });
 
                     // Notify listeners that the page has been selected
                     this._notifyPageSelected({ source: this.element });
@@ -8717,4 +8802,14 @@ $(document).keyup(function (e) {
 
     blueskyUtils.shiftPressed = e.shiftKey;
     blueskyUtils.controlPressed = e.ctrlKey;
+});
+
+// Add easeOut easing
+jQuery.extend(jQuery.easing,
+{
+    def: 'easeOut',
+    easeOut: function (x, curTime, startValue, deltaValue, elapsedTime) {
+        curTime = curTime / elapsedTime - 1;
+        return startValue + deltaValue * curTime * curTime * curTime * curTime * curTime + 1;
+    }
 });
