@@ -259,6 +259,8 @@
 		//
 		addEventListener: function (eventName, listener) {
 
+			// TODO: Can I leverage DOMEventMixin here now?
+		
 			// Create the list of event listeners for the specified event if it does not yet exist
 			// TODO: Apply this version of addEventListener to other controls.
 			if (!this._eventListeners[eventName])

@@ -11,7 +11,7 @@
 	//		
 	//		TODO: This isn't an existing WinJS object; consider moving out into a different namespace (e.g. Bluesky.BaseControl)
 	//		
-	BaseControl: WinJS.Class.define(function (element, options) {
+	BaseControl: WinJS.Class.derive(WinJS.UI.DOMEventMixin, function (element, options) {
 
 		/*DEBUG*/
 		// Parameter validation
@@ -89,47 +89,7 @@
 		//
 		forceLayout: function() {
 			this.render();
-		},
-
-
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.addEventListener
-		//
-		//		Adds a new event listener to the control
-		//
-		//		TODO: The difference between onchange and change.  see examples at http://msdn.microsoft.com/en-us/library/windows/apps/br211891.aspx
-		//			  I need to figure out when "on" is and isn't present, and when it is and isn't stripped...
-		//
-		addEventListener: function (eventName, listener) {
-
-			// Create the list of listeners for the specified event if the list does not yet exit
-			if (!this._eventListeners[eventName])
-				this._eventListeners[eventName] = [];
-
-			// Push the event listener into the list
-			this._eventListeners[eventName].push({ listener: listener });
-		},
-
-
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.removeEventListener
-		//
-		//		Removes an event listener from this Control
-		//
-		removeEventListener: function (eventName, listener) {
-
-			// If we don't have any listeners for the specified event then we know we don't have to remove the listener
-			if (!this._eventListeners[eventName])
-				return;
-
-			// Get the index of listener in the list of listeners for the event; if present in the list, then remove it.
-			var index = this._eventListeners[eventName].indexOf(listener);
-			if (index != -1)
-				this._eventListeners[eventName].splice(index, 1);
-		},
-
+		}
 	})
 });
 

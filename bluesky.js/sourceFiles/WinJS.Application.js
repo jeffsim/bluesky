@@ -153,6 +153,8 @@ WinJS.Namespace.define("WinJS.Application", {
 	//
 	addEventListener: function (eventName, listener) {
 
+		// TODO: Can I leverage DOMEventMixin here now? 
+		
 		/*DEBUG*/
 		// Parameter validation
 		if (!WinJS.Application._eventListeners[eventName])
@@ -187,6 +189,7 @@ WinJS.Namespace.define("WinJS.Application", {
 			}
 		}
 	},
+
 
 	// ================================================================
 	//

@@ -291,6 +291,8 @@ WinJS.Namespace.define("WinJS.Navigation", {
 	//
 	addEventListener: function (eventName, listener) {
 
+		// TODO: Can I leverage DOMEventMixin here now?
+		
 		/*DEBUG*/
 		// Parameter validation
 		if (!this._eventListeners[eventName])

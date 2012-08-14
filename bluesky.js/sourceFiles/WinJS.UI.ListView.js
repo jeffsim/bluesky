@@ -626,8 +626,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			type: "selectionchanged"
         		};
 
-        		for (var i in this._eventListeners.selectionchanged)
-        			this._eventListeners.selectionchanged[i](eventData);
+				this.dispatchEvent(eventInfo.type, eventData);
         	},
 
 
@@ -639,8 +638,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		eventData.type = "iteminvoked";
 
-        		for (var i in this._eventListeners.iteminvoked)
-        			this._eventListeners.iteminvoked[i](eventData);
+				this.dispatchEvent(eventInfo.type, eventData);
         	},
 
 
@@ -664,59 +662,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	onselectionchanged: {
         		get: function () { return this._eventListeners["selectionchanged"]; },
         		set: function (callback) { this.addEventListener("selectionchanged", callback); }
-        	},
-
-
-        	// ================================================================
-        	//
-        	// public function: WinJS.ListView.addEventListener
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229659.aspx
-        	//
-        	addEventListener: function (eventName, listener) {
-
-        		// Create the list of event listeners for the specified event if it does not yet exist
-        		// TODO: Apply this version of addEventListener to other controls.
-        		if (!this._eventListeners[eventName])
-        			this._eventListeners[eventName] = [];
-
-        		// Add the listener to the list of listeners for the specified eventName
-        		this._eventListeners[eventName].push(listener);
-
-        		// Add DOM element event handlers (e.g. click).
-        		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-        		this.element.addEventListener(eventName, listener);
-        	},
-
-
-        	// ================================================================
-        	//
-        	// public function: WinJS.ListView.removeEventListener
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211843.aspx
-        	//
-        	removeEventListener: function (eventName, listener) {
-
-        		/*DEBUG*/
-        		// Parameter validation
-        		if (!this._eventListeners[eventName])
-        			console.warn("WinJS.ListView.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-        		/*ENDDEBUG*/
-
-        		// TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
-
-        		// Remove the listener from the list of listeners for the specified eventName
-        		var listeners = this._eventListeners[eventName];
-        		for (var i = 0; i < listeners.length; i++) {
-        			if (listener === listeners[i]) {
-        				listeners.splice(i, 1);
-        				return;
-        			}
-        		}
-
-        		// Remove DOM element event handlers (e.g. click).
-        		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-        		this.element.removeEventListener(eventName, listener);
         	},
 
 

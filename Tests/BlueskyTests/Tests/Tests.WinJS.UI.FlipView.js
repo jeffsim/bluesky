@@ -26,7 +26,6 @@
 
 				createFlipView().then(function () {
 
-
 					var $flipViewSurface = $(".win-surface", $("#testFlipView"));
 
 					// Verify that the working space contains the flipview
@@ -264,6 +263,7 @@
 						selected.push(eventData);
 					}
 					var onVisChanged = function (eventData) {
+					    console.log(eventData);
 						vischanged.push(eventData);
 					}
 
@@ -293,10 +293,10 @@
 					test.assert(vischanged.length == 2, "Did not get 2 onVisChanged events");
 					test.assert($(vischanged[0].target).hasClass("win-template"), "onVisChanged event 0 pointing at wrong element");
 					test.assert(vischanged[0].detail.source == flipView.element, "onVisChanged event 0 pointing at wrong detail.source");
-					test.assert(vischanged[0].detail.visible == false, "onVisChanged event 0 visible = wrong");
+					test.assert(vischanged[0].detail.visible == true, "onVisChanged event 0 visible = wrong");
 					test.assert($(vischanged[1].target).hasClass("win-template"), "onVisChanged event 1 pointing at wrong element");
 					test.assert(vischanged[1].detail.source == flipView.element, "onVisChanged event 1 pointing at wrong detail.source");
-					test.assert(vischanged[1].detail.visible == true, "onVisChanged event 1 visible = wrong");
+					test.assert(vischanged[1].detail.visible == false, "onVisChanged event 1 visible = wrong");
 
 					// Test changing datacount
 					list.pop();

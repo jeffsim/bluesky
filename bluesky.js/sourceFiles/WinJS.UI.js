@@ -1,5 +1,3 @@
-"use strict";
-
 // ================================================================
 //
 // WinJS.UI
@@ -9,7 +7,6 @@
 //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229782.aspx
 //
 WinJS.Namespace.define("WinJS.UI", {
-
 
 	// ================================================================
 	//
@@ -82,19 +79,27 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		return new WinJS.Promise(function (onComplete) {
 
-			// Add winControl objects to all elements tagged as data-win-control
-			$("[data-win-control]", element).each(function () {
+		    // Process the element
+		    blueskyUtils.ensureDatasetReady(element);
+		    if (element.dataset && element.dataset.winControl)
+		        WinJS.UI._processElement(element);
 
-				// IE9 doesn't automagically populate dataset for us; fault it in if necessary
-				blueskyUtils.ensureDatasetReady(this);
+		    // Process any child elements
+		    $("[data-win-control]", element).each(function () {
 
-				// Process the element
-				if (this.dataset && this.dataset.winControl)
-					WinJS.UI._processElement(this);
-			});
+		        // IE9 doesn't automagically populate dataset for us; fault it in if necessary
+		        blueskyUtils.ensureDatasetReady(this);
 
-			// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
-			setTimeout(function () { onComplete(element.winControl); }, 0);
+		        // Process the element
+		        if (this.dataset && this.dataset.winControl)
+		            WinJS.UI._processElement(this);
+		    });
+
+		    // Yield so that any controls we generated during the process call get a chance to finalize rendering themselves
+		    // before we indicate that we're done
+		    msSetImmediate(function () {
+		        onComplete(element.winControl);
+		    });
 		});
 	},
 
@@ -497,9 +502,9 @@ WinJS.Namespace.define("WinJS.UI", {
 			//
 			selectAll: function () {
 				var that = this;
-				this.clear.then(function () {
-					for (var i = 0; i < this._list.length; i++) {
-						that.add(this._list.getItem(i));
+				this.clear().then(function () {
+					for (var i = 0; i < that._list.length; i++) {
+						that.add(that._list.getItem(i));
 					}
 				});
 			},

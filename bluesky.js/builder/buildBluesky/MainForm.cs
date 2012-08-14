@@ -20,6 +20,7 @@ namespace buildBluesky
 		{
 			string[] filesInOrder = new string[] {
                @"\WinJS.js",
+               @"\WinJS.UI.DOMEventMixin.js",
                @"\WinJS.xhr.js",
                @"\Windows.js",
                @"\Windows.Foundation.js",
@@ -27,6 +28,7 @@ namespace buildBluesky
                @"\Windows.System.Launcher.js",
                @"\WinJS.Application.js",
                @"\WinJS.Navigation.js",
+               @"\WinJS.Resources.js",
                @"\WinJS.Promise.js",
                @"\WinJS.Binding.js",
                @"\WinJS.Binding._ListBase.js",
@@ -42,6 +44,7 @@ namespace buildBluesky
                @"\WinJS.UI.BaseControl.js",
                @"\WinJS.UI.Pages.js",
                @"\WinJS.UI.HtmlControl.js",
+               @"\WinJS.UI.Flyout.js",
                @"\WinJS.UI.Rating.js",
                @"\WinJS.UI.FlipView.js",
                @"\WinJS.UI.ListLayout.js",

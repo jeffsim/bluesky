@@ -420,6 +420,45 @@ var testHarness = {
 
 
     // ==========================================================================
+    // 
+    // public function: simulateMouseEvent
+    //
+    //		Simulates a mouse event
+    //      Adapted from: http://stackoverflow.com/questions/6157929/how-to-simulate-mouse-click-using-javascript
+    //
+    simulateMouseEvent: function (target, options) {
+
+        var event = document.createEvent('MouseEvents');
+        var options = options || {};
+
+        var opts = {
+            type: options.type || 'click',
+            canBubble: options.canBubble || true,
+            cancelable: options.cancelable || true,
+            view: options.view || document.defaultView,
+            detail: options.detail || 1,
+            screenX: options.screenX || 0, //The coordinates within the entire page
+            screenY: options.screenY || 0,
+            clientX: options.clientX || 0, //The coordinates within the viewport
+            clientY: options.clientY || 0,
+            ctrlKey: options.ctrlKey || false,
+            altKey: options.altKey || false,
+            shiftKey: options.shiftKey || false,
+            metaKey: options.metaKey || false, //I *think* 'meta' is 'Cmd/Apple' on Mac, and 'Windows key' on Win. Not sure, though!
+            button: options.button || 0, //0 = left, 1 = middle, 2 = right
+            relatedTarget: options.relatedTarget || null,
+        }
+
+        // Pass in the options
+        event.initMouseEvent(opts.type, opts.canBubble, opts.cancelable, opts.view, opts.detail, opts.screenX, opts.screenY,
+                             opts.clientX, opts.clientY, opts.ctrlKey, opts.altKey, opts.shiftKey, opts.metaKey, opts.button, opts.relatedTarget);
+
+        // Fire the event
+        target.dispatchEvent(event);
+    },
+
+
+    // ==========================================================================
     //
     // Variables
     // 
@@ -579,10 +618,10 @@ $(document).ready(function () {
     // TODO: Cookie these values.
 
     // To select a particular test file, call _setTestFile with the index of the testFile in the test files dropdown, or 'all' for all
-    testHarness._setTestFile(15);
+    testHarness._setTestFile(14);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
-    testHarness._setTest("pagesDefine");
+    testHarness._setTest("flyoutAutoPositioning");
 
     // Temp: start the tests now to save me from clicking the button
     $("#startTests").click();

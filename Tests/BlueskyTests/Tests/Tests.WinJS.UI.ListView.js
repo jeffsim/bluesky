@@ -58,6 +58,7 @@
 		return new WinJS.Promise(function (c) {
 			var listView;
 
+			WinJS.Resources.getString("asdf");
 			WinJS.UI.Pages.render("/Tests/supportFiles/listView/listView.html", target).then(function (testPage) {
 
 				listView = $("#testListView")[0].winControl;

@@ -73,6 +73,7 @@
     <Content Include="Tests\Tests.WinJS.Promise.js" />
     <Content Include="Tests\Tests.WinJS.UI.Animation.js" />
     <Content Include="Tests\Tests.WinJS.UI.FlipView.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Flyout.js" />
     <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
     <Content Include="Tests\Tests.WinJS.UI.js" />
     <Content Include="Tests\Tests.WinJS.UI.ListView.js" />

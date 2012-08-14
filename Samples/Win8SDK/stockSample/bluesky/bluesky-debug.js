@@ -273,6 +273,119 @@ var WinJS = {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.UI.DOMEventMixin.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.DOMEventMixin
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+    DOMEventMixin: WinJS.Class.define(null, {
+
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.addEventListener
+        //
+        //		MSDN: TODO
+        //
+        addEventListener: function (eventName, listener) {
+
+            // Create the list of event listeners for the specified event if it does not yet exist
+            if (!this._eventListeners[eventName])
+                this._eventListeners[eventName] = [];
+
+            // Add the listener to the list of listeners for the specified eventName
+            this._eventListeners[eventName].push(listener);
+
+            // Add DOM element event handlers (e.g. click).
+            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+            this.element.addEventListener(eventName, listener);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.removeEventListener
+        //
+        //		MSDN: TODO
+        //
+        removeEventListener: function (eventName, listener) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!this._eventListeners[eventName])
+                console.warn("WinJS.DOMEventMixin.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+            /*ENDDEBUG*/
+
+            // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
+
+            // Remove the listener from the list of listeners for the specified eventName
+            var listeners = this._eventListeners[eventName];
+            for (var i = 0; i < listeners.length; i++) {
+                if (listener === listeners[i]) {
+                    listeners.splice(i, 1);
+                    return;
+                }
+            }
+
+            // Remove DOM element event handlers (e.g. click).
+            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+            this.element.removeEventListener(eventName, listener);
+        },
+        
+        
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.dispatchEvent
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700594.aspx
+        //
+        dispatchEvent: function(eventName, eventProperties) {
+        
+        	var defaultPrevented = false;
+
+        	if (!this._eventListeners[eventName])
+        		return false;
+        	
+        	this._eventListeners[eventName].forEach(function(listener) {
+        		if (!defaultPrevented)
+        			defaultPrevented = listener(eventProperties);
+        	});
+        	
+        	return defaultPrevented;
+        },
+        
+        
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.dispatchEvent
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh768233.aspx
+        //
+        setOptions: function(control, options) {
+        
+        	// TODO (CLEANUP): Can WinJS.UI.setOptions mixin this object, and move its logic to here?
+        	WinJS.UI.setOptions(control, options);
+        }
+	})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: WinJS.xhr.js
 // ==                                                          == //
 // ============================================================== //
@@ -314,10 +427,10 @@ WinJS.Namespace.define("WinJS", {
 
 				// Request completed?
 				if (request.readyState == 4) {
-
 					// Successful completion or failure?
-					if (request.status >= 200 && request.status < 300)
+					if (request.status >= 200 && request.status < 300) {
 						onComplete(request);
+					}
 					else
 						onError(request);
 
@@ -719,6 +832,8 @@ WinJS.Namespace.define("WinJS.Application", {
 	//
 	addEventListener: function (eventName, listener) {
 
+		// TODO: Can I leverage DOMEventMixin here now?
+		
 		/*DEBUG*/
 		// Parameter validation
 		if (!WinJS.Application._eventListeners[eventName])
@@ -1183,6 +1298,8 @@ WinJS.Namespace.define("WinJS.Navigation", {
 	//
 	addEventListener: function (eventName, listener) {
 
+		// TODO: Can I leverage DOMEventMixin here now?
+		
 		/*DEBUG*/
 		// Parameter validation
 		if (!this._eventListeners[eventName])
@@ -1376,6 +1493,70 @@ WinJS.Namespace.define("WinJS.Navigation", {
 		}
 	}
 });
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.Resources.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.Resources
+//
+//		Implementation of the WinJS.Resources object
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.Resources", { }, {
+    	
+	// ================================================================
+	//
+	// public function: WinJS.Resources.processAll
+	//
+	//		MSDN: TODO
+	//
+	processAll: function() {
+		throw "nyi";
+	},
+	
+		    	
+	// ================================================================
+	//
+	// public function: WinJS.Resources.getString
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701590.aspx
+	//
+	getString: function() {
+		throw "nyi";
+	},
+    
+        	    	
+	// ================================================================
+	//
+	// public event: WinJS.Resources.oncontextchanged
+	//
+	//		MSDN: TODO
+	//
+	oncontextchanged: {
+		get: function () { return this._eventListeners["contextchanged"]; },
+		set: function (callback) { this.addEventListener("contextchanged", callback); }
+	}
+});
+
+// inject addEventListener (et al) into WinJS.resources
+// TODO: Test this actually works
+//WinJS.Class.mix(WinJS.Resources, WinJS.UI.DOMEventMixin);
+console.warn("do this");
 
 
 
@@ -2332,6 +2513,8 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		addEventListener: function (eventName, listener) {
 
+			// TODO: Can I leverage DOMEventMixin here now?
+		
 			// Create the list of event listeners for the specified event if it does not yet exist
 			// TODO: Apply this version of addEventListener to other controls.
 			if (!this._eventListeners[eventName])
@@ -3883,6 +4066,1244 @@ WinJS.Namespace.define("WinJS.Binding", {
 // ============================================================== //
 // ============================================================== //
 
+// ================================================================
+//
+// WinJS.UI
+//
+//		This is the root WinJS.UI namespace/object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229782.aspx
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public Function: WinJS.UI.setOptions
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440978.aspx
+	//
+	setOptions: function (targetObject, members) {
+
+		// If no options specified then exit now
+		if (!members)
+			return;
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!targetObject)
+			console.error("WinJS.UI.setOptions: Undefined or null targetObject specified.");
+		if (!members)
+			console.error("WinJS.UI.setOptions: Undefined or null members specified.");
+		/*ENDDEBUG*/
+
+		for (var fieldKey in members) {
+
+			var fieldValue = members[fieldKey];
+
+			/*DEBUG*/
+			if (!fieldKey)
+				console.error("WinJS.UI.setOptions: Setting undefined or null field", targetObject, members);
+			/*ENDDEBUG*/
+
+			// If the member starts with "on" AND the targetObject is a function that supports addEventListener, then add the fieldValue as an event listener
+			if (fieldKey.toLowerCase().indexOf("on") == 0 && targetObject.addEventListener) {
+
+				// fieldKey is an event and the targetObject supports addEventListener, so add fieldValue as an event
+				// if the fieldValue is a function that go ahead and add it; otherwise (e.g. if the options are declaratively defined)
+				// we need to eval it.
+				// TODO: Is there a non-eval way to do this?
+				if (typeof fieldValue === "function")
+					targetObject.addEventListener(fieldKey.substr(2), fieldValue);
+				else
+					targetObject.addEventListener(fieldKey.substr(2), eval(fieldValue));
+
+			} else {
+
+				// fieldKey is not an event
+				// TODO: With declaratively specified options (e.g. when defining a Rating Control in HTML), numeric values 
+				//		 will be returned here as strings instead of numbers.  While they still equate, they end up as different types.  What's
+				//		 the right way to do that?  Are there other types that hit the same issue?
+				targetObject[fieldKey] = members[fieldKey];
+			}
+		}
+	},
+
+
+	// ================================================================
+	//
+	// public Function: WinJS.UI.process
+	//
+	//		Applies declarative control binding to the specified element.
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440976.aspx
+	//
+	process: function (element) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!element)
+			console.error("WinJS.UI.process: Undefined or null element specified.");
+		/*ENDDEBUG*/
+
+		return new WinJS.Promise(function (onComplete) {
+
+			// Add winControl objects to all elements tagged as data-win-control
+			$("[data-win-control]", element).each(function () {
+
+				// IE9 doesn't automagically populate dataset for us; fault it in if necessary
+				blueskyUtils.ensureDatasetReady(this);
+
+				// Process the element
+				if (this.dataset && this.dataset.winControl)
+					WinJS.UI._processElement(this);
+			});
+
+			// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
+			setTimeout(function () { onComplete(element.winControl); }, 0);
+		});
+	},
+
+
+
+	// ================================================================
+	//
+	// public Function: WinJS.UI.processAll
+	//
+	//		Applies declarative control binding to all elements, starting at the specified root element.
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440975.aspx
+	//
+	processAll: function (rootElement) {
+
+		return new WinJS.Promise(function (onComplete) {
+
+			// If the caller didn't specify a root element, then process the entire document.
+			if (!rootElement)
+				rootElement = document;
+
+			// Add winControl objects to all elements tagged as data-win-control
+			$("[data-win-control]", rootElement).each(function () {
+
+				// IE9 doesn't automagically populate dataset for us; fault it in if necessary
+				blueskyUtils.ensureDatasetReady(this);
+
+				// Process the element
+				WinJS.UI._processElement(this);
+			});
+
+			// Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
+			setTimeout(function () { onComplete(); }, 0);
+		});
+	},
+
+
+	// ================================================================
+	//
+	// private Function: WinJS.UI._processElement
+	//
+	//		Processes a single DOM element; called by WinJS.UI.process and WinJS.UI.processAll
+	//
+	_processElement: function (element) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!element)
+			console.error("WinJS.UI._processElement: Undefined or null element specified.");
+		/*ENDDEBUG*/
+
+		// If we've already processed the element in a previous call to process[All], then don't re-process it now.
+		if (element.winControl)
+			return;
+
+		// If data-win-options is specified, then convert Win8's JS-ish data-win-options attribute string 
+		// into a valid JS object before passing to the constructor.
+		var options = element.dataset.winOptions ? blueskyUtils.convertDeclarativeDataStringToJavascriptObject(element.dataset.winOptions) : null;
+
+		// Create the control specified in data-win-control and attach it to the element; pass data-win-options to the object
+
+		// Note: I originally had an eval here (evil, sure, but short and sweet), but the minify borked on it.  Here's the original line:
+		//		element.winControl = eval("new window." + element.dataset.winControl + "(element, options)");
+		// Then I wanted to do this (less evil, prettier than the above):
+		//		element.winControl = new window[element.dataset.winControl](element, options);
+		// ... but that doesn't work if element.dataset.winControl (a string) contains multiple depth (e.g. Test.Foo.Bar), since
+		// window["Test.Foo.Bar"] != window["Test"]["Foo"]["Bar"]
+		//
+		// So I ended up with the following pained but functional approach.
+		//
+		//		TODO: SURELY there's a better way to do this :P
+		//
+		var parts = element.dataset.winControl.split(".");
+		var controlConstructor = window;
+		for (var i = 0; i < parts.length; i++)
+			controlConstructor = controlConstructor[parts[i]];
+
+		// Now that we have a pointer to the actual control constructor, instantiate the wincontrol
+		element.winControl = new controlConstructor(element, options);
+
+		// Create a reference from the wincontrol back to its source element
+		element.winControl.element = element;
+	},
+
+
+	// ================================================================
+	//
+	// public enumeration: WinJS.UI.TapBehavior
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701303.aspx
+	//
+	TapBehavior: {
+		directSelect: "directSelect",
+		toggleSelect: "invoke",			// TODO: Why does Win8 have this discrepancy?
+		invokeOnly: "invokeOnly",
+		none: "none"
+	},
+
+
+	// ================================================================
+	//
+	// public enumeration: WinJS.UI.SelectionMode
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229687.aspx
+	//
+	SelectionMode: {
+		none: "none",
+		single: "single",
+		multi: "multi"
+	},
+
+
+	// ================================================================
+	//
+	// public enumeration: WinJS.UI.SwipeBehavior
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701287.aspx
+	//
+	SwipeBehavior: {
+		select: "select",
+		none: "none"
+	},
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.IListDataSource
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211786.aspx
+	//
+	IListDataSource: WinJS.Class.define(function (sourceList, listItems) {
+
+		this._list = sourceList;
+		//this._items = WinJS.Binding.as(listItems);
+	},
+
+		// ================================================================
+		// WinJS.UI.IListDataSource members
+		// ================================================================
+
+		{
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.getCount
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700660.aspx
+			//
+			getCount: function () {
+
+				return WinJS.Promise.wrap(this._list.length);
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.itemFromKey
+			//
+			//		MSDN: TODO
+			//
+			itemFromKey: function (itemKey) {
+				return WinJS.Promise.wrap(this._list.getItemFromKey(itemKey));
+			},
+
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.IListDataSource.itemFromIndex
+			//
+			//		MSDN: TODO
+			//
+			itemFromIndex: function (itemIndex) {
+				return WinJS.Promise.wrap(this._list.getAt(itemIndex));
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.UI.IListDataSource.list
+			//
+			//		MSDN: TODO
+			//
+			list: {
+				get: function () {
+					return this._list;
+				}
+			},
+		}),
+
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.ISelection
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872204.aspx
+	//
+	ISelection: WinJS.Class.define(function (sourceList) {
+
+		this._list = sourceList;
+		this._selectedItems = [];
+	},
+
+		// ================================================================
+		// WinJS.UI.ISelection members
+		// ================================================================
+
+		{
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.add
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
+			//
+			add: function (items) {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+
+					// If items is not an array, then convert it into one for simplicity
+					if (items.length === undefined)
+						items = [items];
+					else {
+						// Arrays must contain an object that implements ISelectionRange, which is NYI
+						console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+					}
+
+					// We want to get values from our listview's actual databound list.
+					var curList = that._list.itemDataSource._list;
+					
+					items.forEach(function (value) {
+						var item;
+						if (typeof value === "number") {
+							// value is an index
+							item = curList.getItem(value);
+						} else {
+							// value is an object that contains either index or key.  Use key if both are present
+							if (value.key !== undefined) {
+								item = curList.getItemFromKey(value);
+							} else if (value.index !== undefined) {
+								item = curList.getItem(value);
+							}
+								/*DEBUG*/
+							else {
+								console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
+							}
+							/*ENDDEBUG*/
+						}
+
+						if (that._selectedItems.indexOf(item) == -1)
+							that._selectedItems.push(item);
+					});
+
+					// TODO: Notify our list
+					that._list._selectionChanged();
+
+					c(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.remove
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872205.aspx
+			//
+			remove: function (items) {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+
+					// If items is not an array, then convert it into one for simplicity
+					if (items.length === undefined)
+						items = [items];
+					else {
+						// Arrays must contain an object that implements ISelectionRange, which is NYI
+						console.error("Passing an array of objects to WinJS.UI.ISelection.remove, but ISelectionRange is NYI");
+					}
+
+					// We want to get values from our listview's actual databound list.
+					var curList = that._list.itemDataSource._list;
+
+					items.forEach(function (value) {
+						var item;
+						if (typeof value === "number") {
+							// value is an index
+							item = curList.getItem(value);
+						} else {
+							// value is an object that contains either index or key.  Use key if both are present
+							if (value.key !== undefined) {
+								item = curList.getItemFromKey(value);
+							} else if (value.index !== undefined) {
+								item = curList.getItem(value);
+							}
+								/*DEBUG*/
+							else {
+								console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
+							}
+							/*ENDDEBUG*/
+						}
+
+						var indexOfItem = that._selectedItems.indexOf(item);
+						if (indexOfItem != -1)
+							that._selectedItems.splice(indexOfItem, 1);
+					});
+
+					// TODO: Notify our list
+					that._list._selectionChanged();
+
+					c(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.remove
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872199.aspx
+			//
+			clear: function () {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+					that._selectedItems = [];
+					// Notify our list
+					that._list._selectionChanged();
+					c();
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.count
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872200.aspx
+			//
+			count: function () {
+				return this._selectedItems.length;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getIndices
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+			//
+			getIndices: function () {
+				var indices = [];
+				this._selectedItems.forEach(function (item) {
+					indices.push(item.index);
+				});
+				return indices;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.isEverything
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872203.aspx
+			//
+			isEverything: function () {
+
+				return this.count == this._list.length;
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getItems
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872201.aspx
+			//
+			getItems: function () {
+				var that = this;
+				return new WinJS.Promise(function (c) {
+					c(that._selectedItems);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.set
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872207.aspx
+			//
+			set: function (items) {
+				var that = this;
+				return this.clear().then(function () {
+					return that.add(items);
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.selectAll
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872206.aspx
+			//
+			selectAll: function () {
+				var that = this;
+				this.clear().then(function () {
+					for (var i = 0; i < that._list.length; i++) {
+						that.add(that._list.getItem(i));
+					}
+				});
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getRanges
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872202.aspx
+			//
+			getRanges: function () {
+				return new WinJS.Promise(function (c) {
+					console.error("WinJS.UI.ISelection.getRanges is NYI");
+					c([]);
+				});
+			}
+		})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.Animation.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.Animation
+//
+//		Implementation of the WinJS.UI.Animation namespace
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI.Animation", {
+
+    // ================================================================
+	//
+	// public function: WinJS.UI.Animation.enterPage
+	//
+	//		MSDN: TODO
+	//
+    enterPage: function (elements, offset) {
+
+    	// TODO: is there a difference between enterPage and enterContent?
+        return this.enterContent(elements, offset);
+    },
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.exitPage
+	//
+	//		MSDN: TODO
+	//
+    exitPage: function (elements, offset) {
+
+    	// TODO: is there a difference between exitPage and exitContent?
+        return this.exitContent(elements, offset);
+    },
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.enterContent
+	//
+	//		MSDN: TODO
+	//
+    enterContent: function (elements, offset) {
+
+        return new WinJS.Promise(function (onComplete, e, p) {
+
+            // keep track of the amount of time to delay between each element
+        	var delay = 0;
+
+        	// TODO: Not applying 'offset' parameter
+
+            // Convert to array if only one element
+            if (!elements.length)
+                elements = [elements];
+
+            var numAnimations = elements.length;
+
+            elements.forEach(function (element) {
+
+                if (!element)
+                    return;
+
+                var $el = $(element);
+
+            	// Shift WinJS.UI.Animation._enterExitDistance pixels to the left, then we'll animate back to start
+                $el.offset({
+                	left: $el.offset().left + WinJS.UI.Animation._enterExitDistance
+                });
+
+            	// Set opacity to 0.5, then we'll animate back to 1.
+            	// TODO: should it instead animate back to starting Opacity?  What does win8 do with animating elements with starting opacity of < 1?
+                $el.css("opacity", "0.5");
+
+                $el.delay(delay).animate({
+
+                	opacity: "1",
+
+                	// TODO: I'd've thought that this should animate back to $el.offset().left, but if I do that it goes
+                	// all wonky; test this with elements that have left != 0 -- what does Win8 do?
+					// Note: Apply same change (if any) to exitContent
+                	left: 0
+
+                }, 150, function () {
+
+                    if (--numAnimations == 0) {
+                        if (onComplete)
+                        	onComplete();
+                    }
+                });
+
+                delay += WinJS.UI.Animation._staggerDelay;
+            });
+        });
+    },
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.exitContent
+	//
+	//		MSDN: TODO
+	//
+    exitContent: function (elements, offset) {
+
+    	return new WinJS.Promise(function (onComplete, e, p) {
+
+    		// keep track of the amount of time to delay between each element
+    		var delay = 0;
+
+    		// Convert to array if only one element
+    		if (!elements.length)
+    			elements = [elements];
+
+    		var numAnimations = elements.length;
+
+    		elements.forEach(function (element) {
+
+    		    if (!element)
+    		        return;
+
+    			var $el = $(element);
+
+				// TODO: Oookay.  If I don't do this, then the animation doesn't work.  I need to understand offset() better.
+    			$el.offset({ left: $el.offset().left });
+
+    			$el.delay(delay).animate({
+    				opacity: "0",
+    				left: -WinJS.UI.Animation._enterExitDistance
+    			}, 100, function () {
+
+    				if (--numAnimations == 0) {
+    					if (onComplete)
+    						onComplete();
+    				}
+    			});
+
+    			delay += WinJS.UI.Animation._staggerDelay;
+    		});
+    	});
+    },
+
+
+	// ================================================================
+	//
+	// private member: _staggerDelay
+	//
+	//		Defines the amount of time to pause before starting the next element when animating a collection of element
+	//
+    _staggerDelay: 50,
+
+
+	// ================================================================
+	//
+	// private member: _enterExitDistance
+	//
+	//		The number of pixels to animate left/right enterContent/exitContent
+	//
+    _enterExitDistance: 20
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.BaseControl.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// private Object: WinJS.UI.BaseControl constructor
+	//
+	//		Base control for all renderable WinJS objects.  Should not be directly instantiated, but rather derived from.
+	//
+	//		TODO: Is there an established javascript naming pattern for private classes/variables?
+	//		I've adopted an underline prefix (admittedly inconsistently), but will need to change that once I know what the preferred approach is...
+	//		
+	//		TODO: This isn't an existing WinJS object; consider moving out into a different namespace (e.g. Bluesky.BaseControl)
+	//		
+	BaseControl: WinJS.Class.derive(WinJS.UI.DOMEventMixin, function (element, options) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!element)
+			console.error("WinJS.UI.BaseControl constructor: Undefined or null element specified");
+		/*ENDDEBUG*/
+
+		// Keep a reference to our root element in the DOM.  I'm deep in with jQuery already, so go ahead
+		// and wrap it here.
+		// TODO: Perf isn't currently a concern, but look into jQuery alternatives (including jqm) later		
+		this.$rootElement = $(element);
+
+		this.isYielding = false;
+
+		this._eventListeners = {};
+
+		// Store a reference to this control in the element with which it is associated
+		element.winControl = this;
+
+		// Track the DOM element with which this control is associated
+		this.element = element;
+	},
+
+		// ================================================================
+		// WinJS.UI.BaseControl Member functions
+		// ================================================================
+
+	{
+		// ================================================================
+		//
+		// public Function: WinJS.UI.BaseControl.render
+		//
+		//		Called when the control should "render" itself to the page.  In order to allow
+		//		batching of render calls (e.g. due to multiple changes to a control's datacontext),
+		//		render() performs a yield with a zero timeout.  Given javascript's threading model,
+		//		this allows the caller to call render numerous times, and only after the calling
+		//		thread is done is our timeout triggered and the 'real' rendering is done.
+		//
+		render: function (forceRender) {
+
+			if (forceRender) {
+				this._doRender();
+				this.isYielding = false;
+				return;
+			}
+
+			// If we're already yielding then just return
+			if (this.isYielding)
+				return;
+
+			// Mark that we're yielding and waiting for a chance to render.
+			this.isYielding = true;
+
+			// Set a timeout that will occur as soon as it can.  When it does, call our derived class's doRender function
+			var that = this;
+			return new WinJS.Promise(function(c) {
+				setTimeout(function () {
+					if (that.isYielding) {
+						that._doRender();
+
+						// Mark that we're no longer yielding
+						that.isYielding = false;
+					}
+					c();
+				}, 0);
+			});
+		},
+
+
+		// ================================================================
+		//
+		// public Function: WinJS.UI.BaseControl.forceLayout
+		//
+		//		Forces a regeneration of the control
+		//
+		forceLayout: function() {
+			this.render();
+		}
+	})
+});
+
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.Pages.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.Pages
+//
+//		This is the root WinJS.UI.Pages namespace/object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770584.aspx
+//
+WinJS.Namespace.define("WinJS.UI.Pages", {
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Pages.render
+	//
+	//		Loads, processes, and renders the subpage at pageUri.  Added to DOM element 'targetElement'.  state field
+	//		contains options.  parentedPromise is fulfilled by caller when the html that we return has been added to the DOM - at
+	//		that point we can call 'ready' on the page.
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770580.aspx
+	//		NOTE: Documentation at the link above is out of date/incorrect.
+	//
+	render: function (pageUri, targetElement, state, parentedPromise) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!pageUri)
+			console.error("WinJS.UI.Pages.render: Undefined or null pageUri specified");
+		/*ENDDEBUG*/
+
+		// Create a placeholder element if no target was specified
+		targetElement = targetElement || $("<div></div>")[0];
+
+		// Get the PageControl constructor for the specified Uri.  This will define the page if it does not yet exist
+		var pageConstructor = this.get(pageUri);
+
+		// Create the new page control.  Note that the page is not necessarily rendered (or even loaded) at this point.
+		var pageControl = new pageConstructor(targetElement, state, null, parentedPromise);
+
+		// Render a promise that is fulfilled when rendering is complete.
+		return pageControl.renderPromise;
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Pages.get
+	//
+	//		Gets an already-defined page control for the specifed Uri, or creates a new one
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770586.aspx
+	//
+	get: function (pageUri) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!pageUri)
+			console.error("WinJS.UI.Pages.get: Undefined or null pageUri specified");
+		/*ENDDEBUG*/
+
+		// Get the page constructor for the specified Url
+		var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
+
+		// If the page constructor doesn't exist, then define it now
+		pageConstructor = pageConstructor || WinJS.UI.Pages.define(pageUri);
+
+		// Return the page constructor for the specified url.
+		return pageConstructor;
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Pages.define
+	//
+	//		Defines a new Page and returns a PageControl
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770579.aspx
+	//
+	define: function (pageUri, members) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!pageUri)
+			console.error("WinJS.UI.Pages.define: Undefined or null pageUri specified");
+		/*ENDDEBUG*/
+
+		// Check to see if an existing definition (keyed on the pageUrI) already exists, and use it if so.
+		var existingDefn = this.registeredPages[pageUri.toLowerCase()];
+		if (existingDefn) {
+			var pageControl = existingDefn;
+		}
+		else {
+			var pageControl = WinJS.Class.define(function (targetElement, state, complete, parentedPromise) {
+
+				/*DEBUG*/
+				// Parameter validation
+				if (!targetElement)
+					console.error("WinJS.UI.Pages.PageControl constructor: Undefined or null targetElement specified");
+				/*ENDDEBUG*/
+
+				// this is called when the page should be instantiated and its html realized.  Do so now.
+				var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
+				var that = this;
+
+				if (parentedPromise) {
+					// When parenting has completed, trigger the subpage's ready function.  The function that called render()
+					// is responsible for triggering the parented promise that it passed in.
+					parentedPromise.then(function () {
+						// TODO: verify proper order of operations here.
+						if (that["ready"])
+							that["ready"](targetElement, state);
+						if (that["updateLayout"])
+							that["updateLayout"](targetElement, state, null);
+						if (that["processed"])
+							that["processed"](targetElement, state);
+					});
+				}
+
+				// First load the page; then when that's done, process it.  Return a promise that this will happen.  Caller then chains on that promise.
+				this.renderPromise = this._loadPage({ Uri: pageUri, element: targetElement })
+                            .then(function (result) {
+                            	return that._processPage(result);
+                            });
+
+				// if caller didn't specify a parented promise, then handle calling ready (et al) ourselves.
+				// TODO: Clean this up with the above similar (inverted) block.
+				if (!parentedPromise)
+					this.renderPromise = this.renderPromise.then(function (result) {
+						return new WinJS.Promise(function (onComplete) {
+							// TODO: verify proper order of operations here.
+							if (that["ready"])
+								that["ready"](targetElement, state);
+							if (that["updateLayout"])
+								that["updateLayout"](targetElement, state, null);
+							if (that["processed"])
+								that["processed"](targetElement, state);
+							onComplete(result);
+						});
+					})
+			}, {
+
+				// ================================================================
+				//
+				// private function: PageControl._loadPage
+				//
+				//		Internal function to load a page.  Will support both cached and remote pages.  Returns a Promise 
+				//		so that the caller can be notified when we're done via then().
+				//
+				_loadPage: function (pageInfo) {
+
+					/*DEBUG*/
+					// Parameter validation
+					if (!pageInfo)
+						console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageInfo specified");
+					/*ENDDEBUG*/
+
+					var that = this;
+
+					// Create and return a Promise that we'll load the page.
+					// NOTE: We could merge _getRemotePage into this function as this function is currently doing nothing;
+					//		 however, this two-step process is in preparation for adding support for cached pages later on.
+					return new WinJS.Promise(function (pageLoadCompletedCallback) {
+
+						// TODO: Add cached file support.
+						var fileIsCached = false;
+
+						if (fileIsCached) {
+							// return cached file
+						} else {
+							// Load the page remotely
+							that._getRemotePage(pageInfo, pageLoadCompletedCallback);
+						}
+					});
+				},
+
+				
+				// ================================================================
+				//
+				// private function: PageControl._getRemotePage
+				//
+				//		Internal function to load a page remotely via Ajax.
+				//
+				_getRemotePage: function (pageInfo, pageLoadCompletedCallback) {
+
+					/*DEBUG*/
+					// Parameter validation
+					if (!pageInfo)
+						console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageInfo specified");
+					if (!pageLoadCompletedCallback)
+						console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageLoadCompletedCallback specified");
+					/*ENDDEBUG*/
+
+					// Use Ajax to get the page's contents
+					// TODO: Use WinJS.xhr when that's implemented
+					$.get(pageInfo.Uri, function (response) {
+
+						// We loaded the page
+						// TODO: error handling
+						pageInfo.response = response;
+
+						// Notify that we've fulfilled our Promise to load the page.
+						pageLoadCompletedCallback(pageInfo);
+					});
+				},
+
+
+				// ================================================================
+				//
+				// private function: PageControl._processPage
+				//
+				//		Internal function to process a page; async since css processing can take an indeterminate amount of time.  This function returns 
+				//		a Promise so that the caller can be notified when we're done via then().
+				//
+				_processPage: function (pageInfo) {
+
+				    /*DEBUG*/
+				    // Parameter validation
+				    if (!pageInfo)
+				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
+				    if (!pageInfo.response)
+				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
+				    if (!pageInfo.element)
+				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
+				    /*ENDDEBUG*/
+
+				    // Return a Promise that we'll process the page (Honestly! We will!)
+				    return new WinJS.Promise(function (pageProcessCompletedCallback) {
+
+				        // Parse out the script tags from the response and remove duplicates.  Note that we can't go directly through jQuery for this
+				        // because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
+				        // sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
+				        // $("<div></div>").html(pageInfo.response) won't work for the above reason.
+
+				        // 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
+				        var tempDiv = document.createElement("div");
+				        tempDiv.innerHTML = pageInfo.response;
+
+				        // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
+				    	// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
+				        var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
+				        $("script", document).each(function (index, element) {
+				            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
+				            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
+				        });
+
+				        // TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
+
+				        // Remove WinJS scripts.
+				        // TODO: rather than do this on every page process (slow), do it on publish
+				        // TODO: Note that, once I commented this out, some apps started failing; the reason was because those apps had references to //microsoft/winjs.*,
+				        // and the presence of those references makes the css checks below fail because numNewStyleSheets are never fully loaded,
+				        // so it never makes it out of the loop. This will repro with any 'invalid' script or style reference.  See comment below.  
+				        $("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
+				        $("script[src^='http://Microsoft'], script[src^='http://microsoft']", $newPage).remove();
+
+				        // Track the number of styleSheets before the subpage is loaded.  We will need to wait below until
+				        // we're sure that these pages have been completely parsed before we call the subpage's ready() function.
+				        var numStyleSheetsBeforeSubpageAdded = document.styleSheets.length;
+
+				        // Replace contents of element with loaded page's html
+				        $(pageInfo.element).addClass("pagecontrol");
+				        $(pageInfo.element).append($newPage);
+
+				        // Do some parsing on the subpage...
+				        // 1. Move meta and title tags to page's <head> element
+				        var $head = $("head", document);
+				        $("meta, title", $newPage).prependTo($head);
+
+				        // 2. Move scripts and styles up into the page's <head> element
+				        // TODO: remove any duplicates
+				        $("link, script", $newPage).appendTo($head);
+
+				        // 3. Remove duplicate styles
+				        blueskyUtils.removeDuplicateElements("style", "src", $head);
+
+				        // 4. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
+				        $("title:not(:first)", $head).remove();
+
+				        // Process the wincontrols in the newly loaded page fragment
+				        WinJS.UI.processAll($newPage[0]);
+
+				        // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
+				        $("[id]").each(function (index, element) {
+				            window[element.id] = element;
+				        });
+
+				        // Calculate how many styles the subpage has added.  We will wait below until they are all loaded.
+				        var numNewStyleSheets = document.styleSheets.length - numStyleSheetsBeforeSubpageAdded;
+
+				        // If the subpage has referenced CSS files, those files may or may not yet be parsed; to ensure that they are before
+				        // the subpage's ready function is called, we set up a timer that every 50 milliseconds checks to see if the CSS Files have
+				        // all been parsed and their rules have been added to document.styleSheets.  If so, then we stop the timer and tell the subpage
+				        // to go for it.  Lacking a "cssHasBeenParsed" notification, this is the best we can do.
+				        var timeSpent = 0;
+
+				        var handle = window.setInterval(function () {
+
+				            // Determine how many of the styles have been loaded and parsed.  The browser (well, FF - need to verify against others)
+				            // immediately adds the stylesheet, but it doesn't set cssRules until they're parsed; thus, check if cssRules is defined
+				            // for all newly loaded styles.
+				            // TODO: This isn't quite sufficient on FF; see http://dev.ckeditor.com/ticket/7784
+				            // TODO: This also doesn't appear to work on iPad; need another solution...
+				            var numStylesParsed = 0;
+				            try {
+				                for (var i = 0; i < numNewStyleSheets; i++) {
+				                    if (document.styleSheets[numStyleSheetsBeforeSubpageAdded + i].cssRules != undefined)
+				                        numStylesParsed++;
+				                }
+				            } catch (ex) {
+				                // TODO: silently catch, ignore, and continue.  See if this works...    
+				            }
+
+				            // TODO: find best solution here - see TODO comment above.  if this is the only solution, then make timeOut changable by app
+				            timeSpent += 50;
+				            if (timeSpent > 2000) {
+				                console.warn("Failed to load all style sheets and/or scripts in under 2 seconds; check network log and ensure all stylesheets are valid.");
+				                numStylesParsed = numNewStyleSheets;
+				            }
+				            // Check to see if we've parsed all of the new style sheets
+				            if (numStylesParsed == numNewStyleSheets) {
+
+				                // The page's style sheets have all been loaded. Stop the interval timer
+				                window.clearInterval(handle);
+
+                                // Show the new page's elements with final style sheets; then move them
+                                // out of the temp div; and then remove the temp newPage element
+				                $newPage
+                                    .contents()                     // grab contents (instead of children, to get text nodes as well).
+                                    .appendTo(pageInfo.element);    // And add them to the DOM
+
+				                // Notify that we've fulfilled our Promise to process the page.
+				                pageProcessCompletedCallback(pageInfo);
+				            }
+				        }, 50);
+				    });
+				},
+
+				// renderPromise: A Promise that is fulfilled when we have completed rendering
+				renderPromise: null
+			});
+		}
+
+		// Add members to the page control constructor
+		pageControl = WinJS.Class.mix(pageControl, members);
+
+		// Register the page control constructor for subsequent calls to WinJS.UI.Pages.get and WinJS.UI.Pages.define
+		// TODO: I'm assuming that "helloWorld.html" is the same page as "HelloWORLD.hTML", but should check that Win8 agrees...
+		this.registeredPages[pageUri.toLowerCase()] = pageControl;
+
+		// Return the new page control constructor
+		return pageControl;
+	},
+
+
+	// registeredPages: A map that associates pageUris with page constructor functions
+	registeredPages: []
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.HtmlControl.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.HtmlControl
+//
+//		Implementation of the WinJS.UI.HtmlControl object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700625.aspx
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public Object: WinJS.HtmlControl
+	//
+	//		Note: HtmlControl just has a constructor; no members
+	//
+	HtmlControl: WinJS.Class.define(function (element, options, complete) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!element)
+			console.error("WinJS.UI.HtmlControl constructor: Undefined or null element specified");
+		/*ENDDEBUG*/
+
+		// Render the page using the specified options. When rendering has completed, call the complete function
+		WinJS.UI.Pages.render(options.uri, element, options)
+			.then(complete);
+	})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.Flyout.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
 
 // ================================================================
 //
@@ -4381,9 +5802,9 @@ WinJS.Namespace.define("WinJS.UI", {
 			//
 			selectAll: function () {
 				var that = this;
-				this.clear.then(function () {
-					for (var i = 0; i < this._list.length; i++) {
-						that.add(this._list.getItem(i));
+				this.clear().then(function () {
+					for (var i = 0; i < that._list.length; i++) {
+						that.add(that._list.getItem(i));
 					}
 				});
 			},
@@ -4406,747 +5827,391 @@ WinJS.Namespace.define("WinJS.UI", {
 
 
 
+// TODO: Move this to its own file
+
+WinJS.Namespace.define("WinJS.UI", {
+	DOMEventMixin: WinJS.Class.define(null, {
+
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.addEventListener
+        //
+        //		MSDN: TODO
+        //
+        addEventListener: function (eventName, listener) {
+
+            // Create the list of event listeners for the specified event if it does not yet exist
+            if (!this._eventListeners[eventName])
+                this._eventListeners[eventName] = [];
+
+            // Add the listener to the list of listeners for the specified eventName
+            this._eventListeners[eventName].push(listener);
+
+            // Add DOM element event handlers (e.g. click).
+            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+            this.element.addEventListener(eventName, listener);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.removeEventListener
+        //
+        //		MSDN: TODO
+        //
+        removeEventListener: function (eventName, listener) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!this._eventListeners[eventName])
+                console.warn("WinJS.DOMEventMixin.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+            /*ENDDEBUG*/
+
+            // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
+
+            // Remove the listener from the list of listeners for the specified eventName
+            var listeners = this._eventListeners[eventName];
+            for (var i = 0; i < listeners.length; i++) {
+                if (listener === listeners[i]) {
+                    listeners.splice(i, 1);
+                    return;
+                }
+            }
+
+            // Remove DOM element event handlers (e.g. click).
+            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+            this.element.removeEventListener(eventName, listener);
+        },
+        
+        
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.dispatchEvent
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700594.aspx
+        //
+        dispatchEvent: function(eventName, eventProperties) {
+        
+        	var defaultPrevented = false;
+
+        	if (!this._eventListeners[eventName])
+        		return false;
+        	
+        	this._eventListeners[eventName].forEach(function(listener) {
+        		if (!defaultPrevented)
+        			defaultPrevented = listener(eventProperties);
+        	});
+        	
+        	return defaultPrevented;
+        },
+        
+        
+        // ================================================================
+        //
+        // public function: WinJS.DOMEventMixin.dispatchEvent
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh768233.aspx
+        //
+        setOptions: function(control, options) {
+        
+        	// TODO (CLEANUP): Can WinJS.UI.setOptions mixin this object, and move its logic to here?
+        	WinJS.UI.setOptions(control, options);
+        }
+	})
+});
 
 
 
 
-
-// ============================================================== //
-// ============================================================== //
-// ==                                                          == //
-//                    File: WinJS.UI.Animation.js
-// ==                                                          == //
-// ============================================================== //
-// ============================================================== //
-
+// TODO: Move this to its own file
+	
 // ================================================================
 //
-// WinJS.UI.Animation
+// WinJS.UI.Flyout
 //
-//		Implementation of the WinJS.UI.Animation namespace
+//		Implementation of the WinJS.UI.Flyout object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211726.aspx
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public Object: WinJS.UI.Flyout
+	//
+	Flyout: WinJS.Class.derive(WinJS.UI.BaseControl,
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.Flyout constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211724.aspx
+		//	
+        function (element, options) {
+
+        	/*DEBUG*/
+        	// Parameter validation
+        	if (!element)
+        		console.error("WinJS.UI.Flyout constructor: Undefined or null element specified");
+        	/*ENDDEBUG*/
+
+        	// Call into our base class' constructor
+        	WinJS.UI.BaseControl.call(this, element, options);
+        	
+        	// Initialize values
+			this._hidden = true;
+			this._placement = null;
+			this._anchor = null;
+			this._alignment = null;
+		},
+	
+		// TODO: Support light dismiss
+
+		// ================================================================
+		// WinJS.UI.Flyout Member functions
+		// ================================================================
+
+		{
+        	// ================================================================
+        	//
+        	// public function: WinJS.Flyout.show
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211727.aspx
+        	//
+			show: function(anchor, placement, alignment) {
+				
+				// If visible already then just return
+				if (!this.hidden)
+					return;
+				
+				// Store our anchor, placement, and alignment
+				this._anchor = anchor;
+				this._placement = placement;
+				this._alignment = alignment;
+				
+				// TODO: What elements does win8 pass?  Can I generalize "Event" object?
+				// also: remove need for {}?  what does win8 dispatchEvent do with undefined options?
+				// TODO: Can caller cancel?
+				
+				this.dispatchEvent("beforeshow", {});
+				
+				// show
+				// TODO: Add win-flyout class
+				
+				// Enable light dismiss
+				var that = this;
+				$('body').one('click', this._lightDimissHandler.bind(this));
+
+				// click inside flyout -- event.stopPropagation
+				
+				this.hidden = false;
+				
+				this.dispatchEvent("aftershow", {});
+			
+			},
+			
+	
+        	// ================================================================
+        	//
+        	// public function: WinJS.Flyout.hide
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211727.aspx
+        	//
+			hide: function(anchor, placement, alignment) {
+				
+				// If hidden already then just return
+				if (this.hidden)
+					return;
+				
+				// Remove the light dismiss handler (only needed if hide() is called - light dismiss works w/o it)
+				// TODO: Test - does this work even though we did a bind(this) above?
+				$('body').unbind(this._lightDimissHandler);
+				
+				// TODO: Can caller cancel?
+				this.dispatchEvent("beforehide", {});
+				
+				// hide
+				
+				this.hidden = true;
+				
+				// TODO: Does Win8 clear out anchor, placement, and alignment when hidden?
+				this._placement = null;
+				this._anchor = null;
+				this._alignment = null;
+			
+				this.dispatchEvent("afterhide", {});
+			},
+			
+			
+        	// ================================================================
+        	//
+        	// private function: WinJS.Flyout._lightDimissHandler
+        	//
+        	//		this is called when the user clicks outside the Flyout while visible.
+        	//
+			_lightDimissHandler: function() {
+			
+				// Hide our Flyout
+				this.hide();
+			},
+	
+	
+        	// ================================================================
+        	//
+        	// public event: WinJS.Flyout.onafterhide
+        	//
+        	//		MSDN: TODO
+        	//
+        	onafterhide: {
+        		get: function () { return this._eventListeners["afterhide"]; },
+        		set: function (callback) { this.addEventListener("afterhide", callback); }
+        	},
+        	
+        	
+        	// ================================================================
+        	//
+        	// public event: WinJS.Flyout.onaftershow
+        	//
+        	//		MSDN: TODO
+        	//
+        	onaftershow: {
+        		get: function () { return this._eventListeners["aftershow"]; },
+        		set: function (callback) { this.addEventListener("aftershow", callback); }
+        	},
+        	
+        	
+        	// ================================================================
+        	//
+        	// public event: WinJS.Flyout.onbeforehide
+        	//
+        	//		MSDN: TODO
+        	//
+        	onbeforehide: {
+        		get: function () { return this._eventListeners["beforehide"]; },
+        		set: function (callback) { this.addEventListener("beforehide", callback); }
+        	},
+        	
+        	
+        	// ================================================================
+        	//
+        	// public event: WinJS.Flyout.onbeforeshow
+        	//
+        	//		MSDN: TODO
+        	//
+        	onbeforeshow: {
+        		get: function () { return this._eventListeners["beforeshow"]; },
+        		set: function (callback) { this.addEventListener("beforeshow", callback); }
+        	},
+        	
+        	
+        	// ================================================================
+        	//
+        	// public property: WinJS.Flyout.hidden
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212535.aspx
+        	//
+			_hidden: true,
+			hidden: {
+				get: function() { 
+					return _hidden;
+				}
+			},
+			
+			
+        	// ================================================================
+        	//
+        	// public property: WinJS.Flyout.alignment
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770559.aspx
+        	//
+			_alignment: null,
+			alignment: {
+				get: function() { 
+					return _alignment;
+				}
+			},
+			
+			
+        	// ================================================================
+        	//
+        	// public property: WinJS.Flyout.placement
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770561.aspx
+        	//
+			_placement: true,
+			placement: {
+				get: function() { 
+					return _placement;
+				}
+			},
+			
+			
+        	// ================================================================
+        	//
+        	// public property: WinJS.Flyout.anchor
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770560.aspx
+        	//
+			_anchor: true,
+			anchor: {
+				get: function() { 
+					return _anchor;
+				}
+			}
+	})
+});
+
+
+// TODO: Move this to its own file
+	
+// ================================================================
+//
+// WinJS.Resources
+//
+//		Implementation of the WinJS.Resources object
 //
 //		MSDN: TODO
 //
-WinJS.Namespace.define("WinJS.UI.Animation", {
-
-    // ================================================================
+WinJS.Namespace.define("WinJS.Resources", {
+    	
+	// ================================================================
 	//
-	// public function: WinJS.UI.Animation.enterPage
+	// public function: WinJS.Resources.processAll
 	//
 	//		MSDN: TODO
 	//
-    enterPage: function (elements, offset) {
-
-    	// TODO: is there a difference between enterPage and enterContent?
-        return this.enterContent(elements, offset);
-    },
-
-
+	processAll: function() {
+		throw "nyi";
+	},
+	
+		    	
 	// ================================================================
 	//
-	// public function: WinJS.UI.Animation.exitPage
+	// public function: WinJS.Resources.getString
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701590.aspx
+	//
+	getString: function() {
+		throw "nyi";
+	},
+    
+        	    	
+	// ================================================================
+	//
+	// public event: WinJS.Resources.oncontextchanged
 	//
 	//		MSDN: TODO
 	//
-    exitPage: function (elements, offset) {
-
-    	// TODO: is there a difference between exitPage and exitContent?
-        return this.exitContent(elements, offset);
-    },
-
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Animation.enterContent
-	//
-	//		MSDN: TODO
-	//
-    enterContent: function (elements, offset) {
-
-        return new WinJS.Promise(function (onComplete, e, p) {
-
-            // keep track of the amount of time to delay between each element
-        	var delay = 0;
-
-        	// TODO: Not applying 'offset' parameter
-
-            // Convert to array if only one element
-            if (!elements.length)
-                elements = [elements];
-
-            var numAnimations = elements.length;
-
-            elements.forEach(function (element) {
-
-                if (!element)
-                    return;
-
-                var $el = $(element);
-
-            	// Shift WinJS.UI.Animation._enterExitDistance pixels to the left, then we'll animate back to start
-                $el.offset({
-                	left: $el.offset().left + WinJS.UI.Animation._enterExitDistance
-                });
-
-            	// Set opacity to 0.5, then we'll animate back to 1.
-            	// TODO: should it instead animate back to starting Opacity?  What does win8 do with animating elements with starting opacity of < 1?
-                $el.css("opacity", "0.5");
-
-                $el.delay(delay).animate({
-
-                	opacity: "1",
-
-                	// TODO: I'd've thought that this should animate back to $el.offset().left, but if I do that it goes
-                	// all wonky; test this with elements that have left != 0 -- what does Win8 do?
-					// Note: Apply same change (if any) to exitContent
-                	left: 0
-
-                }, 150, function () {
-
-                    if (--numAnimations == 0) {
-                        if (onComplete)
-                        	onComplete();
-                    }
-                });
-
-                delay += WinJS.UI.Animation._staggerDelay;
-            });
-        });
-    },
-
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Animation.exitContent
-	//
-	//		MSDN: TODO
-	//
-    exitContent: function (elements, offset) {
-
-    	return new WinJS.Promise(function (onComplete, e, p) {
-
-    		// keep track of the amount of time to delay between each element
-    		var delay = 0;
-
-    		// Convert to array if only one element
-    		if (!elements.length)
-    			elements = [elements];
-
-    		var numAnimations = elements.length;
-
-    		elements.forEach(function (element) {
-
-    		    if (!element)
-    		        return;
-
-    			var $el = $(element);
-
-				// TODO: Oookay.  If I don't do this, then the animation doesn't work.  I need to understand offset() better.
-    			$el.offset({ left: $el.offset().left });
-
-    			$el.delay(delay).animate({
-    				opacity: "0",
-    				left: -WinJS.UI.Animation._enterExitDistance
-    			}, 100, function () {
-
-    				if (--numAnimations == 0) {
-    					if (onComplete)
-    						onComplete();
-    				}
-    			});
-
-    			delay += WinJS.UI.Animation._staggerDelay;
-    		});
-    	});
-    },
-
-
-	// ================================================================
-	//
-	// private member: _staggerDelay
-	//
-	//		Defines the amount of time to pause before starting the next element when animating a collection of element
-	//
-    _staggerDelay: 50,
-
-
-	// ================================================================
-	//
-	// private member: _enterExitDistance
-	//
-	//		The number of pixels to animate left/right enterContent/exitContent
-	//
-    _enterExitDistance: 20
+	oncontextchanged: {
+		get: function () { return this._eventListeners["contextchanged"]; },
+		set: function (callback) { this.addEventListener("contextchanged", callback); }
+	},
+	
 });
 
-
-
-
-
-
-
-
-// ============================================================== //
-// ============================================================== //
-// ==                                                          == //
-//                    File: WinJS.UI.BaseControl.js
-// ==                                                          == //
-// ============================================================== //
-// ============================================================== //
-
-WinJS.Namespace.define("WinJS.UI", {
-
-	// ================================================================
-	//
-	// private Object: WinJS.UI.BaseControl constructor
-	//
-	//		Base control for all renderable WinJS objects.  Should not be directly instantiated, but rather derived from.
-	//
-	//		TODO: Is there an established javascript naming pattern for private classes/variables?
-	//		I've adopted an underline prefix (admittedly inconsistently), but will need to change that once I know what the preferred approach is...
-	//		
-	//		TODO: This isn't an existing WinJS object; consider moving out into a different namespace (e.g. Bluesky.BaseControl)
-	//		
-	BaseControl: WinJS.Class.define(function (element, options) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!element)
-			console.error("WinJS.UI.BaseControl constructor: Undefined or null element specified");
-		/*ENDDEBUG*/
-
-		// Keep a reference to our root element in the DOM.  I'm deep in with jQuery already, so go ahead
-		// and wrap it here.
-		// TODO: Perf isn't currently a concern, but look into jQuery alternatives (including jqm) later		
-		this.$rootElement = $(element);
-
-		this.isYielding = false;
-
-		this._eventListeners = {};
-
-		// Store a reference to this control in the element with which it is associated
-		element.winControl = this;
-
-		// Track the DOM element with which this control is associated
-		this.element = element;
-	},
-
-		// ================================================================
-		// WinJS.UI.BaseControl Member functions
-		// ================================================================
-
-	{
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.render
-		//
-		//		Called when the control should "render" itself to the page.  In order to allow
-		//		batching of render calls (e.g. due to multiple changes to a control's datacontext),
-		//		render() performs a yield with a zero timeout.  Given javascript's threading model,
-		//		this allows the caller to call render numerous times, and only after the calling
-		//		thread is done is our timeout triggered and the 'real' rendering is done.
-		//
-		render: function (forceRender) {
-
-			if (forceRender) {
-				this._doRender();
-				this.isYielding = false;
-				return;
-			}
-
-			// If we're already yielding then just return
-			if (this.isYielding)
-				return;
-
-			// Mark that we're yielding and waiting for a chance to render.
-			this.isYielding = true;
-
-			// Set a timeout that will occur as soon as it can.  When it does, call our derived class's doRender function
-			var that = this;
-			return new WinJS.Promise(function(c) {
-				setTimeout(function () {
-					if (that.isYielding) {
-						that._doRender();
-
-						// Mark that we're no longer yielding
-						that.isYielding = false;
-					}
-					c();
-				}, 0);
-			});
-		},
-
-
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.forceLayout
-		//
-		//		Forces a regeneration of the control
-		//
-		forceLayout: function() {
-			this.render();
-		},
-
-
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.addEventListener
-		//
-		//		Adds a new event listener to the control
-		//
-		//		TODO: The difference between onchange and change.  see examples at http://msdn.microsoft.com/en-us/library/windows/apps/br211891.aspx
-		//			  I need to figure out when "on" is and isn't present, and when it is and isn't stripped...
-		//
-		addEventListener: function (eventName, listener) {
-
-			// Create the list of listeners for the specified event if the list does not yet exit
-			if (!this._eventListeners[eventName])
-				this._eventListeners[eventName] = [];
-
-			// Push the event listener into the list
-			this._eventListeners[eventName].push({ listener: listener });
-		},
-
-
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.removeEventListener
-		//
-		//		Removes an event listener from this Control
-		//
-		removeEventListener: function (eventName, listener) {
-
-			// If we don't have any listeners for the specified event then we know we don't have to remove the listener
-			if (!this._eventListeners[eventName])
-				return;
-
-			// Get the index of listener in the list of listeners for the event; if present in the list, then remove it.
-			var index = this._eventListeners[eventName].indexOf(listener);
-			if (index != -1)
-				this._eventListeners[eventName].splice(index, 1);
-		},
-
-	})
-});
-
-
-
-
-
-
-
-
-
-// ============================================================== //
-// ============================================================== //
-// ==                                                          == //
-//                    File: WinJS.UI.Pages.js
-// ==                                                          == //
-// ============================================================== //
-// ============================================================== //
-
-// ================================================================
-//
-// WinJS.UI.Pages
-//
-//		This is the root WinJS.UI.Pages namespace/object
-//
-//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770584.aspx
-//
-WinJS.Namespace.define("WinJS.UI.Pages", {
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Pages.render
-	//
-	//		Loads, processes, and renders the subpage at pageUri.  Added to DOM element 'targetElement'.  state field
-	//		contains options.  parentedPromise is fulfilled by caller when the html that we return has been added to the DOM - at
-	//		that point we can call 'ready' on the page.
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770580.aspx
-	//		NOTE: Documentation at the link above is out of date/incorrect.
-	//
-	render: function (pageUri, targetElement, state, parentedPromise) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!pageUri)
-			console.error("WinJS.UI.Pages.render: Undefined or null pageUri specified");
-		/*ENDDEBUG*/
-
-		// Create a placeholder element if no target was specified
-		targetElement = targetElement || $("<div></div>")[0];
-
-		// Get the PageControl constructor for the specified Uri.  This will define the page if it does not yet exist
-		var pageConstructor = this.get(pageUri);
-
-		// Create the new page control.  Note that the page is not necessarily rendered (or even loaded) at this point.
-		var pageControl = new pageConstructor(targetElement, state, null, parentedPromise);
-
-		// Render a promise that is fulfilled when rendering is complete.
-		return pageControl.renderPromise;
-	},
-
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Pages.get
-	//
-	//		Gets an already-defined page control for the specifed Uri, or creates a new one
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770586.aspx
-	//
-	get: function (pageUri) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!pageUri)
-			console.error("WinJS.UI.Pages.get: Undefined or null pageUri specified");
-		/*ENDDEBUG*/
-
-		// Get the page constructor for the specified Url
-		var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
-
-		// If the page constructor doesn't exist, then define it now
-		pageConstructor = pageConstructor || WinJS.UI.Pages.define(pageUri);
-
-		// Return the page constructor for the specified url.
-		return pageConstructor;
-	},
-
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Pages.define
-	//
-	//		Defines a new Page and returns a PageControl
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770579.aspx
-	//
-	define: function (pageUri, members) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!pageUri)
-			console.error("WinJS.UI.Pages.define: Undefined or null pageUri specified");
-		/*ENDDEBUG*/
-
-		// Check to see if an existing definition (keyed on the pageUrI) already exists, and use it if so.
-		var existingDefn = this.registeredPages[pageUri.toLowerCase()];
-		if (existingDefn) {
-			var pageControl = existingDefn;
-		}
-		else {
-			var pageControl = WinJS.Class.define(function (targetElement, state, complete, parentedPromise) {
-
-				/*DEBUG*/
-				// Parameter validation
-				if (!targetElement)
-					console.error("WinJS.UI.Pages.PageControl constructor: Undefined or null targetElement specified");
-				/*ENDDEBUG*/
-
-				// this is called when the page should be instantiated and its html realized.  Do so now.
-				var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
-				var that = this;
-
-				if (parentedPromise) {
-					// When parenting has completed, trigger the subpage's ready function.  The function that called render()
-					// is responsible for triggering the parented promise that it passed in.
-					parentedPromise.then(function () {
-						// TODO: verify proper order of operations here.
-						if (that["ready"])
-							that["ready"](targetElement, state);
-						if (that["updateLayout"])
-							that["updateLayout"](targetElement, state, null);
-						if (that["processed"])
-							that["processed"](targetElement, state);
-					});
-				}
-
-				// First load the page; then when that's done, process it.  Return a promise that this will happen.  Caller then chains on that promise.
-				this.renderPromise = this._loadPage({ Uri: pageUri, element: targetElement })
-                            .then(function (result) {
-                            	return that._processPage(result);
-                            });
-
-				// if caller didn't specify a parented promise, then handle calling ready (et al) ourselves.
-				// TODO: Clean this up with the above similar (inverted) block.
-				if (!parentedPromise)
-					this.renderPromise = this.renderPromise.then(function (result) {
-						return new WinJS.Promise(function (onComplete) {
-							// TODO: verify proper order of operations here.
-							if (that["ready"])
-								that["ready"](targetElement, state);
-							if (that["updateLayout"])
-								that["updateLayout"](targetElement, state, null);
-							if (that["processed"])
-								that["processed"](targetElement, state);
-							onComplete(result);
-						});
-					})
-			}, {
-
-				// ================================================================
-				//
-				// private function: PageControl._loadPage
-				//
-				//		Internal function to load a page.  Will support both cached and remote pages.  Returns a Promise 
-				//		so that the caller can be notified when we're done via then().
-				//
-				_loadPage: function (pageInfo) {
-
-					/*DEBUG*/
-					// Parameter validation
-					if (!pageInfo)
-						console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageInfo specified");
-					/*ENDDEBUG*/
-
-					var that = this;
-
-					// Create and return a Promise that we'll load the page.
-					// NOTE: We could merge _getRemotePage into this function as this function is currently doing nothing;
-					//		 however, this two-step process is in preparation for adding support for cached pages later on.
-					return new WinJS.Promise(function (pageLoadCompletedCallback) {
-
-						// TODO: Add cached file support.
-						var fileIsCached = false;
-
-						if (fileIsCached) {
-							// return cached file
-						} else {
-							// Load the page remotely
-							that._getRemotePage(pageInfo, pageLoadCompletedCallback);
-						}
-					});
-				},
-
-				
-				// ================================================================
-				//
-				// private function: PageControl._getRemotePage
-				//
-				//		Internal function to load a page remotely via Ajax.
-				//
-				_getRemotePage: function (pageInfo, pageLoadCompletedCallback) {
-
-					/*DEBUG*/
-					// Parameter validation
-					if (!pageInfo)
-						console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageInfo specified");
-					if (!pageLoadCompletedCallback)
-						console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageLoadCompletedCallback specified");
-					/*ENDDEBUG*/
-
-					// Use Ajax to get the page's contents
-					// TODO: Use WinJS.xhr when that's implemented
-					$.get(pageInfo.Uri, function (response) {
-
-						// We loaded the page
-						// TODO: error handling
-						pageInfo.response = response;
-
-						// Notify that we've fulfilled our Promise to load the page.
-						pageLoadCompletedCallback(pageInfo);
-					});
-				},
-
-
-				// ================================================================
-				//
-				// private function: PageControl._processPage
-				//
-				//		Internal function to process a page; async since css processing can take an indeterminate amount of time.  This function returns 
-				//		a Promise so that the caller can be notified when we're done via then().
-				//
-				_processPage: function (pageInfo) {
-
-				    /*DEBUG*/
-				    // Parameter validation
-				    if (!pageInfo)
-				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
-				    if (!pageInfo.response)
-				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
-				    if (!pageInfo.element)
-				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
-				    /*ENDDEBUG*/
-
-				    // Return a Promise that we'll process the page (Honestly! We will!)
-				    return new WinJS.Promise(function (pageProcessCompletedCallback) {
-
-				        // Parse out the script tags from the response and remove duplicates.  Note that we can't go directly through jQuery for this
-				        // because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
-				        // sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
-				        // $("<div></div>").html(pageInfo.response) won't work for the above reason.
-
-				        // 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
-				        var tempDiv = document.createElement("div");
-				        tempDiv.innerHTML = pageInfo.response;
-
-				        // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
-				    	// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
-				        var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
-				        $("script", document).each(function (index, element) {
-				            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
-				            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
-				        });
-
-				        // TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
-
-				        // Remove WinJS scripts.
-				        // TODO: rather than do this on every page process (slow), do it on publish
-				        // TODO: Note that, once I commented this out, some apps started failing; the reason was because those apps had references to //microsoft/winjs.*,
-				        // and the presence of those references makes the css checks below fail because numNewStyleSheets are never fully loaded,
-				        // so it never makes it out of the loop. This will repro with any 'invalid' script or style reference.  See comment below.  
-				        $("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
-				        $("script[src^='http://Microsoft'], script[src^='http://microsoft']", $newPage).remove();
-
-				        // Track the number of styleSheets before the subpage is loaded.  We will need to wait below until
-				        // we're sure that these pages have been completely parsed before we call the subpage's ready() function.
-				        var numStyleSheetsBeforeSubpageAdded = document.styleSheets.length;
-
-				        // Replace contents of element with loaded page's html
-				        $(pageInfo.element).addClass("pagecontrol");
-				        $(pageInfo.element).append($newPage);
-
-				        // Do some parsing on the subpage...
-				        // 1. Move meta and title tags to page's <head> element
-				        var $head = $("head", document);
-				        $("meta, title", $newPage).prependTo($head);
-
-				        // 2. Move scripts and styles up into the page's <head> element
-				        // TODO: remove any duplicates
-				        $("link, script", $newPage).appendTo($head);
-
-				        // 3. Remove duplicate styles
-				        blueskyUtils.removeDuplicateElements("style", "src", $head);
-
-				        // 4. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
-				        $("title:not(:first)", $head).remove();
-
-				        // Process the wincontrols in the newly loaded page fragment
-				        WinJS.UI.processAll($newPage[0]);
-
-				        // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
-				        $("[id]").each(function (index, element) {
-				            window[element.id] = element;
-				        });
-
-				        // Calculate how many styles the subpage has added.  We will wait below until they are all loaded.
-				        var numNewStyleSheets = document.styleSheets.length - numStyleSheetsBeforeSubpageAdded;
-
-				        // If the subpage has referenced CSS files, those files may or may not yet be parsed; to ensure that they are before
-				        // the subpage's ready function is called, we set up a timer that every 50 milliseconds checks to see if the CSS Files have
-				        // all been parsed and their rules have been added to document.styleSheets.  If so, then we stop the timer and tell the subpage
-				        // to go for it.  Lacking a "cssHasBeenParsed" notification, this is the best we can do.
-				        var timeSpent = 0;
-
-				        var handle = window.setInterval(function () {
-
-				            // Determine how many of the styles have been loaded and parsed.  The browser (well, FF - need to verify against others)
-				            // immediately adds the stylesheet, but it doesn't set cssRules until they're parsed; thus, check if cssRules is defined
-				            // for all newly loaded styles.
-				            // TODO: This isn't quite sufficient on FF; see http://dev.ckeditor.com/ticket/7784
-				            // TODO: This also doesn't appear to work on iPad; need another solution...
-				            var numStylesParsed = 0;
-				            try {
-				                for (var i = 0; i < numNewStyleSheets; i++) {
-				                    if (document.styleSheets[numStyleSheetsBeforeSubpageAdded + i].cssRules != undefined)
-				                        numStylesParsed++;
-				                }
-				            } catch (ex) {
-				                // TODO: silently catch, ignore, and continue.  See if this works...    
-				            }
-
-				            // TODO: find best solution here - see TODO comment above.  if this is the only solution, then make timeOut changable by app
-				            timeSpent += 50;
-				            if (timeSpent > 2000) {
-				                console.warn("Failed to load all style sheets and/or scripts in under 2 seconds; check network log and ensure all stylesheets are valid.");
-				                numStylesParsed = numNewStyleSheets;
-				            }
-				            // Check to see if we've parsed all of the new style sheets
-				            if (numStylesParsed == numNewStyleSheets) {
-
-				                // The page's style sheets have all been loaded. Stop the interval timer
-				                window.clearInterval(handle);
-
-                                // Show the new page's elements with final style sheets; then move them
-                                // out of the temp div; and then remove the temp newPage element
-				                $newPage
-                                    .contents()                     // grab contents (instead of children, to get text nodes as well).
-                                    .appendTo(pageInfo.element);    // And add them to the DOM
-
-				                // Notify that we've fulfilled our Promise to process the page.
-				                pageProcessCompletedCallback(pageInfo);
-				            }
-				        }, 50);
-				    });
-				},
-
-				// renderPromise: A Promise that is fulfilled when we have completed rendering
-				renderPromise: null
-			});
-		}
-
-		// Add members to the page control constructor
-		pageControl = WinJS.Class.mix(pageControl, members);
-
-		// Register the page control constructor for subsequent calls to WinJS.UI.Pages.get and WinJS.UI.Pages.define
-		// TODO: I'm assuming that "helloWorld.html" is the same page as "HelloWORLD.hTML", but should check that Win8 agrees...
-		this.registeredPages[pageUri.toLowerCase()] = pageControl;
-
-		// Return the new page control constructor
-		return pageControl;
-	},
-
-
-	// registeredPages: A map that associates pageUris with page constructor functions
-	registeredPages: []
-});
-
-
-
-
-
-
-
-
-// ============================================================== //
-// ============================================================== //
-// ==                                                          == //
-//                    File: WinJS.UI.HtmlControl.js
-// ==                                                          == //
-// ============================================================== //
-// ============================================================== //
-
-// ================================================================
-//
-// WinJS.UI.HtmlControl
-//
-//		Implementation of the WinJS.UI.HtmlControl object
-//
-//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700625.aspx
-//
-WinJS.Namespace.define("WinJS.UI", {
-
-	// ================================================================
-	//
-	// public Object: WinJS.HtmlControl
-	//
-	//		Note: HtmlControl just has a constructor; no members
-	//
-	HtmlControl: WinJS.Class.define(function (element, options, complete) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!element)
-			console.error("WinJS.UI.HtmlControl constructor: Undefined or null element specified");
-		/*ENDDEBUG*/
-
-		// Render the page using the specified options. When rendering has completed, call the complete function
-		WinJS.UI.Pages.render(options.uri, element, options)
-			.then(complete);
-	})
-});
+// inject addEventListener (et al) into WinJS.resources
+// TODO: Test this actually works
+WinJS.Class.mix(WinJS.Resources, DOMEventMixin);
 
 
 
@@ -5583,9 +6648,10 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
             // Start on the first page; yield first to allow caller to finish setup
+            var that = this;
             msSetImmediate(function () {
-                if (this.currentPage == -1)
-                    this.currentPage = 0;
+            	if (that.currentPage == -1)
+                	that.currentPage = 0;
             });
         },
 
@@ -5609,7 +6675,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     return;
 
                 /*DEBUG*/
-                if (!this.itemDataSource.bind) {
+                if (this.itemDataSource.getCount === undefined) {
                     console.log("FlipView.itemDataSource is not a databound object.  Wrap it with WinJS.Binding first.", this, this._itemDataSource);
                     return;
                 }
@@ -5769,8 +6835,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     detail: eventData
                 };
 
-                for (var i in this._eventListeners.pagecompleted)
-                    this._eventListeners.pagecompleted[i](eventInfo);
+				this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -5784,8 +6849,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     type: "datasourcecountchanged"
                 };
 
-                for (var i in this._eventListeners.datasourcecountchanged)
-                    this._eventListeners.datasourcecountchanged[i](eventInfo);
+				this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -5800,8 +6864,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     detail: eventData
                 };
 
-                for (var i in this._eventListeners.pageselected)
-                    this._eventListeners.pageselected[i](eventInfo);
+				this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -5817,8 +6880,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     detail: eventData
                 };
 
-                for (var i in this._eventListeners.pagevisibilitychanged)
-                    this._eventListeners.pagevisibilitychanged[i](eventInfo);
+				this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -5867,59 +6929,6 @@ WinJS.Namespace.define("WinJS.UI", {
             onpagevisibilitychanged: {
                 get: function () { return this._eventListeners["pagevisibilitychanged"]; },
                 set: function (callback) { this.addEventListener("pagevisibilitychanged", callback); }
-            },
-
-
-            // ================================================================
-            //
-            // public function: WinJS.FlipView.addEventListener
-            //
-            //		MSDN: TODO
-            //
-            addEventListener: function (eventName, listener) {
-
-                // Create the list of event listeners for the specified event if it does not yet exist
-                // TODO: Apply this version of addEventListener to other controls.
-                if (!this._eventListeners[eventName])
-                    this._eventListeners[eventName] = [];
-
-                // Add the listener to the list of listeners for the specified eventName
-                this._eventListeners[eventName].push(listener);
-
-                // Add DOM element event handlers (e.g. click).
-                // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-                this.element.addEventListener(eventName, listener);
-            },
-
-
-            // ================================================================
-            //
-            // public function: WinJS.FlipView.removeEventListener
-            //
-            //		MSDN: TODO
-            //
-            removeEventListener: function (eventName, listener) {
-
-                /*DEBUG*/
-                // Parameter validation
-                if (!this._eventListeners[eventName])
-                    console.warn("WinJS.FlipView.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-                /*ENDDEBUG*/
-
-                // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
-
-                // Remove the listener from the list of listeners for the specified eventName
-                var listeners = this._eventListeners[eventName];
-                for (var i = 0; i < listeners.length; i++) {
-                    if (listener === listeners[i]) {
-                        listeners.splice(i, 1);
-                        return;
-                    }
-                }
-
-                // Remove DOM element event handlers (e.g. click).
-                // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-                this.element.removeEventListener(eventName, listener);
             },
 
 
@@ -6324,9 +7333,9 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Generate our layout definition object.
         	// tbd: what's the right win8 default?
         	if (options && options.layout && options.layout.type == "WinJS.UI.ListLayout")
-        		this.layout = new WinJS.UI.ListLayout(options.layout);
+        		this.layout = new WinJS.UI.ListLayout(options && options.layout);
         	else
-        		this.layout = new WinJS.UI.GridLayout(options.layout);
+        		this.layout = new WinJS.UI.GridLayout(options && options.layout);
 
         	this.items = [];
 
@@ -6882,7 +7891,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		set: function (newLayout) {
 
-        			this._layout = newLayout;
+        			this._layout = new WinJS.UI.GridLayout(newLayout);
         			this.render();
         		}
         	},
@@ -6909,8 +7918,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			type: "selectionchanged"
         		};
 
-        		for (var i in this._eventListeners.selectionchanged)
-        			this._eventListeners.selectionchanged[i](eventData);
+				this.dispatchEvent(eventInfo.type, eventData);
         	},
 
 
@@ -6922,8 +7930,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		eventData.type = "iteminvoked";
 
-        		for (var i in this._eventListeners.iteminvoked)
-        			this._eventListeners.iteminvoked[i](eventData);
+				this.dispatchEvent(eventInfo.type, eventData);
         	},
 
 
@@ -6947,59 +7954,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	onselectionchanged: {
         		get: function () { return this._eventListeners["selectionchanged"]; },
         		set: function (callback) { this.addEventListener("selectionchanged", callback); }
-        	},
-
-
-        	// ================================================================
-        	//
-        	// public function: WinJS.ListView.addEventListener
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229659.aspx
-        	//
-        	addEventListener: function (eventName, listener) {
-
-        		// Create the list of event listeners for the specified event if it does not yet exist
-        		// TODO: Apply this version of addEventListener to other controls.
-        		if (!this._eventListeners[eventName])
-        			this._eventListeners[eventName] = [];
-
-        		// Add the listener to the list of listeners for the specified eventName
-        		this._eventListeners[eventName].push(listener);
-
-        		// Add DOM element event handlers (e.g. click).
-        		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-        		this.element.addEventListener(eventName, listener);
-        	},
-
-
-        	// ================================================================
-        	//
-        	// public function: WinJS.ListView.removeEventListener
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211843.aspx
-        	//
-        	removeEventListener: function (eventName, listener) {
-
-        		/*DEBUG*/
-        		// Parameter validation
-        		if (!this._eventListeners[eventName])
-        			console.warn("WinJS.ListView.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-        		/*ENDDEBUG*/
-
-        		// TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
-
-        		// Remove the listener from the list of listeners for the specified eventName
-        		var listeners = this._eventListeners[eventName];
-        		for (var i = 0; i < listeners.length; i++) {
-        			if (listener === listeners[i]) {
-        				listeners.splice(i, 1);
-        				return;
-        			}
-        		}
-
-        		// Remove DOM element event handlers (e.g. click).
-        		// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-        		this.element.removeEventListener(eventName, listener);
         	},
 
 
