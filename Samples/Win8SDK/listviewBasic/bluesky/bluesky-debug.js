@@ -296,9 +296,6 @@ WinJS.Namespace.define("WinJS.UI", {
         //
         addEventListener: function (eventName, listener) {
 
-            // TODO: Move from our own list of event listeners to using our DOM element's add/Remove/DispatchEvent
-            if (!this._eventListeners)
-                this._eventListeners = [];
             // Create the list of event listeners for the specified event if it does not yet exist
             if (!this._eventListeners[eventName])
                 this._eventListeners[eventName] = [];
@@ -362,19 +359,6 @@ WinJS.Namespace.define("WinJS.UI", {
             });
 
             return defaultPrevented;
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.DOMEventMixin.dispatchEvent
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh768233.aspx
-        //
-        setOptions: function (control, options) {
-
-            // TODO (CLEANUP): Can WinJS.UI.setOptions mixin this object, and move its logic to here?
-            WinJS.UI.setOptions(control, options);
         }
     }
 });
@@ -5050,8 +5034,8 @@ WinJS.Namespace.define("WinJS.UI", {
 	    }
 	})
 });
-WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
 
+WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
 
 
 
@@ -6356,6 +6340,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         var templateInstance = $(this.itemTemplate)
 												 .clone()		// Clone it so that we don't modify the original template
 												 .addClass("win-template")	// tell our styles it's a template
+                                                 .removeAttr("data-win-control") // remove the data-win-control attribute
 												 .show()[0];	// Show the instance we'll populate
 
                         // Let WinJS binding do all the heavy lifting for us.
@@ -7297,6 +7282,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
+
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
@@ -7409,17 +7395,15 @@ WinJS.Namespace.define("WinJS.UI", {
             _renderItemTemplate: function (item) {
 
                 // Get the templatized HTML that we'll populate.  Clone it so that we don't modify the original
-                // template, add the 'win-item' class, and then show it
+                // template, add the 'win-item' class, remove the data-win-control attribute, and then show it
                 item.element = $(this.itemTemplate)
 					.clone()
 					.addClass("win-item")
+                    .removeAttr("data-win-control")
 					.show()[0];
 
                 // Let WinJS binding do all the heavy lifting for us.
                 WinJS.Binding.processAll(item.element, item.data);
-
-                // Remove the no-longer necessary data-win-control attribute
-                $(item.element).removeAttr("data-win-control");
             },
 
 
@@ -7576,8 +7560,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (newLayout) {
-
-                    this._layout = new WinJS.UI.GridLayout(newLayout);
+                    if (newLayout instanceof WinJS.UI.ListLayout || newLayout instanceof WinJS.UI.GridLayout)
+                        this._layout = newLayout;
+                    else
+                        this._layout = new WinJS.UI.GridLayout(newLayout);
                     this.render();
                 }
             },

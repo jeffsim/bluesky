@@ -128,6 +128,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         var templateInstance = $(this.itemTemplate)
 												 .clone()		// Clone it so that we don't modify the original template
 												 .addClass("win-template")	// tell our styles it's a template
+                                                 .removeAttr("data-win-control") // remove the data-win-control attribute
 												 .show()[0];	// Show the instance we'll populate
 
                         // Let WinJS binding do all the heavy lifting for us.

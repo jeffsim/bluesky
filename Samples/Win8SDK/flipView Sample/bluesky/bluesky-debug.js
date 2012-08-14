@@ -4643,9 +4643,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		    selectAll: function () {
 		        var that = this;
 		        this.clear().then(function () {
-		            for (var i = 0; i < that._list.length; i++) {
-		                that.add(that._list.getItem(i));
-		            }
+		            that._list.itemDataSource.getCount().then(function (count) {
+		                for (var i = 0; i < count; i++) {
+		                    that.add(i);
+		                }
+		            });
 		        });
 		    },
 
@@ -6581,7 +6583,7 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: TODO
             //
             next: function () {
-                
+
                 if (this.currentPage == this._items.length - 1)
                     return false;
 
@@ -7295,7 +7297,6 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
-
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
@@ -7416,6 +7417,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 // Let WinJS binding do all the heavy lifting for us.
                 WinJS.Binding.processAll(item.element, item.data);
+
+                // Remove the no-longer necessary data-win-control attribute from the item
+                $(item.element).removeAttr("data-win-control");
             },
 
 
@@ -7600,7 +7604,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     type: "selectionchanged"
                 };
 
-                this.dispatchEvent(eventInfo.type, eventData);
+                this.dispatchEvent(eventData.type, eventData);
             },
 
 
@@ -7612,7 +7616,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 eventData.type = "iteminvoked";
 
-                this.dispatchEvent(eventInfo.type, eventData);
+                this.dispatchEvent(eventData.type, eventData);
             },
 
 

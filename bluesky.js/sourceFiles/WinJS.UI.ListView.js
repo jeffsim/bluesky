@@ -434,19 +434,15 @@ WinJS.Namespace.define("WinJS.UI", {
         	_renderItemTemplate: function (item) {
 
         		// Get the templatized HTML that we'll populate.  Clone it so that we don't modify the original
-        		// template, add the 'win-item' class, and then show it
+        		// template, add the 'win-item' class, remove the data-win-control attribute, and then show it
         		item.element = $(this.itemTemplate)
 					.clone()
 					.addClass("win-item")
+                    .removeAttr("data-win-control")
 					.show()[0];
 
         		// Let WinJS binding do all the heavy lifting for us.
         		WinJS.Binding.processAll(item.element, item.data);
-
-        	    // Remove the no-longer necessary data-win-control attribute
-        	    // TODO (CLEANUP): I shouldn't need to do this, but without this, subsequent calls to WinJS.UI.processAll cause ListView
-                // items to be hidden.  Repro in the listViewBasic (essentials) sample, scenario 1.
-        		$(item.element).removeAttr("data-win-control");
         	},
 
 
@@ -603,9 +599,11 @@ WinJS.Namespace.define("WinJS.UI", {
         		},
 
         		set: function (newLayout) {
-
-        			this._layout = new WinJS.UI.GridLayout(newLayout);
-        			this.render();
+        		    if (newLayout instanceof WinJS.UI.ListLayout || newLayout instanceof WinJS.UI.GridLayout)
+        		        this._layout = newLayout;
+        		    else
+        		        this._layout = new WinJS.UI.GridLayout(newLayout);
+        		    this.render();
         		}
         	},
 

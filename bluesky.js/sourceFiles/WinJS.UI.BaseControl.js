@@ -11,7 +11,7 @@
 	//		
 	//		TODO: This isn't an existing WinJS object; consider moving out into a different namespace (e.g. Bluesky.BaseControl)
 	//		
-	BaseControl: WinJS.Class.derive(WinJS.UI.DOMEventMixin, function (element, options) {
+	BaseControl: WinJS.Class.define(function (element, options) {
 
 		/*DEBUG*/
 		// Parameter validation

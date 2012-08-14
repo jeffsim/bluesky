@@ -99,6 +99,7 @@
     <Content Include="js\defaultData.js" />
     <Content Include="js\interactiveContent.js" />
     <Content Include="js\itemTemplatesAndDataSources.js" />
+    <Content Include="js\jquery-1.7.2.min.js" />
     <Content Include="js\orientationAndItemSpacing.js" />
     <Content Include="js\simpleflipview.js" />
     <Content Include="js\stylingButtons.js" />
