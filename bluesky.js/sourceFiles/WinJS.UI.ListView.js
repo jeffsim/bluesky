@@ -626,7 +626,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			type: "selectionchanged"
         		};
 
-				this.dispatchEvent(eventInfo.type, eventData);
+        		this.dispatchEvent(eventData.type, eventData);
         	},
 
 
@@ -638,7 +638,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
         		eventData.type = "iteminvoked";
 
-				this.dispatchEvent(eventInfo.type, eventData);
+        		this.dispatchEvent(eventData.type, eventData);
         	},
 
 

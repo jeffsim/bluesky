@@ -48,8 +48,8 @@ WinJS.Namespace.define("WinJS.UI", {
             // Start on the first page; yield first to allow caller to finish setup
             var that = this;
             msSetImmediate(function () {
-            	if (that.currentPage == -1)
-                	that.currentPage = 0;
+                if (that.currentPage == -1)
+                    that.currentPage = 0;
             });
         },
 
@@ -233,7 +233,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     detail: eventData
                 };
 
-				this.dispatchEvent(eventInfo.type, eventInfo);
+                this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -247,7 +247,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     type: "datasourcecountchanged"
                 };
 
-				this.dispatchEvent(eventInfo.type, eventInfo);
+                this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -262,7 +262,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     detail: eventData
                 };
 
-				this.dispatchEvent(eventInfo.type, eventInfo);
+                this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -278,7 +278,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     detail: eventData
                 };
 
-				this.dispatchEvent(eventInfo.type, eventInfo);
+                this.dispatchEvent(eventInfo.type, eventInfo);
             },
 
 
@@ -330,35 +330,6 @@ WinJS.Namespace.define("WinJS.UI", {
             },
 
 
-            // ================================================================
-            //
-            // public function: WinJS.UI.FlipView.next
-            //
-            //		MSDN: TODO
-            //
-            next: function () {
-                if (this.currentPage == this._items.length - 1)
-                    return false;
-
-                this.currentPage = this.currentPage + 1;
-                return true;
-            },
-
-
-            // ================================================================
-            //
-            // public function: WinJS.UI.FlipView.previous
-            //
-            //		MSDN: TODO
-            //
-            previous: function () {
-                if (this.currentPage == 0)
-                    return false;
-
-                this.currentPage = this.currentPage - 1;
-                return true;
-            },
-
 
             // ================================================================
             //
@@ -374,6 +345,95 @@ WinJS.Namespace.define("WinJS.UI", {
                 return new WinJS.Promise(function (c) {
                     c(that._itemDataSource._list.length);
                 });
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.UI.FlipView.next
+            //
+            //		MSDN: TODO
+            //
+            next: function () {
+
+                if (this.currentPage == this._items.length - 1)
+                    return false;
+
+                // TODO (CLEANUP): Combine previous, next, and set (lots of shared functionality)
+                var pageIndex = this.currentPage + 1;
+
+                this._makePageVisible(pageIndex);
+
+                // Fade out the current page
+                $(this._items[this._currentPage]).fadeOut("fast");
+
+                // Notify listeners that the new page is visible
+                this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+
+                this._currentPage = pageIndex;
+
+                // Notify listeners that the previous page is no longer visible
+                this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+
+                // Notify listeners that the page has been selected
+                this._notifyPageSelected({ source: this.element });
+
+                // Render the page; when done, notify listeners that the page has completed
+                var that = this, offset;
+                if (this.orientation == "horizontal")
+                    offset = { top: "0px", left: "40px" };
+                else
+                    offset = { top: "40px", left: "0px" };
+
+                var that = this;
+                return WinJS.UI.Animation.enterContent([this._items[this._currentPage]], [offset]).then(function () {
+                    that._notifyPageCompleted({ source: that.element });
+                });
+                return true;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.UI.FlipView.previous
+            //
+            //		MSDN: TODO
+            //
+            previous: function () {
+                if (this.currentPage == 0)
+                    return false;
+
+                // TODO (CLEANUP): Combine previous, next, and set (lots of shared functionality)
+                var pageIndex = this.currentPage - 1;
+
+                this._makePageVisible(pageIndex);
+
+                // Fade out the current page
+                $(this._items[this._currentPage]).fadeOut("fast");
+
+                // Notify listeners that the new page is visible
+                this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+
+                this._currentPage = pageIndex;
+
+                // Notify listeners that the previous page is no longer visible
+                this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+
+                // Notify listeners that the page has been selected
+                this._notifyPageSelected({ source: this.element });
+
+                // Render the page; when done, notify listeners that the page has completed
+                var that = this, offset;
+                if (this.orientation == "horizontal")
+                    offset = { top: "0px", left: "-40px" };
+                else
+                    offset = { top: "-40px", left: "0px" };
+
+                var that = this;
+                return WinJS.UI.Animation.enterContent([this._items[this._currentPage]], [offset]).then(function () {
+                    that._notifyPageCompleted({ source: that.element });
+                });
+                return true;
             },
 
 
@@ -412,13 +472,11 @@ WinJS.Namespace.define("WinJS.UI", {
                     this._notifyPageSelected({ source: this.element });
 
                     // Render the page; when done, notify listeners that the page has completed
-
-                    // Animate the next page in
-                    // TODO: Reverse if going left
-                    // TODO: Does win8 animate on currentPage.set, or only on next/prev? A: only on next/prev; pull this out of here...
-                    return WinJS.UI.Animation.enterContent([that._items[that._currentPage]]).then(function () {
-
-                        that._notifyPageCompleted({ source: that.element });
+                    return new WinJS.Promise(function (onComplete) {
+                        $(that._items[that._currentPage]).fadeIn("fast", function () {
+                            that._notifyPageCompleted({ source: that.element });
+                            onComplete();
+                        });
                     });
                 }
             },
