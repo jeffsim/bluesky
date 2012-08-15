@@ -16,6 +16,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     enterPage: function (elements, offset) {
 
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         // TODO: is there a difference between enterPage and enterContent?
         return WinJS.UI.Animation.enterContent(elements, offset);
     },
@@ -28,6 +32,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701586.aspx
     //
     exitPage: function (elements, offset) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
 
         // TODO: is there a difference between exitPage and exitContent?
         return WinJS.UI.Animation.exitContent(elements, offset);
@@ -42,6 +50,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     showPopup: function (elements, offset) {
 
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         return WinJS.UI.Animation._doShowAnimation(elements, offset, 250, "easeOut");
     },
 
@@ -53,6 +65,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212678.aspx
     //
     hidePopup: function (elements) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
 
         return new WinJS.Promise(function (onComplete) {
             if (!elements) {
@@ -78,6 +94,11 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701582.aspx
     //
     enterContent: function (elements, offset) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         return WinJS.UI.Animation._doShowAnimation(elements, offset, 150, "easeOut");
     },
 
@@ -238,6 +259,19 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
         });
     },
 
+    
+    // ================================================================
+    //
+    // private(ish) function: WinJS.UI.Animation._cancelAllActiveAnimations
+    //
+    //		Called when Animations are disabled (through WinJS.UI.Animation.disableAnimations).
+    //
+    _cancelAllActiveAnimations: function() {
+
+        // TODO: What does Win8 do in this situation?  Let in-progress animations complete, force them 
+        // to end-state, or just immediately cancel them?  We opt for the first as it's the simplest.
+    },
+
 
     // ================================================================
     //
@@ -254,5 +288,5 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     //		The number of pixels to animate left/right enterContent/exitContent
     //
-    _enterExitDistance: 20
+    _enterExitDistance: 20,
 });

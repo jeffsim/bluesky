@@ -104,7 +104,6 @@ WinJS.Namespace.define("WinJS.UI", {
     },
 
 
-
     // ================================================================
     //
     // public Function: WinJS.UI.processAll
@@ -182,6 +181,62 @@ WinJS.Namespace.define("WinJS.UI", {
 
         // Create a reference from the wincontrol back to its source element
         element.winControl.element = element;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.enableAnimations
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/Hh779760.aspx
+    // 
+    enableAnimations: function () {
+
+        WinJS.UI._animationEnabled = true;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.disableAnimations
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779759.aspx
+    // 
+    disableAnimations: function () {
+
+        WinJS.UI._animationEnabled = false;
+
+        // Cancel any active animations
+        WinJS.UI.Animation._cancelAllActiveAnimations();
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.executeAnimation
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779762.aspx
+    // 
+    executeAnimation: function (anim) {
+
+        // TODO: Implement this.
+        if (!_warnedExecuteAnimationNYI) {
+            console.warn("Bluesky: WinJS.UI.Animation.executeAnimation is NYI");
+            _warnedExecuteAnimationNYI = true;
+        }
+    },
+    _warnedExecuteAnimationNYI: false,
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.isAnimationEnabled
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779793.aspx
+    // 
+    _animationEnabled: true,
+    isAnimationEnabled: function () {
+        return _animationEnabled;
     },
 
 

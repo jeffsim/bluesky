@@ -123,13 +123,12 @@ WinJS.Namespace.define("WinJS.UI", {
                         "visibility": "visible"
                     });
 
-
 		        // Hide it
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
 		            // Enable light dismiss
-		            $('body').one('click', that._lightDismissHandler.bind(that));
+		            $('body').bind('click', that._lightDismissHandler.bind(that));
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -182,9 +181,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
-		    _lightDismissHandler: function () {
+		    _lightDismissHandler: function (e) {
 
-		        // Hide our Flyout
+		        // Ignore if the click event happened over our flyout
+		        var flyoutLoc = this.$rootElement.offset();
+		        var flyoutWidth = this.$rootElement.outerWidth();
+		        var flyoutHeight = this.$rootElement.outerHeight();
+		        if (e.clientX >= flyoutLoc.left && e.clientX <= flyoutLoc.left + flyoutWidth &&
+                    e.clientY >= flyoutLoc.top && e.clientY <= flyoutLoc.top + flyoutHeight)
+		            return;
+
+		        // Hide our Flyout 
 		        this.hide();
 		    },
 

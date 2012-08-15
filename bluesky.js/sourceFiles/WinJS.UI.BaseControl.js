@@ -26,8 +26,6 @@
 
 		this.isYielding = false;
 
-		this._eventListeners = {};
-
 		// Store a reference to this control in the element with which it is associated
 		element.winControl = this;
 

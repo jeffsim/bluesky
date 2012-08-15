@@ -297,7 +297,6 @@ WinJS.Namespace.define("WinJS.UI", {
         addEventListener: function (eventName, listener, useCapture) {
 
             // Add DOM element event handlers (e.g. click).
-            // TODO (CLEANUP): Remove _eventListeners
             this.element.addEventListener(eventName, listener, useCapture);
         },
 
@@ -4876,8 +4875,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
         this.isYielding = false;
 
-        this._eventListeners = {};
-
         // Store a reference to this control in the element with which it is associated
         element.winControl = this;
 
@@ -5493,15 +5490,18 @@ WinJS.Namespace.define("WinJS.UI", {
 		                       this._getLeftPosition(info, true) || this._getRightPosition(info, true);
 		                break;
 		        }
+
+		        // TODO: Currently attaching flyout to body; should instead attach after anchor so that if the anchor's parent
+                // goes away, then the flyout will go with it.
 		        $flyout
                     .remove()
-                    .appendTo($("body"))
                     .css({
                         "left": dest.left,
                         "top": dest.top,
                         "z-index": "10000",
                         "visibility": "visible"
-                    });
+                    })
+                    .appendTo($("body"));
 
 
 		        // Hide it
@@ -5509,7 +5509,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
 		            // Enable light dismiss
-		            $('body').one('click', that._lightDismissHandler.bind(that));
+		            $('body').bind('click', that._lightDismissHandler.bind(that));
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -5562,9 +5562,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
-		    _lightDismissHandler: function () {
+		    _lightDismissHandler: function (e) {
 
-		        // Hide our Flyout
+		        // Ignore if the click event happened over our flyout
+		        var flyoutLoc = this.$rootElement.offset();
+		        var flyoutWidth = this.$rootElement.outerWidth();
+		        var flyoutHeight = this.$rootElement.outerHeight();
+		        if (e.clientX >= flyoutLoc.left && e.clientX <= flyoutLoc.left + flyoutWidth &&
+                    e.clientY >= flyoutLoc.top && e.clientY <= flyoutLoc.top + flyoutHeight)
+		            return;
+		        // Hide our Flyout 
 		        this.hide();
 		    },
 
@@ -5790,13 +5797,6 @@ WinJS.Namespace.define("WinJS.UI", {
             // Call into our base class' constructor
             WinJS.UI.BaseControl.call(this, element, options);
 
-            // initialize the set of event listeners
-            this._eventListeners = {
-                onchange: [],
-                onpreviewchange: [],
-                oncancel: []
-            };
-
             // Initialize hover and mousecapture-related variables
             this._mouseDown = false;
             this._overClickedStar = null;
@@ -5907,7 +5907,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         this.userRating = null;
                     }
                 }
-                this._notifyCancel({ target: { winControl: this }, type: 'cancel' });
+                this._notifyCancel();
 
                 this.render();
             },
@@ -5928,8 +5928,8 @@ WinJS.Namespace.define("WinJS.UI", {
                 // Create the event info that we'll pass through the various events
                 var eventInfo = {
                     tentativeRating: this.userRating,
-                    target: { winControl: this },
-                    type: 'previewchange',
+                    //target: { winControl: this },
+                    //type: 'previewchange',
                     preventDefault: false
                 }
 
@@ -5950,7 +5950,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 this.userRating = thisIndex + 1;
 
                 // Update event info and fire the change notification
-                eventInfo.type = "change";
+                //	eventInfo.type = "change";
                 eventInfo.tentativeRating = this.userRating;
                 eventInfo.userRating = this.userRating;
                 this._notifyChange(eventInfo);
@@ -5996,14 +5996,10 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private Function: WinJS.UI.Rating._notifyChange
             //
-            //		TODO: Can/should I generalize all three of these into one generic event firer?
-            //		TODO: Need to figure on where "on" should and shouldn't be.
-            //
             _notifyChange: function (eventData) {
-
-                // TODO: Can I use forEach?
-                for (var i in this._eventListeners.onchange)
-                    this._eventListeners.onchange[i].listener(eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("change", true, false, eventData);
+                this.element.dispatchEvent(event);
             },
 
 
@@ -6012,8 +6008,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // private Function: WinJS.UI.Rating._notifyPreviewChange
             //
             _notifyPreviewChange: function (eventData) {
-                for (var i in this._eventListeners.onpreviewchange)
-                    this._eventListeners.onpreviewchange[i].listener(eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("previewchange", true, false, eventData);
+                this.element.dispatchEvent(event);
             },
 
 
@@ -6022,8 +6019,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // private Function: WinJS.UI.Rating._notifyCancel
             //
             _notifyCancel: function (eventData) {
-                for (var i in this._eventListeners.oncancel)
-                    this._eventListeners.oncancel[i].listener(eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("cancel", true, false, eventData);
+                this.element.dispatchEvent(event);
             },
 
 

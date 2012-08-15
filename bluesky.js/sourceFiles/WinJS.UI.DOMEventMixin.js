@@ -17,7 +17,6 @@ WinJS.Namespace.define("WinJS.UI", {
         addEventListener: function (eventName, listener, useCapture) {
 
             // Add DOM element event handlers (e.g. click).
-            // TODO (CLEANUP): Remove _eventListeners
             this.element.addEventListener(eventName, listener, useCapture);
         },
 

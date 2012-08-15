@@ -151,7 +151,12 @@
                     var newUrl = select.options[select.selectedIndex].value;
                     WinJS.Navigation.navigate(newUrl).then(function () {
                         setImmediate(function () {
-                            document.getElementById("scenarioSelect").setActive();
+                            // BLUESKY-CHANGE:  setActive is occassionally hitting an obtuse exception ("incorrect function" or somesuch).  this
+                            // isn't my code; is it a bug in the RP version of IE10? try/catching for now.
+                            try {
+                                document.getElementById("scenarioSelect").setActive();
+                            } catch (ex) {
+                            }
                         });
                     });
                 }
