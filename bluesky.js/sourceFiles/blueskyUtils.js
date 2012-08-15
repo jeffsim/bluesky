@@ -4,6 +4,21 @@
 //
 var blueskyUtils = {
 
+    // ================================================================
+    //
+    // public function: blueskyUtils.getHighestZIndex
+    //
+    //      Returns the highest z-index of all elements.  Useful to add DOM elements above all others (e.g. modal dialog box)
+    //
+    getHighestZIndex: function () {
+
+        var highestIndex = 0;
+        $("[z-index]").each(function () {
+            highestIndex = Math.max(highestIndex, $(this).attr("z-index"));
+        });
+        return highestIndex;
+    },
+
 	// ================================================================
 	//
 	// public Function: blueskyUtils.convertDeclarativeDataStringToJavascriptObject

@@ -4,13 +4,13 @@
 //
 WinJS.Namespace.define("Windows.Foundation", {
 
-	// =========================================================
-	//
-	//		TODO: Stub function
-	//
-	Uri: WinJS.Class.define(function (uri) {
-		this.uri = uri;
-	},
+    // =========================================================
+    //
+    //		TODO: Stub function
+    //
+    Uri: WinJS.Class.define(function (uri) {
+        this.uri = uri;
+    },
 	{
 	})
 });

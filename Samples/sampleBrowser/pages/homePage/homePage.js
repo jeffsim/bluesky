@@ -242,13 +242,32 @@
 			});
 
 			list.push({
-				group: this.listGroups[2],
-				backgroundImage: "http://bluesky.io/samples/previews/flipview.jpg",
-				DisplayName: "FlipView",
-				itemTemplate: 'sdkTemplate',
-				url: "http://flipview.bluesky.io",
-				githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/flipView%20Sample",
-				msdnUrl: "http://code.msdn.microsoft.com/windowsapps/FlipView-control-sample-18e434b4"
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/messageDialog.png",
+			    DisplayName: "MessageDialog",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://messageDialog.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/messageDialog",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/Message-dialog-sample-00c928f5"
+			});
+			list.push({
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/flipview.jpg",
+			    DisplayName: "FlipView",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://flipview.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/flipView%20Sample",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/FlipView-control-sample-18e434b4"
+			});
+
+			list.push({
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/flyoutSample.jpg",
+			    DisplayName: "Flyout control",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://flyoutSample.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/flyoutControl",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/Flyout-sample-258757b3"
 			});
 
 			list.push({

@@ -4134,7 +4134,6 @@ WinJS.Namespace.define("WinJS.UI", {
     },
 
 
-
     // ================================================================
     //
     // public Function: WinJS.UI.processAll
@@ -4212,6 +4211,62 @@ WinJS.Namespace.define("WinJS.UI", {
 
         // Create a reference from the wincontrol back to its source element
         element.winControl.element = element;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.enableAnimations
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/Hh779760.aspx
+    // 
+    enableAnimations: function () {
+
+        WinJS.UI._animationEnabled = true;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.disableAnimations
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779759.aspx
+    // 
+    disableAnimations: function () {
+
+        WinJS.UI._animationEnabled = false;
+
+        // Cancel any active animations
+        WinJS.UI.Animation._cancelAllActiveAnimations();
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.executeAnimation
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779762.aspx
+    // 
+    executeAnimation: function (anim) {
+
+        // TODO: Implement this.
+        if (!_warnedExecuteAnimationNYI) {
+            console.warn("Bluesky: WinJS.UI.Animation.executeAnimation is NYI");
+            _warnedExecuteAnimationNYI = true;
+        }
+    },
+    _warnedExecuteAnimationNYI: false,
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.isAnimationEnabled
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779793.aspx
+    // 
+    _animationEnabled: true,
+    isAnimationEnabled: function () {
+        return _animationEnabled;
     },
 
 
@@ -4590,6 +4645,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     enterPage: function (elements, offset) {
 
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         // TODO: is there a difference between enterPage and enterContent?
         return WinJS.UI.Animation.enterContent(elements, offset);
     },
@@ -4602,6 +4661,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701586.aspx
     //
     exitPage: function (elements, offset) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
 
         // TODO: is there a difference between exitPage and exitContent?
         return WinJS.UI.Animation.exitContent(elements, offset);
@@ -4616,6 +4679,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     showPopup: function (elements, offset) {
 
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         return WinJS.UI.Animation._doShowAnimation(elements, offset, 250, "easeOut");
     },
 
@@ -4627,6 +4694,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212678.aspx
     //
     hidePopup: function (elements) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
 
         return new WinJS.Promise(function (onComplete) {
             if (!elements) {
@@ -4652,6 +4723,11 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701582.aspx
     //
     enterContent: function (elements, offset) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         return WinJS.UI.Animation._doShowAnimation(elements, offset, 150, "easeOut");
     },
 
@@ -4812,6 +4888,19 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
         });
     },
 
+    
+    // ================================================================
+    //
+    // private(ish) function: WinJS.UI.Animation._cancelAllActiveAnimations
+    //
+    //		Called when Animations are disabled (through WinJS.UI.Animation.disableAnimations).
+    //
+    _cancelAllActiveAnimations: function() {
+
+        // TODO: What does Win8 do in this situation?  Let in-progress animations complete, force them 
+        // to end-state, or just immediately cancel them?  We opt for the first as it's the simplest.
+    },
+
 
     // ================================================================
     //
@@ -4828,7 +4917,7 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     //		The number of pixels to animate left/right enterContent/exitContent
     //
-    _enterExitDistance: 20
+    _enterExitDistance: 20,
 });
 
 
@@ -5499,13 +5588,12 @@ WinJS.Namespace.define("WinJS.UI", {
                         "visibility": "visible"
                     });
 
-
 		        // Hide it
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
 		            // Enable light dismiss
-		            $('body').one('click', that._lightDismissHandler.bind(that));
+		            $('body').bind('click', that._lightDismissHandler.bind(that));
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -5558,9 +5646,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
-		    _lightDismissHandler: function () {
+		    _lightDismissHandler: function (e) {
 
-		        // Hide our Flyout
+		        // Ignore if the click event happened over our flyout
+		        var flyoutLoc = this.$rootElement.offset();
+		        var flyoutWidth = this.$rootElement.outerWidth();
+		        var flyoutHeight = this.$rootElement.outerHeight();
+		        if (e.clientX >= flyoutLoc.left && e.clientX <= flyoutLoc.left + flyoutWidth &&
+                    e.clientY >= flyoutLoc.top && e.clientY <= flyoutLoc.top + flyoutHeight)
+		            return;
+
+		        // Hide our Flyout 
 		        this.hide();
 		    },
 
@@ -7571,6 +7667,178 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
         })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.UI.Popups.MessageDialog.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.UI.Popups.MessageDialog
+//
+//		Implementation of the Windows.UI.Popups.MessageDialog object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog
+//
+WinJS.Namespace.define("WinJS.UI.Popups", {
+
+    // ================================================================
+    //
+    // public Object: Windows.UI.Popups.MessageDialog
+    //
+    MessageDialog: WinJS.Class.define(
+
+		// ================================================================
+		//
+		// public function: Windows.UI.Popups.MessageDialog constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.messagedialog.aspx
+		//	
+        function (content, title) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!content)
+                console.error("Windows.UI.Popups.MessageDialog constructor: Undefined or null content specified");
+            /*ENDDEBUG*/
+
+        },
+
+		// ================================================================
+		// Windows.UI.Popups.MessageDialog Member functions
+		// ================================================================
+
+		{
+		    // ================================================================
+		    //
+		    // public function: Windows.UI.Popups.MessageDialog.showAsync
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.showasync.aspx
+		    //	
+		    showAsync: function () {
+		        return new WinJS.Promise(function (onComplete) {
+
+		            // Complete the promise when the dialog closes...
+		            onComplete();
+		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.defaultCommandIndex
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.defaultcommandindex.aspx
+		    //	
+		    _defaultCommandIndex: 0,
+		    defaultCommandIndex: {
+		        get: function () {
+		            return this._defaultCommandIndex;
+		        },
+		        set: function (value) {
+		            this._defaultCommandIndex = value;
+		        }
+
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.cancelCommandIndex
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.cancelcommandindex.aspx
+		    //	
+		    _cancelCommandIndex: -1,
+		    cancelCommandIndex: {
+		        get: function () {
+		            return this._cancelCommandIndex;
+		        },
+		        set: function (value) {
+		            this._cancelCommandIndex = value;
+		        }
+
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.commands
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.commands.aspx
+		    //	
+		    _comands: [],
+		    commands: {
+		        get: function () {
+		            return this._commands;
+		        },
+		        set: function (value) {
+		            this._commands = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.content
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.content.aspx
+		    //	
+		    _content: "",
+		    content: {
+		        get: function () {
+		            return this._content;
+		        },
+		        set: function (value) {
+		            this._content = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.options
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.options.aspx
+		    //	
+		    _options: {},
+		    options: {
+		        get: function () {
+		            return this._options;
+		        },
+		        set: function (value) {
+		            this._options = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.title
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.title.aspx
+		    //	
+		    _title: "",
+		    title: {
+		        get: function () {
+		            return this._title;
+		        },
+		        set: function (value) {
+		            this._title = value;
+		        }
+		    }
+		})
 });
 
 

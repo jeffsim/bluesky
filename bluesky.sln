@@ -15,40 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "buildBluesky", "bluesky.js\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bluesky.js Source", "bluesky.js Source", "{D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}"
 	ProjectSection(SolutionItems) = preProject
-		bluesky.js\sourceFiles\WinJS.Application.js = bluesky.js\sourceFiles\WinJS.Application.js
-		bluesky.js\sourceFiles\WinJS.Binding.FilteredList.js = bluesky.js\sourceFiles\WinJS.Binding.FilteredList.js
-		bluesky.js\sourceFiles\WinJS.Binding.GroupedList.js = bluesky.js\sourceFiles\WinJS.Binding.GroupedList.js
-		bluesky.js\sourceFiles\WinJS.Binding.GroupsList.js = bluesky.js\sourceFiles\WinJS.Binding.GroupsList.js
-		bluesky.js\sourceFiles\WinJS.Binding.List.js = bluesky.js\sourceFiles\WinJS.Binding.List.js
-		bluesky.js\sourceFiles\WinJS.Binding.Template.js = bluesky.js\sourceFiles\WinJS.Binding.Template.js
-		bluesky.js\sourceFiles\WinJS.Binding._ListBase.js = bluesky.js\sourceFiles\WinJS.Binding._ListBase.js
-		bluesky.js\sourceFiles\WinJS.Binding._ListProjection.js = bluesky.js\sourceFiles\WinJS.Binding._ListProjection.js
-		bluesky.js\sourceFiles\WinJS.Binding._ModifiableListBase.js = bluesky.js\sourceFiles\WinJS.Binding._ModifiableListBase.js
-		bluesky.js\sourceFiles\WinJS.Binding.js = bluesky.js\sourceFiles\WinJS.Binding.js
-		bluesky.js\sourceFiles\WinJS.Navigation.js = bluesky.js\sourceFiles\WinJS.Navigation.js
-		bluesky.js\sourceFiles\WinJS.Promise.js = bluesky.js\sourceFiles\WinJS.Promise.js
-		bluesky.js\sourceFiles\WinJS.Resources.js = bluesky.js\sourceFiles\WinJS.Resources.js
-		bluesky.js\sourceFiles\WinJS.UI.Animation.js = bluesky.js\sourceFiles\WinJS.UI.Animation.js
-		bluesky.js\sourceFiles\WinJS.UI.BaseControl.js = bluesky.js\sourceFiles\WinJS.UI.BaseControl.js
-		bluesky.js\sourceFiles\WinJS.UI.DOMEventMixin.js = bluesky.js\sourceFiles\WinJS.UI.DOMEventMixin.js
-		bluesky.js\sourceFiles\WinJS.UI.FlipView.js = bluesky.js\sourceFiles\WinJS.UI.FlipView.js
-		bluesky.js\sourceFiles\WinJS.UI.Flyout.js = bluesky.js\sourceFiles\WinJS.UI.Flyout.js
-		bluesky.js\sourceFiles\WinJS.UI.GridLayout.js = bluesky.js\sourceFiles\WinJS.UI.GridLayout.js
-		bluesky.js\sourceFiles\WinJS.UI.HtmlControl.js = bluesky.js\sourceFiles\WinJS.UI.HtmlControl.js
-		bluesky.js\sourceFiles\WinJS.UI.ListLayout.js = bluesky.js\sourceFiles\WinJS.UI.ListLayout.js
-		bluesky.js\sourceFiles\WinJS.UI.ListView.js = bluesky.js\sourceFiles\WinJS.UI.ListView.js
-		bluesky.js\sourceFiles\WinJS.UI.Pages.js = bluesky.js\sourceFiles\WinJS.UI.Pages.js
-		bluesky.js\sourceFiles\WinJS.UI.Rating.js = bluesky.js\sourceFiles\WinJS.UI.Rating.js
-		bluesky.js\sourceFiles\WinJS.UI.js = bluesky.js\sourceFiles\WinJS.UI.js
-		bluesky.js\sourceFiles\WinJS.Utilities.QueryCollection.js = bluesky.js\sourceFiles\WinJS.Utilities.QueryCollection.js
-		bluesky.js\sourceFiles\WinJS.Utilities.js = bluesky.js\sourceFiles\WinJS.Utilities.js
-		bluesky.js\sourceFiles\WinJS.js = bluesky.js\sourceFiles\WinJS.js
-		bluesky.js\sourceFiles\WinJS.xhr.js = bluesky.js\sourceFiles\WinJS.xhr.js
-		bluesky.js\sourceFiles\Windows.Foundation.js = bluesky.js\sourceFiles\Windows.Foundation.js
-		bluesky.js\sourceFiles\Windows.Globalization.js = bluesky.js\sourceFiles\Windows.Globalization.js
-		bluesky.js\sourceFiles\Windows.System.Launcher.js = bluesky.js\sourceFiles\Windows.System.Launcher.js
-		bluesky.js\sourceFiles\Windows.UI.WebUI.js = bluesky.js\sourceFiles\Windows.UI.WebUI.js
-		bluesky.js\sourceFiles\Windows.js = bluesky.js\sourceFiles\Windows.js
 		bluesky.js\sourceFiles\blueskyUtils.js = bluesky.js\sourceFiles\blueskyUtils.js
 	EndProjectSection
 EndProject
@@ -118,6 +84,74 @@ EndProject
 Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "Controls_Flyout", "Samples\Win8SDK\flyoutControl\Controls_Flyout.jsproj", "{373B6FA1-D9A2-42E2-B9CC-D6D4BE0E36A5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "Samples\Win8SDK\flyoutControl\WebApp.csproj", "{350EF1C7-2801-40FF-A314-64F166020856}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MessageDialog", "MessageDialog", "{3FFD648E-8BBA-42E9-B590-4A0F0EFA73C4}"
+EndProject
+Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "MessageDialogSample", "Samples\Win8SDK\messageDialog\MessageDialogSample.jsproj", "{68EA1B7C-EE36-4502-8318-F9643EC11683}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "Samples\Win8SDK\messageDialog\WebApp.csproj", "{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WinJS.Binding", "WinJS.Binding", "{16ED6547-13E8-41E5-8373-EAE1C56E19B2}"
+	ProjectSection(SolutionItems) = preProject
+		bluesky.js\sourceFiles\WinJS.Binding.FilteredList.js = bluesky.js\sourceFiles\WinJS.Binding.FilteredList.js
+		bluesky.js\sourceFiles\WinJS.Binding.GroupedList.js = bluesky.js\sourceFiles\WinJS.Binding.GroupedList.js
+		bluesky.js\sourceFiles\WinJS.Binding.GroupsList.js = bluesky.js\sourceFiles\WinJS.Binding.GroupsList.js
+		bluesky.js\sourceFiles\WinJS.Binding.List.js = bluesky.js\sourceFiles\WinJS.Binding.List.js
+		bluesky.js\sourceFiles\WinJS.Binding.Template.js = bluesky.js\sourceFiles\WinJS.Binding.Template.js
+		bluesky.js\sourceFiles\WinJS.Binding._ListBase.js = bluesky.js\sourceFiles\WinJS.Binding._ListBase.js
+		bluesky.js\sourceFiles\WinJS.Binding._ListProjection.js = bluesky.js\sourceFiles\WinJS.Binding._ListProjection.js
+		bluesky.js\sourceFiles\WinJS.Binding._ModifiableListBase.js = bluesky.js\sourceFiles\WinJS.Binding._ModifiableListBase.js
+		bluesky.js\sourceFiles\WinJS.Binding.js = bluesky.js\sourceFiles\WinJS.Binding.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Windows.UI", "Windows.UI", "{34B2A275-494E-411E-8B6C-27EB400D0780}"
+	ProjectSection(SolutionItems) = preProject
+		bluesky.js\sourceFiles\Windows.UI.Popups.MessageDialog.js = bluesky.js\sourceFiles\Windows.UI.Popups.MessageDialog.js
+		bluesky.js\sourceFiles\Windows.UI.Popups.UICommand.js = bluesky.js\sourceFiles\Windows.UI.Popups.UICommand.js
+		bluesky.js\sourceFiles\Windows.UI.WebUI.js = bluesky.js\sourceFiles\Windows.UI.WebUI.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WinJS", "WinJS", "{39DD35FF-D7D5-4400-BDD2-F3E68CEBE3F6}"
+	ProjectSection(SolutionItems) = preProject
+		bluesky.js\sourceFiles\WinJS.Application.js = bluesky.js\sourceFiles\WinJS.Application.js
+		bluesky.js\sourceFiles\WinJS.Navigation.js = bluesky.js\sourceFiles\WinJS.Navigation.js
+		bluesky.js\sourceFiles\WinJS.Promise.js = bluesky.js\sourceFiles\WinJS.Promise.js
+		bluesky.js\sourceFiles\WinJS.Resources.js = bluesky.js\sourceFiles\WinJS.Resources.js
+		bluesky.js\sourceFiles\WinJS.Utilities.QueryCollection.js = bluesky.js\sourceFiles\WinJS.Utilities.QueryCollection.js
+		bluesky.js\sourceFiles\WinJS.Utilities.js = bluesky.js\sourceFiles\WinJS.Utilities.js
+		bluesky.js\sourceFiles\WinJS.js = bluesky.js\sourceFiles\WinJS.js
+		bluesky.js\sourceFiles\WinJS.xhr.js = bluesky.js\sourceFiles\WinJS.xhr.js
+		bluesky.js\sourceFiles\blueskyUtils.js = bluesky.js\sourceFiles\blueskyUtils.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WinJS.UI", "WinJS.UI", "{1C6B59FD-D842-4CAB-86EC-E93E0E5DF67C}"
+	ProjectSection(SolutionItems) = preProject
+		bluesky.js\sourceFiles\WinJS.UI.Animation.js = bluesky.js\sourceFiles\WinJS.UI.Animation.js
+		bluesky.js\sourceFiles\WinJS.UI.BaseControl.js = bluesky.js\sourceFiles\WinJS.UI.BaseControl.js
+		bluesky.js\sourceFiles\WinJS.UI.DOMEventMixin.js = bluesky.js\sourceFiles\WinJS.UI.DOMEventMixin.js
+		bluesky.js\sourceFiles\WinJS.UI.FlipView.js = bluesky.js\sourceFiles\WinJS.UI.FlipView.js
+		bluesky.js\sourceFiles\WinJS.UI.Flyout.js = bluesky.js\sourceFiles\WinJS.UI.Flyout.js
+		bluesky.js\sourceFiles\WinJS.UI.GridLayout.js = bluesky.js\sourceFiles\WinJS.UI.GridLayout.js
+		bluesky.js\sourceFiles\WinJS.UI.HtmlControl.js = bluesky.js\sourceFiles\WinJS.UI.HtmlControl.js
+		bluesky.js\sourceFiles\WinJS.UI.ListLayout.js = bluesky.js\sourceFiles\WinJS.UI.ListLayout.js
+		bluesky.js\sourceFiles\WinJS.UI.ListView.js = bluesky.js\sourceFiles\WinJS.UI.ListView.js
+		bluesky.js\sourceFiles\WinJS.UI.Pages.js = bluesky.js\sourceFiles\WinJS.UI.Pages.js
+		bluesky.js\sourceFiles\WinJS.UI.Rating.js = bluesky.js\sourceFiles\WinJS.UI.Rating.js
+		bluesky.js\sourceFiles\WinJS.UI.js = bluesky.js\sourceFiles\WinJS.UI.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Windows.Foundation", "Windows.Foundation", "{F85083EC-DFC6-4A09-B269-7A0312C5FF26}"
+	ProjectSection(SolutionItems) = preProject
+		bluesky.js\sourceFiles\Windows.Foundation.Collections.js = bluesky.js\sourceFiles\Windows.Foundation.Collections.js
+		bluesky.js\sourceFiles\Windows.Foundation.js = bluesky.js\sourceFiles\Windows.Foundation.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Windows", "Windows", "{C459C5CE-96FE-4353-BC80-CBE4A3EA8D6C}"
+	ProjectSection(SolutionItems) = preProject
+		bluesky.js\sourceFiles\Windows.Globalization.js = bluesky.js\sourceFiles\Windows.Globalization.js
+		bluesky.js\sourceFiles\Windows.System.Launcher.js = bluesky.js\sourceFiles\Windows.System.Launcher.js
+		bluesky.js\sourceFiles\Windows.js = bluesky.js\sourceFiles\Windows.js
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -299,6 +333,18 @@ Global
 		{5BB1836E-5DBD-49A0-AF88-123EE93106B6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BB1836E-5DBD-49A0-AF88-123EE93106B6}.Release|x64.ActiveCfg = Release|Any CPU
 		{5BB1836E-5DBD-49A0-AF88-123EE93106B6}.Release|x86.ActiveCfg = Release|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Release|ARM.ActiveCfg = Release|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Release|x64.ActiveCfg = Release|Any CPU
+		{68EA1B7C-EE36-4502-8318-F9643EC11683}.Release|x86.ActiveCfg = Release|Any CPU
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493}.Debug|ARM.ActiveCfg = Debug|Any CPU
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493}.Debug|Any CPU.Build.0 = Debug|Any CPU
@@ -311,6 +357,16 @@ Global
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493}.Release|Any CPU.Deploy.0 = Release|Any CPU
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493}.Release|x64.ActiveCfg = Release|Any CPU
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493}.Release|x86.ActiveCfg = Release|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Release|ARM.ActiveCfg = Release|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Release|x64.ActiveCfg = Release|Any CPU
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0}.Release|x86.ActiveCfg = Release|Any CPU
 		{76745FCB-5AF4-467A-AF2C-448DCA0D3DB6}.Debug|ARM.ActiveCfg = Debug|Any CPU
 		{76745FCB-5AF4-467A-AF2C-448DCA0D3DB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{76745FCB-5AF4-467A-AF2C-448DCA0D3DB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
@@ -453,22 +509,29 @@ Global
 		{0A5A0EB5-B3C9-4A83-86D7-1CDFD6BDF816} = {34B1C474-3A06-4289-A0DC-523B97662F9E}
 		{0AF11018-2DA9-4251-AD13-8FE9B5306049} = {99FFAAA5-5C29-4D07-8FBD-6E95F438455D}
 		{12CBF5AC-FCDC-4477-9050-946D81030324} = {34B1C474-3A06-4289-A0DC-523B97662F9E}
+		{16ED6547-13E8-41E5-8373-EAE1C56E19B2} = {D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}
 		{196866EA-B69C-4A30-B7D8-50EA9026F8F2} = {0AF11018-2DA9-4251-AD13-8FE9B5306049}
+		{1C6B59FD-D842-4CAB-86EC-E93E0E5DF67C} = {D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}
 		{1EA06DC8-7251-4998-8020-789367EE7CC3} = {6A04C81D-820C-4102-B939-748813E8EFBF}
 		{251FECA7-17D8-4BA3-BE58-338C42795638} = {6A04C81D-820C-4102-B939-748813E8EFBF}
 		{2C7D80E1-B443-4B40-99CC-0FB36D178023} = {011EC80B-5DA5-409E-94F8-8CEE7B905DF7}
 		{2D3091D1-4342-4561-8A92-532B8B6EF28E} = {011EC80B-5DA5-409E-94F8-8CEE7B905DF7}
 		{3298BF84-E4E0-4436-9107-4695C9FCC05A} = {6A04C81D-820C-4102-B939-748813E8EFBF}
 		{34B1C474-3A06-4289-A0DC-523B97662F9E} = {6A04C81D-820C-4102-B939-748813E8EFBF}
+		{34B2A275-494E-411E-8B6C-27EB400D0780} = {D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}
 		{350EF1C7-2801-40FF-A314-64F166020856} = {93C24609-59B0-4824-B239-A7668887416E}
 		{373B6FA1-D9A2-42E2-B9CC-D6D4BE0E36A5} = {93C24609-59B0-4824-B239-A7668887416E}
+		{39DD35FF-D7D5-4400-BDD2-F3E68CEBE3F6} = {D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}
 		{3C990735-DBA3-490A-8B74-D5CE2D459BEC} = {54D9DC3C-4BE7-40AB-8BDE-997DC8990DB5}
 		{3F389AAB-BC93-4566-BFAA-ABDF54A35990} = {79257DB3-6E06-4B4F-9B32-EA91AEC80885}
+		{3FFD648E-8BBA-42E9-B590-4A0F0EFA73C4} = {6A04C81D-820C-4102-B939-748813E8EFBF}
 		{53A00B4A-76C2-4435-8E79-9F07B002CA4D} = {FADD45CA-E61A-4C48-B101-641AFB2E21B0}
 		{54D9DC3C-4BE7-40AB-8BDE-997DC8990DB5} = {99FFAAA5-5C29-4D07-8FBD-6E95F438455D}
 		{5BB1836E-5DBD-49A0-AF88-123EE93106B6} = {54D9DC3C-4BE7-40AB-8BDE-997DC8990DB5}
+		{68EA1B7C-EE36-4502-8318-F9643EC11683} = {3FFD648E-8BBA-42E9-B590-4A0F0EFA73C4}
 		{6A04C81D-820C-4102-B939-748813E8EFBF} = {08811DB0-03F0-4204-A1D9-0FB468322D08}
 		{722B08B5-69DC-4A27-AA55-1BE1ED592493} = {251FECA7-17D8-4BA3-BE58-338C42795638}
+		{7335D766-A1F8-4F9C-9CFB-F423C23CD0F0} = {3FFD648E-8BBA-42E9-B590-4A0F0EFA73C4}
 		{76745FCB-5AF4-467A-AF2C-448DCA0D3DB6} = {9E9B13D2-6AE3-4359-85B7-519AB6C8C45F}
 		{8303B3B9-9DC6-466E-89B7-7337156449B8} = {0F66D8AA-523D-4F9A-9002-D36E4B933B90}
 		{89B9FBC1-ECFC-4058-9A4B-7415A38CE7FE} = {FADD45CA-E61A-4C48-B101-641AFB2E21B0}
@@ -479,8 +542,10 @@ Global
 		{9EE3BA23-05BA-402A-A8B6-F3281C3F8B2C} = {3298BF84-E4E0-4436-9107-4695C9FCC05A}
 		{AB36E9BE-6E81-4385-8F28-FA6AAE0EDF5C} = {0F66D8AA-523D-4F9A-9002-D36E4B933B90}
 		{BA7E15BE-ABAA-4634-B26A-647BD6D2D427} = {0AF11018-2DA9-4251-AD13-8FE9B5306049}
+		{C459C5CE-96FE-4353-BC80-CBE4A3EA8D6C} = {D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}
 		{E03D5A86-2988-4C43-906D-9760BD1C6C40} = {1EA06DC8-7251-4998-8020-789367EE7CC3}
 		{ECC14E8A-5A13-43A5-952A-E8778C3305C4} = {251FECA7-17D8-4BA3-BE58-338C42795638}
+		{F85083EC-DFC6-4A09-B269-7A0312C5FF26} = {D8DD47BF-2402-4AC9-B069-8FFFC3E2DFBB}
 		{FADD45CA-E61A-4C48-B101-641AFB2E21B0} = {6A04C81D-820C-4102-B939-748813E8EFBF}
 		{FB814FCF-C27C-415E-ADFA-F5679B5D9DD2} = {1EA06DC8-7251-4998-8020-789367EE7CC3}
 	EndGlobalSection
