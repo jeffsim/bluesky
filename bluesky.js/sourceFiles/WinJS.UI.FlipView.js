@@ -227,14 +227,10 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyPageCompleted
             //
-            _notifyPageCompleted: function (eventData) {
-                var eventInfo = {
-                    target: this._items[this._currentPage] ? $(">div>div", this._items[this._currentPage])[0] : undefined,
-                    type: "pagecompleted",
-                    detail: eventData
-                };
-
-                this.dispatchEvent(eventInfo.type, eventInfo);
+            _notifyPageCompleted: function (pageElement, eventData) {
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("pagecompleted", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -242,13 +238,12 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyDataSourceCountChanged
             //
-            _notifyDataSourceCountChanged: function (eventData) {
-                var eventInfo = {
-                    target: this,
-                    type: "datasourcecountchanged"
-                };
+            _notifyDataSourceCountChanged: function (pageElement, eventData) {
 
-                this.dispatchEvent(eventInfo.type, eventInfo);
+                // TODO-CLEANUP: Merge all of these _notify*** functions into one function and just call it.
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("datasourcecountchanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -256,14 +251,11 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyPageSelected
             //
-            _notifyPageSelected: function (eventData) {
-                var eventInfo = {
-                    target: this._items[this._currentPage] ? $(">div>div", this._items[this._currentPage])[0] : undefined,
-                    type: "pageselected",
-                    detail: eventData
-                };
+            _notifyPageSelected: function (pageElement, eventData) {
 
-                this.dispatchEvent(eventInfo.type, eventInfo);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("pageselected", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -271,15 +263,11 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyPageVisibilityChanged
             //
-            _notifyPageVisibilityChanged: function (eventData) {
-                var eventInfo = {
-                    type: "pagevisibilitychanged",
-                    target: this._items[this._currentPage] ? $(">div>div", this._items[this._currentPage])[0] : undefined,
-                    srcElement: this._items[this._currentPage] ? this._items[this._currentPage][0] : undefined,
-                    detail: eventData
-                };
+            _notifyPageVisibilityChanged: function (pageElement, eventData) {
 
-                this.dispatchEvent(eventInfo.type, eventInfo);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("pagevisibilitychanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -369,15 +357,17 @@ WinJS.Namespace.define("WinJS.UI", {
                 $(this._items[this._currentPage]).fadeOut("fast");
 
                 // Notify listeners that the new page is visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                var outgoingPage = $(".win-template", this._items[this._currentPage])[0];
+                var incomingPage = $(".win-template", this._items[pageIndex])[0];
+                this._notifyPageVisibilityChanged(outgoingPage, { source: this.element, visible: true });
 
                 this._currentPage = pageIndex;
 
                 // Notify listeners that the previous page is no longer visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                this._notifyPageVisibilityChanged(incomingPage, { source: this.element, visible: false });
 
                 // Notify listeners that the page has been selected
-                this._notifyPageSelected({ source: this.element });
+                this._notifyPageSelected(incomingPage, { source: this.element });
 
                 // Render the page; when done, notify listeners that the page has completed
                 var that = this, offset;
@@ -388,7 +378,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 var that = this;
                 return WinJS.UI.Animation.enterContent([this._items[this._currentPage]], [offset]).then(function () {
-                    that._notifyPageCompleted({ source: that.element });
+                    that._notifyPageCompleted(incomingPage, { source: that.element });
                 });
                 return true;
             },
@@ -413,15 +403,17 @@ WinJS.Namespace.define("WinJS.UI", {
                 $(this._items[this._currentPage]).fadeOut("fast");
 
                 // Notify listeners that the new page is visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                var outgoingPage = $(".win-template", this._items[this._currentPage])[0];
+                var incomingPage = $(".win-template", this._items[pageIndex])[0];
+                this._notifyPageVisibilityChanged(outgoingPage, { source: this.element, visible: true });
 
                 this._currentPage = pageIndex;
 
                 // Notify listeners that the previous page is no longer visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                this._notifyPageVisibilityChanged(incomingPage, { source: this.element, visible: false });
 
                 // Notify listeners that the page has been selected
-                this._notifyPageSelected({ source: this.element });
+                this._notifyPageSelected(incomingPage, { source: this.element });
 
                 // Render the page; when done, notify listeners that the page has completed
                 var that = this, offset;
@@ -432,7 +424,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 var that = this;
                 return WinJS.UI.Animation.enterContent([this._items[this._currentPage]], [offset]).then(function () {
-                    that._notifyPageCompleted({ source: that.element });
+                    that._notifyPageCompleted(incomingPage, { source: that.element });
                 });
                 return true;
             },
@@ -453,29 +445,36 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     if (this._currentPage == pageIndex)
                         return;
-
+                    if (pageIndex >= this._items.length)
+                        return;
                     var that = this;
 
                     this._makePageVisible(pageIndex);
 
-                    // Fade out the current page
-                    $(this._items[this._currentPage]).fadeOut("fast");
+                    var outgoingPage = $(".win-template", this._items[this._currentPage])[0];
+                    var incomingPage = $(".win-template", this._items[pageIndex])[0];
 
-                    // Notify listeners that the new page is visible
-                    this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                    // Fade out the current page
+                    if (outgoingPage) {
+                        $(this._items[this._currentPage]).fadeOut("fast");
+                        this._notifyPageVisibilityChanged(outgoingPage, { source: this.element, visible: true });
+                    }
+
+                    if (!incomingPage)
+                        return;
 
                     this._currentPage = pageIndex;
 
                     // Notify listeners that the previous page is no longer visible
-                    that._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                    this._notifyPageVisibilityChanged(incomingPage, { source: this.element, visible: false });
 
                     // Notify listeners that the page has been selected
-                    this._notifyPageSelected({ source: this.element });
+                    this._notifyPageSelected(incomingPage, { source: this.element });
 
                     // Render the page; when done, notify listeners that the page has completed
                     return new WinJS.Promise(function (onComplete) {
                         $(that._items[that._currentPage]).fadeIn("fast", function () {
-                            that._notifyPageCompleted({ source: that.element });
+                            that._notifyPageCompleted(incomingPage, { source: that.element });
                             onComplete();
                         });
                     });
@@ -537,7 +536,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     var renderMeWithCountChange = function () {
                         that.render(true);
                         that.currentPage = Math.min(that._currentPage, that._itemDataSource._list.length - 1);
-                        that._notifyDataSourceCountChanged();
+                        that._notifyDataSourceCountChanged(that.element);
                     };
 
                     // Unbind from previous list (if any)

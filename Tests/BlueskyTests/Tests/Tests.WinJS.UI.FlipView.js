@@ -283,7 +283,7 @@
 					// NOTE: Win8 displays a "loading" item that it hides when things are loaded - this causes
 					// and extra visibilitychanged event on win8 that we don't see in bluesky since we don't have
 					// that loaded div...
-					test.assert(completed.length == 1, "Did not get completed event");
+				    test.assert(completed.length == 1, "Did not get completed event");
 					test.assert($(completed[0].target).hasClass("win-template"), "completed event pointing at wrong element");
 					test.assert(completed[0].detail.source == flipView.element, "completed event pointing at wrong detail.source");
 					test.assert(selected.length == 1, "Did not get selected event");

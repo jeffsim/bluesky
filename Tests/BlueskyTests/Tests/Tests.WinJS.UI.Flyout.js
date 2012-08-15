@@ -22,10 +22,9 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
 
             var $anchor = testHarness.addTestElement("<div id='testAnchor' style='position: absolute;top:10px;left:200px;background-color:#a00;width:100px;height:100px'>anchor</div>");
             var $flyout = testHarness.addTestElement('<div id="testFlyout" data-win-control="WinJS.UI.Flyout" style="display: none;background-color:#aaa;width:200px;height:200px">Hello there</div>');
-            $flyout.css("opacity", ".25");
+            
             var flyout = new WinJS.UI.Flyout($flyout[0]);
             var after = function (e) {
-
                 // Verify the flyout is visible and where we expect it to be
                 var $flyoutDiv = $(".win-flyout");
                 test.assert($flyoutDiv.length == 1, "Flyout not present in DOM");
@@ -144,7 +143,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var flyoutHorzCenter = $flyout.offset().left + $flyout.outerWidth() / 2;
                     test.assert(anchorHorzCenter == flyoutHorzCenter, "Flyout not horizontally centered (1)");
 
-                    flyout.removeEventListener("aftershow", this);
+                    flyout.removeEventListener("aftershow", afterShow);
                     flyout.hide();
                     $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
                     onComplete();
@@ -170,7 +169,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                         var flyoutHorzCenter = $flyout.offset().left + $flyout.outerWidth() / 2;
                         test.assert(anchorHorzCenter == flyoutHorzCenter, "Flyout not horizontally centered (2)");
 
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
                         onComplete();
@@ -194,7 +193,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().left < $anchor.offset().left, "Flyout is not to the left of anchor");
 
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -231,7 +230,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                 var afterShow = function () {
                     // Verify the flyout is visible and where we expect it to be
                     test.assert($flyout.offset().left < $anchor.offset().left, "Flyout is not to the left");
-                    flyout.removeEventListener("aftershow", this);
+                    flyout.removeEventListener("aftershow", afterShow);
                     flyout.hide();
                     $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -253,7 +252,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().left > $anchor.offset().left, "Flyout is not to the right");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -276,7 +275,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().top < $anchor.offset().top, "Flyout is not to the top");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -299,7 +298,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().top > $anchor.offset().top, "Flyout is not to the bottom");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -339,7 +338,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                 var afterShow = function () {
                     // Verify the flyout is visible and where we expect it to be
                     test.assert($flyout.offset().top == parseInt($flyout.css("marginTop")), "Flyout not on top of screen");
-                    flyout.removeEventListener("aftershow", this);
+                    flyout.removeEventListener("aftershow", afterShow);
                     flyout.hide();
                     $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -359,7 +358,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().top == parseInt($flyout.css("marginTop")), "Flyout (2) not on top of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -382,7 +381,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().left + $flyout.outerWidth() + parseInt($flyout.css("marginRight")) == leftEdge, "Flyout not on right of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -405,7 +404,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().left + $flyout.outerWidth() + parseInt($flyout.css("marginRight")) == leftEdge, "Flyout (2) not on right of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -429,7 +428,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().top + $flyout.outerHeight() + parseInt($flyout.css("marginBottom")) == bottomEdge, "Flyout not on bottom of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -452,7 +451,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().top + $flyout.outerHeight() + parseInt($flyout.css("marginBottom")) == bottomEdge, "Flyout (2) not on bottom of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -474,7 +473,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().left == parseInt($flyout.css("marginLeft")), "Flyout not on left of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 
@@ -496,7 +495,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     var afterShow = function () {
                         // Verify the flyout is visible and where we expect it to be
                         test.assert($flyout.offset().left == parseInt($flyout.css("marginLeft")), "Flyout not on left of screen");
-                        flyout.removeEventListener("aftershow", this);
+                        flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
                         $(flyout.element).remove(); // Need to explicitly remove flyout from DOM since it's not in the testFrame
 

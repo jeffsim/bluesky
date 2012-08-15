@@ -53,6 +53,7 @@
     <Content Include="Tests\supportFiles\listView\img2.jpg" />
     <Content Include="Tests\supportFiles\listView\img3.jpg" />
     <Content Include="Tests\supportFiles\listView\img4.jpg" />
+    <Content Include="Tests\Tests.WinJS.UI.Flyout.js" />
     <Content Include="Tests\Tests.WinJS.UI.ListView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Animation.js" />
     <Content Include="Tests\supportFiles\flipView\flipView.html" />

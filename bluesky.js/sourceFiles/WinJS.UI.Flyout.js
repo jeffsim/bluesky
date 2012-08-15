@@ -31,6 +31,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // Call into our base class' constructor
             WinJS.UI.BaseControl.call(this, element, options);
 
+            // Hide the flyout until shown
+            $(element).hide();
+
             // Initialize values
             this._hidden = true;
             this._placement = null;
@@ -62,7 +65,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._placement = placement;
 		        this._alignment = alignment;
 
-		        this.dispatchEvent("beforeshow", { type: "beforeshow", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        // TODO-CLEANUP: This pattern is repeated in a lot of places; move into DOMEventMixin as private function.
+		        //		        this.dispatchEvent("beforeshow", { type: "beforeshow", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        var event = document.createEvent("CustomEvent");
+		        event.initCustomEvent("beforeshow", true, false, {});
+		        this.element.dispatchEvent(event);
+
 
 		        // show
 		        var $anchor = $(anchor);
@@ -122,7 +130,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
 		            // Enable light dismiss
 		            $('body').one('click', that._lightDismissHandler.bind(that));
-		            that.dispatchEvent("aftershow", { type: "aftershow", target: that.element, currentTarget: that.element, srcElement: that.element });
+
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("aftershow", true, false, {});
+		            that.element.dispatchEvent(event);
 		        });
 
 		    },
@@ -144,14 +155,18 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // TODO: Test - does this work even though we did a bind(this) above?
 		        $('body').unbind('click', this._lightDismissHandler);
 
-		        this.dispatchEvent("beforehide", { type: "beforehide", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        var event = document.createEvent("CustomEvent");
+		        event.initCustomEvent("beforehide", true, false, {});
+		        this.element.dispatchEvent(event);
 
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
 		            $(that.element).css("visibility", "hidden");
-		            that.dispatchEvent("afterhide", { type: "afterhide", target: that.element, currentTarget: that.element, srcElement: that.element });
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("afterhide", true, false, {});
+		            that.element.dispatchEvent(event);
 		        });
 
 		        // TODO: Does Win8 clear out anchor, placement, and alignment when hidden?
