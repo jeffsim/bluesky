@@ -87,6 +87,7 @@
     <Content Include="Tests\Tests.WinJS.UI.js" />
     <Content Include="Tests\Tests.WinJS.js" />
     <Content Include="Tests\Tests.WinJS.Promise.js" />
+    <Content Include="Tests\Tests.WinJS.UI.SemanticZoom.js" />
     <Content Include="Tests\Tests.WinJS.Utilities.js" />
     <Content Include="Tests\Tests.WinJS.Utilities.QueryCollection.js" />
     <Content Include="Web.config" />

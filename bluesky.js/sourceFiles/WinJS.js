@@ -1,3 +1,15 @@
+/*DEBUG*/
+// verify app included jQuery
+if (!jQuery) {
+    console.error("Bluesky requires jQuery.  Please include it prior to referencing bluesky.js");
+}
+
+// Verify known version of jQuery is used.
+if ($().jquery != "1.7.2") {
+    console.warn("this version of Bluesky.js was tested against jQuery v1.7.2; this app uses v" + $().jquery + ".  Consider changing to 1.7.2 if you encounter unexpected issues.");
+}
+/*ENDDEBUG*/
+
 // ================================================================
 //
 // WinJS

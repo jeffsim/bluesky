@@ -131,6 +131,9 @@ WinJS.Namespace.define("WinJS.UI", {
                                                  .removeAttr("data-win-control") // remove the data-win-control attribute
 												 .show()[0];	// Show the instance we'll populate
 
+                        // Give the cloned element a unique identifier
+                        blueskyUtils.setDOMElementUniqueId(templateInstance);
+
                         // Let WinJS binding do all the heavy lifting for us.
                         WinJS.Binding.processAll(templateInstance, item.data);
 
@@ -278,8 +281,17 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211705.aspx
             //
             ondatasourcecountchanged: {
-                get: function () { return this._eventListeners["datasourcecountchanged"]; },
-                set: function (callback) { this.addEventListener("datasourcecountchanged", callback); }
+                 
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._ondatasourcecountchanged;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._ondatasourcecountchanged = callback;
+                    this.addEventListener("datasourcecountchanged", callback);
+                }
             },
 
 
@@ -290,8 +302,17 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh965332.aspx
             //
             onpagecompleted: {
-                get: function () { return this._eventListeners["pagecompleted"]; },
-                set: function (callback) { this.addEventListener("pagecompleted", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onpagecompleted;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onpagecompleted = callback;
+                    this.addEventListener("pagecompleted", callback);
+                }
             },
 
 
@@ -302,8 +323,16 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211713.aspx
             //
             onpageselected: {
-                get: function () { return this._eventListeners["pageselected"]; },
-                set: function (callback) { this.addEventListener("pageselected", callback); }
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onpageselected;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onpageselected = callback;
+                    this.addEventListener("pageselected", callback);
+                }
             },
 
 
@@ -314,8 +343,16 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211714.aspx
             //
             onpagevisibilitychanged: {
-                get: function () { return this._eventListeners["pagevisibilitychanged"]; },
-                set: function (callback) { this.addEventListener("pagevisibilitychanged", callback); }
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onpagevisibilitychanged;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onpagevisibilitychanged = callback;
+                    this.addEventListener("pagevisibilitychanged", callback);
+                }
             },
 
 

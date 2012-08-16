@@ -19,6 +19,20 @@ var blueskyUtils = {
         return highestIndex;
     },
 
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.setDOMElementUniqueId
+    //
+    //      Assigns a unique (to the current DOM) id to the specified element
+    //
+    _uniqueControlId: 1,
+    setDOMElementUniqueId: function(element) {
+        // TODO (PERF): Do this without wrapping in $
+        $(element).attr("id", "_bs" + (this._uniqueControlId++));
+    },
+
+
 	// ================================================================
 	//
 	// public Function: blueskyUtils.convertDeclarativeDataStringToJavascriptObject

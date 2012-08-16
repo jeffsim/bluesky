@@ -235,11 +235,19 @@ WinJS.Namespace.define("WinJS.UI", {
 								.clone()
 								.addClass("win-groupheader")
 								.show();
+                            
+                            // Give the cloned element a unique identifier
+                            // TODO (CLEANUP): can I do this in Binding.processAll?
+                            blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
 
                             // Perform data binding on the group header template
                             // TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
                             //		 code to allow that to return asychronously...
                             WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
+
+                            // Remove the data-win-control attribute after we've processed it.
+                            // TODO (CLEANUP): Am I doing this after every call to processAll?  If so, move this into there.
+                            $groupHeaderTemplate.removeAttr("data-win-control");
 
                             // Add the fully realized HTML for the group header to the ListView's DOM element.
                             $surfaceDiv.append($groupHeaderTemplate);
@@ -436,6 +444,9 @@ WinJS.Namespace.define("WinJS.UI", {
                     .removeAttr("data-win-control")
 					.show()[0];
 
+                // Give the cloned element a unique identifier
+                blueskyUtils.setDOMElementUniqueId(item.element);
+
                 // Let WinJS binding do all the heavy lifting for us.
                 WinJS.Binding.processAll(item.element, item.data);
             },
@@ -472,6 +483,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // Append the rendered item to our container (which was added to the DOM earlier)
                         item.element = element;
+
+                        // Give the cloned element a unique identifier
+                        if (!$(item.element).attr("id"))
+                            blueskyUtils.setDOMElementUniqueId(item.element);
 
                         // Get the size of the item from the item's element.
                         // TODO (PERF): Avoid the jQuery wrapper here.
@@ -620,6 +635,9 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _notifySelectionChanged: function (pageElement) {
 
+                // TODO: What to pass for data?
+                var eventData = {};
+
                 var event = document.createEvent("CustomEvent");
                 event.initCustomEvent("selectionchanged", true, false, eventData);
                 pageElement.dispatchEvent(event);
@@ -631,6 +649,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // private function: WinJS.ListView._notifyItemInvoked
             //
             _notifyItemInvoked: function (pageElement, eventData) {
+
+                // TODO: What to pass for data?
+                var eventData = {};
 
                 var event = document.createEvent("CustomEvent");
                 event.initCustomEvent("iteminvoked", true, false, eventData);
@@ -645,9 +666,19 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211827.aspx
             //
             oniteminvoked: {
-                get: function () { return this._eventListeners["iteminvoked"]; },
-                set: function (callback) { this.addEventListener("iteminvoked", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._oniteminvoked;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._oniteminvoked = callback;
+                    this.addEventListener("iteminvoked", callback);
+                }
             },
+
 
             // ================================================================
             //
@@ -656,8 +687,17 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: TODO
             //
             onselectionchanged: {
-                get: function () { return this._eventListeners["selectionchanged"]; },
-                set: function (callback) { this.addEventListener("selectionchanged", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onselectionchanged;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onselectionchanged = callback;
+                    this.addEventListener("selectionchanged", callback);
+                }
             },
 
 

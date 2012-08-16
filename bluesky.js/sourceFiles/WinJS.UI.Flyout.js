@@ -41,8 +41,6 @@ WinJS.Namespace.define("WinJS.UI", {
             this._alignment = null;
         },
 
-		// TODO: Support light dismiss
-
 		// ================================================================
 		// WinJS.UI.Flyout Member functions
 		// ================================================================
@@ -275,8 +273,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onafterhide: {
-		        get: function () { return this._eventListeners["afterhide"]; },
-		        set: function (callback) { this.addEventListener("afterhide", callback); }
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onafterhide;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onafterhide = callback;
+		            this.addEventListener("afterhide", callback);
+		        }
 		    },
 
 
@@ -287,8 +293,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onaftershow: {
-		        get: function () { return this._eventListeners["aftershow"]; },
-		        set: function (callback) { this.addEventListener("aftershow", callback); }
+
+		        get: function () {
+                    // Return the tracked hander (if any)
+		            return this._onaftershow;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onaftershow = callback;
+                    this.addEventListener("aftershow", callback);
+                }
 		    },
 
 
@@ -299,8 +314,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforehide: {
-		        get: function () { return this._eventListeners["beforehide"]; },
-		        set: function (callback) { this.addEventListener("beforehide", callback); }
+                
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onbeforehide;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onbeforehide = callback;
+		            this.addEventListener("beforehide", callback);
+		        }
 		    },
 
 
@@ -311,8 +335,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforeshow: {
-		        get: function () { return this._eventListeners["beforeshow"]; },
-		        set: function (callback) { this.addEventListener("beforeshow", callback); }
+                
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onbeforeshow;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onbeforeshow = callback;
+		            this.addEventListener("beforeshow", callback);
+		        }
 		    },
 
 

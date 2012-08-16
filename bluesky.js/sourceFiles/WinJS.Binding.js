@@ -260,6 +260,9 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 					WinJS.Binding._bindField(this, targetField, winBinds[targetField], dataContext);
 			});
 
+		    // Remove the data-win-control attribute after we've processed it.
+			// $(rootElement).removeAttr("data-win-control");
+
 			// Notify that we've fulfilled our promise to processAll
 			onComplete();
 		});

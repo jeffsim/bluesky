@@ -61,6 +61,7 @@
     <Content Include="testHarness\TestHarness.js" />
     <Content Include="Tests\supportFiles\flipView\flipView.html" />
     <Content Include="Tests\supportFiles\listView\listView.html" />
+    <Content Include="Tests\supportFiles\semanticZoom\simpleZoom.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
     <Content Include="Tests\Tests.WinJS.Application.js" />
     <Content Include="Tests\Tests.WinJS.Binding.FilteredList.js" />
@@ -80,6 +81,7 @@
     <Content Include="Tests\Tests.WinJS.UI.ListView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Pages.js" />
     <Content Include="Tests\Tests.WinJS.UI.Rating.js" />
+    <Content Include="Tests\Tests.WinJS.UI.SemanticZoom.js" />
     <Content Include="Tests\Tests.WinJS.Utilities.js" />
     <Content Include="Tests\Tests.WinJS.Utilities.QueryCollection.js" />
     <Content Include="Tests\supportFiles\externalTemplate1.html" />

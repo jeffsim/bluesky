@@ -14,6 +14,18 @@
 // ============================================================== //
 // ============================================================== //
 
+/*DEBUG*/
+// verify app included jQuery
+if (!jQuery) {
+    console.error("Bluesky requires jQuery.  Please include it prior to referencing bluesky.js");
+}
+
+// Verify known version of jQuery is used.
+if ($().jquery != "1.7.2") {
+    console.warn("this version of Bluesky.js was tested against jQuery v1.7.2; this app uses v" + $().jquery + ".  Consider changing to 1.7.2 if you encounter unexpected issues.");
+}
+/*ENDDEBUG*/
+
 // ================================================================
 //
 // WinJS
@@ -294,21 +306,10 @@ WinJS.Namespace.define("WinJS.UI", {
         //
         //		MSDN: TODO
         //
-        addEventListener: function (eventName, listener) {
-
-            // TODO: Move from our own list of event listeners to using our DOM element's add/Remove/DispatchEvent
-            if (!this._eventListeners)
-                this._eventListeners = [];
-            // Create the list of event listeners for the specified event if it does not yet exist
-            if (!this._eventListeners[eventName])
-                this._eventListeners[eventName] = [];
-
-            // Add the listener to the list of listeners for the specified eventName
-            this._eventListeners[eventName].push(listener);
+        addEventListener: function (eventName, listener, useCapture) {
 
             // Add DOM element event handlers (e.g. click).
-            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-            this.element.addEventListener(eventName, listener);
+            this.element.addEventListener(eventName, listener, useCapture);
         },
 
 
@@ -320,25 +321,7 @@ WinJS.Namespace.define("WinJS.UI", {
         //
         removeEventListener: function (eventName, listener) {
 
-            /*DEBUG*/
-            // Parameter validation
-            if (!this._eventListeners[eventName])
-                console.warn("WinJS.DOMEventMixin.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-            /*ENDDEBUG*/
-
-            // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
-
-            // Remove the listener from the list of listeners for the specified eventName
-            var listeners = this._eventListeners[eventName];
-            for (var i = 0; i < listeners.length; i++) {
-                if (listener === listeners[i]) {
-                    listeners.splice(i, 1);
-                    return;
-                }
-            }
-
             // Remove DOM element event handlers (e.g. click).
-            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
             this.element.removeEventListener(eventName, listener);
         },
 
@@ -349,32 +332,20 @@ WinJS.Namespace.define("WinJS.UI", {
         //
         //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700594.aspx
         //
-        dispatchEvent: function (eventName, eventProperties) {
+        dispatchEvent: function (type, eventProperties) {
 
-            var defaultPrevented = false;
+            var event = document.createEvent("Event");
 
-            if (!this._eventListeners[eventName])
-                return false;
+            // initialize the event.  Win8 passes properties in via ".detail"
 
-            this._eventListeners[eventName].forEach(function (listener) {
-                if (!defaultPrevented)
-                    defaultPrevented = listener(eventProperties);
-            });
+            // TODO: Do all events take false, false?
+            event.initEvent(type, false, false);
 
-            return defaultPrevented;
-        },
+            if (eventProperties)
+                event.detail = eventProperties.detail;
 
-
-        // ================================================================
-        //
-        // public function: WinJS.DOMEventMixin.dispatchEvent
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh768233.aspx
-        //
-        setOptions: function (control, options) {
-
-            // TODO (CLEANUP): Can WinJS.UI.setOptions mixin this object, and move its logic to here?
-            WinJS.UI.setOptions(control, options);
+            // TODO: Did Microsoft invert dispatchEvent's return value?
+            return this.element.dispatchEvent(event);
         }
     }
 });
@@ -589,6 +560,117 @@ WinJS.Namespace.define("Windows.Foundation", {
     },
 	{
 	})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Foundation.Collections.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// =========================================================
+//
+// Implementation of Windows.Foundation.Collections.IVectorView
+//
+WinJS.Namespace.define("Windows.Foundation.Collections", {
+    IVectorView: WinJS.Class.define(function () {
+        this._items = [];
+    },
+    {
+        // TODO (CLEANUP): Derive this from Array.
+        // TODO (CLEANUP): Function header comment blocks
+        getAt: function (index) {
+            if (index < this._items.length)
+                return this._items[index];
+            return null;
+        },
+
+
+        getMany: function (index, start) {
+            console.error("IVector.getMany NYI");
+        },
+
+        indexOf: function (item) {
+            return this._items.indexOf(item);
+        },
+        size: function () {
+            return this._items.length;
+        }
+    })
+});
+
+// =========================================================
+//
+// Implementation of Windows.Foundation.Collections.IVector
+//
+WinJS.Namespace.define("Windows.Foundation.Collections", {
+    IVector: WinJS.Class.derive(Windows.Foundation.Collections.IVectorView, function () {
+        this._items = [];
+    },
+    {
+        // TODO (CLEANUP): Function header comment blocks
+
+        // MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br206632.aspx
+        append: function (value) {
+            this._items.push(value);
+        },
+
+
+        clear: function () {
+            this._items = [];
+        },
+
+
+        getAt: function (index) {
+            if (index < this._items.length)
+                return this._items[index];
+            return null;
+        },
+
+
+        getMany: function (index, start) {
+            console.error("IVector.getMany NYI");
+        },
+
+        getView: function () {
+            console.error("IVector.getView NYI");
+        },
+
+        indexOf: function (item) {
+            return this._items.indexOf(item);
+        },
+        insertAt: function (index, item) {
+            return this._items.splice(index, 0, item);
+        },
+        removeAt: function (index) {
+            this._items.splice(index, 1);
+        },
+        removeAtEnd: function () {
+            return this._items.pop();
+        },
+        replaceAll: function (newItems) {
+            this._items.clear();
+            newItems.forEach(function (item) {
+                this._items.append(item);
+            });
+        },
+        setAt: function (index, item) {
+            if (index < this._items.length)
+                this._items[index] = item;
+        },
+        size: function () {
+            return this._items.length;
+        }
+    })
 });
 
 
@@ -1522,8 +1604,6 @@ WinJS.Namespace.define("WinJS.Navigation", {
 //		MSDN: TODO
 //
 WinJS.Namespace.define("WinJS.Resources", function () {
-    // TODO: Hmm... Going to have to rethink this when I really implement WinJS.Resources.
-    WinJS.Resources._eventListeners = null
 }, {
 
     // ================================================================
@@ -1557,77 +1637,11 @@ WinJS.Namespace.define("WinJS.Resources", function () {
     oncontextchanged: {
         get: function () { return this._eventListeners["contextchanged"]; },
         set: function (callback) { this.addEventListener("contextchanged", callback); }
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.Resources.addEventListener
-    //
-    //		MSDN: TODO
-    //
-    addEventListener: function (eventName, listener) {
-
-        // TODO: How to use DomEventMixin here?
-
-        // Create the list of event listeners for the specified event if it does not yet exist
-        if (!WinJS.Resources._eventListeners[eventName])
-            WinJS.Resources._eventListeners[eventName] = [];
-
-        // Add the listener to the list of listeners for the specified eventName
-        WinJS.Resources._eventListeners[eventName].push(listener);
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.Resources.removeEventListener
-    //
-    //		MSDN: TODO
-    //
-    removeEventListener: function (eventName, listener) {
-
-        /*DEBUG*/
-        // Parameter validation
-        if (!WinJS.Resources._eventListeners[eventName])
-            console.warn("WinJS.Resources.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-        /*ENDDEBUG*/
-
-        // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
-
-        // Remove the listener from the list of listeners for the specified eventName
-        var listeners = WinJS.Resources._eventListeners[eventName];
-        for (var i = 0; i < listeners.length; i++) {
-            if (listener === listeners[i]) {
-                listeners.splice(i, 1);
-                return;
-            }
-        }
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.DOMEventMixin.dispatchEvent
-    //
-    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700594.aspx
-    //
-    dispatchEvent: function (eventName, eventProperties) {
-
-        var defaultPrevented = false;
-
-        if (!this._eventListeners[eventName])
-            return false;
-
-        this._eventListeners[eventName].forEach(function (listener) {
-            if (!defaultPrevented)
-                defaultPrevented = listener(eventProperties);
-        });
-
-        return defaultPrevented;
-    },
-
+    }
 });
+
+// TODO: How to mixin to an object (instead of a class)?  
+// WinJS.Class.mix(WinJS.Resources, WinJS.UI.DOMEventMixin);
 
 
 
@@ -2240,6 +2254,9 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
                 for (var targetField in winBinds)
                     WinJS.Binding._bindField(this, targetField, winBinds[targetField], dataContext);
             });
+
+            // Remove the data-win-control attribute after we've processed it.
+            // $(rootElement).removeAttr("data-win-control");
 
             // Notify that we've fulfilled our promise to processAll
             onComplete();
@@ -4038,6 +4055,9 @@ WinJS.Namespace.define("WinJS.Binding", {
 		            // Clone this template prior to populating it
 		            var $template = $(templateElement).clone();
 
+		            // Give the cloned element a unique identifier
+		            blueskyUtils.setDOMElementUniqueId($template[0]);
+
 		            // Populate the data into the cloned template
 		            return WinJS.Binding.processAll($template, data).then(function () {
 
@@ -4244,7 +4264,6 @@ WinJS.Namespace.define("WinJS.UI", {
     },
 
 
-
     // ================================================================
     //
     // public Function: WinJS.UI.processAll
@@ -4322,6 +4341,62 @@ WinJS.Namespace.define("WinJS.UI", {
 
         // Create a reference from the wincontrol back to its source element
         element.winControl.element = element;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.enableAnimations
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/Hh779760.aspx
+    // 
+    enableAnimations: function () {
+
+        WinJS.UI._animationEnabled = true;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.disableAnimations
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779759.aspx
+    // 
+    disableAnimations: function () {
+
+        WinJS.UI._animationEnabled = false;
+
+        // Cancel any active animations
+        WinJS.UI.Animation._cancelAllActiveAnimations();
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.executeAnimation
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779762.aspx
+    // 
+    executeAnimation: function (anim) {
+
+        // TODO: Implement this.
+        if (!_warnedExecuteAnimationNYI) {
+            console.warn("Bluesky: WinJS.UI.Animation.executeAnimation is NYI");
+            _warnedExecuteAnimationNYI = true;
+        }
+    },
+    _warnedExecuteAnimationNYI: false,
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.UI.isAnimationEnabled
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779793.aspx
+    // 
+    _animationEnabled: true,
+    isAnimationEnabled: function () {
+        return _animationEnabled;
     },
 
 
@@ -4643,9 +4718,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		    selectAll: function () {
 		        var that = this;
 		        this.clear().then(function () {
-		            for (var i = 0; i < that._list.length; i++) {
-		                that.add(that._list.getItem(i));
-		            }
+		            that._list.itemDataSource.getCount().then(function (count) {
+		                for (var i = 0; i < count; i++) {
+		                    that.add(i);
+		                }
+		            });
 		        });
 		    },
 
@@ -4698,6 +4775,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     enterPage: function (elements, offset) {
 
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         // TODO: is there a difference between enterPage and enterContent?
         return WinJS.UI.Animation.enterContent(elements, offset);
     },
@@ -4710,6 +4791,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701586.aspx
     //
     exitPage: function (elements, offset) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
 
         // TODO: is there a difference between exitPage and exitContent?
         return WinJS.UI.Animation.exitContent(elements, offset);
@@ -4724,6 +4809,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     showPopup: function (elements, offset) {
 
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         return WinJS.UI.Animation._doShowAnimation(elements, offset, 250, "easeOut");
     },
 
@@ -4735,6 +4824,10 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212678.aspx
     //
     hidePopup: function (elements) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
 
         return new WinJS.Promise(function (onComplete) {
             if (!elements) {
@@ -4760,6 +4853,11 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701582.aspx
     //
     enterContent: function (elements, offset) {
+
+        // Do nothing if animations are disabled
+        if (!WinJS.UI.isAnimationEnabled)
+            return;
+
         return WinJS.UI.Animation._doShowAnimation(elements, offset, 150, "easeOut");
     },
 
@@ -4923,6 +5021,19 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
     // ================================================================
     //
+    // private(ish) function: WinJS.UI.Animation._cancelAllActiveAnimations
+    //
+    //		Called when Animations are disabled (through WinJS.UI.Animation.disableAnimations).
+    //
+    _cancelAllActiveAnimations: function () {
+
+        // TODO: What does Win8 do in this situation?  Let in-progress animations complete, force them 
+        // to end-state, or just immediately cancel them?  We opt for the first as it's the simplest.
+    },
+
+
+    // ================================================================
+    //
     // private member: _staggerDelay
     //
     //		Defines the amount of time to pause before starting the next element when animating a collection of element
@@ -4936,7 +5047,7 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     //		The number of pixels to animate left/right enterContent/exitContent
     //
-    _enterExitDistance: 20
+    _enterExitDistance: 20,
 });
 
 
@@ -4981,8 +5092,6 @@ WinJS.Namespace.define("WinJS.UI", {
         this.$rootElement = $(element);
 
         this.isYielding = false;
-
-        this._eventListeners = {};
 
         // Store a reference to this control in the element with which it is associated
         element.winControl = this;
@@ -5048,8 +5157,8 @@ WinJS.Namespace.define("WinJS.UI", {
 	    }
 	})
 });
-WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
 
+WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
 
 
 
@@ -5517,14 +5626,15 @@ WinJS.Namespace.define("WinJS.UI", {
             // Call into our base class' constructor
             WinJS.UI.BaseControl.call(this, element, options);
 
+            // Hide the flyout until shown
+            $(element).hide();
+
             // Initialize values
             this._hidden = true;
             this._placement = null;
             this._anchor = null;
             this._alignment = null;
         },
-
-		// TODO: Support light dismiss
 
 		// ================================================================
 		// WinJS.UI.Flyout Member functions
@@ -5548,7 +5658,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._placement = placement;
 		        this._alignment = alignment;
 
-		        this.dispatchEvent("beforeshow", { type: "beforeshow", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        // TODO-CLEANUP: This pattern is repeated in a lot of places; move into DOMEventMixin as private function.
+		        //		        this.dispatchEvent("beforeshow", { type: "beforeshow", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        var event = document.createEvent("CustomEvent");
+		        event.initCustomEvent("beforeshow", true, false, {});
+		        this.element.dispatchEvent(event);
+
 
 		        // show
 		        var $anchor = $(anchor);
@@ -5601,14 +5716,16 @@ WinJS.Namespace.define("WinJS.UI", {
                         "visibility": "visible"
                     });
 
-
 		        // Hide it
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
 		            // Enable light dismiss
-		            $('body').one('click', that._lightDismissHandler.bind(that));
-		            that.dispatchEvent("aftershow", { type: "aftershow", target: that.element, currentTarget: that.element, srcElement: that.element });
+		            $('body').bind('click', that._lightDismissHandler.bind(that));
+
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("aftershow", true, false, {});
+		            that.element.dispatchEvent(event);
 		        });
 
 		    },
@@ -5630,14 +5747,18 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // TODO: Test - does this work even though we did a bind(this) above?
 		        $('body').unbind('click', this._lightDismissHandler);
 
-		        this.dispatchEvent("beforehide", { type: "beforehide", target: this.element, currentTarget: this.element, srcElement: this.element });
+		        var event = document.createEvent("CustomEvent");
+		        event.initCustomEvent("beforehide", true, false, {});
+		        this.element.dispatchEvent(event);
 
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
 		            $(that.element).css("visibility", "hidden");
-		            that.dispatchEvent("afterhide", { type: "afterhide", target: that.element, currentTarget: that.element, srcElement: that.element });
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("afterhide", true, false, {});
+		            that.element.dispatchEvent(event);
 		        });
 
 		        // TODO: Does Win8 clear out anchor, placement, and alignment when hidden?
@@ -5653,9 +5774,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
-		    _lightDismissHandler: function () {
+		    _lightDismissHandler: function (e) {
 
-		        // Hide our Flyout
+		        // Ignore if the click event happened over our flyout
+		        var flyoutLoc = this.$rootElement.offset();
+		        var flyoutWidth = this.$rootElement.outerWidth();
+		        var flyoutHeight = this.$rootElement.outerHeight();
+		        if (e.clientX >= flyoutLoc.left && e.clientX <= flyoutLoc.left + flyoutWidth &&
+                    e.clientY >= flyoutLoc.top && e.clientY <= flyoutLoc.top + flyoutHeight)
+		            return;
+
+		        // Hide our Flyout 
 		        this.hide();
 		    },
 
@@ -5739,8 +5868,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onafterhide: {
-		        get: function () { return this._eventListeners["afterhide"]; },
-		        set: function (callback) { this.addEventListener("afterhide", callback); }
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onafterhide;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onafterhide = callback;
+		            this.addEventListener("afterhide", callback);
+		        }
 		    },
 
 
@@ -5751,8 +5888,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onaftershow: {
-		        get: function () { return this._eventListeners["aftershow"]; },
-		        set: function (callback) { this.addEventListener("aftershow", callback); }
+
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onaftershow;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onaftershow = callback;
+		            this.addEventListener("aftershow", callback);
+		        }
 		    },
 
 
@@ -5763,8 +5909,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforehide: {
-		        get: function () { return this._eventListeners["beforehide"]; },
-		        set: function (callback) { this.addEventListener("beforehide", callback); }
+
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onbeforehide;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onbeforehide = callback;
+		            this.addEventListener("beforehide", callback);
+		        }
 		    },
 
 
@@ -5775,8 +5930,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforeshow: {
-		        get: function () { return this._eventListeners["beforeshow"]; },
-		        set: function (callback) { this.addEventListener("beforeshow", callback); }
+
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onbeforeshow;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onbeforeshow = callback;
+		            this.addEventListener("beforeshow", callback);
+		        }
 		    },
 
 
@@ -5880,13 +6044,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
             // Call into our base class' constructor
             WinJS.UI.BaseControl.call(this, element, options);
-
-            // initialize the set of event listeners
-            this._eventListeners = {
-                onchange: [],
-                onpreviewchange: [],
-                oncancel: []
-            };
 
             // Initialize hover and mousecapture-related variables
             this._mouseDown = false;
@@ -5998,7 +6155,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         this.userRating = null;
                     }
                 }
-                this._notifyCancel({ target: { winControl: this }, type: 'cancel' });
+                this._notifyCancel();
 
                 this.render();
             },
@@ -6019,8 +6176,8 @@ WinJS.Namespace.define("WinJS.UI", {
                 // Create the event info that we'll pass through the various events
                 var eventInfo = {
                     tentativeRating: this.userRating,
-                    target: { winControl: this },
-                    type: 'previewchange',
+                    //target: { winControl: this },
+                    //type: 'previewchange',
                     preventDefault: false
                 }
 
@@ -6041,7 +6198,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 this.userRating = thisIndex + 1;
 
                 // Update event info and fire the change notification
-                eventInfo.type = "change";
+                //	eventInfo.type = "change";
                 eventInfo.tentativeRating = this.userRating;
                 eventInfo.userRating = this.userRating;
                 this._notifyChange(eventInfo);
@@ -6087,14 +6244,10 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private Function: WinJS.UI.Rating._notifyChange
             //
-            //		TODO: Can/should I generalize all three of these into one generic event firer?
-            //		TODO: Need to figure on where "on" should and shouldn't be.
-            //
             _notifyChange: function (eventData) {
-
-                // TODO: Can I use forEach?
-                for (var i in this._eventListeners.onchange)
-                    this._eventListeners.onchange[i].listener(eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("change", true, false, eventData);
+                this.element.dispatchEvent(event);
             },
 
 
@@ -6103,8 +6256,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // private Function: WinJS.UI.Rating._notifyPreviewChange
             //
             _notifyPreviewChange: function (eventData) {
-                for (var i in this._eventListeners.onpreviewchange)
-                    this._eventListeners.onpreviewchange[i].listener(eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("previewchange", true, false, eventData);
+                this.element.dispatchEvent(event);
             },
 
 
@@ -6113,8 +6267,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // private Function: WinJS.UI.Rating._notifyCancel
             //
             _notifyCancel: function (eventData) {
-                for (var i in this._eventListeners.oncancel)
-                    this._eventListeners.oncancel[i].listener(eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("cancel", true, false, eventData);
+                this.element.dispatchEvent(event);
             },
 
 
@@ -6354,7 +6509,11 @@ WinJS.Namespace.define("WinJS.UI", {
                         var templateInstance = $(this.itemTemplate)
 												 .clone()		// Clone it so that we don't modify the original template
 												 .addClass("win-template")	// tell our styles it's a template
+                                                 .removeAttr("data-win-control") // remove the data-win-control attribute
 												 .show()[0];	// Show the instance we'll populate
+
+                        // Give the cloned element a unique identifier
+                        blueskyUtils.setDOMElementUniqueId(templateInstance);
 
                         // Let WinJS binding do all the heavy lifting for us.
                         WinJS.Binding.processAll(templateInstance, item.data);
@@ -6452,14 +6611,10 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyPageCompleted
             //
-            _notifyPageCompleted: function (eventData) {
-                var eventInfo = {
-                    target: this._items[this._currentPage] ? $(">div>div", this._items[this._currentPage])[0] : undefined,
-                    type: "pagecompleted",
-                    detail: eventData
-                };
-
-                this.dispatchEvent(eventInfo.type, eventInfo);
+            _notifyPageCompleted: function (pageElement, eventData) {
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("pagecompleted", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -6467,13 +6622,12 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyDataSourceCountChanged
             //
-            _notifyDataSourceCountChanged: function (eventData) {
-                var eventInfo = {
-                    target: this,
-                    type: "datasourcecountchanged"
-                };
+            _notifyDataSourceCountChanged: function (pageElement, eventData) {
 
-                this.dispatchEvent(eventInfo.type, eventInfo);
+                // TODO-CLEANUP: Merge all of these _notify*** functions into one function and just call it.
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("datasourcecountchanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -6481,14 +6635,11 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyPageSelected
             //
-            _notifyPageSelected: function (eventData) {
-                var eventInfo = {
-                    target: this._items[this._currentPage] ? $(">div>div", this._items[this._currentPage])[0] : undefined,
-                    type: "pageselected",
-                    detail: eventData
-                };
+            _notifyPageSelected: function (pageElement, eventData) {
 
-                this.dispatchEvent(eventInfo.type, eventInfo);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("pageselected", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -6496,15 +6647,11 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.FlipView._notifyPageVisibilityChanged
             //
-            _notifyPageVisibilityChanged: function (eventData) {
-                var eventInfo = {
-                    type: "pagevisibilitychanged",
-                    target: this._items[this._currentPage] ? $(">div>div", this._items[this._currentPage])[0] : undefined,
-                    srcElement: this._items[this._currentPage] ? this._items[this._currentPage][0] : undefined,
-                    detail: eventData
-                };
+            _notifyPageVisibilityChanged: function (pageElement, eventData) {
 
-                this.dispatchEvent(eventInfo.type, eventInfo);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("pagevisibilitychanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -6515,8 +6662,17 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211705.aspx
             //
             ondatasourcecountchanged: {
-                get: function () { return this._eventListeners["datasourcecountchanged"]; },
-                set: function (callback) { this.addEventListener("datasourcecountchanged", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._ondatasourcecountchanged;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._ondatasourcecountchanged = callback;
+                    this.addEventListener("datasourcecountchanged", callback);
+                }
             },
 
 
@@ -6527,8 +6683,17 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh965332.aspx
             //
             onpagecompleted: {
-                get: function () { return this._eventListeners["pagecompleted"]; },
-                set: function (callback) { this.addEventListener("pagecompleted", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onpagecompleted;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onpagecompleted = callback;
+                    this.addEventListener("pagecompleted", callback);
+                }
             },
 
 
@@ -6539,8 +6704,16 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211713.aspx
             //
             onpageselected: {
-                get: function () { return this._eventListeners["pageselected"]; },
-                set: function (callback) { this.addEventListener("pageselected", callback); }
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onpageselected;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onpageselected = callback;
+                    this.addEventListener("pageselected", callback);
+                }
             },
 
 
@@ -6551,8 +6724,16 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211714.aspx
             //
             onpagevisibilitychanged: {
-                get: function () { return this._eventListeners["pagevisibilitychanged"]; },
-                set: function (callback) { this.addEventListener("pagevisibilitychanged", callback); }
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onpagevisibilitychanged;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onpagevisibilitychanged = callback;
+                    this.addEventListener("pagevisibilitychanged", callback);
+                }
             },
 
 
@@ -6594,15 +6775,17 @@ WinJS.Namespace.define("WinJS.UI", {
                 $(this._items[this._currentPage]).fadeOut("fast");
 
                 // Notify listeners that the new page is visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                var outgoingPage = $(".win-template", this._items[this._currentPage])[0];
+                var incomingPage = $(".win-template", this._items[pageIndex])[0];
+                this._notifyPageVisibilityChanged(outgoingPage, { source: this.element, visible: true });
 
                 this._currentPage = pageIndex;
 
                 // Notify listeners that the previous page is no longer visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                this._notifyPageVisibilityChanged(incomingPage, { source: this.element, visible: false });
 
                 // Notify listeners that the page has been selected
-                this._notifyPageSelected({ source: this.element });
+                this._notifyPageSelected(incomingPage, { source: this.element });
 
                 // Render the page; when done, notify listeners that the page has completed
                 var that = this, offset;
@@ -6613,7 +6796,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 var that = this;
                 return WinJS.UI.Animation.enterContent([this._items[this._currentPage]], [offset]).then(function () {
-                    that._notifyPageCompleted({ source: that.element });
+                    that._notifyPageCompleted(incomingPage, { source: that.element });
                 });
                 return true;
             },
@@ -6638,15 +6821,17 @@ WinJS.Namespace.define("WinJS.UI", {
                 $(this._items[this._currentPage]).fadeOut("fast");
 
                 // Notify listeners that the new page is visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                var outgoingPage = $(".win-template", this._items[this._currentPage])[0];
+                var incomingPage = $(".win-template", this._items[pageIndex])[0];
+                this._notifyPageVisibilityChanged(outgoingPage, { source: this.element, visible: true });
 
                 this._currentPage = pageIndex;
 
                 // Notify listeners that the previous page is no longer visible
-                this._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                this._notifyPageVisibilityChanged(incomingPage, { source: this.element, visible: false });
 
                 // Notify listeners that the page has been selected
-                this._notifyPageSelected({ source: this.element });
+                this._notifyPageSelected(incomingPage, { source: this.element });
 
                 // Render the page; when done, notify listeners that the page has completed
                 var that = this, offset;
@@ -6657,7 +6842,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 var that = this;
                 return WinJS.UI.Animation.enterContent([this._items[this._currentPage]], [offset]).then(function () {
-                    that._notifyPageCompleted({ source: that.element });
+                    that._notifyPageCompleted(incomingPage, { source: that.element });
                 });
                 return true;
             },
@@ -6678,29 +6863,36 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     if (this._currentPage == pageIndex)
                         return;
-
+                    if (pageIndex >= this._items.length)
+                        return;
                     var that = this;
 
                     this._makePageVisible(pageIndex);
 
-                    // Fade out the current page
-                    $(this._items[this._currentPage]).fadeOut("fast");
+                    var outgoingPage = $(".win-template", this._items[this._currentPage])[0];
+                    var incomingPage = $(".win-template", this._items[pageIndex])[0];
 
-                    // Notify listeners that the new page is visible
-                    this._notifyPageVisibilityChanged({ source: this.element, visible: true });
+                    // Fade out the current page
+                    if (outgoingPage) {
+                        $(this._items[this._currentPage]).fadeOut("fast");
+                        this._notifyPageVisibilityChanged(outgoingPage, { source: this.element, visible: true });
+                    }
+
+                    if (!incomingPage)
+                        return;
 
                     this._currentPage = pageIndex;
 
                     // Notify listeners that the previous page is no longer visible
-                    that._notifyPageVisibilityChanged({ source: this.element, visible: false });
+                    this._notifyPageVisibilityChanged(incomingPage, { source: this.element, visible: false });
 
                     // Notify listeners that the page has been selected
-                    this._notifyPageSelected({ source: this.element });
+                    this._notifyPageSelected(incomingPage, { source: this.element });
 
                     // Render the page; when done, notify listeners that the page has completed
                     return new WinJS.Promise(function (onComplete) {
                         $(that._items[that._currentPage]).fadeIn("fast", function () {
-                            that._notifyPageCompleted({ source: that.element });
+                            that._notifyPageCompleted(incomingPage, { source: that.element });
                             onComplete();
                         });
                     });
@@ -6762,7 +6954,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     var renderMeWithCountChange = function () {
                         that.render(true);
                         that.currentPage = Math.min(that._currentPage, that._itemDataSource._list.length - 1);
-                        that._notifyDataSourceCountChanged();
+                        that._notifyDataSourceCountChanged(that.element);
                     };
 
                     // Unbind from previous list (if any)
@@ -6956,6 +7148,145 @@ WinJS.Namespace.define("WinJS.UI", {
 	})
 });
 
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.SemanticZoom.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.SemanticZoom
+//
+//		Implementation of the WinJS.UI.SemanticZoom object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229690.aspx
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+    // ================================================================
+    //
+    // public Object: WinJS.UI.SemanticZoom
+    //
+    SemanticZoom: WinJS.Class.derive(WinJS.UI.BaseControl,
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.SemanticZoom constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229692.aspx
+		//	
+        function (element, options) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!element)
+                console.error("WinJS.UI.SemanticZoom constructor: Undefined or null element specified");
+            /*ENDDEBUG*/
+
+            // Call into our base class' constructor
+            WinJS.UI.BaseControl.call(this, element, options);
+
+            // Initialize values
+            this._enableButton = true;
+            this._locked = false;
+            this._zoomedOut = true;
+            this._zoomFactor = 0.65;
+        },
+
+		// ================================================================
+		// WinJS.UI.SemanticZoom Member functions
+		// ================================================================
+
+		{
+		    // TODO: _doRender?
+
+		    // ================================================================
+		    //
+		    // public event: WinJS.SemanticZoom.onzoomchanged
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
+		    //
+		    onzoomchanged: {
+		        get: function () {
+		            // Return the tracked hander
+		            return this._onzoomchanged;
+		        },
+
+		        set: function (callback) {
+		            // track the specified handler for this.get
+		            this._onzoomchanged = callback;
+		            this.addEventListener("zoomchanged", callback);
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.SemanticZoom.enableButton
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
+		    //
+		    _enableButton: true,
+		    enableButton: {
+		        get: function () {
+		            return this._enableButton;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.SemanticZoom.locked
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
+		    //
+		    _locked: false,
+		    locked: {
+		        get: function () {
+		            return this._locked;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.SemanticZoom.zoomedOut
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
+		    //
+		    _zoomedOut: true,
+		    zoomedOut: {
+		        get: function () {
+		            return this._zoomedOut;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.SemanticZoom.zoomFactor
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
+		    //
+		    _zoomFactor: 0.65,
+		    zoomFactor: {
+		        get: function () {
+		            return this._zoomFactor;
+		        }
+		    }
+		})
+});
 
 
 
@@ -7210,10 +7541,18 @@ WinJS.Namespace.define("WinJS.UI", {
 								.addClass("win-groupheader")
 								.show();
 
+                            // Give the cloned element a unique identifier
+                            // TODO (CLEANUP): can I do this in Binding.processAll?
+                            blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
+
                             // Perform data binding on the group header template
                             // TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
                             //		 code to allow that to return asychronously...
                             WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
+
+                            // Remove the data-win-control attribute after we've processed it.
+                            // TODO (CLEANUP): Am I doing this after every call to processAll?  If so, move this into there.
+                            $groupHeaderTemplate.removeAttr("data-win-control");
 
                             // Add the fully realized HTML for the group header to the ListView's DOM element.
                             $surfaceDiv.append($groupHeaderTemplate);
@@ -7312,14 +7651,9 @@ WinJS.Namespace.define("WinJS.UI", {
                                 var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
 
                                 // Call the callback
-                                that._notifyItemInvoked({
-                                    srcElement: this.parentNode,
-                                    target: this.parentNode,
-                                    currentTarget: that.$rootElement,
-                                    detail: {
-                                        itemIndex: itemIndex,
-                                        itemPromise: promise
-                                    }
+                                that._notifyItemInvoked(this.parentNode, {
+                                    itemIndex: itemIndex,
+                                    itemPromise: promise
                                 });
                             }
 
@@ -7357,7 +7691,7 @@ WinJS.Namespace.define("WinJS.UI", {
                                 }
 
                                 that._lastSelectedItemIndex = itemIndex;
-                                that._notifySelectionChanged();
+                                that._notifySelectionChanged(that.element);
                             }
                         });
                     }
@@ -7408,11 +7742,15 @@ WinJS.Namespace.define("WinJS.UI", {
             _renderItemTemplate: function (item) {
 
                 // Get the templatized HTML that we'll populate.  Clone it so that we don't modify the original
-                // template, add the 'win-item' class, and then show it
+                // template, add the 'win-item' class, remove the data-win-control attribute, and then show it
                 item.element = $(this.itemTemplate)
 					.clone()
 					.addClass("win-item")
+                    .removeAttr("data-win-control")
 					.show()[0];
+
+                // Give the cloned element a unique identifier
+                blueskyUtils.setDOMElementUniqueId(item.element);
 
                 // Let WinJS binding do all the heavy lifting for us.
                 WinJS.Binding.processAll(item.element, item.data);
@@ -7450,6 +7788,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // Append the rendered item to our container (which was added to the DOM earlier)
                         item.element = element;
+
+                        // Give the cloned element a unique identifier
+                        if (!$(item.element).attr("id"))
+                            blueskyUtils.setDOMElementUniqueId(item.element);
 
                         // Get the size of the item from the item's element.
                         // TODO (PERF): Avoid the jQuery wrapper here.
@@ -7572,8 +7914,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (newLayout) {
-
-                    this._layout = new WinJS.UI.GridLayout(newLayout);
+                    if (newLayout instanceof WinJS.UI.ListLayout || newLayout instanceof WinJS.UI.GridLayout)
+                        this._layout = newLayout;
+                    else
+                        this._layout = new WinJS.UI.GridLayout(newLayout);
                     this.render();
                 }
             },
@@ -7594,13 +7938,14 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.ListView._notifySelectionChanged
             //
-            _notifySelectionChanged: function () {
+            _notifySelectionChanged: function (pageElement) {
 
-                var eventData = {
-                    type: "selectionchanged"
-                };
+                // TODO: What to pass for data?
+                var eventData = {};
 
-                this.dispatchEvent(eventData.type, eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("selectionchanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -7608,11 +7953,14 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private function: WinJS.ListView._notifyItemInvoked
             //
-            _notifyItemInvoked: function (eventData) {
+            _notifyItemInvoked: function (pageElement, eventData) {
 
-                eventData.type = "iteminvoked";
+                // TODO: What to pass for data?
+                var eventData = {};
 
-                this.dispatchEvent(eventData.type, eventData);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("iteminvoked", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -7623,9 +7971,19 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211827.aspx
             //
             oniteminvoked: {
-                get: function () { return this._eventListeners["iteminvoked"]; },
-                set: function (callback) { this.addEventListener("iteminvoked", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._oniteminvoked;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._oniteminvoked = callback;
+                    this.addEventListener("iteminvoked", callback);
+                }
             },
+
 
             // ================================================================
             //
@@ -7634,8 +7992,17 @@ WinJS.Namespace.define("WinJS.UI", {
             //		MSDN: TODO
             //
             onselectionchanged: {
-                get: function () { return this._eventListeners["selectionchanged"]; },
-                set: function (callback) { this.addEventListener("selectionchanged", callback); }
+
+                get: function () {
+                    // Return the tracked hander (if any)
+                    return this._onselectionchanged;
+                },
+
+                set: function (callback) {
+                    // track the specified handler for this.get
+                    this._onselectionchanged = callback;
+                    this.addEventListener("selectionchanged", callback);
+                }
             },
 
 
@@ -7679,6 +8046,398 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
         })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.UI.Popups.UICommand.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.UI.Popups.UICommand
+//
+//		Implementation of the Windows.UI.Popups.UICommand object
+//
+//		MSDN: http://msdn.microsoft.com/library/windows/apps/BR242166
+//
+
+WinJS.Namespace.define("Windows.UI.Popups", {
+
+    // ================================================================
+    //
+    // public Object: Windows.UI.Popups.UICommand
+    //
+    UICommand: WinJS.Class.define(
+
+		// ================================================================
+		//
+		// public function: Windows.UI.Popups.UICommand constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-US/library/windows/apps/br242179
+		//	
+        function (label, action, commandId) {
+
+            this._label = label;
+            this._invoked = action;
+            this._id = commandId;
+        },
+
+		// ================================================================
+		// Windows.UI.Popups.UICommand Member functions
+		// ================================================================
+
+		{
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.UICommand.id
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-US/library/windows/apps/windows.ui.popups.uicommand.id
+		    //	
+		    _id: 0,
+		    id: {
+		        get: function () {
+		            return this._id;
+		        },
+		        set: function (value) {
+		            this._id = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.UICommand.invoked
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-US/library/windows/apps/windows.ui.popups.uicommand.invoked
+		    //	
+		    _invoked: 0,
+		    invoked: {
+		        get: function () {
+		            return this._invoked;
+		        },
+		        set: function (value) {
+		            this._invoked = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.UICommand.label
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-US/library/windows/apps/windows.ui.popups.uicommand.label
+		    //	
+		    _label: 0,
+		    label: {
+		        get: function () {
+		            return this._label;
+		        },
+		        set: function (value) {
+		            this._label = value;
+		        }
+		    }
+		})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.UI.Popups.MessageDialog.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.UI.Popups.MessageDialog
+//
+//		Implementation of the Windows.UI.Popups.MessageDialog object
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog
+//
+
+WinJS.Namespace.define("Windows.UI.Popups", {
+
+    // ================================================================
+    //
+    // public Object: Windows.UI.Popups.MessageDialog
+    //
+    MessageDialog: WinJS.Class.define(
+
+		// ================================================================
+		//
+		// public function: Windows.UI.Popups.MessageDialog constructor
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.messagedialog.aspx
+		//	
+        function (content, title) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!content)
+                console.error("Windows.UI.Popups.MessageDialog constructor: Undefined or null content specified");
+            /*ENDDEBUG*/
+
+            this._content = content;
+            this._title = title;
+            this._commands = new Windows.Foundation.Collections.IVector();
+        },
+
+		// ================================================================
+		// Windows.UI.Popups.MessageDialog Member functions
+		// ================================================================
+
+		{
+		    // ================================================================
+		    //
+		    // public function: Windows.UI.Popups.MessageDialog.showAsync
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.showasync.aspx
+		    //	
+		    showAsync: function () {
+		        var that = this;
+		        return new WinJS.Promise(function (onComplete) {
+
+		            // Get the highest z-index item, and place the dialog one higher
+		            var highestZ = blueskyUtils.getHighestZIndex();
+
+		            // Create the translucent overlay that appears behind the dialog
+		            var $overlay = $("<div style='width:100%;height:100%;background-color:#000;opacity:.5;z-index:" + (highestZ + 1) + "'></div>");
+		            $overlay.fadeIn("fast").appendTo("body");
+
+		            // Create the messagebox div
+		            var messageHeight = that.title ? 200 : 160;
+		            var messageTop = ($("html").outerHeight() - messageHeight) / 2;
+		            var $message = $("<div></div>")
+                        .css({
+                            "width": "100%",
+                            "background-color": "#fff",
+                            "z-index": highestZ + 2,
+                            "left": 0,
+                            "position": "absolute",
+                            "top": messageTop,
+                            "height": messageHeight,
+                            "right": 0
+                        });
+		            // TODO: Do the margin trick so that the messagebox stays vertically centered.
+
+		            // TODO: Make sure < in content doesn't break!
+		            var $titleText = $("<div>" + that.content + "</div>")
+                        .css({
+                            "color": "#000",
+                            "font-size": "16pt",
+                            "position": "absolute",
+                            "top": that.title ? 80 : 20,
+                            "left": "400px"
+                        })
+                        .appendTo($message);
+
+		            if (that.title) {
+		                // TODO: Make sure < in title doesn't break!
+		                var $titleText = $("<div>" + that.title + "</div>")
+                            .css({
+                                "color": "#000",
+                                "font-size": "30pt",
+                                "position": "absolute",
+                                "top": 20,
+                                "left": "400px"
+                            })
+		                    .appendTo($message);
+		            }
+
+		            // Add commands.  If none specified then use 'Close'
+		            if (that.commands.size() == 0) {
+		                var closeCommand = new Windows.UI.Popups.UICommand("Close");
+		                that.commands.append(closeCommand);
+		            }
+
+		            var buttonStart = 1300 - that.commands.size() * 200;
+		            for (var i = 0; i < that.commands.size() ; i++) {
+		                var command = that.commands.getAt(i);
+		                var backgroundColor = i == that.defaultCommandIndex ? "rgba(53,206,251,1)" : "#ccc";
+		                var border = i == that.defaultCommandIndex ? "solid 3px #000" : "solid 3px #ccc";
+		                var left = buttonStart + i * 200;
+		                var $commandButton = $("<div>" + command.label + "</div>")
+                        .css({
+                            "color": "#000",
+                            "background-color": backgroundColor,
+                            "border": border,
+                            "width": "150px",
+                            "cursor": "pointer",
+                            "padding": "8px 6px",
+                            "font-size": "12pt",
+                            "font-weight": "600",
+                            "position": "absolute",
+                            "text-align": "center",
+                            "top": that.title ? 130 : 80,
+                            "left": left
+                        })
+		                .appendTo($message);
+		                $commandButton.bind("click", { command: command }, function (event) {
+		                    if (event.data.command.invoked)
+		                        event.data.command.invoked(event.data.command);
+		                    that._close(event.data.command);
+		                });
+		            }
+		            // If we created a temporary 'close' command, then remove it now
+		            if (closeCommand)
+		                that.commands.clear();
+
+		            $message.fadeIn("fast").appendTo("body");
+
+		            that._$message = $message;
+		            that._$overlay = $overlay;
+
+		            // Complete the promise when the dialog closes...
+		            that._onClosedPromise = onComplete;
+		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: Windows.UI.Popups.MessageDialog._close
+		    //
+		    //		Called after a button has been pressed and the messagebox should go away.  When done, fulfill our closed promise.
+		    //	
+		    _close: function (command) {
+
+		        var that = this;
+		        this._$overlay.fadeOut("fast", function () {
+		            that._$overlay.remove();
+		        });
+		        this._$message.fadeOut("fast", function () {
+		            that._$message.remove();
+
+		            // TODO (CLEANUP): technically the overlay may still be present when we fulfill the closed promise - should really 
+		            // join the two fadeout promises together and wait for that before fulfilling our closed promise.
+		            that._onClosedPromise(command);
+		        });
+
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.defaultCommandIndex
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.defaultcommandindex.aspx
+		    //	
+		    _defaultCommandIndex: 0,
+		    defaultCommandIndex: {
+		        get: function () {
+		            return this._defaultCommandIndex;
+		        },
+		        set: function (value) {
+		            this._defaultCommandIndex = value;
+		        }
+
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.cancelCommandIndex
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.cancelcommandindex.aspx
+		    //	
+		    _cancelCommandIndex: -1,
+		    cancelCommandIndex: {
+		        get: function () {
+		            return this._cancelCommandIndex;
+		        },
+		        set: function (value) {
+		            this._cancelCommandIndex = value;
+		        }
+
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.commands
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.commands.aspx
+		    //	
+		    _commands: null,
+		    commands: {
+		        get: function () {
+		            return this._commands;
+		        },
+		        set: function (value) {
+		            this._commands = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.content
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.content.aspx
+		    //	
+		    _content: "",
+		    content: {
+		        get: function () {
+		            return this._content;
+		        },
+		        set: function (value) {
+		            this._content = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.options
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.options.aspx
+		    //	
+		    _options: {},
+		    options: {
+		        get: function () {
+		            return this._options;
+		        },
+		        set: function (value) {
+		            this._options = value;
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: Windows.UI.Popups.MessageDialog.title
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.popups.messagedialog.title.aspx
+		    //	
+		    _title: "",
+		    title: {
+		        get: function () {
+		            return this._title;
+		        },
+		        set: function (value) {
+		            this._title = value;
+		        }
+		    }
+		})
 });
 
 
@@ -8197,6 +8956,35 @@ WinJS.Namespace.define("WinJS.Utilities", {
 // blueskyUtils
 //
 var blueskyUtils = {
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.getHighestZIndex
+    //
+    //      Returns the highest z-index of all elements.  Useful to add DOM elements above all others (e.g. modal dialog box)
+    //
+    getHighestZIndex: function () {
+
+        var highestIndex = 0;
+        $("[z-index]").each(function () {
+            highestIndex = Math.max(highestIndex, $(this).attr("z-index"));
+        });
+        return highestIndex;
+    },
+
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.setDOMElementUniqueId
+    //
+    //      Assigns a unique (to the current DOM) id to the specified element
+    //
+    _uniqueControlId: 1,
+    setDOMElementUniqueId: function (element) {
+        // TODO (PERF): Do this without wrapping in $
+        $(element).attr("id", "_bs" + (this._uniqueControlId++));
+    },
+
 
     // ================================================================
     //

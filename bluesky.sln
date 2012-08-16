@@ -137,6 +137,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WinJS.UI", "WinJS.UI", "{1C
 		bluesky.js\sourceFiles\WinJS.UI.ListView.js = bluesky.js\sourceFiles\WinJS.UI.ListView.js
 		bluesky.js\sourceFiles\WinJS.UI.Pages.js = bluesky.js\sourceFiles\WinJS.UI.Pages.js
 		bluesky.js\sourceFiles\WinJS.UI.Rating.js = bluesky.js\sourceFiles\WinJS.UI.Rating.js
+		bluesky.js\sourceFiles\WinJS.UI.SemanticZoom.js = bluesky.js\sourceFiles\WinJS.UI.SemanticZoom.js
 		bluesky.js\sourceFiles\WinJS.UI.js = bluesky.js\sourceFiles\WinJS.UI.js
 	EndProjectSection
 EndProject

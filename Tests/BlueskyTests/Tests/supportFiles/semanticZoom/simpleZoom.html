@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+    <!-- Template for the group headers in the zoomed in ListView -->
+    <div id="headerTemplate" data-win-control="WinJS.Binding.Template" style="display: none">
+        <div class="simpleHeaderItem">
+            <h1 data-win-bind="innerText: title"></h1>
+        </div>
+    </div>
+
+    <!-- Template for the items in the zoomed in ListView -->
+    <div id="mediumListIconTextTemplate" data-win-control="WinJS.Binding.Template" style="display: none">
+        <div class="mediumListIconTextItem">
+            <img src="#" class="mediumListIconTextItem-Image" data-win-bind="src: picture" />
+            <div class="mediumListIconTextItem-Detail">
+                <h4 data-win-bind="innerText: title"></h4>
+                <h6 data-win-bind="innerText: text"></h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for the items in the zoomed out ListView of the SemanticZoom -->
+    <div id="semanticZoomTemplate" data-win-control="WinJS.Binding.Template" style="display: none">
+        <div class="semanticZoomItem" style="width:100px;height:100px;background-color:#999">
+            <h2 class="semanticZoomItem-Text" style="color:#fff" data-win-bind="innerText: title"></h2>
+        </div>
+    </div>
+
+    <div id="semanticZoomDiv" data-win-control="WinJS.UI.SemanticZoom">   
+        <!-- The zoomed in ListView -->
+        <div id="zoomedInListView"
+            data-win-control="WinJS.UI.ListView"
+            data-win-options="{ 
+                    itemDataSource: Tests.SemanticZoom.myGroupedList.dataSource, 
+                    itemTemplate: mediumListIconTextTemplate, 
+                    groupDataSource: Tests.SemanticZoom.myGroupedList.groups.dataSource, 
+                    groupHeaderTemplate: headerTemplate, 
+                    selectionMode: 'none', 
+                    tapBehavior: 'none', 
+                    swipeBehavior: 'none' 
+                }">
+        </div>
+
+        <!-- The zoomed out ListView -->
+        <div id="zoomedOutListView"
+            data-win-control="WinJS.UI.ListView"
+            data-win-options="{ 
+                    itemDataSource: Tests.SemanticZoom.myGroupedList.groups.dataSource, 
+                    itemTemplate: semanticZoomTemplate, 
+                    selectionMode: 'none', 
+                    tapBehavior: 'invoke', 
+                    swipeBehavior: 'none' 
+                }">
+        </div>
+    </div>
+</body>
+</html>
