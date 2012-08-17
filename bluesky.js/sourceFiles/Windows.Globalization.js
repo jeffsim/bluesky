@@ -18,7 +18,7 @@ WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
     	format: function (date) {
     		// TODO: Parse the format string.  For now, hardcoded to what stockSample needs
     		if (this._formatTemplate == "hour minute")
-    			return date.toLocaleFormat();
+    			return date.toLocaleString();
     		else
     			return "";
     	}

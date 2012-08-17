@@ -145,7 +145,7 @@
 }
 
  a {
-            color: #9ff;
+            color: #9ff !important;
             text-decoration: underline;
         }
 

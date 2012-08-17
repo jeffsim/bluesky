@@ -18,12 +18,6 @@
             to create a group data source. This example also shows how to use a simple Windows
             Library for JavaScript template to create a group header.
         </p> 
-		<div style="font-size:large;color:red; font-weight:600">
-            Known bluesky issues with this sample:
-            <ul>
-                <li>Semantic Zoom is not yet implemented; the second scenario does not function</li>
-            </ul>
-        </div>
     </div>
     <div data-win-control="SdkSample.ScenarioOutput">
         
@@ -52,8 +46,8 @@
                 itemTemplate: mediumListIconTextTemplate, 
                 groupDataSource: myGroupedList.groups.dataSource,
                 groupHeaderTemplate: headerTemplate, 
-                selectionMode: 'multi', 
-                tapBehavior: 'directSelect', 
+                selectionMode: 'none', 
+                tapBehavior: 'none', 
                 swipeBehavior: 'none'
             }"
         ></div>

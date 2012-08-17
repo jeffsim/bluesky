@@ -47,6 +47,13 @@
     <Content Include="TestHarness\testHarness.css" />
     <Content Include="TestHarness\testHarness.html" />
     <Content Include="TestHarness\testHarness.js" />
+    <Content Include="Tests\supportFiles\images\60Banana.png" />
+    <Content Include="Tests\supportFiles\images\60Lemon.png" />
+    <Content Include="Tests\supportFiles\images\60Mint.png" />
+    <Content Include="Tests\supportFiles\images\60Orange.png" />
+    <Content Include="Tests\supportFiles\images\60Strawberry.png" />
+    <Content Include="Tests\supportFiles\images\60Vanilla.png" />
+    <Content Include="Tests\supportFiles\semanticZoom\simpleZoom.html" />
     <Content Include="Tests\Tests.WinJS.UI.DOMEventMixin.js" />
     <Content Include="Tests\supportFiles\listView\listView.html" />
     <Content Include="Tests\supportFiles\listView\img1.jpg" />

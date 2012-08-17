@@ -112,6 +112,8 @@ WinJS.Namespace.define("WinJS.UI", {
                 var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
                 var $viewportDiv = $("<div class='win-viewport " + orientation + "' role='group'></div>");
                 var $surfaceDiv = $("<div class='win-surface'></div>");
+                this.$viewport = $viewportDiv;
+                this.$scrollSurface = $surfaceDiv;
 
                 // The surface div has to be sized in order for the group header to obtain a valid size (see calculation of topY below).  Size the
                 // surface div to match the viewport; we'll increase its size after we render all items and know the final size
@@ -340,7 +342,7 @@ WinJS.Namespace.define("WinJS.UI", {
                             var itemIndex = $(this).data("itemIndex");
 
                             // Call invoke
-                            if ((that.tapBehavior != "none") && that.oniteminvoked != null) {
+                            if (that.tapBehavior != "none") {
 
                                 // Create a Promise with the clicked item
                                 var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
@@ -629,33 +631,29 @@ WinJS.Namespace.define("WinJS.UI", {
             },
 
 
-            // ================================================================
-            //
-            // private function: WinJS.ListView._notifySelectionChanged
-            //
-            _notifySelectionChanged: function (pageElement) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._notifySelectionChanged
+        	//
+            _notifySelectionChanged: function (pageElement, eventData) {
 
-                // TODO: What to pass for data?
-                var eventData = {};
+            	// TODO: What to pass for data?
 
-                var event = document.createEvent("CustomEvent");
-                event.initCustomEvent("selectionchanged", true, false, eventData);
-                pageElement.dispatchEvent(event);
+            	var event = document.createEvent("CustomEvent");
+            	event.initCustomEvent("selectionchanged", true, false, eventData);
+            	pageElement.dispatchEvent(event);
             },
 
 
-            // ================================================================
-            //
-            // private function: WinJS.ListView._notifyItemInvoked
-            //
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._notifyItemInvoked
+        	//
             _notifyItemInvoked: function (pageElement, eventData) {
 
-                // TODO: What to pass for data?
-                var eventData = {};
-
-                var event = document.createEvent("CustomEvent");
-                event.initCustomEvent("iteminvoked", true, false, eventData);
-                pageElement.dispatchEvent(event);
+            	var event = document.createEvent("CustomEvent");
+            	event.initCustomEvent("iteminvoked", true, false, eventData);
+            	pageElement.dispatchEvent(event);
             },
 
 
@@ -673,6 +671,11 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+
+                	// Remove previous on* handler if one was specified
+                	if (this._oniteminvoked)
+                		this.removeEventListener("iteminvoked", this._oniteminvoked);
+
                     // track the specified handler for this.get
                     this._oniteminvoked = callback;
                     this.addEventListener("iteminvoked", callback);
@@ -694,6 +697,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._onselectionchanged)
+                		this.removeEventListener("selectionchanged", this._onselectionchanged);
+
                     // track the specified handler for this.get
                     this._onselectionchanged = callback;
                     this.addEventListener("selectionchanged", callback);
@@ -738,7 +745,52 @@ WinJS.Namespace.define("WinJS.UI", {
 										));
                     }
                 });
-            }
+            },
 
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.ListView.scrollPosition
+        	//
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211847.aspx
+        	//
+            scrollPosition: {
+            	get: function () {
+					if (this.layout.horizontal)
+						return this.$viewport.scrollLeft();
+					else
+						return this.$viewport.scrollTop();
+            	},
+            	set: function (value) {
+            		if (this.layout.horizontal)
+            			this.$viewport.scrollLeft(value);
+					else
+            			this.$viewport.scrollTop(value);
+            	}
+            },
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.ListView.indexOfFirstVisible
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
+        	//
+            indexOfFirstVisible: {
+            	get: function () {
+            		console.warn("ListView.indexOfFirstVisible getter is NYI; returning 0");
+            		return 0;
+            	},
+            	set: function (index) {
+            		// Get the position of the item at index 'index', and scroll to it
+            		var item = this.items[index].element.parentNode;
+            		var listMargin = parseInt(this.$scrollSurface.css("marginLeft"));
+            		var itemMargin = parseInt($(item).css("marginLeft"));
+            		if (this.layout.horizontal)
+            			this.scrollPosition = item.offsetLeft + listMargin - itemMargin;
+            		else
+            			this.scrollPosition = item.offsetTop;
+            	}
+            }
         })
 });

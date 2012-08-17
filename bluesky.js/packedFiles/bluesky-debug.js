@@ -708,7 +708,7 @@ WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
     	format: function (date) {
     		// TODO: Parse the format string.  For now, hardcoded to what stockSample needs
     		if (this._formatTemplate == "hour minute")
-    			return date.toLocaleFormat();
+    			return date.toLocaleString();
     		else
     			return "";
     	}
@@ -5349,7 +5349,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 					});
 				},
 
-				
+
 				// ================================================================
 				//
 				// private function: PageControl._getRemotePage
@@ -5389,126 +5389,79 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				//
 				_processPage: function (pageInfo) {
 
-				    /*DEBUG*/
-				    // Parameter validation
-				    if (!pageInfo)
-				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
-				    if (!pageInfo.response)
-				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
-				    if (!pageInfo.element)
-				        console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
-				    /*ENDDEBUG*/
+					/*DEBUG*/
+					// Parameter validation
+					if (!pageInfo)
+						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo specified");
+					if (!pageInfo.response)
+						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.response specified", pageInfo);
+					if (!pageInfo.element)
+						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
+					/*ENDDEBUG*/
 
-				    // Return a Promise that we'll process the page (Honestly! We will!)
-				    return new WinJS.Promise(function (pageProcessCompletedCallback) {
+					// Return a Promise that we'll process the page (Honestly! We will!)
+					return new WinJS.Promise(function (pageProcessCompletedCallback) {
 
-				        // Parse out the script tags from the response and remove duplicates.  Note that we can't go directly through jQuery for this
-				        // because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
-				        // sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
-				        // $("<div></div>").html(pageInfo.response) won't work for the above reason.
+						// Parse out the script tags from the response and remove duplicates.  Note that we can't go directly through jQuery for this
+						// because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
+						// sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
+						// $("<div></div>").html(pageInfo.response) won't work for the above reason.
 
-				        // 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
-				        var tempDiv = document.createElement("div");
-				        tempDiv.innerHTML = pageInfo.response;
+						// Also note: Per http://molily.de/weblog/domcontentloaded, HTML5 requires browsers to defer execution of scripts until
+						// all previous stylesheets are loaded.  So, we need to rearrange scripts and styles from the loaded page so that styles come before scripts.
+						// This does inject a nontrivial perf hit, but its unavoidable given the need to have styles parsed before scripts reference them (e.g. WinControl sizes).  In order 
+						// to minimize the perf hit somewhat, we push all scripts to the bottom of the page and styles to the top (see rules 5 and 6 here:http://stevesouders.com/hpws/rules.php)
+						// TODO: If this is a problem for a subset of apps, then provide a "WinJS.Bluesky.deferScripts" option and set it to optout.
+						// TODO: does this also explain the FOUT?  I doubt it...
+						// TODO: How to do this to root page?  Probably just warn user? 
 
-				        // 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
-				    	// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
-				        var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
-				        $("script", document).each(function (index, element) {
-				            // TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
-				            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
-				        });
+						// 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
+						var tempDiv = document.createElement("div");
+						tempDiv.innerHTML = pageInfo.response;
 
-				        // TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
+						// 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
+						// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
+						var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
+						$("script", document).each(function (index, element) {
+							// TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
+							$("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
+						});
 
-				        // Remove WinJS scripts.
-				        // TODO: rather than do this on every page process (slow), do it on publish
-				        // TODO: Note that, once I commented this out, some apps started failing; the reason was because those apps had references to //microsoft/winjs.*,
-				        // and the presence of those references makes the css checks below fail because numNewStyleSheets are never fully loaded,
-				        // so it never makes it out of the loop. This will repro with any 'invalid' script or style reference.  See comment below.  
-				        $("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
-				        $("script[src^='http://Microsoft'], script[src^='http://microsoft']", $newPage).remove();
+						// TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
 
-				        // Track the number of styleSheets before the subpage is loaded.  We will need to wait below until
-				        // we're sure that these pages have been completely parsed before we call the subpage's ready() function.
-				        var numStyleSheetsBeforeSubpageAdded = document.styleSheets.length;
+						// Remove WinJS scripts.  Technically not necessary, possibly worth pulling out for perf.
+						$("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
+						$("script[src^='http://Microsoft'], script[src^='http://microsoft'], script[src^='//Microsoft'], script[src^='//microsoft']", $newPage).remove();
 
-				        // Replace contents of element with loaded page's html
-				        $(pageInfo.element).addClass("pagecontrol");
-				        $(pageInfo.element).append($newPage);
+						// Replace contents of element with loaded page's html
+						$(pageInfo.element).addClass("pagecontrol");
 
-				        // Do some parsing on the subpage...
-				        // 1. Move meta and title tags to page's <head> element
-				        var $head = $("head", document);
-				        $("meta, title", $newPage).prependTo($head);
+						// Do some parsing on the subpage...
+						// 1. Move meta and title tags to page's <head> element.  Also move styles
+						var $head = $("head", document);
+						$("meta, title, link", $newPage).prependTo($head);
 
-				        // 2. Move scripts and styles up into the page's <head> element
-				        // TODO: remove any duplicates
-				        $("link, script", $newPage).appendTo($head);
+						// 2. Remove duplicate styles and meta/charset tags
+						blueskyUtils.removeDuplicateElements("style", "src", $head);
+						blueskyUtils.removeDuplicateElements("meta", "charset", $head);
 
-				        // 3. Remove duplicate styles
-				        blueskyUtils.removeDuplicateElements("style", "src", $head);
+						// 3. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
+						$("title:not(:first)", $head).remove();
 
-				        // 4. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
-				        $("title:not(:first)", $head).remove();
+						// Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
+						$(pageInfo.element).append($newPage.contents());
 
-				        // Process the wincontrols in the newly loaded page fragment
-				        WinJS.UI.processAll($newPage[0]);
+						// Process the wincontrols in the newly loaded page fragment
+						WinJS.UI.processAll(pageInfo.element);
 
-				        // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
-				        $("[id]").each(function (index, element) {
-				            window[element.id] = element;
-				        });
+						// Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
+						$("[id]").each(function (index, element) {
+							window[element.id] = element;
+						});
 
-				        // Calculate how many styles the subpage has added.  We will wait below until they are all loaded.
-				        var numNewStyleSheets = document.styleSheets.length - numStyleSheetsBeforeSubpageAdded;
-
-				        // If the subpage has referenced CSS files, those files may or may not yet be parsed; to ensure that they are before
-				        // the subpage's ready function is called, we set up a timer that every 50 milliseconds checks to see if the CSS Files have
-				        // all been parsed and their rules have been added to document.styleSheets.  If so, then we stop the timer and tell the subpage
-				        // to go for it.  Lacking a "cssHasBeenParsed" notification, this is the best we can do.
-				        var timeSpent = 0;
-
-				        var handle = window.setInterval(function () {
-
-				            // Determine how many of the styles have been loaded and parsed.  The browser (well, FF - need to verify against others)
-				            // immediately adds the stylesheet, but it doesn't set cssRules until they're parsed; thus, check if cssRules is defined
-				            // for all newly loaded styles.
-				            // TODO: This isn't quite sufficient on FF; see http://dev.ckeditor.com/ticket/7784
-				            // TODO: This also doesn't appear to work on iPad; need another solution...
-				            var numStylesParsed = 0;
-				            try {
-				                for (var i = 0; i < numNewStyleSheets; i++) {
-				                    if (document.styleSheets[numStyleSheetsBeforeSubpageAdded + i].cssRules != undefined)
-				                        numStylesParsed++;
-				                }
-				            } catch (ex) {
-				                // TODO: silently catch, ignore, and continue.  See if this works...    
-				            }
-
-				            // TODO: find best solution here - see TODO comment above.  if this is the only solution, then make timeOut changable by app
-				            timeSpent += 50;
-				            if (timeSpent > 2000) {
-				                console.warn("Failed to load all style sheets and/or scripts in under 2 seconds; check network log and ensure all stylesheets are valid.");
-				                numStylesParsed = numNewStyleSheets;
-				            }
-				            // Check to see if we've parsed all of the new style sheets
-				            if (numStylesParsed == numNewStyleSheets) {
-
-				                // The page's style sheets have all been loaded. Stop the interval timer
-				                window.clearInterval(handle);
-
-                                // Show the new page's elements with final style sheets; then move them
-                                // out of the temp div; and then remove the temp newPage element
-				                $newPage
-                                    .contents()                     // grab contents (instead of children, to get text nodes as well).
-                                    .appendTo(pageInfo.element);    // And add them to the DOM
-
-				                // Notify that we've fulfilled our Promise to process the page.
-				                pageProcessCompletedCallback(pageInfo);
-				            }
-				        }, 50);
-				    });
+						// Notify that we've fulfilled our Promise to process the page.
+						pageProcessCompletedCallback(pageInfo);
+					});
 				},
 
 				// renderPromise: A Promise that is fulfilled when we have completed rendering
@@ -5873,6 +5826,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onafterhide)
+		        		this.removeEventListener("afterhide", this._onafterhide);
+
 		            // track the specified handler for this.get
 		            this._onafterhide = callback;
 		            this.addEventListener("afterhide", callback);
@@ -5893,7 +5850,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		            return this._onaftershow;
                 },
 
-                set: function (callback) {
+		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onaftershow)
+		        		this.removeEventListener("aftershow", this._onaftershow);
+
                     // track the specified handler for this.get
                     this._onaftershow = callback;
                     this.addEventListener("aftershow", callback);
@@ -5915,6 +5876,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onbeforehide)
+		        		this.removeEventListener("beforehide", this._onbeforehide);
+
 		            // track the specified handler for this.get
 		            this._onbeforehide = callback;
 		            this.addEventListener("beforehide", callback);
@@ -5936,6 +5901,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onbeforeshow)
+		        		this.removeEventListener("beforeshow", this._onbeforeshow);
+
 		            // track the specified handler for this.get
 		            this._onbeforeshow = callback;
 		            this.addEventListener("beforeshow", callback);
@@ -6668,6 +6637,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._ondatasourcecountchanged)
+                		this.removeEventListener("datasourcecountchanged", this._ondatasourcecountchanged);
+
                     // track the specified handler for this.get
                     this._ondatasourcecountchanged = callback;
                     this.addEventListener("datasourcecountchanged", callback);
@@ -6689,6 +6662,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._onpagecompleted)
+                		this.removeEventListener("pagecompleted", this._onpagecompleted);
+
                     // track the specified handler for this.get
                     this._onpagecompleted = callback;
                     this.addEventListener("pagecompleted", callback);
@@ -6709,6 +6686,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._onpageselected)
+                		this.removeEventListener("pageselected", this._onpageselected);
+
                     // track the specified handler for this.get
                     this._onpageselected = callback;
                     this.addEventListener("pageselected", callback);
@@ -6729,7 +6710,11 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
-                    // track the specified handler for this.get
+                	// Remove previous on* handler if one was specified
+                	if (this._onpagevisibilitychanged)
+                		this.removeEventListener("pagevisibilitychanged", this._onpagevisibilitychanged);
+
+                	// track the specified handler for this.get
                     this._onpagevisibilitychanged = callback;
                     this.addEventListener("pagevisibilitychanged", callback);
                 }
@@ -6860,9 +6845,11 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
                 set: function (pageIndex) {
 
+                	pageIndex = Math.max(pageIndex, 0);
+
                     if (this._currentPage == pageIndex)
                         return;
-                    if (pageIndex >= this._items.length)
+                    if (pageIndex >= this._itemDataSource.getCount())
                         return;
                     var that = this;
 
@@ -6976,7 +6963,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     // Refresh our in-page appearance to show the new datasource's items.
                     this.render();
-                    this.currentPage = Math.min(this._currentPage, this._itemDataSource._list.length - 1);
+                    this.currentPage = Math.max(0, Math.min(this._currentPage, this._itemDataSource._list.length - 1));
 
                     // Fire count change
                     // TODO: Does Win8 fire this on datasource change, or just on item changes?
@@ -7173,11 +7160,11 @@ WinJS.Namespace.define("WinJS.UI", {
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-    // ================================================================
-    //
-    // public Object: WinJS.UI.SemanticZoom
-    //
-    SemanticZoom: WinJS.Class.derive(WinJS.UI.BaseControl,
+	// ================================================================
+	//
+	// public Object: WinJS.UI.SemanticZoom
+	//
+	SemanticZoom: WinJS.Class.derive(WinJS.UI.BaseControl,
 
 		// ================================================================
 		//
@@ -7187,20 +7174,71 @@ WinJS.Namespace.define("WinJS.UI", {
 		//	
         function (element, options) {
 
-            /*DEBUG*/
-            // Parameter validation
-            if (!element)
-                console.error("WinJS.UI.SemanticZoom constructor: Undefined or null element specified");
-            /*ENDDEBUG*/
+        	/*DEBUG*/
+        	// Parameter validation
+        	if (!element)
+        		console.error("WinJS.UI.SemanticZoom constructor: Undefined or null element specified");
+        	/*ENDDEBUG*/
 
-            // Call into our base class' constructor
-            WinJS.UI.BaseControl.call(this, element, options);
+        	// Call into our base class' constructor
+        	WinJS.UI.BaseControl.call(this, element, options);
 
-            // Initialize values
-            this._enableButton = true;
-            this._locked = false;
-            this._zoomedOut = true;
-            this._zoomFactor = 0.65;
+        	// Tag our rootelement with our class and role
+        	this.$rootElement.addClass("win-semanticzoom").css("position", "relative");
+        	this.$rootElement.attr("role", "ms-semanticzoomcontainer");
+
+        	// Generate the DOM hierarchy for the SemanticZoom control
+        	this._$zoomedInElement = $(">div::nth-child(1)", this.$rootElement);
+        	this._$zoomedOutElement = $(">div::nth-child(2)", this.$rootElement);
+        	this._$zoomContainer = $("<div style='position: absolute; left: 0px; top: 0px; overflow: hidden'></div>").appendTo(this.$rootElement);
+        	this._$zoomedInContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomContainer);
+        	this._$zoomedOutContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomContainer);
+        	this._$zoomedInSubContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomedInContainer);
+        	this._$zoomedOutSubContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomedOutContainer);
+        	this._$zoomedInElement.appendTo(this._$zoomedInSubContainer);
+        	this._$zoomedOutElement.appendTo(this._$zoomedOutSubContainer);
+
+        	// Set dimensions
+        	var dimensions = {
+        		width: this.$rootElement.innerWidth(),
+        		height: this.$rootElement.innerHeight()
+        	};
+        	this._$zoomContainer.css(dimensions);
+        	this._$zoomedInContainer.css(dimensions);
+        	this._$zoomedOutContainer.css(dimensions);
+        	this._$zoomedInSubContainer.css(dimensions);
+        	this._$zoomedOutSubContainer.css(dimensions);
+        	this._$zoomedInElement.css(dimensions);
+        	this._$zoomedOutElement.css(dimensions);
+
+        	// Add the zoom button
+        	this._addZoomButton();
+
+        	WinJS.UI.processAll(this.element);
+
+        	// Start out with zoomedin visible, zoomedout hidden
+        	this._showElement(this._$zoomedInContainer);
+        	this._hideElement(this._$zoomedOutContainer);
+
+        	// When the user clicks on an item in the zoomedout control, zoom into it in the zoomedincontrol
+        	// TODO: This only works with ListViews for now.  Need to generalize through IZoomableView in R2/R3
+        	this._zoomedInListView = this._$zoomedInElement[0].winControl;
+        	this._zoomedOutListView = this._$zoomedOutElement[0].winControl;
+        	/*DEBUG*/
+        	
+        	if (!this._zoomedOutListView)
+        		console.error("SemanticZoom only works with ListView subcontrols for R1; IZoomableView will come in R2/R3");
+        	if (this._zoomedInListView._groupDataSource != this._zoomedOutListView._itemDataSource)
+        		console.error("SemanticZoom currently only works with a grouped listview as the zoomed-in view, and that listview's groupdatasource as the zoomed-out view.  Check the GroupedListview sample for a working example");
+
+        	/*ENDDEBUG*/
+        	this._zoomedOutListView.oniteminvoked = this._zoomedOutListItemClicked.bind(this);
+
+        	// Initialize values
+        	this._enableButton = true;
+        	this._locked = false;
+        	this._zoomedOut = false;
+        	this._zoomFactor = 0.65;
         },
 
 		// ================================================================
@@ -7208,82 +7246,231 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
 		{
-		    // TODO: _doRender?
 
-		    // ================================================================
-		    //
-		    // public event: WinJS.SemanticZoom.onzoomchanged
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
-		    //
-		    onzoomchanged: {
-		        get: function () {
-                    // Return the tracked hander
-		            return this._onzoomchanged;
-		        },
+			// ================================================================
+			//
+			// public event: WinJS.SemanticZoom.onzoomchanged
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
+			//
+			onzoomchanged: {
+				get: function () {
+					// Return the tracked hander
+					return this._onzoomchanged;
+				},
 
-		        set: function (callback) {
-                    // track the specified handler for this.get
-		            this._onzoomchanged = callback;
-		            this.addEventListener("zoomchanged", callback);
-		        }
-		    },
+				set: function (callback) {
 
+					// Remove previous on* handler if one was specified
+					if (this._onzoomchanged)
+						this.removeEventListener("zoomchanged", this._onzoomchanged);
 
-		    // ================================================================
-		    //
-		    // public property: WinJS.SemanticZoom.enableButton
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
-		    //
-		    _enableButton: true,
-		    enableButton: {
-		        get: function () {
-		            return this._enableButton;
-		        }
-		    },
+					// track the specified handler for this.get
+					this._onzoomchanged = callback;
+					this.addEventListener("zoomchanged", callback);
+				}
+			},
 
 
-		    // ================================================================
-		    //
-		    // public property: WinJS.SemanticZoom.locked
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
-		    //
-		    _locked: false,
-		    locked: {
-		        get: function () {
-		            return this._locked;
-		        }
-		    },
+			// ================================================================
+			//
+			// public property: WinJS.SemanticZoom.enableButton
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
+			//
+			_enableButton: true,
+			enableButton: {
+				get: function () {
+					return this._enableButton;
+				},
+				set: function (value) {
+					this._enableButton = value;
+					this._enableButton ? this._addZoomButton() : this._removeZoomButton();
+				}
+			},
 
 
-		    // ================================================================
-		    //
-		    // public property: WinJS.SemanticZoom.zoomedOut
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
-		    //
-		    _zoomedOut: true,
-		    zoomedOut: {
-		        get: function () {
-		            return this._zoomedOut;
-		        }
-		    },
+			// ================================================================
+			//
+			// public property: WinJS.SemanticZoom.locked
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
+			//
+			_locked: false,
+			locked: {
+				get: function () {
+					return this._locked;
+				},
+				set: function (value) {
+					this._locked = value;
+				}
+			},
 
 
-		    // ================================================================
-		    //
-		    // public property: WinJS.SemanticZoom.zoomFactor
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
-		    //
-		    _zoomFactor: 0.65,
-		    zoomFactor: {
-		        get: function () {
-		            return this._zoomFactor;
-		        }
-		    }
+			// ================================================================
+			//
+			// public property: WinJS.SemanticZoom.zoomedOut
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
+			//
+			_zoomedOut: false,
+			zoomedOut: {
+				get: function () {
+					return this._zoomedOut;
+				},
+				set: function (isZoomedOut) {
+
+					// If the ZoomControl is locked, then ignore zoom set
+					if (this._locked)
+						return;
+
+					// If same, then ignore
+					if (this._zoomedOut == isZoomedOut)
+						return;
+
+					this._zoomedOut = isZoomedOut;
+
+					// hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
+					// Promises which are fulfilled when the animation has finished; we wait until both
+					// animations are done before triggering onzoomchanged
+					var promises = [];
+					if (isZoomedOut) {
+						// We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
+						promises.push(this._hideElement(this._$zoomedInContainer));
+						promises.push(this._showElement(this._$zoomedOutContainer));
+
+						// Also hide the zoom button, which isn't visible when zoomed out
+						this._$zoomButton.hide().css({ "visibility": "hidden" });
+					} else {
+
+						// We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
+						promises.push(this._showElement(this._$zoomedInContainer));
+						promises.push(this._hideElement(this._$zoomedOutContainer));
+
+						// Also show the zoom button, which is visible when zoomed out (if enableButton is true)
+						if (this.enableButton)
+							this._$zoomButton.show().css({ "visibility": "visible" });
+					}
+
+					// Per above, wait until both animations have completed before triggering onzoomchanged.
+					var that = this;
+					WinJS.Promise.join(promises).then(function () {
+						// Notify listeners that zoom changed
+						var event = document.createEvent("CustomEvent");
+						event.initCustomEvent("zoomchanged", true, false, {});
+						that.element.dispatchEvent(event);
+					});
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.SemanticZoom.zoomFactor
+			//
+			//		TODO: NYI; not leveraging this yet.
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
+			//
+			_zoomFactor: 0.65,
+			zoomFactor: {
+				get: function () {
+					return this._zoomFactor;
+				}
+			},
+
+
+			// ================================================================
+			//
+			// private function: WinJS.SemanticZoom._showElement
+			//
+			_showElement: function ($element) {
+
+				// TODO: Animate zoom (in R2)
+				// TODO (CLEANUP): Use jQuery's promise functionality here?
+				return new WinJS.Promise(function (onComplete) {
+					$element.fadeIn("fast", function () {
+						$element.css({ "visibility": "visible" });
+						onComplete();
+					});
+				});
+			},
+
+
+			// ================================================================
+			//
+			// private function: WinJS.SemanticZoom._hideElement
+			//
+			_hideElement: function ($element) {
+
+				// TODO: Animate zoom (in R2)
+				// TODO (CLEANUP): Use jQuery's promise functionality here?
+				return new WinJS.Promise(function (onComplete) {
+					$element.fadeOut("fast", function () {
+						$element.css({ "visibility": "hidden" });
+						onComplete();
+					});
+				});
+			},
+
+
+			// ================================================================
+			//
+			// private function: WinJS.SemanticZoom._addZoomButton
+			//
+			_addZoomButton: function () {
+
+				this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
+				this.$rootElement.append(this._$zoomButton);
+				var that = this;
+				this._$zoomButton.click(function () {
+					that.zoomedOut = true;
+				});
+			},
+
+
+			// ================================================================
+			//
+			// private function: WinJS.SemanticZoom._removeZoomButton
+			//
+			_removeZoomButton: function () {
+
+				this._$zoomButton.remove();
+			},
+
+
+			// ================================================================
+			//
+			// private function: WinJS.SemanticZoom._zoomedOutListItemClicked
+			//
+			//		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
+			//		scrolled to the clicked-on group.
+			//
+			_zoomedOutListItemClicked: function (eventData) {
+
+				// Zoom out
+				this.zoomedOut = false;
+
+				// Gor now, Semantic Zoom works with grouped lists only, so we can find the first item
+				// in the invoked group, and scroll to it in the zoomed-in listview.
+				// TODO: Support other datasources than grouped lists
+				var that = this;
+				eventData.detail.itemPromise.then(function (clickedGroup) {
+
+					// Find the first item in the zoomedinlistview that is in the clicked group
+					// TODO (CLEANUP): Should use IListDataSource for this.
+					var list = that._zoomedInListView._itemDataSource._list;
+					for (var i = 0; i < list.length; i++) {
+						var item = list.getItem(i);
+						if (item.groupKey == clickedGroup.key) {
+
+							// Bring the selected item/group (?) into view
+							that._zoomedInListView.indexOfFirstVisible = i;
+							break;
+						}
+					}
+				});
+			}
 		})
 });
 
@@ -7416,6 +7603,8 @@ WinJS.Namespace.define("WinJS.UI", {
                 var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
                 var $viewportDiv = $("<div class='win-viewport " + orientation + "' role='group'></div>");
                 var $surfaceDiv = $("<div class='win-surface'></div>");
+                this.$viewport = $viewportDiv;
+                this.$scrollSurface = $surfaceDiv;
 
                 // The surface div has to be sized in order for the group header to obtain a valid size (see calculation of topY below).  Size the
                 // surface div to match the viewport; we'll increase its size after we render all items and know the final size
@@ -7644,7 +7833,7 @@ WinJS.Namespace.define("WinJS.UI", {
                             var itemIndex = $(this).data("itemIndex");
 
                             // Call invoke
-                            if ((that.tapBehavior != "none") && that.oniteminvoked != null) {
+                            if (that.tapBehavior != "none") {
 
                                 // Create a Promise with the clicked item
                                 var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
@@ -7933,33 +8122,29 @@ WinJS.Namespace.define("WinJS.UI", {
             },
 
 
-            // ================================================================
-            //
-            // private function: WinJS.ListView._notifySelectionChanged
-            //
-            _notifySelectionChanged: function (pageElement) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._notifySelectionChanged
+        	//
+            _notifySelectionChanged: function (pageElement, eventData) {
 
-                // TODO: What to pass for data?
-                var eventData = {};
+            	// TODO: What to pass for data?
 
-                var event = document.createEvent("CustomEvent");
-                event.initCustomEvent("selectionchanged", true, false, eventData);
-                pageElement.dispatchEvent(event);
+            	var event = document.createEvent("CustomEvent");
+            	event.initCustomEvent("selectionchanged", true, false, eventData);
+            	pageElement.dispatchEvent(event);
             },
 
 
-            // ================================================================
-            //
-            // private function: WinJS.ListView._notifyItemInvoked
-            //
+        	// ================================================================
+        	//
+        	// private function: WinJS.ListView._notifyItemInvoked
+        	//
             _notifyItemInvoked: function (pageElement, eventData) {
 
-                // TODO: What to pass for data?
-                var eventData = {};
-
-                var event = document.createEvent("CustomEvent");
-                event.initCustomEvent("iteminvoked", true, false, eventData);
-                pageElement.dispatchEvent(event);
+            	var event = document.createEvent("CustomEvent");
+            	event.initCustomEvent("iteminvoked", true, false, eventData);
+            	pageElement.dispatchEvent(event);
             },
 
 
@@ -7977,6 +8162,11 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+
+                	// Remove previous on* handler if one was specified
+                	if (this._oniteminvoked)
+                		this.removeEventListener("iteminvoked", this._oniteminvoked);
+
                     // track the specified handler for this.get
                     this._oniteminvoked = callback;
                     this.addEventListener("iteminvoked", callback);
@@ -7998,6 +8188,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._onselectionchanged)
+                		this.removeEventListener("selectionchanged", this._onselectionchanged);
+
                     // track the specified handler for this.get
                     this._onselectionchanged = callback;
                     this.addEventListener("selectionchanged", callback);
@@ -8042,8 +8236,53 @@ WinJS.Namespace.define("WinJS.UI", {
 										));
                     }
                 });
-            }
+            },
 
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.ListView.scrollPosition
+        	//
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211847.aspx
+        	//
+            scrollPosition: {
+            	get: function () {
+					if (this.layout.horizontal)
+						return this.$viewport.scrollLeft();
+					else
+						return this.$viewport.scrollTop();
+            	},
+            	set: function (value) {
+            		if (this.layout.horizontal)
+            			this.$viewport.scrollLeft(value);
+					else
+            			this.$viewport.scrollTop(value);
+            	}
+            },
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.ListView.indexOfFirstVisible
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
+        	//
+            indexOfFirstVisible: {
+            	get: function () {
+            		console.warn("ListView.indexOfFirstVisible getter is NYI; returning 0");
+            		return 0;
+            	},
+            	set: function (index) {
+            		// Get the position of the item at index 'index', and scroll to it
+            		var item = this.items[index].element.parentNode;
+            		var listMargin = parseInt(this.$scrollSurface.css("marginLeft"));
+            		var itemMargin = parseInt($(item).css("marginLeft"));
+            		if (this.layout.horizontal)
+            			this.scrollPosition = item.offsetLeft + listMargin - itemMargin;
+            		else
+            			this.scrollPosition = item.offsetTop;
+            	}
+            }
         })
 });
 

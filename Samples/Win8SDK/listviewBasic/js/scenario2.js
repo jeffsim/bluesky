@@ -15,7 +15,7 @@
             listView.forceLayout();
 
             function itemInvokedHandler(eventObject) {
-                eventObject.detail.itemPromise.done(function (invokedItem) {
+            	eventObject.detail.itemPromise.done(function (invokedItem) {
 
                     // Access item data from the itemPromise
                     WinJS.log("The item at index " + invokedItem.index + " is "
@@ -23,7 +23,7 @@
                         + invokedItem.data.text, "sample", "status");
                 });
             }
-
+            console.log(2);
             listView.addEventListener("iteminvoked", itemInvokedHandler, false);
         }
     });

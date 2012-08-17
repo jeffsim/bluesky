@@ -5,44 +5,51 @@
 ////
 //// Copyright (c) Microsoft Corporation. All rights reserved
 (function () {
-    "use strict";
+	"use strict";
 
-    function getStockInfoData(stock) {
-        var url = "/data/stock-info.xml";
-        return WinJS.xhr({ url: url }).then(function (response) {
-            return parseInfoData(response);
-        });
-    }
+	function getStockInfoData(stock) {
+		var url = "/data/stock-info.xml";
+		return WinJS.xhr({ url: url }).then(function (response) {
+			return parseInfoData(response);
+		});
+	}
 
-    function getHistoryData(range) {
-        var url = "/data/stock-history-" + range + ".csv";
-        return WinJS.xhr({ url: url }).then(function (response) {
-            return parseHistoryData(response);
-        });
-    }
+	function getHistoryData(range) {
+		var url = "/data/stock-history-" + range + ".csv";
+		return WinJS.xhr({ url: url }).then(function (response) {
+			return parseHistoryData(response);
+		});
+	}
 
-    function getNewsData(stock) {
-        var url = "/data/stock-news.xml";
-        return WinJS.xhr({ url: url });
-    }
+	function getNewsData(stock) {
+		var url = "/data/stock-news.xml";
+		return WinJS.xhr({ url: url });
+	}
 
-    function formatNumber(number) {
-        return number.replace(/,/g, "");
-    }
+	function formatNumber(number) {
+		return number.replace(/,/g, "");
+	}
 
-    function parseInfoData(response) {
-        var result = [],
+	function parseInfoData(response) {
+		var result = [],
             xmlDoc = response.responseXML;
-        var allCompanyInfoNodes = xmlDoc.querySelectorAll("DynamicSymbology");
-        var allStockDataNodes = xmlDoc.querySelectorAll("Dynamic");
 
-        for (var i = 0, len = allStockDataNodes.length; i < len; i++) {
-            var stockDataNodes = allStockDataNodes[i];
-            var companyInfoNodes = allCompanyInfoNodes[i];
+		// IE9 does not support querySelectorAll, so we work around it here. TODO (CLEANUP): Move this to WinJS-Polyfill.js
+		if (WinJS.Application.IsBluesky && !xmlDoc.querySelectorAll) {
+			var v = new DOMParser().parseFromString(xmlDoc.xml, "application/xml");
+			var allCompanyInfoNodes = v.querySelectorAll("DynamicSymbology");
+			var allStockDataNodes = v.querySelectorAll("Dynamic");
+		} else {
+			var allCompanyInfoNodes = xmlDoc.querySelectorAll("DynamicSymbology");
+			var allStockDataNodes = xmlDoc.querySelectorAll("Dynamic");
+		}
+		for (var i = 0, len = allStockDataNodes.length; i < len; i++) {
+			var stockDataNodes = allStockDataNodes[i];
+			var companyInfoNodes = allCompanyInfoNodes[i];
 
-            var marketCapOriginal = formatNumber(stockDataNodes.querySelector("MarketCap").textContent),
+			var marketCapOriginal = formatNumber(stockDataNodes.querySelector("MarketCap").textContent),
                 openValue = formatNumber(stockDataNodes.querySelector("Open").textContent);
-            var openStr = parseFloat(openValue),
+			var openStr = parseFloat(openValue),
                 lastSale = parseFloat(formatNumber(stockDataNodes.querySelector("Last").textContent)),
                 low = parseFloat(stockDataNodes.querySelector("Low").textContent),
                 high = parseFloat(stockDataNodes.querySelector("High").textContent),
@@ -50,60 +57,60 @@
                 closeValue = parseFloat(parseFloat(stockDataNodes.querySelector("Close").textContent)),
                 yearLow = parseFloat(stockDataNodes.querySelector("Low52Week").textContent),
                 yearHigh = parseFloat(stockDataNodes.querySelector("High52Week").textContent);
-            volume = volume > 0 ? volume : "N/A";
+			volume = volume > 0 ? volume : "N/A";
 
-            result[i] =
+			result[i] =
             {
-                name: companyInfoNodes.querySelector("LocalCompanyName").textContent,
-                open: openValue === 0 ? "N/A" : openValue,
-                close: closeValue,
-                marketcap: parseInt(marketCapOriginal.substr(1, marketCapOriginal.length)),
-                fiftyTwoWeekRange: yearLow + " - " + yearHigh,
-                lastSale: lastSale,
-                lastSaleTime: Helper.getFriendlyTime(stockDataNodes.querySelector("TimeOfLastSale").textContent),
-                change: closeValue === 0 ? "0" : Helper.formatDecimal(parseFloat(lastSale - closeValue), 2).toString(),
-                percent: openValue === 0 ? "N/A" : ((Math.abs(lastSale - openValue) * 100) / openValue).toString(),
-                volume: volume,
-                low: low,
-                high: high,
-                daysRange: openValue === 0 ? "N/A" : (low + " - " + high),
-                symbol: companyInfoNodes.querySelector("Symbol").textContent.toUpperCase()
+            	name: companyInfoNodes.querySelector("LocalCompanyName").textContent,
+            	open: openValue === 0 ? "N/A" : openValue,
+            	close: closeValue,
+            	marketcap: parseInt(marketCapOriginal.substr(1, marketCapOriginal.length)),
+            	fiftyTwoWeekRange: yearLow + " - " + yearHigh,
+            	lastSale: lastSale,
+            	lastSaleTime: Helper.getFriendlyTime(stockDataNodes.querySelector("TimeOfLastSale").textContent),
+            	change: closeValue === 0 ? "0" : Helper.formatDecimal(parseFloat(lastSale - closeValue), 2).toString(),
+            	percent: openValue === 0 ? "N/A" : ((Math.abs(lastSale - openValue) * 100) / openValue).toString(),
+            	volume: volume,
+            	low: low,
+            	high: high,
+            	daysRange: openValue === 0 ? "N/A" : (low + " - " + high),
+            	symbol: companyInfoNodes.querySelector("Symbol").textContent.toUpperCase()
             };
-        }
+		}
 
-        return result;
-    }
+		return result;
+	}
 
-    function parseHistoryData(response) {
-        var firstDate = "",
+	function parseHistoryData(response) {
+		var firstDate = "",
             rows = response.responseText.split("\n"),
             firstValues = rows[rows.length - 2].split(","),
             firstClose = parseFloat(firstValues[4]),
             stockValues = [];
 
-        for (var i = 1, len = rows.length - 1; i < len; i++) {
-            var values = rows[i].split(","),
+		for (var i = 1, len = rows.length - 1; i < len; i++) {
+			var values = rows[i].split(","),
                 date = values[0];
-            if (i === rows.length - 2) {
-                firstDate = date;
-            }
-            var closeValue = parseFloat(values[4]);
-            var perClose = (Math.abs(closeValue - firstClose) * 100) / firstClose * (closeValue > firstClose ? 1 : -1),
+			if (i === rows.length - 2) {
+				firstDate = date;
+			}
+			var closeValue = parseFloat(values[4]);
+			var perClose = (Math.abs(closeValue - firstClose) * 100) / firstClose * (closeValue > firstClose ? 1 : -1),
                 volume = values[5],
                 adjClose = parseFloat(values[6]);
 
-            stockValues.push([date, closeValue]);
-        }
+			stockValues.push([date, closeValue]);
+		}
 
-        return {
-            stockValues: stockValues,
-            firstDate: firstDate
-        };
-    }
+		return {
+			stockValues: stockValues,
+			firstDate: firstDate
+		};
+	}
 
-    WinJS.Namespace.define("Api", {
-        getStockInfoData: getStockInfoData,
-        getHistoryData: getHistoryData,
-        getNewsData: getNewsData
-    });
+	WinJS.Namespace.define("Api", {
+		getStockInfoData: getStockInfoData,
+		getHistoryData: getHistoryData,
+		getNewsData: getNewsData
+	});
 })();

@@ -279,6 +279,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onafterhide)
+		        		this.removeEventListener("afterhide", this._onafterhide);
+
 		            // track the specified handler for this.get
 		            this._onafterhide = callback;
 		            this.addEventListener("afterhide", callback);
@@ -299,7 +303,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		            return this._onaftershow;
                 },
 
-                set: function (callback) {
+		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onaftershow)
+		        		this.removeEventListener("aftershow", this._onaftershow);
+
                     // track the specified handler for this.get
                     this._onaftershow = callback;
                     this.addEventListener("aftershow", callback);
@@ -321,6 +329,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onbeforehide)
+		        		this.removeEventListener("beforehide", this._onbeforehide);
+
 		            // track the specified handler for this.get
 		            this._onbeforehide = callback;
 		            this.addEventListener("beforehide", callback);
@@ -342,6 +354,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
+		        	// Remove previous on* handler if one was specified
+		        	if (this._onbeforeshow)
+		        		this.removeEventListener("beforeshow", this._onbeforeshow);
+
 		            // track the specified handler for this.get
 		            this._onbeforeshow = callback;
 		            this.addEventListener("beforeshow", callback);

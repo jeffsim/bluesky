@@ -84,3 +84,16 @@ option
 	-webkit-user-select: none;
 	user-select: none;
 }
+
+/* Fix semantic zoom button */
+/* TODO: Use icon instead of "_" */
+.win-semanticzoom-button:before
+{
+	content: "_";
+	font-weight:800;
+}
+
+.win-semanticzoom-button:hover
+{
+	border: solid 2px black;
+}

@@ -12,7 +12,15 @@
     function show(xml, stock) {
         newsItems = [];
         var markup = "";
-        var results = xml.querySelectorAll("NewsResult");
+
+		// IE9 does not support querySelectorAll, so we work around it here. TODO (CLEANUP): Move this to WinJS-Polyfill.js
+        if (WinJS.Application.IsBluesky && !xml.querySelectorAll) {
+        	var v = new DOMParser().parseFromString(xml.xml, "application/xml");
+        	var results = v.querySelectorAll("NewsResult");
+        } else {
+        	var results = xml.querySelectorAll("NewsResult");
+        }
+
         for (var i = 0, len = results.length; i < len; i++) {
             var title = results[i].querySelector("Title").textContent;
             var url = results[i].querySelector("Url").textContent;

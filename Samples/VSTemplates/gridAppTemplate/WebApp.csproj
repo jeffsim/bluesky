@@ -57,12 +57,8 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml.Linq" />
-    <Content Include="bluesky\bluesky-debug.js" />
-    <Content Include="bluesky\bluesky-MiscWinJSPolyfills.js" />
     <Content Include="bluesky\appOverrides.css" />
-    <Content Include="bluesky\webOverrides-dark.css" />
     <Content Include="bluesky\sdkCommonStyles.css" />
-    <Content Include="bluesky\webOverrides-light.css" />
     <Content Include="css\default.css" />
     <Content Include="images\logo.png" />
     <Content Include="images\smalllogo.png" />

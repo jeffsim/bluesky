@@ -288,6 +288,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._ondatasourcecountchanged)
+                		this.removeEventListener("datasourcecountchanged", this._ondatasourcecountchanged);
+
                     // track the specified handler for this.get
                     this._ondatasourcecountchanged = callback;
                     this.addEventListener("datasourcecountchanged", callback);
@@ -309,6 +313,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._onpagecompleted)
+                		this.removeEventListener("pagecompleted", this._onpagecompleted);
+
                     // track the specified handler for this.get
                     this._onpagecompleted = callback;
                     this.addEventListener("pagecompleted", callback);
@@ -329,6 +337,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
+                	// Remove previous on* handler if one was specified
+                	if (this._onpageselected)
+                		this.removeEventListener("pageselected", this._onpageselected);
+
                     // track the specified handler for this.get
                     this._onpageselected = callback;
                     this.addEventListener("pageselected", callback);
@@ -349,7 +361,11 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
-                    // track the specified handler for this.get
+                	// Remove previous on* handler if one was specified
+                	if (this._onpagevisibilitychanged)
+                		this.removeEventListener("pagevisibilitychanged", this._onpagevisibilitychanged);
+
+                	// track the specified handler for this.get
                     this._onpagevisibilitychanged = callback;
                     this.addEventListener("pagevisibilitychanged", callback);
                 }
@@ -480,9 +496,11 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
                 set: function (pageIndex) {
 
+                	pageIndex = Math.max(pageIndex, 0);
+
                     if (this._currentPage == pageIndex)
                         return;
-                    if (pageIndex >= this._items.length)
+                    if (pageIndex >= this._itemDataSource.getCount())
                         return;
                     var that = this;
 
@@ -596,7 +614,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     // Refresh our in-page appearance to show the new datasource's items.
                     this.render();
-                    this.currentPage = Math.min(this._currentPage, this._itemDataSource._list.length - 1);
+                    this.currentPage = Math.max(0, Math.min(this._currentPage, this._itemDataSource._list.length - 1));
 
                     // Fire count change
                     // TODO: Does Win8 fire this on datasource change, or just on item changes?
