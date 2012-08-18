@@ -5,12 +5,12 @@ Check out the samples: http://sampleBrowser.bluesky.io
 ### Current test status
 <table>
 <tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
-<tr><td>Firefox (latest)</td><td><b>129 of 132</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
-<tr><td>IE 10</td><td><b>129 of 132</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>IE 9</td><td><b>129 of 132</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Chrome (latest)</td><td><b>129 of 132</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (mac)</td><td><b>128 of 132</b> tests passing.</td><td>Above, plus QueryColleciton.listen() test failing</td></tr>
-<tr><td>Safari (iPad)</td><td><b>128 of 132</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Firefox (latest)</td><td><b>147 of 150</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
+<tr><td>IE 10</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 9</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Chrome (latest)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (iPad)</td><td><b>146 of 150</b> tests passing.</td><td>Same as above, plus queryCollection.listen test failing (<b>investigating</b>)</td></tr>
+<tr><td>Safari (mac)</td><td><b>146 of 150</b> tests passing.</td><td>Same as above</td></tr>
 </table>
 
 Run the tests here: http://tests.bluesky.io/testharness/testharness.html

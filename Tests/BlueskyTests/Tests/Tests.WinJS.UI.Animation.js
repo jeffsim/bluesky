@@ -26,7 +26,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
             WinJS.UI.Animation.showPopup([$testElement[0]]).then(function () {
 
                 // verify the content is where we expect it to be
-                test.assert($("#testElement").css("left") == "0px", "Element not at left=0; " + $("#testElement").css("left"));
+            	test.assert($("#testElement").css("left") == "0px" || $("#testElement").css("left") == "auto", "Element not at left=0; " + $("#testElement").css("left"));
 
                 return WinJS.Promise.timeout();
             }).then(function () {
@@ -61,7 +61,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
             WinJS.UI.Animation.enterContent([$testElement[0]]).then(function () {
 
                 // verify the content is where we expect it to be
-                test.assert($("#testElement").css("left") == "0px", "Element not at left=0; " + $("#testElement").css("left"));
+            	test.assert($("#testElement").css("left") == "0px" || $("#testElement").css("left") == "auto", "Element not at left=0; " + $("#testElement").css("left"));
 
                 return WinJS.Promise.timeout();
             }).then(function () {
@@ -82,7 +82,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
 
                 // verify the elements are where we expect them to be
                 $(".testEl").get().forEach(function (el) {
-                    test.assert($(el).css("left") == "0px", "Element not at left=0; " + $(el).css("left"));
+                	test.assert($(el).css("left") == "0px" || $(el).css("left") == "auto", "Element not at left=0; " + $(el).css("left"));
                 });
 
                 onTestComplete(test);
@@ -195,7 +195,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
 
                 // verify the content is where we expect it to be
                 // TODO: Does Win8 munge with the left property?  Do they restore it to 0 at the end?
-                test.assert($("#testElement").css("left") == -WinJS.UI.Animation._enterExitDistance + "px", "Element not at left");
+            	test.assert($("#testElement").css("left") == -WinJS.UI.Animation._enterExitDistance + "px" || $("#testElement").css("left") == "auto", "Element not at left");
 
                 return WinJS.Promise.timeout();
             }).then(function () {
@@ -216,7 +216,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
 
                 // verify the elements are where we expect them to be
                 $(".testEl").get().forEach(function (el) {
-                    test.assert($(el).css("left") == -WinJS.UI.Animation._enterExitDistance + "px", "2: Element not at left");
+                	test.assert($(el).css("left") == -WinJS.UI.Animation._enterExitDistance + "px" || $(el).css("left") == "auto", "2: Element not at left");
                 });
 
                 onTestComplete(test);
@@ -243,7 +243,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
             WinJS.UI.Animation.enterPage([$testElement[0]]).then(function () {
 
                 // verify the content is where we expect it to be
-                test.assert($("#testElement").css("left") == "0px", "Element not at left=0");
+            	test.assert($("#testElement").css("left") == "0px" || $("#testElement").css("left") == "auto", "Element not at left=0");
 
                 return WinJS.Promise.timeout();
             }).then(function () {
@@ -264,7 +264,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
 
                 // verify the elements are where we expect them to be
                 $(".testEl").get().forEach(function (el) {
-                    test.assert($(el).css("left") == "0px", "Element not at left=0");
+                	test.assert($(el).css("left") == "0px" || $(el).css("left") == "auto", "Element not at left=0");
                 });
 
                 onTestComplete(test);
@@ -292,7 +292,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
 
                 // verify the content is where we expect it to be
                 // TODO: Does Win8 munge with the left property?  Do they restore it to 0 at the end?
-                test.assert($("#testElement").css("left") == -WinJS.UI.Animation._enterExitDistance + "px", "Element not at left");
+            	test.assert($("#testElement").css("left") == -WinJS.UI.Animation._enterExitDistance + "px" || $("#testElement").css("left") == "auto", "Element not at left");
 
                 return WinJS.Promise.timeout();
             }).then(function () {
@@ -313,7 +313,7 @@ testHarness.addTestFile("WinJS.UI.Animation Tests", {
 
                 // verify the elements are where we expect them to be
                 $(".testEl").get().forEach(function (el) {
-                    test.assert($(el).css("left") == -WinJS.UI.Animation._enterExitDistance + "px", "2: Element not at left");
+                	test.assert($(el).css("left") == -WinJS.UI.Animation._enterExitDistance + "px" || $(el).css("left") == "auto", "2: Element not at left");
                 });
 
                 onTestComplete(test);

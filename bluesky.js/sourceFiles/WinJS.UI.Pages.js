@@ -108,15 +108,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 					parentedPromise.then(function () {
 
 						// We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
-						WinJS.UI.processAll(targetElement).then(function () {
-							// TODO: verify proper order of operations here.
-							if (that.ready)
-								that.ready(targetElement, state);
-							if (that.updateLayout)
-								that.updateLayout(targetElement, state, null);
-							if (that.processed)
-								that.processed(targetElement, state);
-						});
+						return WinJS.UI.processAll(targetElement);
+
+					}).then(function () {
+						// TODO: verify proper order of operations here.
+						if (that.ready)
+							that.ready(targetElement, state);
+						if (that.updateLayout)
+							that.updateLayout(targetElement, state, null);
+						if (that.processed)
+							that.processed(targetElement, state);
 					});
 				}
 
@@ -156,17 +157,18 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				if (!parentedPromise)
 					this.renderPromise = this.renderPromise.then(function (result) {
 						// We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
-						WinJS.UI.processAll(targetElement).then(function () {
-							return new WinJS.Promise(function (onComplete) {
-								// TODO: verify proper order of operations here.
-								if (that["ready"])
-									that["ready"](targetElement, state);
-								if (that["updateLayout"])
-									that["updateLayout"](targetElement, state, null);
-								if (that["processed"])
-									that["processed"](targetElement, state);
-								onComplete(result);
-							});
+						return WinJS.UI.processAll(targetElement);
+
+					}).then(function () {
+						return new WinJS.Promise(function (onComplete) {
+							// TODO: verify proper order of operations here.
+							if (that["ready"])
+								that["ready"](targetElement, state);
+							if (that["updateLayout"])
+								that["updateLayout"](targetElement, state, null);
+							if (that["processed"])
+								that["processed"](targetElement, state);
+							onComplete();
 						});
 					})
 			}, {
