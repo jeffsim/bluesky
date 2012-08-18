@@ -51,6 +51,11 @@ var blueskyUtils = {
 		// TODO: Should the middle / be replaced with \/ or //?  I'm not sure what js's replace does here since "/" seems to delimit the regex, but it seems to be working...
 		// TODO: This doesn't work with string arrays; e.g. "tooltipStrings:['Horrible','Poor','Fair','Good','Excellent','Delete']" borks.
 		dataBindString = dataBindString.replace("\r", "").replace("\n", "").trim();
+
+		// Trim trailing semicolons
+		if (dataBindString[dataBindString.length - 1] == ";")
+			dataBindString = dataBindString.substring(0, dataBindString.length - 1);
+
 		var output = dataBindString.replace(/([a-zA-z\-0-9\./]+)/g, "'$1'");
 
 		// 1B. The above regex will blindly add quotes to keyword that already have quotes.  Remove them here.

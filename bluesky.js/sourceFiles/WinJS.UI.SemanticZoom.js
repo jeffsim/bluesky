@@ -74,7 +74,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	this._zoomedOutListView = this._$zoomedOutElement[0].winControl;
         	/*DEBUG*/
         	
-        	if (!this._zoomedOutListView)
+        	if (!this._zoomedOutListView || !this._zoomedOutListView.selection)
         		console.error("SemanticZoom only works with ListView subcontrols for R1; IZoomableView will come in R2/R3");
         	if (this._zoomedInListView._groupDataSource != this._zoomedOutListView._itemDataSource)
         		console.error("SemanticZoom currently only works with a grouped listview as the zoomed-in view, and that listview's groupdatasource as the zoomed-out view.  Check the GroupedListview sample for a working example");

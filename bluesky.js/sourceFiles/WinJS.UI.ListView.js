@@ -343,15 +343,18 @@ WinJS.Namespace.define("WinJS.UI", {
 
                             // Call invoke
                             if (that.tapBehavior != "none") {
+								// TODO: Clean this up
+                            	if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
 
-                                // Create a Promise with the clicked item
-                                var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+                            		// Create a Promise with the clicked item
+                            		var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
 
-                                // Call the callback
-                                that._notifyItemInvoked(this.parentNode, {
-                                    itemIndex: itemIndex,
-                                    itemPromise: promise
-                                });
+                            		// Call the callback
+                            		that._notifyItemInvoked(this.parentNode, {
+                            			itemIndex: itemIndex,
+                            			itemPromise: promise
+                            		});
+                            	}
                             }
 
                             // Handle selection

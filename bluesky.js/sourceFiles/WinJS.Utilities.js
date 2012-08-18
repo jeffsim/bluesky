@@ -173,12 +173,5 @@ function msSetImmediate(callback) {
     });
 }
 
-// ================================================================
-//
-// public function: setImmediate
-//
-//		MSDN: TODO
-//
-function setImmediate(c) {
-	return msSetImmediate(c);
-}
+window.msSetImmediate = msSetImmediate;
+var setImmediate = msSetImmediate;

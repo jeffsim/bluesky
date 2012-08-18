@@ -106,35 +106,67 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 					// When parenting has completed, trigger the subpage's ready function.  The function that called render()
 					// is responsible for triggering the parented promise that it passed in.
 					parentedPromise.then(function () {
-						// TODO: verify proper order of operations here.
-						if (that["ready"])
-							that["ready"](targetElement, state);
-						if (that["updateLayout"])
-							that["updateLayout"](targetElement, state, null);
-						if (that["processed"])
-							that["processed"](targetElement, state);
+
+						// We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
+						WinJS.UI.processAll(targetElement).then(function () {
+							// TODO: verify proper order of operations here.
+							if (that.ready)
+								that.ready(targetElement, state);
+							if (that.updateLayout)
+								that.updateLayout(targetElement, state, null);
+							if (that.processed)
+								that.processed(targetElement, state);
+						});
 					});
 				}
 
-				// First load the page; then when that's done, process it.  Return a promise that this will happen.  Caller then chains on that promise.
-				this.renderPromise = this._loadPage({ Uri: pageUri, element: targetElement })
-                            .then(function (result) {
-                            	return that._processPage(result);
-                            });
+				// Create a promise to load the specified Uri into the specifie targetElement
+				var loadedAndInited = this._loadPage({
+					Uri: pageUri,
+					element: targetElement
+				}).then(function (pageInfo) {
+
+					// After loading, process the page
+					return that._processPage(pageInfo);
+
+				}).then(function (pageInfo) {
+
+					// After processing the page, call the page's "init" function (if any)
+					return new WinJS.Promise(function (c) {
+
+						if (that.init)
+							that.init(targetElement, state);
+						c(pageInfo);
+					});
+				});
+
+				// Fulfill our elementReady promise after the page has been loaded AND init'ed
+				this.elementReady = loadedAndInited.then(function () {
+					return targetElement;
+				});
+
+				// After the page is loaded is init'ed, process it.  Return a promise that this will happen.  Caller then chains on that promise.
+				// TODO: Diff between this and elementReady?
+				this.renderPromise = loadedAndInited.then(function (result) {
+					return result;
+				});
 
 				// if caller didn't specify a parented promise, then handle calling ready (et al) ourselves.
 				// TODO: Clean this up with the above similar (inverted) block.
 				if (!parentedPromise)
 					this.renderPromise = this.renderPromise.then(function (result) {
-						return new WinJS.Promise(function (onComplete) {
-							// TODO: verify proper order of operations here.
-							if (that["ready"])
-								that["ready"](targetElement, state);
-							if (that["updateLayout"])
-								that["updateLayout"](targetElement, state, null);
-							if (that["processed"])
-								that["processed"](targetElement, state);
-							onComplete(result);
+						// We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
+						WinJS.UI.processAll(targetElement).then(function () {
+							return new WinJS.Promise(function (onComplete) {
+								// TODO: verify proper order of operations here.
+								if (that["ready"])
+									that["ready"](targetElement, state);
+								if (that["updateLayout"])
+									that["updateLayout"](targetElement, state, null);
+								if (that["processed"])
+									that["processed"](targetElement, state);
+								onComplete(result);
+							});
 						});
 					})
 			}, {
@@ -223,6 +255,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 						console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
 					/*ENDDEBUG*/
 
+					// At this point, pageInfo.element == targetElement and pageInfo.response contains the 
+					// text HTML response obtained from pageUri.
+
 					// Return a Promise that we'll process the page (Honestly! We will!)
 					return new WinJS.Promise(function (pageProcessCompletedCallback) {
 
@@ -236,54 +271,89 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 						// This does inject a nontrivial perf hit, but its unavoidable given the need to have styles parsed before scripts reference them (e.g. WinControl sizes).  In order 
 						// to minimize the perf hit somewhat, we push all scripts to the bottom of the page and styles to the top (see rules 5 and 6 here:http://stevesouders.com/hpws/rules.php)
 						// TODO: If this is a problem for a subset of apps, then provide a "WinJS.Bluesky.deferScripts" option and set it to optout.
-						// TODO: does this also explain the FOUT?  I doubt it...
 						// TODO: How to do this to root page?  Probably just warn user? 
 
-						// 1. Create the temporary DOM element ourselves and assign its HTML to the subpage's html
-						var tempDiv = document.createElement("div");
-						tempDiv.innerHTML = pageInfo.response;
+						// Create the temporary DOM element ourselves and assign its HTML to the subpage's html.  Do this instead of appendChild to keep the scripts.
+						// BTW: I *heart* John Resig: http://ejohn.org/blog/dom-documentfragments/
+						// TODO (PERF): Doing this with jQuery to get the 'contents' function. Need to refactor using document.createElement("div")
+						var tempDiv = $("<div></div>");
+						tempDiv[0].innerHTML = pageInfo.response;
 
-						// 2. NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage
+						// Create the temporary DOM fragment and copy the page's contents into it
+						var tempDocument = document.createDocumentFragment();
+						tempDiv.contents().get().forEach(function (child) {
+							tempDocument.appendChild(child);
+						});
+
+						// AT THIS POINT: 
+						//	1. tempDocument contains all of the contents of the loaded page as valid DOM element
+						//	2. None of the scripts or styles (local or referenced) have been loaded or executed yet
+
+						// NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage before
+						//we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
+						//
 						// Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
-						var $newPage = $(tempDiv).css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
+						var $newPage = $(tempDiv);//.css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
+
+						// Add the contents from the temporary document to our new div
+						// NOTE: This will NOT execute any scripts in $newPage.
+						$newPage.append(tempDocument);
+
+						// For each script in the main document, remove any duplicates in the new page.
+						// TODO: this approach is case sensitive, so "test.js" and "Test.js" will not match.  What's the jQuery way to say "case insensitive"?
 						$("script", document).each(function (index, element) {
-							// TODO: this is case sensitive, so "test.js" and "Test.js" will not match.
 							$("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
 						});
 
-						// TODO: convert links to scripts?  See <LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">
-
-						// Remove WinJS scripts.  Technically not necessary, possibly worth pulling out for perf.
+						// Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
 						$("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
 						$("script[src^='http://Microsoft'], script[src^='http://microsoft'], script[src^='//Microsoft'], script[src^='//microsoft']", $newPage).remove();
 
-						// Replace contents of element with loaded page's html
-						$(pageInfo.element).addClass("pagecontrol");
+						// AT THIS POINT: 
+						//	1. The loaded page is ready to be appended to the target element
+						//	2. None of the loaded page's scripts have been executed, nor have its externally referenced scripts or styles been loaded.  
+
+						// Prep the target element to insert the new page.
+						var $target = $(pageInfo.element);
+						$target.addClass("pagecontrol");
 
 						// Do some parsing on the subpage...
-						// 1. Move meta and title tags to page's <head> element.  Also move styles
+						// A. Move various tags up to the page's <head> element.  Also move styles
+						// TODO (PERF): Grab $("head") once and make it available in blueskyUtils._$head (or somesuch) for internal use only.
 						var $head = $("head", document);
+
+						// Move styles first so that they're there when we move scripts.  Also; prepend the styles so they appear first
 						$("meta, title, link", $newPage).prependTo($head);
 
-						// 2. Remove duplicate styles and meta/charset tags
+						// B. Remove duplicate styles and meta/charset tags
 						blueskyUtils.removeDuplicateElements("style", "src", $head);
 						blueskyUtils.removeDuplicateElements("meta", "charset", $head);
 
-						// 3. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
+						// C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
 						$("title:not(:first)", $head).remove();
 
-						// Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
-						$(pageInfo.element).append($newPage.contents());
+						// move any scripts out of $newPage and into a temporary list so that we can process them independently
+						//		var $newPageScripts = $("script", $newPage).remove();
 
-						// Process the wincontrols in the newly loaded page fragment
-						WinJS.UI.processAll(pageInfo.element);
+						// Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
+						$target.append($newPage.contents());
+
+						// AT THIS POINT: 
+						//	1. $target contains all of the elements from the loaded page.
+						//	2. $target may or may not be placed within the DOM, so ELEMENTS WITHIN $target MAY HAVE INVALID DIMENSIONS/STYLES.
+						//  3. All styles from the loaded page have been moved up to the page's head, but possibly not yet parsed into document.styleSheets
+						//	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
 						// Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
-						$("[id]").each(function (index, element) {
+						$("[id]", $target).each(function (index, element) {
 							window[element.id] = element;
 						});
 
-						// Notify that we've fulfilled our Promise to process the page.
+						//	$newPageScripts.appendTo($head);
+
+						// We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
+						// wait for the parentedPromise to be fulfilled...
+
 						pageProcessCompletedCallback(pageInfo);
 					});
 				},

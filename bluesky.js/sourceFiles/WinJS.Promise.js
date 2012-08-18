@@ -265,9 +265,9 @@ WinJS.Namespace.define("WinJS", {
 			//
 			is: function (value) {
 
-				// TODO: Currently checking for existing of the then function; this will fire a false-positive if
-				// the object is not a Promise but has an unrelated complete function.  What's the right way to check
-				// for Promise'ness?
+				// TODO: Currently checking for existence of the then function; this will fire a false-positive if
+				// the object is not a Promise but has an unrelated function called "then".  What's the right way to check
+				// for Promise'ness?  could use "instanceof"...
 				return (value && value.then && typeof value.then === "function")
 			},
 
@@ -283,11 +283,9 @@ WinJS.Namespace.define("WinJS", {
 			//
 			join: function (promises) {
 
-				// TODO: support empty list
-
 				return new WinJS.Promise(function (c, e, p) {
 					var results = [];
-					if (!promises) {
+					if (!promises || promises.length == 0) {
 						c(results);
 					} else {
 						// If a single promise was specified, then convert to array
@@ -315,5 +313,4 @@ WinJS.Namespace.define("WinJS", {
 				});
 			}
 		})
-
 });

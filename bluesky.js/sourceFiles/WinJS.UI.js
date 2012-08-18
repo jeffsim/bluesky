@@ -169,12 +169,19 @@ WinJS.Namespace.define("WinJS.UI", {
         //
         // So I ended up with the following pained but functional approach.
         //
-        //		TODO: SURELY there's a better way to do this :P
-        //
         var parts = element.dataset.winControl.split(".");
         var controlConstructor = window;
-        for (var i = 0; i < parts.length; i++)
-            controlConstructor = controlConstructor[parts[i]];
+        for (var i = 0; i < parts.length; i++) {
+
+        	/*DEBUG*/
+        	if (!controlConstructor) {
+        		console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
+        		return;
+        	}
+        	/*ENDDEBUG*/
+
+        	controlConstructor = controlConstructor[parts[i]];
+        }
 
         // Now that we have a pointer to the actual control constructor, instantiate the wincontrol
         element.winControl = new controlConstructor(element, options);
