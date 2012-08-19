@@ -6925,7 +6925,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     if (this._currentPage == pageIndex)
                         return;
-                    if (pageIndex >= this._itemDataSource.getCount())
+                    if (!this._itemDataSource || pageIndex >= this._itemDataSource.getCount())
                         return;
                     var that = this;
 
