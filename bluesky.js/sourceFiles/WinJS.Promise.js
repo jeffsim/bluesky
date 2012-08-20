@@ -54,8 +54,8 @@ WinJS.Namespace.define("WinJS", {
         	// Call the init callback function; this will kick off the (potentially long-lived) async process
         	var that = this;
         	init(function completed(value) { that._complete(value); },
-                 function error(value) { that._error(value); },
-                 function progress(value) { that._progress(value); });
+                 function error(value) { that._error && that._error(value); },
+                 function progress(value) { that._progress && that._progress(value); });
         },
 
 		// ================================================================

@@ -1,0 +1,5 @@
+﻿<xml>
+  <test1 foo="bar">
+    <Hello></Hello>
+  </test1>
+</xml>

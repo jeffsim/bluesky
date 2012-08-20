@@ -380,60 +380,55 @@ WinJS.Namespace.define("WinJS", {
 	// public function: WinJS.xhr
 	//
 	xhr: function (options) {
+		
+		var req;
+		return new WinJS.Promise(
+            function (c, e, p) {
+            	/// <returns value="c(new XMLHttpRequest())" locid="WinJS.xhr.constructor._returnValue" />
+            	req = new XMLHttpRequest();
+            	req.onreadystatechange = function () {
+            		if (req._canceled) { return; }
 
-		var request;
-		var requestType = options && options.type || "GET";
+            		if (req.readyState === 4) {
+            			if (req.status >= 200 && req.status < 300) {
+            				c(req);
+            			} else {
+            				if (req.status == 404)
+            					req.number = -2146697211;
+            				e(req);
+            			}
+            			req.onreadystatechange = function () { };
+            		} else {
+            			p(req);
+            		}
+            	};
 
-		return new WinJS.Promise(function (onComplete, onError, onProgress) {
+            	req.open(
+                    options.type || "GET",
+                    options.url,
+                    // Promise based XHR does not support sync.
+                    //
+                    true,
+                    options.user,
+                    options.password
+                );
+            	req.responseType = options.responseType || "";
 
-			// track if we've completed the request already
-			var requestCompleted = false;
+            	Object.keys(options.headers || {}).forEach(function (k) {
+            		req.setRequestHeader(k, options.headers[k]);
+            	});
 
-			// Create the request
-			request = new XMLHttpRequest();
+            	if (options.customRequestInitializer) {
+            		options.customRequestInitializer(req);
+            	}
 
-			// Listen for changes
-			request.onreadystatechange = function () {
-
-				// If the request was cancelled, then just break out
-				if (request.cancelled || requestCompleted)
-					return;
-
-				// Request completed?
-				if (request.readyState == 4) {
-					// Successful completion or failure?
-					if (request.status >= 200 && request.status < 300) {
-						onComplete(request);
-					}
-					else
-						onError(request);
-
-					// Ignore subsequent changes
-					requestCompleted = true;
-				} else {
-					// Report progress (TODO: Promise doesn't support progress yet)
-					// onProgress(request);
-				}
-			};
-
-			// Open the request
-			request.open(requestType, options.url, true);
-
-			// Add request headers
-			if (options.headers)
-				options.headers.forEach(function (header) {
-					request.setRequestHeader(key, header);
-				});
-
-			// Finally, send the request
-			request.send(options.data);
-		},
-
-		// Error handler
-		function () {
-			request.cancelled = true;
-			request.abort();
-		});
+            	req.send(options.data);
+            },
+            function () {
+            	req._canceled = true;
+            	req.abort();
+            }
+        );
 	}
 });
 
@@ -1714,8 +1709,8 @@ WinJS.Namespace.define("WinJS", {
         	// Call the init callback function; this will kick off the (potentially long-lived) async process
         	var that = this;
         	init(function completed(value) { that._complete(value); },
-                 function error(value) { that._error(value); },
-                 function progress(value) { that._progress(value); });
+                 function error(value) { that._error && that._error(value); },
+                 function progress(value) { that._progress && that._progress(value); });
         },
 
 		// ================================================================
