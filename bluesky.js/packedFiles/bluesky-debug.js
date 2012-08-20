@@ -1714,8 +1714,8 @@ WinJS.Namespace.define("WinJS", {
         	// Call the init callback function; this will kick off the (potentially long-lived) async process
         	var that = this;
         	init(function completed(value) { that._complete(value); },
-                 function error(value) { that._error(value); },
-                 function progress(value) { that._progress(value); });
+                 function error(value) { that._error && that._error(value); },
+                 function progress(value) { that._progress && that._progress(value); });
         },
 
 		// ================================================================
@@ -9218,6 +9218,143 @@ WinJS.Namespace.define("WinJS.Utilities", {
 
 	// ================================================================
 	//
+	// public function: WinJS.Utilities.createEventProperties
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229811.aspx
+	//
+	createEventProperties: function (events) {
+
+		// 'events' can be an arbitrary collection of parameters, so walk the argument list
+		var eventProperties = {};
+		for (var i = 0; i < arguments.length; i++) {
+			var eventName = arguments[i];
+
+			// Create the property.  Do this as a function as I was getting tripped up by the closure
+			eventProperties["on" + eventName] = this._createProperty(eventName);
+		}
+		return eventProperties;
+	},
+
+	_createProperty: function (eventName) {
+
+		var publicName = "on" + eventName;
+		var privateName = "_on" + eventName;
+		return {
+			get: function () {
+				return this[privateName];
+			},
+			set: function (callback) {
+				// Remove previous on* handler if one was specified
+				if (this[privateName])
+					this.removeEventListener(eventName, callback);
+
+				// track the specified handler for this.get
+				this[privateName] = callback;
+				this.addEventListener(eventName, callback);
+			}
+		};
+	},
+
+
+	// ================================================================
+	//
+	// public object: WinJS.Utilities.eventMixin
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211693.aspx
+	//
+	eventMixin: {
+
+		// ================================================================
+		//
+		// public function: WinJS.Utilities.eventMixin.dispatchEvent
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211690.aspx
+		//
+		addEventListener: function (eventName, listener) {
+
+			if (!this._eventListeners)
+				this._eventListeners = [];
+			if (!this._eventListeners[eventName])
+				this._eventListeners[eventName] = [];
+
+			// Add the listener to the list of listeners for the specified eventName
+			this._eventListeners[eventName].push(listener);
+		},
+
+
+		// ================================================================
+		//
+		// public function: WinJS.Utilities.eventMixin.dispatchEvent
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211695.aspx
+		//
+		removeEventListener: function (eventName, listener) {
+
+			// Remove the listener from the list of listeners for the specified eventName
+			var listeners = this._eventListeners[eventName];
+			for (var i = 0; i < listeners.length; i++) {
+				if (listener === listeners[i]) {
+					listeners.splice(i, 1);
+					return;
+				}
+			}
+		},
+
+
+		// ================================================================
+		//
+		// public function: WinJS.Utilities.eventMixin.dispatchEvent
+		//
+		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211692.aspx
+		//
+		dispatchEvent: function (eventName, eventProperties) {
+
+			if (!this._eventListeners)
+				return;
+
+			// TODO (CLEANUP): Can I just use the browser's dispatchEvent (etc) here?
+			// TODO (CLEANUP): Use this in WinJS.Application, WinJS.Navigation, and other places that need events but don't have elements.
+			var listeners = this._eventListeners[eventName];
+			if (!listeners)
+				return;
+
+			var eventData = {
+
+				// Event type
+				type: eventName,
+
+				// Event Targeting
+				currentTarget: this,
+				target: this,
+
+				// bubble/cancel.  TODO: What are the proper values here?
+				bubbles: false,
+				cancelable: false,
+
+				// Misc
+				eventPhase: 0,
+				detail: eventProperties,
+
+				// Stopping/preventing
+				defaultPrevented: false,
+				preventDefault: function () { this.defaultPrevented = true; },
+				_stopImmediately: false,
+				stopImmediatePropagation: function () { this._stopImmediately = true; }
+			};
+
+			for (var i = 0; i < listeners.length; i++) {
+				listeners[i](eventData);
+				if (eventData._stopImmediately)
+					break;
+			}
+
+			return eventData.defaultPrevented;
+		}
+	},
+
+
+	// ================================================================
+	//
 	// public function: WinJS.Utilities.addClass
 	//
 	//		Adds the specified class to the specified DOM element
@@ -9326,12 +9463,12 @@ WinJS.Namespace.define("WinJS.Utilities", {
 //
 function msSetImmediate(callback) {
 
-    // TODO: I'm assuming this is what setImmediate does; essentially just yield the thread, and as soon as
-    // the thread gets a chance, call the callback function
-    // TODO: setImmediate tests.
-    WinJS.Promise.timeout().then(function () {
-        callback();
-    });
+	// TODO: I'm assuming this is what setImmediate does; essentially just yield the thread, and as soon as
+	// the thread gets a chance, call the callback function
+	// TODO: setImmediate tests.
+	WinJS.Promise.timeout().then(function () {
+		callback();
+	});
 }
 
 window.msSetImmediate = msSetImmediate;

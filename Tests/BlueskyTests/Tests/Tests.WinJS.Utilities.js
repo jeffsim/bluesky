@@ -156,5 +156,63 @@ testHarness.addTestFile("WinJS.Utilities Tests", {
 		test.assert(qc.length == 5, "Failed to query divs");
 		qc = WinJS.Utilities.query(".t1", $("#child2", $(testDiv))[0]);
 		test.assert(qc.length == 3, "Failed to query by class from child");
+	},
+
+
+
+	// ==========================================================================
+	// 
+	// Test WinJS.Utilities.createEventProperties functionality
+	//
+	createEventProperties: function (test) {
+
+		test.start("WinJS.Utilities.createEventProperties tests");
+		var Person = WinJS.Class.define(
+            function () {
+            	this.name = "Harry";
+            	this.color = "blue";
+            });
+		WinJS.Class.mix(Person, WinJS.Utilities.createEventProperties("change", "rename"));
+		var myPerson = new Person();
+		var hasOnChange = false;
+		var hasOnRename = false;
+		var hasName = false;
+		var hasColor = false;
+		for (var prop in myPerson) {
+			hasOnChange |= prop == "onchange";
+			hasOnRename |= prop == "onrename";
+			hasName |= prop == "name";
+			hasColor |= prop == "color";
+		}
+		test.assert(hasOnChange, "does not have onchange");
+		test.assert(hasOnRename, "does not have onrename");
+		test.assert(hasName, "does not have name");
+		test.assert(hasColor, "does not have color");
+	},
+
+
+	// ==========================================================================
+	// 
+	// Test WinJS.Utilities.eventMixin functionality
+	//
+	eventMixin: function (test) {
+
+		test.start("WinJS.Utilities.eventMixin tests");
+		return test.doAsync(function (onTestComplete) {
+
+			var Person = WinJS.Class.define(
+                function () {
+                	this.name = "Harry";
+                	this.color = "blue";
+                });
+			WinJS.Class.mix(Person, WinJS.Utilities.eventMixin);
+			WinJS.Class.mix(Person, WinJS.Utilities.createEventProperties("change", "rename"));
+			var myPerson = new Person();
+			myPerson.onchange = function (eventData) {
+				test.assert(eventData.detail.hello == "world", "Event data not valid");
+				onTestComplete(test);
+			};
+			myPerson.dispatchEvent("change", { "hello": "world" });
+		});
 	}
 });
