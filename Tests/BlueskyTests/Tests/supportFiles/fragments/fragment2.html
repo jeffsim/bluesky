@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <!-- test internal css -->
+    <style>
+        #test2 {
+            color: red;
+        }
+    </style>
+
+    <!-- test external css -->
+    <link href="/Tests/supportFiles/fragments/fragment2.css" rel="stylesheet" />
+    
+    <!-- test external script -->
+    <script type='text/javascript' src='/Tests/supportFiles/fragments/fragment2.js'></script>
+
+    <!-- test internal script -->
+    <script type='text/javascript'>
+        // This block should run before .cache() returns.
+        $(document).ready(function () {
+            // This should not have an impact
+            $("#test3").text("XYZ");
+            
+            // This should have an impact
+            window.fragmentTestValue3 = 300;
+        });
+        
+        window.fragmentTestValue2 = 200;
+        window.fragmentTestFunc1 = function () {
+            $("#test3").text("123");
+            window.fragmentTestValue6 = 600;
+        };
+    </script>
+
+</head>
+<body>
+    <div id='root'>Hello</div>
+    <div id='test2'>Foo</div>
+    <div id='test3'>Bar</div>
+</body>
+</html>

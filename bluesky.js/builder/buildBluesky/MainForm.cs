@@ -44,6 +44,7 @@ namespace buildBluesky
                @"\WinJS.UI.js",
                @"\WinJS.UI.Animation.js",
                @"\WinJS.UI.BaseControl.js",
+               @"\WinJS.UI.Fragments.js",
                @"\WinJS.UI.Pages.js",
                @"\WinJS.UI.HtmlControl.js",
                @"\WinJS.UI.Flyout.js",
@@ -86,6 +87,13 @@ namespace buildBluesky
 			if(File.Exists(blueskyTestFile))
 				File.Delete(blueskyTestFile);
 			File.Copy(destFolder + "bluesky-min.js", blueskyTestFile);
+
+			// Temp, for development purposes - copy into sample folder
+            var navSampleFile = @"..\..\..\..\..\Samples\Win8SDK\fragmentsSample\bluesky\bluesky-debug.js";
+            if (File.Exists(navSampleFile))
+                File.Delete(navSampleFile);
+            File.Copy(destFolder + "bluesky-debug.js", navSampleFile);
+
 
             MessageBox.Show("Build complete");
 		}

@@ -114,11 +114,19 @@ WinJS.Namespace.define("WinJS.UI", {
     //
     processAll: function (rootElement) {
 
+    	// TODO (CLEANUP): This and .process() share an awful lot of similarity...
+
         return new WinJS.Promise(function (onComplete) {
 
-            // If the caller didn't specify a root element, then process the entire document.
+        	// If the caller didn't specify a root element, then process the entire document.
             if (!rootElement)
-                rootElement = document;
+            	rootElement = document;
+            else {
+            	// Process the element
+            	blueskyUtils.ensureDatasetReady(rootElement);
+            	if (rootElement.dataset && rootElement.dataset.winControl)
+            		WinJS.UI._processElement(rootElement);
+            }
 
             // Add winControl objects to all elements tagged as data-win-control
             $("[data-win-control]", rootElement).each(function () {

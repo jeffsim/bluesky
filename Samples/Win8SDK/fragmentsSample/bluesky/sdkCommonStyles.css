@@ -1,0 +1,98 @@
+/* This file contains style overrides that apply to all of the Win8 SDK samples.  These overrides
+   are necessary to make WinJS look good on other browsers, in particular dealing with the lack of
+  -ms-grid, which the Win8 SDK samples rely heavily upon */
+
+/* Address the lack of Segoe UI Light */
+#descLabel, #listLabel, #featureLabel
+{
+	font-family: "Segoe UI", "Helvetica", "Verdana";
+}
+
+/* The following css is all to address the lack of -ms-grid on non-IE10 browsers */
+/* TODO: if not IE10... */
+.notIE10 #rootGrid
+{
+	position: absolute;
+	left: 100px;
+	right: 100px;
+}
+
+.notIE10 #content
+{
+	position: absolute;
+	top: 44px;
+	bottom: 80px;
+	left: 0px;
+	right: 200px;
+}
+
+.notIE10 #header
+{
+	padding-top: 20px;
+}
+
+.notIE10 #footer
+{
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+.notIE10 .content
+{
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+.notIE10 .TOCCenter
+{
+	margin-left: 60px;
+}
+
+.notIE10 .controlEventsItemTemplate img
+{
+	height: 270px;
+	margin-left: 36px;
+}
+
+.notIE10 .details
+{
+	position: absolute;
+	top: 100px;
+	left: 530px;
+	right: 110px;
+}
+
+.notIE10 .itemContainer
+{
+	border-left: solid 6px #0c0 !important;
+}
+
+.notIE10 #links
+{
+	margin-right: 120px;
+	padding-bottom: 20px;
+}
+
+.notIE10 .overlay
+{
+	margin-top: -80px;
+}
+
+.notIE10 .mediumListIconTextItem-Detail
+{
+	margin: -70px 5px 5px 75px !important;
+}
+
+.notIE10 .regularListIconTextItem-Detail
+{
+	margin: -70px 5px 5px 75px !important;
+}
+
+.notIE10 .smallListIconTextItem-Detail
+{
+	margin: -70px 5px 5px 75px !important;
+}

@@ -60,6 +60,14 @@
     <Content Include="testHarness\TestHarness.css" />
     <Content Include="testHarness\TestHarness.js" />
     <Content Include="Tests\supportFiles\flipView\flipView.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment1.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment4.css" />
+    <Content Include="Tests\supportFiles\fragments\fragment4.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment4.js" />
+    <Content Include="Tests\supportFiles\fragments\fragment3.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment2.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment2.js" />
+    <Content Include="Tests\supportFiles\fragments\fragment2.css" />
     <Content Include="Tests\supportFiles\listView\listView.html" />
     <Content Include="Tests\supportFiles\semanticZoom\simpleZoom.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
@@ -76,6 +84,7 @@
     <Content Include="Tests\Tests.WinJS.UI.DOMEventMixin.js" />
     <Content Include="Tests\Tests.WinJS.UI.FlipView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Flyout.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Fragments.js" />
     <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
     <Content Include="Tests\Tests.WinJS.UI.js" />
     <Content Include="Tests\Tests.WinJS.UI.ListView.js" />

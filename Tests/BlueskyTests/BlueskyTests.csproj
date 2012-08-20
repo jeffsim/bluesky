@@ -47,6 +47,15 @@
     <Content Include="TestHarness\testHarness.css" />
     <Content Include="TestHarness\testHarness.html" />
     <Content Include="TestHarness\testHarness.js" />
+    <Content Include="Tests\supportFiles\fragments\fragment1.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment2.css" />
+    <Content Include="Tests\supportFiles\fragments\fragment2.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment2.js" />
+    <Content Include="Tests\supportFiles\fragments\fragment3.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment4.css" />
+    <Content Include="Tests\supportFiles\fragments\fragment4.html" />
+    <Content Include="Tests\supportFiles\fragments\fragment4.js" />
+    <Content Include="Tests\Tests.WinJS.UI.Fragments.js" />
     <Content Include="Tests\supportFiles\images\60Banana.png" />
     <Content Include="Tests\supportFiles\images\60Lemon.png" />
     <Content Include="Tests\supportFiles\images\60Mint.png" />
