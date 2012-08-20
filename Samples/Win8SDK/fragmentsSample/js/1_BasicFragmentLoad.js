@@ -23,12 +23,12 @@
             // Read fragment from the HTML file and load it into the div.  Note
             // Fragments.renderCopy() returns a promise which a done() statement
             // is attached to in order to perform additional processing or handle errors
-            // that may have occurred during the cloneTo() action.
+        	// that may have occurred during the cloneTo() action.
             WinJS.UI.Fragments.renderCopy("/html/1_BasicFragmentLoad_Fragment.html",
                 this.basicFragmentLoadDiv)
                 .done(
-                    function () {
-                        WinJS.log && WinJS.log("successfully loaded fragment", "sample", "status");
+        	function () {
+        		WinJS.log && WinJS.log("successfully loaded fragment", "sample", "status");
                     },
                     function (error) {
                         WInJS.log && WinJS.log("error loading fragment: " + error, "sample", "error");

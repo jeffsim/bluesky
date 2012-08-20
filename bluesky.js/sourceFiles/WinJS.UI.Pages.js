@@ -76,6 +76,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 	//
 	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770579.aspx
 	//
+	_renderingPage: null,
+	_renderingSubpages: [],
 	define: function (pageUri, members) {
 
 		/*DEBUG*/
@@ -111,7 +113,13 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 						return WinJS.UI.processAll(targetElement);
 
 					}).then(function () {
-						// TODO: verify proper order of operations here.
+						// If this is the top level "rendering page", then wait until all subpage renderPromises have been fulfilled before we tell anyone that we're done.
+						// TODO: This should actually work recursively, where a subpage waits on its subpages.
+						if (that == WinJS.UI.Pages._renderingPage && WinJS.UI.Pages._renderingSubpages.length > 0)
+							return WinJS.Promise.join(WinJS.UI.Pages._renderingSubpages);
+
+					}).then(function () {
+						WinJS.UI.Pages._renderingPage = null;
 						if (that.ready)
 							that.ready(targetElement, state);
 						if (that.updateLayout)
@@ -152,25 +160,37 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 					return result;
 				});
 
+				if (WinJS.UI.Pages._renderingPage) {
+					// We're already rendering a page; that page (or one of its subpages) must have a subpage.  We will want to wait on all subpage rendering prior to informing complation
+					WinJS.UI.Pages._renderingSubpages.push(this.renderPromise);
+				} else {
+					WinJS.UI.Pages._renderingPage = this;
+					WinJS.UI.Pages._renderingSubpages = [];
+				}
+
 				// if caller didn't specify a parented promise, then handle calling ready (et al) ourselves.
 				// TODO: Clean this up with the above similar (inverted) block.
-				if (!parentedPromise)
+				if (!parentedPromise) {
 					this.renderPromise = this.renderPromise.then(function (result) {
 						// We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
 						return WinJS.UI.processAll(targetElement);
 
 					}).then(function () {
-						return new WinJS.Promise(function (onComplete) {
-							// TODO: verify proper order of operations here.
-							if (that["ready"])
-								that["ready"](targetElement, state);
-							if (that["updateLayout"])
-								that["updateLayout"](targetElement, state, null);
-							if (that["processed"])
-								that["processed"](targetElement, state);
-							onComplete();
-						});
+						// If this is the top level "rendering page", then wait until all subpage renderPromises have been fulfilled before we tell anyone that we're done.
+						// TODO: This should actually work recursively, where a subpage waits on its subpages.
+						if (that == WinJS.UI.Pages._renderingPage && WinJS.UI.Pages._renderingSubpages.length > 0)
+							return WinJS.Promise.join(WinJS.UI.Pages._renderingSubpages);
+
+					}).then(function () {
+						WinJS.UI.Pages._renderingPage = null;
+						if (that["ready"])
+							that["ready"](targetElement, state);
+						if (that["updateLayout"])
+							that["updateLayout"](targetElement, state, null);
+						if (that["processed"])
+							that["processed"](targetElement, state);
 					})
+				}
 			}, {
 
 				// ================================================================
@@ -325,7 +345,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 						var $head = $("head", document);
 
 						// Move styles first so that they're there when we move scripts.  Also; prepend the styles so they appear first
-						$("meta, title, link", $newPage).prependTo($head);
+						$("meta, title, link, style", $newPage).prependTo($head);
 
 						// B. Remove duplicate styles and meta/charset tags
 						blueskyUtils.removeDuplicateElements("style", "src", $head);

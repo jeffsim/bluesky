@@ -310,6 +310,16 @@
 				msdnUrl: "http://code.msdn.microsoft.com/windowsapps/ListView-selection-detail-95e06ade"
 			});
 
+			list.push({
+				group: this.listGroups[2],
+				backgroundImage: "http://bluesky.io/samples/previews/fragmentsSample.jpg",
+				DisplayName: "Fragments sample",
+				itemTemplate: 'sdkTemplate',
+				url: "http://fragmentsSample.bluesky.io",
+				githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/fragmentsSample",
+				msdnUrl: "http://code.msdn.microsoft.com/windowsapps/Fragments-91f66b07"
+			});
+
 			return list;
 		}
 	});

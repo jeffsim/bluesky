@@ -136,7 +136,8 @@
     // Control that populates and runs the scenario selector
 
     var ScenarioSelect = WinJS.UI.Pages.define("/sample-utils/scenario-select.html", {
-        ready: function (element, options) {
+    	ready: function (element, options) {
+
             var that = this;
             var selectElement = WinJS.Utilities.query("#scenarioSelect", element);
             this._selectElement = selectElement[0];
@@ -150,7 +151,7 @@
                 if (select.selectedIndex >= 0) {
                     var newUrl = select.options[select.selectedIndex].value;
                     WinJS.Navigation.navigate(newUrl).then(function () {
-                        setImmediate(function () {
+                    	setImmediate(function () {
                             document.getElementById("scenarioSelect").setActive();
                         });
                     });

@@ -49,12 +49,13 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
 			// If caller specifed an element, then move the document fragment into it and return the element; otherwise just return the fragment
 
 			if (addToCache)
-				WinJS.UI.Fragments._cacheStore[href] = docFrag;
+				WinJS.UI.Fragments._cacheStore[href] = docFrag.cloneNode(true);
 
 			if (!element)
 				return docFrag;
 
 			element.appendChild(docFrag);
+
 			return element;
 		});
 	},
