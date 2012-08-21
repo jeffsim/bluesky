@@ -9,8 +9,8 @@ Check out the samples: http://sampleBrowser.bluesky.io
 <tr><td>IE 10</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
 <tr><td>IE 9</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
 <tr><td>Chrome (latest)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (iPad)</td><td><b>146 of 150</b> tests passing.</td><td>Same as above, plus queryCollection.listen test failing (<b>investigating</b>)</td></tr>
-<tr><td>Safari (mac)</td><td><b>146 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (iPad)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (mac)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
 </table>
 
 Run the tests here: http://tests.bluesky.io/testharness/testharness.html
