@@ -59,6 +59,7 @@ namespace buildBluesky
 			   @"\Windows.UI.WebUI.js",
 			   @"\WinJS.Utilities.js",
 			   @"\WinJS.Utilities.QueryCollection.js",
+               @"\blueskySettings.js",
                @"\blueskyUtils.js"
             };
 

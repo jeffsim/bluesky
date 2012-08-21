@@ -84,6 +84,7 @@
     <Content Include="Tests\Tests.WinJS.Navigation.js" />
     <Content Include="Tests\Tests.WinJS.Promise.js" />
     <Content Include="Tests\Tests.WinJS.UI.Animation.js" />
+    <Content Include="Tests\Tests.WinJS.UI.AppBarCommand.js" />
     <Content Include="Tests\Tests.WinJS.UI.DOMEventMixin.js" />
     <Content Include="Tests\Tests.WinJS.UI.FlipView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Flyout.js" />
