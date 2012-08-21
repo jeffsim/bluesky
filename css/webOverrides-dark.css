@@ -6,7 +6,6 @@
 //		web friendly.  See webOverrides-light.css for the partner file for ui-light.css
 //
 */
-
 /* Select a more web-friendly set of fonts
 	TODO: Figure out what the best set of fonts are. */
 body, input, textarea, button, select, option
@@ -86,15 +85,28 @@ option
 	user-select: none;
 }
 
-/* Fix semantic zoom button */
-/* TODO: Use icon instead of "_" */
-.win-semanticzoom-button:before
+/* clear backbutton content */
+.win-backbutton:before
 {
-	content: "_";
-	font-weight:800;
+	content: "";
+}
+/* part of above */
+.win-backbutton
+{
+    background:url("http://bluesky.io/images/icons.png") no-repeat scroll -40px 0px !important;
+	/* Following is necessary to make it work on iOS (tbd: safari too? */
+	background-size: 200px 1200px;
 }
 
-.win-semanticzoom-button:hover
+/* clear semantic zoom button content */
+.win-semanticzoom-button:before
 {
-	border: solid 2px black;
+	content: "";
+}
+/* part of above */
+.win-semanticzoom-button
+{
+    background:url("http://bluesky.io/images/icons.png") no-repeat scroll -9px -1122px rgba(216, 216, 216, 0.33);
+	/* Following is necessary to make it work on iOS (tbd: safari too? */
+	background-size: 200px 1200px;
 }

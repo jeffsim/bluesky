@@ -280,7 +280,13 @@
 				results.push($(this).attr("id"));
 				e.cancelBubble = true;
 			});
-			$("div", $(testDiv)).trigger("click");
+
+			// Note: Safari does not like .trigger("click"), so manually gen up the event
+			$("div", $(testDiv)).each(function (index, el) {
+				var evt = document.createEvent("MouseEvents");
+				evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+				el.dispatchEvent(evt);
+			});
 
 			test.assert(results.length == 5, "Did not trigger 5 events");
 			test.assert(results.indexOf("child1") >= 0, "Did not trigger for child1");
@@ -288,7 +294,7 @@
 			test.assert(results.indexOf("child3") >= 0, "Did not trigger for child3");
 			test.assert(results.indexOf("child4") >= 0, "Did not trigger for child4");
 			test.assert(results.indexOf("child5") >= 0, "Did not trigger for child5");
-		},
+		}
 	});
 
 
