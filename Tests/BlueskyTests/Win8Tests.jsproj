@@ -59,6 +59,9 @@
     <Content Include="testHarness\TestHarness-win8.html" />
     <Content Include="testHarness\TestHarness.css" />
     <Content Include="testHarness\TestHarness.js" />
+    <Content Include="Tests\supportFiles\appBar\customLayout.html" />
+    <Content Include="Tests\supportFiles\appBar\complexAppbar.html" />
+    <Content Include="Tests\supportFiles\appBar\basicAppbar.html" />
     <Content Include="Tests\supportFiles\flipView\flipView.html" />
     <Content Include="Tests\supportFiles\fragments\fragment1.html" />
     <Content Include="Tests\supportFiles\fragments\fragment4.css" />
@@ -87,6 +90,7 @@
     <Content Include="Tests\Tests.WinJS.UI.Fragments.js" />
     <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
     <Content Include="Tests\Tests.WinJS.UI.js" />
+    <Content Include="Tests\Tests.WinJS.UI.AppBar.js" />
     <Content Include="Tests\Tests.WinJS.UI.ListView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Pages.js" />
     <Content Include="Tests\Tests.WinJS.UI.Rating.js" />
@@ -109,6 +113,7 @@
     <Content Include="Tests\supportFiles\flipView\img2.jpg" />
     <Content Include="Tests\supportFiles\flipView\img3.jpg" />
     <Content Include="Tests\supportFiles\flipView\img4.jpg" />
+    <Content Include="Tests\Tests.WinJS.xhr.js" />
     <None Include="Win8Tests_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

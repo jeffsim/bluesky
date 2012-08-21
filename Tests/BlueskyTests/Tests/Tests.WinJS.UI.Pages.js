@@ -2,7 +2,7 @@
 
 // ================================================================
 //
-// Test.WinJS.UI.js
+// Test.WinJS.UI.Pages.js
 //		Tests for the top-level WinJS.UI.Pages object
 //
 
