@@ -389,6 +389,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		    alignment: {
 		        get: function () {
 		            return this._alignment;
+		        },
+		        set: function () {
+		        	console.warn("Flyout.alignment is NYI");
 		        }
 		    },
 

@@ -6,7 +6,6 @@
 //		web friendly.  See webOverrides-dark.css for the partner file for ui-dark.css
 //
 */
-
 /* Select a more web-friendly set of fonts
 	TODO: Figure out what the best set of fonts are. */
 body, input, textarea, button, select, option
@@ -53,14 +52,78 @@ option, select
 	line-height: 2;
 }
 
-/* Fix semantic zoom button */
-/* TODO: Use icon instead of "_" */
+.win-backbutton::before
+{
+	content: "<"; /* Was "\E0D5"; */
+	font-size: 20pt; /* TBD: was ?*/
+}
+
+.win-backbutton:lang(ar)::before, .win-backbutton:lang(dv)::before, .win-backbutton:lang(fa)::before, .win-backbutton:lang(he)::before, .win-backbutton:lang(ku-Arab)::before, .win-backbutton:lang(pa-Arab)::before, .win-backbutton:lang(prs)::before, .win-backbutton:lang(ps)::before, .win-backbutton:lang(sd-Arab)::before, .win-backbutton:lang(syr)::before, .win-backbutton:lang(ug)::before, .win-backbutton:lang(ur)::before, .win-backbutton:lang(qps-plocm)::before
+{
+	content: "<"; /* Was "\E0AE"; */
+	font-size: 20pt; /* TBD: was ?*/
+}
+
+/* Give clickable listview headers a pointer cursor */
+.win-listview .win-groupheader p[role="link"]
+{
+	cursor: pointer;
+}
+
+/* Disallow drag-select of DOM elements in listviews and flipviews */
+.win-listview, .win-flipview
+{
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* clear backbutton content */
+.win-backbutton:before
+{
+	content: "";
+}
+/* part of above */
+.win-backbutton
+{
+    background:url("http://bluesky.io/images/icons-dark.png") no-repeat scroll -40px 0px transparent !important;
+	/* Following is necessary to make it work on iOS (tbd: safari too? */
+	background-size: 200px 1200px;
+}
+
+/* clear semantic zoom button content */
 .win-semanticzoom-button:before
 {
-	content: "_";
-	font-weight:800;
+	content: "";
 }
-.win-semanticzoom-button:hover
+/* part of above */
+.win-semanticzoom-button
 {
-	border: solid 2px black;
+    background:url("http://bluesky.io/images/icons-dark.png") no-repeat scroll -9px -1122px rgba(216, 216, 216, 0.33);
+	/* Following is necessary to make it work on iOS (tbd: safari too? */
+	background-size: 200px 1200px;
+}
+
+/* ignore click events on listview selection border */
+.win-selectionbordercontainer, .win-selectionbackground,.win-selectioncheckmarkbackground, .win-selectioncheckmark
+{
+    pointer-events:none;
+}
+
+/* AppBar styles */
+#appBar
+{
+	height: 78px;
+	padding: 5px;
+	position: fixed;
+	bottom: 0px;
+	width: 100%;
+	z-index: 10000;
+}
+
+.win-commandimage {
+    background: url("http://bluesky.io/images/icons-dark.png") repeat scroll 0 0 transparent;
+    height: 40px;
+    width: 40px;
 }

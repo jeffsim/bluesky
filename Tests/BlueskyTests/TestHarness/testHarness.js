@@ -621,7 +621,7 @@ $(document).ready(function () {
     testHarness._setTestFile(11);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
-    testHarness._setTest("rightClickBringup");
+    testHarness._setTest("basicAppbar");
 
     // Temp: start the tests now to save me from clicking the button
     $("#startTests").click();

@@ -80,7 +80,7 @@ testHarness.addTestFile("WinJS.UI.xhr Tests", {
 					test.assert(result.response == result.responseText, "html: Response != responseText");
 					test.assert(result.responseXML == null, "html: ResponseXML != null");
 					test.assert(result.status == 200, "html: Status incorrect");
-					test.assert(result.statusText == "OK", "html: Status text incorrect");
+					test.assert(result.statusText == "OK", "html: Status text incorrect." + result.statusText);
 					c();
 				});
 			}).then(function () {
@@ -94,7 +94,7 @@ testHarness.addTestFile("WinJS.UI.xhr Tests", {
 					test.assert(result.response == result.responseText, "txt: Response != responseText");
 					test.assert(result.responseXML == null, "txt: ResponseXML != null");
 					test.assert(result.status == 200, "txt: Status incorrect");
-					test.assert(result.statusText == "OK", "txt: Status text incorrect");
+					test.assert(result.statusText == "OK", "html: Status text incorrect." + result.statusText);
 				});
 			}).then(function () {
 				// Test getting an xml file
@@ -230,9 +230,7 @@ testHarness.addTestFile("WinJS.UI.xhr Tests", {
 					test.assert(result.statusText == "OK", "jpg: Status text incorrect");
 
 					// Validate contents of jpg
-					// NOTE: For R1 we don't support binary objects via Xhr.
-					test.nyi("Support binary objects in xhr");
-					//test.assert(result.response.substr(3).indexOf("Exif") != -1, "jpg: response != Exif");
+					test.assert(result.response.substr(3).indexOf("Exif") != -1, "jpg: response != Exif");
 
 					onTestComplete(test);
 				});

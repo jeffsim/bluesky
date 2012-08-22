@@ -128,6 +128,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WinJS.UI", "WinJS.UI", "{1C6B59FD-D842-4CAB-86EC-E93E0E5DF67C}"
 	ProjectSection(SolutionItems) = preProject
 		bluesky.js\sourceFiles\WinJS.UI.Animation.js = bluesky.js\sourceFiles\WinJS.UI.Animation.js
+		bluesky.js\sourceFiles\WinJS.UI.AppBar.js = bluesky.js\sourceFiles\WinJS.UI.AppBar.js
+		bluesky.js\sourceFiles\WinJS.UI.AppBarCommand.js = bluesky.js\sourceFiles\WinJS.UI.AppBarCommand.js
 		bluesky.js\sourceFiles\WinJS.UI.BaseControl.js = bluesky.js\sourceFiles\WinJS.UI.BaseControl.js
 		bluesky.js\sourceFiles\WinJS.UI.DOMEventMixin.js = bluesky.js\sourceFiles\WinJS.UI.DOMEventMixin.js
 		bluesky.js\sourceFiles\WinJS.UI.FlipView.js = bluesky.js\sourceFiles\WinJS.UI.FlipView.js

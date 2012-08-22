@@ -36,8 +36,8 @@ WinJS.Namespace.define("WinJS.UI", {
         	this.$rootElement.attr("role", "ms-semanticzoomcontainer");
 
         	// Generate the DOM hierarchy for the SemanticZoom control
-        	this._$zoomedInElement = $(">div::nth-child(1)", this.$rootElement);
-        	this._$zoomedOutElement = $(">div::nth-child(2)", this.$rootElement);
+        	this._$zoomedInElement = $($(">div", this.$rootElement)[0]);
+        	this._$zoomedOutElement = $($(">div", this.$rootElement)[1]);
         	this._$zoomContainer = $("<div style='position: absolute; left: 0px; top: 0px; overflow: hidden'></div>").appendTo(this.$rootElement);
         	this._$zoomedInContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomContainer);
         	this._$zoomedOutContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomContainer);

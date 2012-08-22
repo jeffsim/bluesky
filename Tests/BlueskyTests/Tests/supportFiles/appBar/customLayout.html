@@ -13,7 +13,10 @@
 <body>
     Hello world
     <div id="appBar" data-win-control="WinJS.UI.AppBar" data-win-options="{layout:'custom'}">
-        <button>Button 1</button>
+        <button data-win-control="WinJS.UI.AppBarCommand"  
+                data-win-options="{id:'cmdAdd',label:'Add',icon:'add', section:'global',tooltip:'Add item'}">
+        </button>
+                <button>Button 1</button>
         <br />
         <button>Button 2</button>
         <br />

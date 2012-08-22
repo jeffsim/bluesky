@@ -194,6 +194,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     var templateMargins = that._getItemMargins();
 
                     var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
+                    var groupRenderStartX;
 
                     var listWidth = that.$rootElement.innerWidth();
 

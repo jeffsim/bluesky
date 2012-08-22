@@ -56,20 +56,23 @@ WinJS.Namespace.define("WinJS", {
 
 				// TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
 				var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
-
 				// If this isn't a local request, then run it through the proxy to enable cross-domain
 				// TODO: Check if it's same-domain and don't proxy if so
 				// Use JSON format to support binary objects (xml format borks on them)
-				if (!isLocal)
+				if (isLocal) {
+					var dataType = undefined;
+				} else {
 					options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
 								  "%22%3B&format=json&callback=?";
+					var dataType = "jsonp";
+				}
 				//	jQuery.support.cors = true; 
 				// TODO: Progress
 				$.ajax({
 					url: options.url,
 					data: options.data,
-					dataType: "jsonp",
+					dataType: dataType,
 					success: function (data, textStatus, jqXHR) {
 						// Since we're using YQL, data contains the XML Document with the result. Extract it
 						if (isLocal) {
@@ -101,7 +104,7 @@ WinJS.Namespace.define("WinJS", {
 							responseXML: responseXML,
 							readyState: 4,
 							DONE: 4,
-							statusText: jqXHR.statusText,
+							statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
 							status: jqXHR.status
 						});
 					},

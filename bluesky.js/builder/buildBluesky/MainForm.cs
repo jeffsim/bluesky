@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -42,6 +41,8 @@ namespace buildBluesky
                @"\WinJS.Binding.GroupsList.js",
                @"\WinJS.Binding.Template.js",
                @"\WinJS.UI.js",
+               @"\WinJS.UI.AppBar.js",
+               @"\WinJS.UI.AppBarCommand.js",
                @"\WinJS.UI.Animation.js",
                @"\WinJS.UI.BaseControl.js",
                @"\WinJS.UI.Fragments.js",

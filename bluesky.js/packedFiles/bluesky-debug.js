@@ -4517,14 +4517,19 @@ WinJS.Namespace.define("WinJS.UI", {
         for (var i = 0; i < parts.length; i++) {
 
         	/*DEBUG*/
-        	if (!controlConstructor) {
-        		console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
-        		return;
-        	}
+        	if (!controlConstructor)
+        		break;
         	/*ENDDEBUG*/
 
         	controlConstructor = controlConstructor[parts[i]];
         }
+
+    	/*DEBUG*/
+        if (!controlConstructor) {
+        	console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
+        	return;
+        }
+    	/*ENDDEBUG*/
 
         // Now that we have a pointer to the actual control constructor, instantiate the wincontrol
         element.winControl = new controlConstructor(element, options);
@@ -4944,6 +4949,764 @@ WinJS.Namespace.define("WinJS.UI", {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.UI.AppBar.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.AppBar
+//
+//		Implementation of the WinJS.UI.AppBar object
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public Object: WinJS.UI.AppBar
+	//
+	AppBar: WinJS.Class.derive(WinJS.UI.BaseControl,
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.AppBar constructor
+		//
+		//		MSDN: TODO
+		//
+        function (element, options) {
+
+        	/*DEBUG*/
+        	// Parameter validation
+        	if (!element)
+        		console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
+        	/*ENDDEBUG*/
+
+        	options = options || {};
+
+        	// Set default options
+        	this._hidden = options.hidden || true;
+        	this._disabled = options.disabled || false;
+        	this._sticky = options.sticky || false;
+        	this._layout = options.layout || "commands";
+        	// TODO: layout
+
+        	// Call into our base class' constructor
+        	WinJS.UI.BaseControl.call(this, element, options);
+
+        	// Create our DOM hierarchy
+        	var $root = this.$rootElement;
+        	$root.addClass("win-overlay");
+        	$root.addClass("win-appbar");
+        	$root.addClass("win-commandlayout");
+        	$root.attr("role", "menubar");
+        	$root.css("z-index", "1001");
+        	$root.css("visibility", this._hidden ? "hidden" : "visible");
+        	this.placement = options.placement || "bottom";
+
+        	if (this._layout == "custom") {
+        		WinJS.UI.processAll(this.element);
+        	}
+
+        	// Populate commands
+        	this._commands = [];
+        	var that = this;
+        	$("button, hr", $root).each(function (i, button) {
+        		WinJS.UI.processAll(button);
+        		that._commands.push(button.winControl);
+        	});
+
+        	// Create click eater
+        	this.$clickEater = $("<div class='win-appbarclickeater' style='z-index:1000'></div>");
+        	this.$clickEater.appendTo($("body"));
+        	this.$clickEater.click(function () {
+        		if (!that._sticky)
+        			that.hide();
+        	});
+
+        	// Capture right-click
+        	$("body").bind("contextmenu", function (event) {
+        		// Prevent default to keep browser's context menu from showing
+        		// Don't StopPropagation though, so that other appbars get the event
+        		event.preventDefault();
+        		if (that._hidden)
+        			that.show();
+        		else
+        			that.hide();
+        	});
+        },
+
+		// ================================================================
+		// WinJS.UI.AppBar Member functions
+		// ================================================================
+
+
+		{
+			// ================================================================
+			//
+			// public property: WinJS.AppBar.layout
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700558.aspx
+			//
+			_layout: "commands",
+			layout: {
+				get: function () {
+					return this._layout;
+				},
+				set: function (value) {
+					this._layout = value;
+					// TODO: Anything to do here?
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.AppBar.placement
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700567.aspx
+			//
+			_placement: "bottom",
+			placement: {
+				get: function () {
+					return this._placement;
+				},
+				set: function (value) {
+
+					this._placement = value;
+
+					// Oddly, the win-bottom/win-top classes don't define bottom/top values.  Do so explicitly here.
+					if (this._placement == "bottom") {
+						this.$rootElement.addClass("win-bottom");
+						this.$rootElement.css({ "top": "auto", "bottom": "0px" });
+					} else {
+						this.$rootElement.addClass("win-top");
+						this.$rootElement.css({ "top": "0px", "bottom": "auto" });
+					}
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.AppBar.commands
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700535.aspx
+			//
+			_commands: [],
+			commands: {
+				set: function (newCommands) {
+
+					if (this._layout == "custom")
+						return;
+
+					// TODO: Does Win8 animate?
+					this._commands = [];
+					this.$rootElement.empty();
+
+					if (!newCommands)
+						return;
+
+					// Caller can specify one item - if they did then convert it to an array
+					if (!newCommands.length)
+						newCommands = [newCommands];
+
+					for (var i = 0; i < newCommands.length; i++) {
+						this._commands.push(newCommands[i]);
+						this.$rootElement.append(newCommands[i].element);
+
+						// the command needs to listen to our hide events so that it can hide flyout (if it has one)
+						this.addEventListener("beforehide", newCommands[i]._appBarHiding.bind(newCommands[i]));
+					}
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.AppBar.hideCommands
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700551.aspx
+			//
+			hideCommands: function (commands) {
+
+				if (!commands)
+					return;
+				if (!(commands instanceof Array))
+					commands = [commands];
+
+				// TODO: Animate removal of commands
+				for (var i = 0; i < commands.length; i++) {
+					var command = commands[i];
+					if (typeof command === "string") {
+						command = this.getCommandById(command);
+					}
+					command._hidden = true;
+					command.$rootElement.css("visibility", "hidden");
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.AppBar.showCommands
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700570.aspx
+			//
+			showCommands: function (commands) {
+
+				if (!commands)
+					return;
+				if (!(commands instanceof Array))
+					commands = [commands];
+
+				// TODO: Animate addition of commands
+				for (var i = 0; i < commands.length; i++) {
+					var command = commands[i];
+					if (typeof command === "string")
+						command = this.getCommandById(command);
+					command._hidden = false;
+					command.$rootElement.css("visibility", "visible");
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.AppBar.showOnlyCommands
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700574.aspx
+			//
+			showOnlyCommands: function (commands) {
+
+				if (!commands)
+					commands = [];
+				if (!(commands instanceof Array))
+					commands = [commands];
+
+				// TODO: Animate addition of commands?
+				// TODO (CLEANUP): Do this better.  Currently hiding everything and then showing only the ones specified.
+				for (var i = 0; i < this._commands.length; i++) {
+					this._commands[i]._hidden = true;
+					this._commands[i].$rootElement.css("visibility", "hidden");
+				}
+				this.showCommands(commands);
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.AppBar.getCommandById
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700547.aspx
+			//
+			getCommandById: function (id) {
+				if (!this._commands)
+					return null;
+
+				for (var i = 0; i < this._commands.length; i++)
+					if (this._commands[i].id == id)
+						return this._commands[i];
+
+				return null;
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.AppBar.disabled
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700540.aspx
+			//
+			_disabled: false,
+			disabled: {
+				get: function () {
+					return this._disabled;
+				},
+				set: function (value) {
+
+					this._disabled = value;
+
+					if (this._disabled && !this._hidden) {
+						// Don't call this.hide() since win8 doesn't fire events when hiding due to disabled = true
+						// TODO: Animate
+						this.$rootElement.css("visibility", "hidden");
+						this._hidden = true;
+					}
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.AppBar.show
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229676.aspx
+			//
+			show: function () {
+				if (this._disabled)
+					return;
+				// TODO: Animate
+				var event = document.createEvent("CustomEvent");
+				event.initCustomEvent("beforeshow", true, true, {});
+				this.element.dispatchEvent(event);
+
+				// Did any listener cancel the event?  If so then don't show
+				// NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
+				//if (event.preventDefault)
+				//	return;
+
+				this.$rootElement.css("visibility", "visible");
+				this._hidden = false;
+				this.$clickEater.show();
+				var event = document.createEvent("CustomEvent");
+				event.initCustomEvent("aftershow", true, true, {});
+				this.element.dispatchEvent(event);
+			},
+
+
+			// ================================================================
+			//
+			// public function: WinJS.AppBar.hide
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229668.aspx
+			//
+			hide: function () {
+				// TODO: Animate
+
+				if (this._disabled)
+					return;
+				// TODO: Generalize this oft-repeated pattern.
+				var event = document.createEvent("CustomEvent");
+				event.initCustomEvent("beforehide", true, true, {});
+				this.element.dispatchEvent(event);
+
+				// Did any listener cancel the event?  If so then don't hide
+				// NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
+				//if (event.preventDefault)
+				//	return;
+
+				this.$rootElement.css("visibility", "hidden");
+
+				this._hidden = true;
+				this.$clickEater.hide();
+
+				var event = document.createEvent("CustomEvent");
+				event.initCustomEvent("afterhide", true, true, {});
+				this.element.dispatchEvent(event);
+			},
+
+
+			// ================================================================
+			//
+			// public property: WinJS.AppBar.hidden
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229665.aspx
+			//
+			_hidden: true,
+			hidden: {
+				get:
+        		function () {
+        			return this._hidden;
+        		}
+			},
+
+
+			// ================================================================
+			//
+			// public event: WinJS.AppBar.onafterhide
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212515.aspx
+			//
+			onafterhide: {
+				get: function () {
+					// Return the tracked hander (if any)
+					return this._onafterhide;
+				},
+
+				set: function (callback) {
+					// Remove previous on* handler if one was specified
+					if (this._onafterhide)
+						this.removeEventListener("afterhide", this._onafterhide);
+
+					// track the specified handler for this.get
+					this._onafterhide = callback;
+					this.addEventListener("afterhide", callback);
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public event: WinJS.AppBar.onaftershow
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212516.aspx
+			//
+			onaftershow: {
+
+				get: function () {
+					// Return the tracked hander (if any)
+					return this._onaftershow;
+				},
+
+				set: function (callback) {
+					// Remove previous on* handler if one was specified
+					if (this._onaftershow)
+						this.removeEventListener("aftershow", this._onaftershow);
+
+					// track the specified handler for this.get
+					this._onaftershow = callback;
+					this.addEventListener("aftershow", callback);
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public event: WinJS.AppBar.onbeforehide
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212517.aspx
+			//
+			onbeforehide: {
+
+				get: function () {
+					// Return the tracked hander (if any)
+					return this._onbeforehide;
+				},
+
+				set: function (callback) {
+					// Remove previous on* handler if one was specified
+					if (this._onbeforehide)
+						this.removeEventListener("beforehide", this._onbeforehide);
+
+					// track the specified handler for this.get
+					this._onbeforehide = callback;
+					this.addEventListener("beforehide", callback);
+				}
+			},
+
+
+			// ================================================================
+			//
+			// public event: WinJS.AppBar.onbeforeshow
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212518.aspx
+			//
+			onbeforeshow: {
+
+				get: function () {
+					// Return the tracked hander (if any)
+					return this._onbeforeshow;
+				},
+
+				set: function (callback) {
+					// Remove previous on* handler if one was specified
+					if (this._onbeforeshow)
+						this.removeEventListener("beforeshow", this._onbeforeshow);
+
+					// track the specified handler for this.get
+					this._onbeforeshow = callback;
+					this.addEventListener("beforeshow", callback);
+				}
+			}
+		})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.AppBarCommand.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.AppBarCommand
+//
+//		Implementation of the WinJS.UI.AppBarCommand object
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public Object: WinJS.UI.AppBarCommand
+	//
+	AppBarCommand: WinJS.Class.derive(WinJS.UI.BaseControl,
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.AppBarCommand constructor
+		//
+		//		MSDN: TODO
+		//
+        function (element, options) {
+
+        	options = options || {};
+
+        	// Set default options
+        	this._type = options.type || "button";
+        	this._section = options.section || "global";
+        	this._hidden = options.hidden || false;
+        	this._disabled = options.disabled || false;
+        	this._icon = options.icon || "";
+        	this._label = options.label || "";
+        	this.onclick = options.onclick || null;
+        	this._selected = options.selected || false;
+
+        	// Create a base element if one was not provided
+        	if (!element) {
+        		// create button or hr based on options.type
+        		if (options.type == "separator")
+        			element = $("<hr/>")[0];
+        		else
+        			element = $("<button data-win-control='WinJS.UI.AppBarCommand'></button>")[0];
+        		// Give the element a unique id
+        		blueskyUtils.setDOMElementUniqueId(element);
+        	}
+
+        	// Call into our base class' constructor
+        	WinJS.UI.BaseControl.call(this, element, options);
+
+        	// Set id after we've created the element
+        	this.id = options.id;
+        	if (this.id)
+        		this.$rootElement.attr("id", this.id);
+        	if (options.extraClass)
+        		this.$rootElement.addClass(options.extraClass);
+        	this.tooltip = options.tooltip || this.label;
+
+        	// Create our DOM hierarchy
+        	var $root = this.$rootElement;
+        	$root.addClass("win-command");
+
+        	if (this.section == "global")
+        		$root.addClass("win-global");
+        	else
+        		$root.addClass("win-selection");
+        	if (this.type == "toggle")
+        		$root.attr("role", "menuitemcheckbox");
+        	else
+        		$root.attr("role", "menuitem");
+
+        	// Create the flyout to show when this button is clicked if type == flyout
+        	this.flyout = (this.type == "flyout" && options.flyout) || null;
+
+        	if (this.type != "separator") {
+        		this.$commandImage = $("<span class='win-commandicon win-commandring'><span class='win-commandimage'></span></span>");
+        		$root.append(this.$commandImage);
+        		this.$label = $("<span class='win-label'>" + this.label + "</span>");
+        		$root.append(this.$label);
+        	}
+
+        	// Bind click for flyout
+        	var that = this;
+        	$root.bind("click", function (event) {
+
+        		if (that._flyout) {
+        			event.stopPropagation();
+        			that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
+        		}
+        	});
+        },
+
+		// ================================================================
+		// WinJS.UI.AppBarCommand Member functions
+		// ================================================================
+
+        {
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.icon
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700483.aspx
+        	//
+        	_icon: true,
+        	icon: {
+        		get: function () {
+        			return _icon;
+        		},
+        		set: function (value) {
+        			this._icon = value;
+        			// TODO: Set in DOM
+        			console.error("nyi - change icon in DOM");
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.label
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700492.aspx
+        	//
+        	_label: true,
+        	label: {
+        		get: function () {
+        			return this._label;
+        		},
+        		set: function (value) {
+        			this._label = value;
+        			this.$label.text(value);
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.disabled
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700457.aspx
+        	//
+        	_disabled: true,
+        	disabled: {
+        		get: function () {
+        			return this._disabled;
+        		},
+        		set: function (value) {
+        			this._disabled = value;
+        			this.$rootElement.attr("disabled", this._disabled ? "disabled" : undefined);
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.flyout
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700472.aspx
+        	//
+        	_flyout: true,
+        	flyout: {
+        		get: function () {
+        			return this._flyout;
+        		},
+        		set: function (value) {
+        			// string vs. object
+        			if (typeof value === "string")
+        				value = new WinJS.UI.Flyout($("#" + value)[0]);
+        			this._flyout = value;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.hidden
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700477.aspx
+        	//
+        	_hidden: true,
+        	hidden: {
+        		get: function () {
+        			return this._hidden;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.section
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700511.aspx
+        	//
+        	_section: true,
+        	section: {
+        		get: function () {
+        			return this._section;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.type
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700529.aspx
+        	//
+        	_type: "button",
+        	type: {
+        		get: function () {
+        			return this._type;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.tooltip
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700522.aspx
+        	//
+        	_tooltip: "",
+        	tooltip: {
+        		get: function () {
+        			return this._tooltip;
+        		},
+        		set: function (value) {
+        			this._tooltip = value;
+
+        			// TODO: Use WinJS.UI.Tooltip when that is implemented
+        			this.$rootElement.attr("title", value);
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// public property: WinJS.UI.AppBarCommand.selected
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700513.aspx
+        	//
+        	_selected: "",
+        	selected: {
+        		get: function () {
+        			return this._selected;
+        		},
+        		set: function (value) {
+        			this._selected = value;
+        			// TODO: Change value in DOM.
+        			console.error("nyi - change selected in DOM");
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// private function: WinJS.UI.AppBarCommand._appBarHiding
+        	//
+        	//		Called by the appbar when it's hiding; this allows us to hide our flyout if we have one and it's showing
+        	//
+        	_appBarHiding: function () {
+
+        		// If we have a flyout, then hide it
+        		if (this._flyout)
+        			this._flyout.hide();
+        	}
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: WinJS.UI.Animation.js
 // ==                                                          == //
 // ============================================================== //
@@ -4959,287 +5722,300 @@ WinJS.Namespace.define("WinJS.UI", {
 //
 WinJS.Namespace.define("WinJS.UI.Animation", {
 
-    // ================================================================
-    //
-    // public function: WinJS.UI.Animation.enterPage
-    //
-    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212672.aspx
-    //
-    enterPage: function (elements, offset) {
-
-        // Do nothing if animations are disabled
-        if (!WinJS.UI.isAnimationEnabled)
-            return;
-
-        // TODO: is there a difference between enterPage and enterContent?
-        return WinJS.UI.Animation.enterContent(elements, offset);
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.UI.Animation.exitPage
-    //
-    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701586.aspx
-    //
-    exitPage: function (elements, offset) {
-
-        // Do nothing if animations are disabled
-        if (!WinJS.UI.isAnimationEnabled)
-            return;
-
-        // TODO: is there a difference between exitPage and exitContent?
-        return WinJS.UI.Animation.exitContent(elements, offset);
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.UI.Animation.showPopup
-    //
-    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br230468.aspx
-    //
-    showPopup: function (elements, offset) {
-
-        // Do nothing if animations are disabled
-        if (!WinJS.UI.isAnimationEnabled)
-            return;
-
-        return WinJS.UI.Animation._doShowAnimation(elements, offset, 250, "easeOut");
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.UI.Animation.hidePopup
-    //
-    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212678.aspx
-    //
-    hidePopup: function (elements) {
-
-        // Do nothing if animations are disabled
-        if (!WinJS.UI.isAnimationEnabled)
-            return;
-
-        return new WinJS.Promise(function (onComplete) {
-            if (!elements) {
-                onComplete();
-                return;
-            }
-            // Convert to array if only one element
-            if (!elements.length)
-                elements = [elements];
-
-            // Fade out all of the elements
-            $(elements).fadeOut("fast").promise().done(function () {
-                onComplete();
-            });
-        });
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.UI.Animation.enterContent
-    //
-    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701582.aspx
-    //
-    enterContent: function (elements, offset) {
-
-        // Do nothing if animations are disabled
-        if (!WinJS.UI.isAnimationEnabled)
-            return;
-
-        return WinJS.UI.Animation._doShowAnimation(elements, offset, 150, "easeOut");
-    },
-
-
-    // ================================================================
-    //
-    // private function: WinJS.UI.Animation._doShowAnimation
-    //
-    _doShowAnimation: function (elements, offset, timeToAnimate, easing) {
-
-        return new WinJS.Promise(function (onComplete, e, p) {
-
-            // keep track of the amount of time to delay between each element
-            var delay = 0;
-
-            // If no offset was specified then use our default
-            offset = offset || {
-                top: "0px",
-                left: WinJS.UI.Animation._enterExitDistance + "px"
-            };
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.enterPage
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212672.aspx
+	//
+	enterPage: function (elements, offset) {
+
+		// Do nothing if animations are disabled
+		if (!WinJS.UI.isAnimationEnabled)
+			return;
+
+		// TODO: is there a difference between enterPage and enterContent?
+		return WinJS.UI.Animation.enterContent(elements, offset);
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.exitPage
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701586.aspx
+	//
+	exitPage: function (elements, offset) {
+
+		// Do nothing if animations are disabled
+		if (!WinJS.UI.isAnimationEnabled)
+			return;
+
+		// TODO: is there a difference between exitPage and exitContent?
+		return WinJS.UI.Animation.exitContent(elements, offset);
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.showPopup
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br230468.aspx
+	//
+	showPopup: function (elements, offset) {
+
+		// Do nothing if animations are disabled
+		if (!WinJS.UI.isAnimationEnabled)
+			return;
+
+		return WinJS.UI.Animation._doShowAnimation(elements, offset, 250, "easeOut");
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.hidePopup
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212678.aspx
+	//
+	hidePopup: function (elements) {
+
+		// Do nothing if animations are disabled
+		if (!WinJS.UI.isAnimationEnabled)
+			return;
+
+		return new WinJS.Promise(function (onComplete) {
+			if (!elements) {
+				onComplete();
+				return;
+			}
+			// Convert to array if only one element
+			if (!elements.length)
+				elements = [elements];
+
+			// Fade out all of the elements
+			$(elements).fadeOut("fast").promise().done(function () {
+				onComplete();
+			});
+		});
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.enterContent
+	//
+	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701582.aspx
+	//
+	enterContent: function (elements, offset) {
+
+		// Do nothing if animations are disabled
+		if (!WinJS.UI.isAnimationEnabled)
+			return;
+
+		return WinJS.UI.Animation._doShowAnimation(elements, offset, 150, "easeOut");
+	},
+
+
+	// ================================================================
+	//
+	// private function: WinJS.UI.Animation._doShowAnimation
+	//
+	_doShowAnimation: function (elements, offset, timeToAnimate, easing) {
+
+		return new WinJS.Promise(function (onComplete, e, p) {
+
+			// keep track of the amount of time to delay between each element
+			var delay = 0;
+
+			// If no offset was specified then use our default
+			offset = offset || {
+				top: "0px",
+				left: WinJS.UI.Animation._enterExitDistance + "px"
+			};
+
+			// Convert to array if only one element; do same for offset
+			if (!elements.length)
+				elements = [elements];
+			if (!offset.length)
+				offset = [offset];
 
-            // Convert to array if only one element; do same for offset
-            if (!elements.length)
-                elements = [elements];
-            if (!offset.length)
-                offset = [offset];
+			var numAnimations = elements.length;
+			for (var i = 0; i < elements.length; i++) {
 
-            var numAnimations = elements.length;
-            for (var i = 0; i < elements.length; i++) {
+				var element = elements[i];
 
-                var element = elements[i];
+				// If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
+				if (!element) {
+					numAnimations--;
+					return;
+				}
 
-                // If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
-                if (!element) {
-                    numAnimations--;
-                    return;
-                }
+				var $el = $(element);
 
-                var $el = $(element);
+				// TODO: Does Win8 animate hidden content into visibility?
+				//if ($el.css("visibility") == "hidden" || $el.css("display") == "none" || $el.css("opacity") == 0) {
+				//numAnimations--;
+				//continue;
+				//}
 
-                // Store initial position type, since setting offset below will force it to relative
-                var originalPosition = $el.css("position");
-
-                // Get the amount that we'll offset the current element before animating back to start position
-                var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
-                var offsetTop = parseInt(elementOffset.top);
-                var offsetLeft = parseInt(elementOffset.left);
+				// Store initial position type, since setting offset below will force it to relative
+				var originalPosition = $el.css("position");
 
-                // Move element to starting animation position
-                var initialPosition = $el.offset();
-                $el.offset({
-                    top: initialPosition.top + offsetTop,
-                    left: initialPosition.left + offsetLeft
-                });
-
-                // Set opacity to 0.5, then we'll animate back to 1 (note that Win8 does not appear to reset to initial opacity, so neither do we)
-                $el.css("opacity", "0.5");
+				// Get the amount that we'll offset the current element before animating back to start position
+				var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
+				var offsetTop = parseInt(elementOffset.top);
+				var offsetLeft = parseInt(elementOffset.left);
 
-                // Animate top/left back to initial position
-                $el.delay(delay).animate({
+				// Move element to starting animation position
+				var initialPosition = $el.offset();
+				$el.offset({
+					top: initialPosition.top + offsetTop,
+					left: initialPosition.left + offsetLeft
+				});
 
-                    opacity: "1",
-                    top: (offsetTop > 0 ? "-" : "+") + "=" + Math.abs(offsetTop),
-                    left: (offsetLeft > 0 ? "-" : "+") + "=" + Math.abs(offsetLeft)
-
-                }, {
-                    duration: timeToAnimate,
-                    easing: easing || "linear",
-                    complete: function () {
-
-                        // Restore original css position
-                        $el.css("position", originalPosition);
-
-                        // When an animation completes, check if it was the last one and if so fulfill the promise.
-                        if (--numAnimations == 0) {
-
-                            if (onComplete)
-                                onComplete();
-                        }
-                    }
-                });
-
-                delay += WinJS.UI.Animation._staggerDelay;
-            }
-        });
-    },
-
-
-    // ================================================================
-    //
-    // public function: WinJS.UI.Animation.exitContent
-    //
-    //		MSDN: TODO
-    //
-    exitContent: function (elements, offset) {
-
-        return new WinJS.Promise(function (onComplete, e, p) {
-
-            // keep track of the amount of time to delay between each element
-            var delay = 0;
-
-            // If no offset was specified then use our default
-            offset = offset || {
-                top: "0px",
-                left: -WinJS.UI.Animation._enterExitDistance + "px"
-            };
-
-            // Convert to array if only one element; do same for offset
-            if (!elements.length)
-                elements = [elements];
-            if (!offset.length)
-                offset = [offset];
-
-            var numAnimations = elements.length;
-
-            for (var i = 0; i < elements.length; i++) {
-
-                var element = elements[i];
-
-                // If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
-                if (!element) {
-                    numAnimations--;
-                    return;
-                }
-
-                var $el = $(element);
-                var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
-                var offsetTop = parseInt(elementOffset.top);
-                var offsetLeft = parseInt(elementOffset.left);
-
-                // Store initial position type, since we need to force it to relative and will need to restore it
-                var originalPosition = $el.css("position");
-
-                // Force position to relative so that left/top animation works
-                $el.css("position", "relative");
-
-                // Perform the animation
-                $el.delay(delay).animate({
-                    opacity: "0",
-                    left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
-                    top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
-                }, 100, function () {
-
-                    // Restore original css position
-                    $el.css("position", originalPosition);
-
-                    // When an animation completes, check if it was the last one and if so fulfill the promise.
-                    // TODO (CLEANUP): Consider using jQuery's promise (but that then means I need to track an array anyways)...
-                    if (--numAnimations == 0) {
-
-                        if (onComplete)
-                            onComplete();
-                    }
-                });
-
-                delay += WinJS.UI.Animation._staggerDelay;
-            }
-        });
-    },
-
-    
-    // ================================================================
-    //
-    // private(ish) function: WinJS.UI.Animation._cancelAllActiveAnimations
-    //
-    //		Called when Animations are disabled (through WinJS.UI.Animation.disableAnimations).
-    //
-    _cancelAllActiveAnimations: function() {
-
-        // TODO: What does Win8 do in this situation?  Let in-progress animations complete, force them 
-        // to end-state, or just immediately cancel them?  We opt for the first as it's the simplest.
-    },
-
-
-    // ================================================================
-    //
-    // private member: _staggerDelay
-    //
-    //		Defines the amount of time to pause before starting the next element when animating a collection of element
-    //
-    _staggerDelay: 30,
-
-
-    // ================================================================
-    //
-    // private member: _enterExitDistance
-    //
-    //		The number of pixels to animate left/right enterContent/exitContent
-    //
-    _enterExitDistance: 20,
+				// Set opacity to 0.5, then we'll animate back to 1 (note that Win8 does not appear to reset to initial opacity, so neither do we)
+				$el.css("opacity", "0.5");
+
+				// Animate top/left back to initial position
+				$el.delay(delay).animate({
+
+					opacity: "1",
+					top: (offsetTop > 0 ? "-" : "+") + "=" + Math.abs(offsetTop),
+					left: (offsetLeft > 0 ? "-" : "+") + "=" + Math.abs(offsetLeft)
+
+				}, {
+					duration: timeToAnimate,
+					easing: easing || "linear",
+					complete: function () {
+
+						// Restore original css position
+						$el.css("position", originalPosition);
+
+						// When an animation completes, check if it was the last one and if so fulfill the promise.
+						if (--numAnimations == 0) {
+
+							if (onComplete)
+								onComplete();
+						}
+					}
+				});
+
+				delay += WinJS.UI.Animation._staggerDelay;
+			}
+		});
+	},
+
+
+	// ================================================================
+	//
+	// public function: WinJS.UI.Animation.exitContent
+	//
+	//		MSDN: TODO
+	//
+	exitContent: function (elements, offset) {
+
+		return new WinJS.Promise(function (onComplete, e, p) {
+
+			// keep track of the amount of time to delay between each element
+			var delay = 0;
+
+			// If no offset was specified then use our default
+			offset = offset || {
+				top: "0px",
+				left: -WinJS.UI.Animation._enterExitDistance + "px"
+			};
+
+			// Convert to array if only one element; do same for offset
+			if (!elements.length)
+				elements = [elements];
+			if (!offset.length)
+				offset = [offset];
+
+			var numAnimations = elements.length;
+
+			for (var i = 0; i < elements.length; i++) {
+
+				var element = elements[i];
+
+				// If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
+				if (!element) {
+					numAnimations--;
+					continue;
+				}
+
+				var $el = $(element);
+
+				// If hidden then don't animate
+				if ($el.css("visibility") == "hidden" || $el.css("display") == "none" || $el.css("opacity") == 0) {
+					numAnimations--;
+					continue;
+				}
+
+				var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
+				var offsetTop = parseInt(elementOffset.top);
+				var offsetLeft = parseInt(elementOffset.left);
+
+				// Store initial position type, since we need to force it to relative and will need to restore it
+				var originalPosition = $el.css("position");
+
+				// Force position to relative so that left/top animation works
+				$el.css("position", "relative");
+
+				// Perform the animation
+				$el.delay(delay).animate({
+					opacity: "0",
+					left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
+					top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
+				}, 100, function () {
+
+					// Restore original css position
+					$el.css("position", originalPosition);
+
+					// When an animation completes, check if it was the last one and if so fulfill the promise.
+					// TODO (CLEANUP): Consider using jQuery's promise (but that then means I need to track an array anyways)...
+					if (--numAnimations == 0) {
+
+						if (onComplete)
+							onComplete();
+					}
+				});
+
+				delay += WinJS.UI.Animation._staggerDelay;
+			}
+		});
+	},
+
+
+	// ================================================================
+	//
+	// private(ish) function: WinJS.UI.Animation._cancelAllActiveAnimations
+	//
+	//		Called when Animations are disabled (through WinJS.UI.Animation.disableAnimations).
+	//
+	_cancelAllActiveAnimations: function () {
+
+		// TODO: What does Win8 do in this situation?  Let in-progress animations complete, force them 
+		// to end-state, or just immediately cancel them?  We opt for the first as it's the simplest.
+	},
+
+
+	// ================================================================
+	//
+	// private member: _staggerDelay
+	//
+	//		Defines the amount of time to pause before starting the next element when animating a collection of element
+	//
+	_staggerDelay: 30,
+
+
+	// ================================================================
+	//
+	// private member: _enterExitDistance
+	//
+	//		The number of pixels to animate left/right enterContent/exitContent
+	//
+	_enterExitDistance: 20,
 });
 
 
@@ -6521,6 +7297,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		    alignment: {
 		        get: function () {
 		            return this._alignment;
+		        },
+		        set: function () {
+		        	console.warn("Flyout.alignment is NYI");
 		        }
 		    },
 
