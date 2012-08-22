@@ -103,6 +103,57 @@ testHarness.addTestFile("WinJS.UI.AppBar Tests", {
         });
     },
 
+    // ==========================================================================
+    // 
+    // Test two WinJS.UI.AppBars
+    //
+    twoAppBars: function (test) {
+
+        test.start("Two appbar tests");
+
+        // When you create multiple appbars on win8, they are all instantiated and present, and all respond to right-click/show.
+
+        // This is an async test, so it must use test.doAsync and call onTestComplete when done
+        return test.doAsync(function (onTestComplete) {
+
+            // Create a div to hold the page(s) we'll create
+            var $testDiv = testHarness.addTestDiv("dataA");
+            var appBar = new WinJS.UI.AppBar($testDiv[0]);
+            var button1 = new WinJS.UI.AppBarCommand(null, { id: "id1", icon: "undo", label: "undo", section: "global", extraClass: "testClass", tooltip: "World" });
+            appBar.commands = [button1];
+
+            var $testDiv2 = testHarness.addTestDiv("dataB");
+            var appBar2 = new WinJS.UI.AppBar($testDiv2[0]);
+            var button1 = new WinJS.UI.AppBarCommand(null, { id: "id1", icon: "redo", label: "redo", section: "global", extraClass: "testClass", tooltip: "World" });
+            appBar2.commands = [button1];
+
+            appBar2.onaftershow = function () {
+                // Verify appbar 2 is visible, appbar 1 is hidden
+                test.assert($testDiv2.css("visibility") == "visible", "appbar 2 not visible");
+                test.assert($testDiv.css("visibility") == "hidden", "appbar 1 not hidden");
+
+                $testDiv.remove();
+                $testDiv2.remove();
+                onTestComplete(test);
+            }
+
+            appBar.onaftershow = function () {
+
+                // Verify both appbars are where we expect them to be
+                test.assert($(">.win-appbar", $(".testFrame")).length == 2, "AppBars not where we expect them to be");
+                // Verify appbar 1 is visible, appbar 2 is hidden
+                test.assert($testDiv.css("visibility") == "visible", "appbar 1 not visible");
+                test.assert($testDiv2.css("visibility") == "hidden", "appbar 2 not hidden");
+                // Switch appbars
+                appBar.hide();
+                appBar2.show();
+
+                onTestComplete(test);
+            }
+            appBar.show();
+        });
+    },
+
 
     // ==========================================================================
     // 
