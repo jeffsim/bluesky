@@ -19,10 +19,8 @@ Run the tests here: http://tests.bluesky.io/testharness/testharness.html
 
 ## What is bluesky?
 bluesky is an effort to deliver an API, Platform, and Portal that unifies users’ app experiences across all of their devices.  Initial efforts are focused on developers and the API, which will be a ground-up rewrite of WinJS, built for the modern web.  The goal of bringing WinJS to the web is to enable the impending army of WinJS developers to quickly and easily – ideally with just one click - bring their Win8 apps to the web.  Picture taking your Win8 app and publishing it to Facebook or your own web site; or making it available on the iPad...
-## How complete is the bluesky WinJS API at the moment?
-Not very complete, although we've just hit our API Preview milestone (you can see what that includes in the table below.)  "done" in the table does not mean 100% complete; it means "complete for normal use cases."
 ## How complete will the final bluesky WinJS API be?
-Fairly complete.  The yardstick for bluesky is that a typical Win8/WinJS app works on the web without any changes except where the app relies on a non-cross-browser feature and a polyfill isn’t available (e.g. –ms-grid).  We’ll be using the Win8 SDK samples as a proving ground for the near-term future.  There will be things that just plain never work (e.g. hybrid apps).
+The yardstick for bluesky is that a typical Win8/WinJS app works on the web without any changes except where the app relies on a non-cross-browser feature and a polyfill isn’t available (e.g. –ms-grid).  We’ll be using the Win8 SDK samples as a proving ground for the near-term future.  There will be things that just plain never work (e.g. hybrid apps).
 ## How much of bluesky is new code?
 All of it.  bluesky is written from scratch, and shares precisely 0 lines of code with Microsoft’s WinJS.  
 ## How do I run the tests?
@@ -37,6 +35,9 @@ Another option is to view the Tests running on the web; you can do that here: ht
 See the readme in the Samples folder for instructions on how the WinJS navigation template was converted to bluesky.  A more robust answer will be part of R1.
 ## What comes when?
 No dates, but here’s a rough staging (everything subject to change):
+
+"done" in the table does not mean 100% feature parity; it means "complete for typical use cases."
+
 <table>
   <tr>
 		<td>Release Number</td>
@@ -68,18 +69,22 @@ No dates, but here’s a rough staging (everything subject to change):
 	<tr>
 		<td>1</td>
 		<td>API Beta</td>
-		<td>WinJS on the Web<br/><br/>At this point a complex WinJS application can be run nearly verbatim on the web.  Works across any HTML5 browser on tablet or PC (functions on mobile, but no explicit effort to deal with mobile layout or device challenges).  This includes largely complete versions of the following objects:</td>
+		<td>WinJS on the Web<br/><br/>At this point a complex WinJS application can be <b>prototyped</b> on the web.  Works across any HTML5 browser on tablet or PC (functions on mobile, but no explicit effort to deal with mobile layout or device challenges).  This includes largely complete versions of the following objects:</td>
 		<td>
 			<ul>
-				<li>WinJS.UI.ListView (<b>almost done</b>)</li>
+				<li>WinJS.UI.ListView (<b>done</b>)</li>
 				<li>WinJS.UI.FlipView (<b>done</b>)</li>
 				<li>WinJS.UI.Rating (<b>done</b>)</li>
-				<li>WinJS.UI.Animation (<b>started</b>)</li>
+				<li>WinJS.UI.FlipView (<b>done</b>)</li>
+				<li>WinJS.UI.Fragments (<b>done</b>)</li>
+				<li>WinJS.UI.Flyout (<b>done</b>)</li>
+				<li>WinJS.UI.Popups.MessageDialog (<b>done</b>)</li>
+				<li>WinJS.UI.Animation (<b>done</b>)</li>
 				<li>WinJS.xhr (<b>done</b>)</li>
 				<li>Windows.Storage (local and temp)</li>
 				<li>WinJS.Resources</li>
-				<li>WinJS.UI.AppBar</li>
-				<li>WinJS.UI.SemanticZoom</li>
+				<li>WinJS.UI.AppBar (<b>done</b>)</li>
+				<li>WinJS.UI.SemanticZoom (<b>done</b>)</li>
 				<li>bluesky Sample browser (<b>done</b>)</li>
 				<li>bluesky apps work on any HTML5 browser (tablet/desktop)</li>
 				<li>Adapt WinJS.Navigation to the web</li>
