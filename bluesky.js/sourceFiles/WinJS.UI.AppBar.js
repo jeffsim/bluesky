@@ -20,67 +20,68 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		//		MSDN: TODO
 		//
-        function (element, options) {
+		function (element, options) {
 
-        	/*DEBUG*/
-        	// Parameter validation
-        	if (!element)
-        		console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
-        	/*ENDDEBUG*/
+			/*DEBUG*/
+			// Parameter validation
+			if (!element)
+				console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
+			/*ENDDEBUG*/
 
-        	options = options || {};
+			options = options || {};
 
-        	// Set default options
-        	this._hidden = options.hidden || true;
-        	this._disabled = options.disabled || false;
-        	this._sticky = options.sticky || false;
-        	this._layout = options.layout || "commands";
-        	// TODO: layout
+			// Set default options
+			this._hidden = options.hidden == "false" ? false : true;
+			this._disabled = options.disabled == "true" ? true : false;
+			this._sticky = options.sticky == "true" ? true : false;
+			this._layout = options.layout || "commands";
+			// TODO: layout
 
-        	// Call into our base class' constructor
-        	WinJS.UI.BaseControl.call(this, element, options);
+			// Call into our base class' constructor
+			WinJS.UI.BaseControl.call(this, element, options);
 
-        	// Create our DOM hierarchy
-        	var $root = this.$rootElement;
-        	$root.addClass("win-overlay");
-        	$root.addClass("win-appbar");
-        	$root.addClass("win-commandlayout");
-        	$root.attr("role", "menubar");
-        	$root.css("z-index", "1001");
-        	$root.css("visibility", this._hidden ? "hidden" : "visible");
-        	this.placement = options.placement || "bottom";
+			// Create our DOM hierarchy
+			var $root = this.$rootElement;
+			$root.addClass("win-overlay");
+			$root.addClass("win-appbar");
+			$root.addClass("win-commandlayout");
+			$root.attr("role", "menubar");
+			$root.css("z-index", "1001");
+			$root.css("visibility", this._hidden ? "hidden" : "visible");
+			this.placement = options.placement || "bottom";
 
-        	if (this._layout == "custom") {
-        		WinJS.UI.processAll(this.element);
-        	}
+			if (this._layout == "custom") {
+				WinJS.UI.processAll(this.element);
+			}
 
-        	// Populate commands
-        	this._commands = [];
-        	var that = this;
-        	$("button, hr", $root).each(function (i, button) {
-        		WinJS.UI.processAll(button);
-        		that._commands.push(button.winControl);
-        	});
+			// Populate commands
+			this._commands = [];
+			var that = this;
+			$("button, hr", $root).each(function (i, button) {
+				WinJS.UI.processAll(button);
+				that._commands.push(button.winControl);
+			});
 
-        	// Create click eater
-        	this.$clickEater = $("<div class='win-appbarclickeater' style='z-index:1000'></div>");
-        	this.$clickEater.appendTo($("body"));
-        	this.$clickEater.click(function () {
-        		if (!that._sticky)
-        			that.hide();
-        	});
+			// Create click eater
+			this.$clickEater = $("<div class='win-appbarclickeater' style='z-index:1000'></div>");
+			this.$clickEater.appendTo($("body"));
+			this.$clickEater.click(function () {
+				if (!that._sticky)
+					that.hide();
+			});
 
-        	// Capture right-click
-        	$("body").bind("contextmenu", function (event) {
-        		// Prevent default to keep browser's context menu from showing
-        		// Don't StopPropagation though, so that other appbars get the event
-        		event.preventDefault();
-        		if (that._hidden)
-        			that.show();
-        		else
-        			that.hide();
-        	});
-        },
+			// Capture right-click
+			$("body").bind("contextmenu", function (event) {
+				// Prevent default to keep browser's context menu from showing
+
+				// Don't StopPropagation though, so that other appbars get the event
+				event.preventDefault();
+				if (that._hidden)
+					that.show();
+				else
+					that.hide();
+			});
+		},
 
 		// ================================================================
 		// WinJS.UI.AppBar Member functions
@@ -302,7 +303,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				//if (event.preventDefault)
 				//	return;
 
-				this.$rootElement.css("visibility", "visible");
+				this.$rootElement.css("visibility", "visible").css("display", "block");
 				this._hidden = false;
 				this.$clickEater.show();
 				var event = document.createEvent("CustomEvent");

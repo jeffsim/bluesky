@@ -91,8 +91,8 @@ testHarness.addTestFile("WinJS.UI.AppBar Tests", {
 					test.assert($appBar.css("visibility") == "visible", "Appbar not visible");
 
 					// Cleanup
-	//				$appBar.remove();
-		//			$(".win-appbarclickeater").remove();
+					$appBar.remove();
+					$(".win-appbarclickeater").remove();
 
 					// notify the test harness that we've completed this async test
 					onTestComplete(test);

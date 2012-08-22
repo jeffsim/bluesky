@@ -423,20 +423,23 @@ WinJS.Namespace.define("WinJS", {
 
 				// TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
 				var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
-
 				// If this isn't a local request, then run it through the proxy to enable cross-domain
 				// TODO: Check if it's same-domain and don't proxy if so
 				// Use JSON format to support binary objects (xml format borks on them)
-				if (!isLocal)
+				if (isLocal) {
+					var dataType = undefined;
+				} else {
 					options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
 								  "%22%3B&format=json&callback=?";
+					var dataType = "jsonp";
+				}
 				//	jQuery.support.cors = true; 
 				// TODO: Progress
 				$.ajax({
 					url: options.url,
 					data: options.data,
-					dataType: "jsonp",
+					dataType: dataType,
 					success: function (data, textStatus, jqXHR) {
 						// Since we're using YQL, data contains the XML Document with the result. Extract it
 						if (isLocal) {
@@ -468,7 +471,7 @@ WinJS.Namespace.define("WinJS", {
 							responseXML: responseXML,
 							readyState: 4,
 							DONE: 4,
-							statusText: jqXHR.statusText,
+							statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
 							status: jqXHR.status
 						});
 					},
@@ -4949,6 +4952,116 @@ WinJS.Namespace.define("WinJS.UI", {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.UI.BaseControl.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// private Object: WinJS.UI.BaseControl constructor
+	//
+	//		Base control for all renderable WinJS objects.  Should not be directly instantiated, but rather derived from.
+	//
+	//		TODO: Is there an established javascript naming pattern for private classes/variables?
+	//		I've adopted an underline prefix (admittedly inconsistently), but will need to change that once I know what the preferred approach is...
+	//		
+	//		TODO: This isn't an existing WinJS object; consider moving out into a different namespace (e.g. Bluesky.BaseControl)
+	//		
+	BaseControl: WinJS.Class.define(function (element, options) {
+
+		/*DEBUG*/
+		// Parameter validation
+		if (!element)
+			console.error("WinJS.UI.BaseControl constructor: Undefined or null element specified");
+		/*ENDDEBUG*/
+
+		// Keep a reference to our root element in the DOM.  I'm deep in with jQuery already, so go ahead
+		// and wrap it here.
+		// TODO: Perf isn't currently a concern, but look into jQuery alternatives (including jqm) later		
+		this.$rootElement = $(element);
+
+		this.isYielding = false;
+
+		// Store a reference to this control in the element with which it is associated
+		element.winControl = this;
+
+		// Track the DOM element with which this control is associated
+		this.element = element;
+	},
+
+		// ================================================================
+		// WinJS.UI.BaseControl Member functions
+		// ================================================================
+
+	{
+		// ================================================================
+		//
+		// public Function: WinJS.UI.BaseControl.render
+		//
+		//		Called when the control should "render" itself to the page.  In order to allow
+		//		batching of render calls (e.g. due to multiple changes to a control's datacontext),
+		//		render() performs a yield with a zero timeout.  Given javascript's threading model,
+		//		this allows the caller to call render numerous times, and only after the calling
+		//		thread is done is our timeout triggered and the 'real' rendering is done.
+		//
+		render: function (forceRender) {
+
+			if (forceRender) {
+				this._doRender();
+				this.isYielding = false;
+				return;
+			}
+
+			// If we're already yielding then just return
+			if (this.isYielding)
+				return;
+
+			// Mark that we're yielding and waiting for a chance to render.
+			this.isYielding = true;
+
+			// Set a timeout that will occur as soon as it can.  When it does, call our derived class's doRender function
+			var that = this;
+			return new WinJS.Promise(function(c) {
+				setTimeout(function () {
+					if (that.isYielding) {
+						that._doRender();
+
+						// Mark that we're no longer yielding
+						that.isYielding = false;
+					}
+					c();
+				}, 0);
+			});
+		},
+
+
+		// ================================================================
+		//
+		// public Function: WinJS.UI.BaseControl.forceLayout
+		//
+		//		Forces a regeneration of the control
+		//
+		forceLayout: function() {
+			this.render();
+		}
+	})
+});
+
+WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: WinJS.UI.AppBar.js
 // ==                                                          == //
 // ============================================================== //
@@ -4976,67 +5089,68 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		//		MSDN: TODO
 		//
-        function (element, options) {
+		function (element, options) {
 
-        	/*DEBUG*/
-        	// Parameter validation
-        	if (!element)
-        		console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
-        	/*ENDDEBUG*/
+			/*DEBUG*/
+			// Parameter validation
+			if (!element)
+				console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
+			/*ENDDEBUG*/
 
-        	options = options || {};
+			options = options || {};
 
-        	// Set default options
-        	this._hidden = options.hidden || true;
-        	this._disabled = options.disabled || false;
-        	this._sticky = options.sticky || false;
-        	this._layout = options.layout || "commands";
-        	// TODO: layout
+			// Set default options
+			this._hidden = options.hidden == "false" ? false : true;
+			this._disabled = options.disabled == "true" ? true : false;
+			this._sticky = options.sticky == "true" ? true : false;
+			this._layout = options.layout || "commands";
+			// TODO: layout
 
-        	// Call into our base class' constructor
-        	WinJS.UI.BaseControl.call(this, element, options);
+			// Call into our base class' constructor
+			WinJS.UI.BaseControl.call(this, element, options);
 
-        	// Create our DOM hierarchy
-        	var $root = this.$rootElement;
-        	$root.addClass("win-overlay");
-        	$root.addClass("win-appbar");
-        	$root.addClass("win-commandlayout");
-        	$root.attr("role", "menubar");
-        	$root.css("z-index", "1001");
-        	$root.css("visibility", this._hidden ? "hidden" : "visible");
-        	this.placement = options.placement || "bottom";
+			// Create our DOM hierarchy
+			var $root = this.$rootElement;
+			$root.addClass("win-overlay");
+			$root.addClass("win-appbar");
+			$root.addClass("win-commandlayout");
+			$root.attr("role", "menubar");
+			$root.css("z-index", "1001");
+			$root.css("visibility", this._hidden ? "hidden" : "visible");
+			this.placement = options.placement || "bottom";
 
-        	if (this._layout == "custom") {
-        		WinJS.UI.processAll(this.element);
-        	}
+			if (this._layout == "custom") {
+				WinJS.UI.processAll(this.element);
+			}
 
-        	// Populate commands
-        	this._commands = [];
-        	var that = this;
-        	$("button, hr", $root).each(function (i, button) {
-        		WinJS.UI.processAll(button);
-        		that._commands.push(button.winControl);
-        	});
+			// Populate commands
+			this._commands = [];
+			var that = this;
+			$("button, hr", $root).each(function (i, button) {
+				WinJS.UI.processAll(button);
+				that._commands.push(button.winControl);
+			});
 
-        	// Create click eater
-        	this.$clickEater = $("<div class='win-appbarclickeater' style='z-index:1000'></div>");
-        	this.$clickEater.appendTo($("body"));
-        	this.$clickEater.click(function () {
-        		if (!that._sticky)
-        			that.hide();
-        	});
+			// Create click eater
+			this.$clickEater = $("<div class='win-appbarclickeater' style='z-index:1000'></div>");
+			this.$clickEater.appendTo($("body"));
+			this.$clickEater.click(function () {
+				if (!that._sticky)
+					that.hide();
+			});
 
-        	// Capture right-click
-        	$("body").bind("contextmenu", function (event) {
-        		// Prevent default to keep browser's context menu from showing
-        		// Don't StopPropagation though, so that other appbars get the event
-        		event.preventDefault();
-        		if (that._hidden)
-        			that.show();
-        		else
-        			that.hide();
-        	});
-        },
+			// Capture right-click
+			$("body").bind("contextmenu", function (event) {
+				// Prevent default to keep browser's context menu from showing
+
+				// Don't StopPropagation though, so that other appbars get the event
+				event.preventDefault();
+				if (that._hidden)
+					that.show();
+				else
+					that.hide();
+			});
+		},
 
 		// ================================================================
 		// WinJS.UI.AppBar Member functions
@@ -5110,7 +5224,7 @@ WinJS.Namespace.define("WinJS.UI", {
 						return;
 
 					// Caller can specify one item - if they did then convert it to an array
-					if (!newCommands.length)
+					if (!(newCommands instanceof Array))
 						newCommands = [newCommands];
 
 					for (var i = 0; i < newCommands.length; i++) {
@@ -5258,7 +5372,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				//if (event.preventDefault)
 				//	return;
 
-				this.$rootElement.css("visibility", "visible");
+				this.$rootElement.css("visibility", "visible").css("display", "block");
 				this._hidden = false;
 				this.$clickEater.show();
 				var event = document.createEvent("CustomEvent");
@@ -5458,12 +5572,10 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Set default options
         	this._type = options.type || "button";
         	this._section = options.section || "global";
-        	this._hidden = options.hidden || false;
-        	this._disabled = options.disabled || false;
-        	this._icon = options.icon || "";
+        	this._hidden = options.hidden == "true" ? true : false;
         	this._label = options.label || "";
         	this.onclick = options.onclick || null;
-        	this._selected = options.selected || false;
+        	this._selected = options.selected == "true" ? true : false;
 
         	// Create a base element if one was not provided
         	if (!element) {
@@ -5486,6 +5598,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
+        	this.disabled = options.disabled == "true" ? true : false;
 
         	// Create our DOM hierarchy
         	var $root = this.$rootElement;
@@ -5509,6 +5622,7 @@ WinJS.Namespace.define("WinJS.UI", {
         		this.$label = $("<span class='win-label'>" + this.label + "</span>");
         		$root.append(this.$label);
         	}
+        	this.icon = options.icon || "";
 
         	// Bind click for flyout
         	var that = this;
@@ -5535,12 +5649,39 @@ WinJS.Namespace.define("WinJS.UI", {
         	_icon: true,
         	icon: {
         		get: function () {
-        			return _icon;
+        			return this._icon;
         		},
         		set: function (value) {
         			this._icon = value;
-        			// TODO: Set in DOM
-        			console.error("nyi - change icon in DOM");
+        			var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
+        			if (this.icon.indexOf("url(") == 0)
+        				$(".win-commandimage", this.$rootElement).css({
+        					"backgroundImage": this._icon + " !important",
+        					"backgroundPosition": ""
+        				});
+        			else if (iconIndex >= 0) {
+        				var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
+
+        				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
+        				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
+        				var iconImage = "http://bluesky.io/images/icons-dark.png";
+        				for (var i = 0; i < document.styleSheets.length; i++) {
+        					if (document.styleSheets[i].href && document.styleSheets[i].href.toLowerCase().indexOf("ui-dark.css") >= 0) {
+        						iconImage = "http://bluesky.io/images/icons.png";
+        						break;
+        					}
+        				}
+
+        				$(".win-commandimage", this.$rootElement).css({
+        					"backgroundImage": "url('" + iconImage + "')",
+        					"backgroundPosition": iconStr,
+        				});
+        			} else
+        				$(".win-commandimage", this.$rootElement).css({
+        					"backgroundImage": "",
+        					"backgroundPosition": ""
+        				});
+
         		}
         	},
 
@@ -5576,10 +5717,12 @@ WinJS.Namespace.define("WinJS.UI", {
         		},
         		set: function (value) {
         			this._disabled = value;
-        			this.$rootElement.attr("disabled", this._disabled ? "disabled" : undefined);
+        			if (this._disabled)
+        				this.$rootElement.attr("disabled", "disabled");
+        			else
+        				this.$rootElement.removeAttr("disabled");
         		}
         	},
-
 
         	// ================================================================
         	//
@@ -5676,8 +5819,8 @@ WinJS.Namespace.define("WinJS.UI", {
         		},
         		set: function (value) {
         			this._selected = value;
-        			// TODO: Change value in DOM.
-        			console.error("nyi - change selected in DOM");
+        			// Win8's styles use the aria-checked attribute to apply selected styling
+        			this.$rootElement.attr("aria-checked", value ? "true" : "");
         		}
         	},
 
@@ -5694,6 +5837,38 @@ WinJS.Namespace.define("WinJS.UI", {
         		if (this._flyout)
         			this._flyout.hide();
         	}
+        }, {
+        	_iconMap: ['accept', 'back', 'caption', 'contactpresence', 'document',
+					  'accounts', 'bold', 'cc', 'copy', 'download',
+					  'add', 'bookmarks', 'characters', 'crop', 'edit',
+					  'admin', 'browsephotos', 'clear', 'cut', 'emoji',
+					  'aligncenter', 'bullets', 'clock', 'delete', 'emoji2',
+					  'alignleft', 'calendar', 'closepane', 'disableupdates', 'favorite',
+					  'alignright', 'calendarday', 'comment', 'dislike', 'filter',
+					  'attach', 'calendarweek', 'contact', 'dockbottom', 'dinf',
+					  'attachcamera', 'camera', 'contact2', 'dockleft', 'flag',
+					  'audio', 'cancel', 'contactinfo', 'dockright', 'folder',
+					  'font', 'home', 'link', 'movetofolder', 'page2',
+					  'fontcolor', 'import', 'list', 'musicinfo', 'paste',
+					  'forward', 'importall', 'mail', 'mute', 'pause',
+					  'globe', 'important', 'mail2', 'next', 'people',
+					  'go', 'italic', 'mailforward', 'openfile', 'permissions',
+					  'gototoday', 'keyboard', 'mailreply', 'openlocal', 'phone',
+					  'hangup', 'leavechat', 'mailreplyall', 'openpane', 'pictures',
+					  'help', 'left', 'mappin', 'orientation', 'pin',
+					  'hidebcc', 'like', 'message', 'otheruser', 'placeholder',
+					  'highlight', 'likedislike', 'more', 'page', 'play',
+					  'previewlink', 'repair', 'settings', 'sync', 'video',
+					  'previous', 'right', 'shop', 'trim', 'videochat',
+					  'priority', 'rotate', 'showbcc', 'twopage', 'view',
+					  'protectedocument', 'rotatecamera', 'showresults', 'underline', 'viewall',
+					  'read', 'save', 'shuffle', 'undo', 'volume',
+					  'redo', 'savelocal', 'slideshow', 'unfavorite', 'webcam',
+					  'refresh', 'selectall', 'sort', 'unpin', 'world',
+					  'remote', 'send', 'stop', 'up', 'zoom',
+					  'remove', 'setlockscreen', 'stopslideshow', 'upload', 'zoomin',
+					  'rename', 'settile', 'switch', 'uploadskydrive', 'zoomout'
+        	]
         })
 });
 
@@ -6028,116 +6203,6 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
-//                    File: WinJS.UI.BaseControl.js
-// ==                                                          == //
-// ============================================================== //
-// ============================================================== //
-
-WinJS.Namespace.define("WinJS.UI", {
-
-	// ================================================================
-	//
-	// private Object: WinJS.UI.BaseControl constructor
-	//
-	//		Base control for all renderable WinJS objects.  Should not be directly instantiated, but rather derived from.
-	//
-	//		TODO: Is there an established javascript naming pattern for private classes/variables?
-	//		I've adopted an underline prefix (admittedly inconsistently), but will need to change that once I know what the preferred approach is...
-	//		
-	//		TODO: This isn't an existing WinJS object; consider moving out into a different namespace (e.g. Bluesky.BaseControl)
-	//		
-	BaseControl: WinJS.Class.define(function (element, options) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!element)
-			console.error("WinJS.UI.BaseControl constructor: Undefined or null element specified");
-		/*ENDDEBUG*/
-
-		// Keep a reference to our root element in the DOM.  I'm deep in with jQuery already, so go ahead
-		// and wrap it here.
-		// TODO: Perf isn't currently a concern, but look into jQuery alternatives (including jqm) later		
-		this.$rootElement = $(element);
-
-		this.isYielding = false;
-
-		// Store a reference to this control in the element with which it is associated
-		element.winControl = this;
-
-		// Track the DOM element with which this control is associated
-		this.element = element;
-	},
-
-		// ================================================================
-		// WinJS.UI.BaseControl Member functions
-		// ================================================================
-
-	{
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.render
-		//
-		//		Called when the control should "render" itself to the page.  In order to allow
-		//		batching of render calls (e.g. due to multiple changes to a control's datacontext),
-		//		render() performs a yield with a zero timeout.  Given javascript's threading model,
-		//		this allows the caller to call render numerous times, and only after the calling
-		//		thread is done is our timeout triggered and the 'real' rendering is done.
-		//
-		render: function (forceRender) {
-
-			if (forceRender) {
-				this._doRender();
-				this.isYielding = false;
-				return;
-			}
-
-			// If we're already yielding then just return
-			if (this.isYielding)
-				return;
-
-			// Mark that we're yielding and waiting for a chance to render.
-			this.isYielding = true;
-
-			// Set a timeout that will occur as soon as it can.  When it does, call our derived class's doRender function
-			var that = this;
-			return new WinJS.Promise(function(c) {
-				setTimeout(function () {
-					if (that.isYielding) {
-						that._doRender();
-
-						// Mark that we're no longer yielding
-						that.isYielding = false;
-					}
-					c();
-				}, 0);
-			});
-		},
-
-
-		// ================================================================
-		//
-		// public Function: WinJS.UI.BaseControl.forceLayout
-		//
-		//		Forces a regeneration of the control
-		//
-		forceLayout: function() {
-			this.render();
-		}
-	})
-});
-
-WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
-
-
-
-
-
-
-
-
-// ============================================================== //
-// ============================================================== //
-// ==                                                          == //
 //                    File: WinJS.UI.Fragments.js
 // ==                                                          == //
 // ============================================================== //
@@ -6355,7 +6420,7 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
 	//
 	_getDocumentFragmentFromCache: function (href, element) {
 
-		var docFrag = this._cacheStore[href].cloneNode();
+		var docFrag = this._cacheStore[href].cloneNode(true);
 		return new WinJS.Promise(function (c) {
 			if (!element) {
 				c(docFrag);
@@ -8552,8 +8617,8 @@ WinJS.Namespace.define("WinJS.UI", {
         	this.$rootElement.attr("role", "ms-semanticzoomcontainer");
 
         	// Generate the DOM hierarchy for the SemanticZoom control
-        	this._$zoomedInElement = $(">div::nth-child(1)", this.$rootElement);
-        	this._$zoomedOutElement = $(">div::nth-child(2)", this.$rootElement);
+        	this._$zoomedInElement = $($(">div", this.$rootElement)[0]);
+        	this._$zoomedOutElement = $($(">div", this.$rootElement)[1]);
         	this._$zoomContainer = $("<div style='position: absolute; left: 0px; top: 0px; overflow: hidden'></div>").appendTo(this.$rootElement);
         	this._$zoomedInContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomContainer);
         	this._$zoomedOutContainer = $("<div style='position:absolute;top:0px;left:0px;overflow: hidden'></div>").appendTo(this._$zoomContainer);
@@ -9049,6 +9114,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     var templateMargins = that._getItemMargins();
 
                     var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
+                    var groupRenderStartX;
 
                     var listWidth = that.$rootElement.innerWidth();
 

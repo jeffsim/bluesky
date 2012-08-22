@@ -27,12 +27,10 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Set default options
         	this._type = options.type || "button";
         	this._section = options.section || "global";
-        	this._hidden = options.hidden || false;
-        	this._disabled = options.disabled || false;
-        	this._icon = options.icon || "";
+        	this._hidden = options.hidden == "true" ? true : false;
         	this._label = options.label || "";
         	this.onclick = options.onclick || null;
-        	this._selected = options.selected || false;
+        	this._selected = options.selected == "true" ? true : false;
 
         	// Create a base element if one was not provided
         	if (!element) {
@@ -55,6 +53,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
+        	this.disabled = options.disabled == "true" ? true : false;
 
         	// Create our DOM hierarchy
         	var $root = this.$rootElement;
@@ -78,6 +77,7 @@ WinJS.Namespace.define("WinJS.UI", {
         		this.$label = $("<span class='win-label'>" + this.label + "</span>");
         		$root.append(this.$label);
         	}
+        	this.icon = options.icon || "";
 
         	// Bind click for flyout
         	var that = this;
@@ -104,12 +104,39 @@ WinJS.Namespace.define("WinJS.UI", {
         	_icon: true,
         	icon: {
         		get: function () {
-        			return _icon;
+        			return this._icon;
         		},
         		set: function (value) {
         			this._icon = value;
-        			// TODO: Set in DOM
-        			console.error("nyi - change icon in DOM");
+        			var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
+        			if (this.icon.indexOf("url(") == 0)
+        				$(".win-commandimage", this.$rootElement).css({
+        					"backgroundImage": this._icon + " !important",
+        					"backgroundPosition": ""
+        				});
+        			else if (iconIndex >= 0) {
+        				var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
+
+        				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
+        				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
+        				var iconImage = "http://bluesky.io/images/icons-dark.png";
+        				for (var i = 0; i < document.styleSheets.length; i++) {
+        					if (document.styleSheets[i].href && document.styleSheets[i].href.toLowerCase().indexOf("ui-dark.css") >= 0) {
+        						iconImage = "http://bluesky.io/images/icons.png";
+        						break;
+        					}
+        				}
+
+        				$(".win-commandimage", this.$rootElement).css({
+        					"backgroundImage": "url('" + iconImage + "')",
+        					"backgroundPosition": iconStr,
+        				});
+        			} else
+        				$(".win-commandimage", this.$rootElement).css({
+        					"backgroundImage": "",
+        					"backgroundPosition": ""
+        				});
+
         		}
         	},
 
@@ -145,10 +172,12 @@ WinJS.Namespace.define("WinJS.UI", {
         		},
         		set: function (value) {
         			this._disabled = value;
-        			this.$rootElement.attr("disabled", this._disabled ? "disabled" : undefined);
+        			if (this._disabled)
+        				this.$rootElement.attr("disabled", "disabled");
+        			else
+        				this.$rootElement.removeAttr("disabled");
         		}
         	},
-
 
         	// ================================================================
         	//
@@ -263,5 +292,37 @@ WinJS.Namespace.define("WinJS.UI", {
         		if (this._flyout)
         			this._flyout.hide();
         	}
+        }, {
+        	_iconMap: ['accept', 'back', 'caption', 'contactpresence', 'document',
+					  'accounts', 'bold', 'cc', 'copy', 'download',
+					  'add', 'bookmarks', 'characters', 'crop', 'edit',
+					  'admin', 'browsephotos', 'clear', 'cut', 'emoji',
+					  'aligncenter', 'bullets', 'clock', 'delete', 'emoji2',
+					  'alignleft', 'calendar', 'closepane', 'disableupdates', 'favorite',
+					  'alignright', 'calendarday', 'comment', 'dislike', 'filter',
+					  'attach', 'calendarweek', 'contact', 'dockbottom', 'dinf',
+					  'attachcamera', 'camera', 'contact2', 'dockleft', 'flag',
+					  'audio', 'cancel', 'contactinfo', 'dockright', 'folder',
+					  'font', 'home', 'link', 'movetofolder', 'page2',
+					  'fontcolor', 'import', 'list', 'musicinfo', 'paste',
+					  'forward', 'importall', 'mail', 'mute', 'pause',
+					  'globe', 'important', 'mail2', 'next', 'people',
+					  'go', 'italic', 'mailforward', 'openfile', 'permissions',
+					  'gototoday', 'keyboard', 'mailreply', 'openlocal', 'phone',
+					  'hangup', 'leavechat', 'mailreplyall', 'openpane', 'pictures',
+					  'help', 'left', 'mappin', 'orientation', 'pin',
+					  'hidebcc', 'like', 'message', 'otheruser', 'placeholder',
+					  'highlight', 'likedislike', 'more', 'page', 'play',
+					  'previewlink', 'repair', 'settings', 'sync', 'video',
+					  'previous', 'right', 'shop', 'trim', 'videochat',
+					  'priority', 'rotate', 'showbcc', 'twopage', 'view',
+					  'protectedocument', 'rotatecamera', 'showresults', 'underline', 'viewall',
+					  'read', 'save', 'shuffle', 'undo', 'volume',
+					  'redo', 'savelocal', 'slideshow', 'unfavorite', 'webcam',
+					  'refresh', 'selectall', 'sort', 'unpin', 'world',
+					  'remote', 'send', 'stop', 'up', 'zoom',
+					  'remove', 'setlockscreen', 'stopslideshow', 'upload', 'zoomin',
+					  'rename', 'settile', 'switch', 'uploadskydrive', 'zoomout'
+        	]
         })
 });

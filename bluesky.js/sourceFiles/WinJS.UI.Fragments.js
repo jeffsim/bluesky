@@ -210,7 +210,7 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
 	//
 	_getDocumentFragmentFromCache: function (href, element) {
 
-		var docFrag = this._cacheStore[href].cloneNode();
+		var docFrag = this._cacheStore[href].cloneNode(true);
 		return new WinJS.Promise(function (c) {
 			if (!element) {
 				c(docFrag);

@@ -134,3 +134,8 @@ option
     height: 40px;
     width: 40px;
 }
+
+button:disabled .win-commandimage, button:disabled:active .win-commandimage {
+    opacity: .5;
+}
+    

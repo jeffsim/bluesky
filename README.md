@@ -5,13 +5,15 @@ Check out the samples: http://sampleBrowser.bluesky.io
 ### Current test status
 <table>
 <tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
-<tr><td>Firefox (latest)</td><td><b>147 of 150</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
-<tr><td>IE 10</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>IE 9</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Chrome (latest)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Firefox (latest)</td><td><b>182 of 185</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
+<tr><td>Chrome (latest)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 10</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
 <tr><td>Safari (iPad)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
 <tr><td>Safari (mac)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 9</td><td><b>181 of 185</b> tests passing.</td><td>Same as above, plus WinJS.xhr with binary data failing</td></tr>
 </table>
+
+We're currently seeing some intermittent test failures as well, which only impact the first run.  If you see different results than the above, then try re-running the tests.  Investigating...
 
 Run the tests here: http://tests.bluesky.io/testharness/testharness.html
 
