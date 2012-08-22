@@ -509,18 +509,20 @@ WinJS.Namespace.define("WinJS.UI", {
 		    },
 
 
-		    // ================================================================
-		    //
-		    // public function: WinJS.UI.ISelection.getIndices
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
-		    //
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getIndices
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+			//
 		    getIndices: function () {
-		        var indices = [];
-		        this._selectedItems.forEach(function (item) {
-		            indices.push(item.index);
-		        });
-		        return indices;
+		    	var indices = [];
+		    	var that = this;
+		    	this._selectedItems.forEach(function (item) {
+		    		var itemIndex = item.index || that._list._itemDataSource._list.indexOf(item);
+		    		indices.push(itemIndex);
+		    	});
+		    	return indices;
 		    },
 
 

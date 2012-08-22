@@ -63,18 +63,24 @@ WinJS.Namespace.define("WinJS", {
 				if (!isLocal)
 					options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=json&callback=";
+								  "%22%3B&format=json&callback=?";
+				//	jQuery.support.cors = true; 
 				// TODO: Progress
 				$.ajax({
 					url: options.url,
 					data: options.data,
+					dataType: "jsonp",
 					success: function (data, textStatus, jqXHR) {
 						// Since we're using YQL, data contains the XML Document with the result. Extract it
 						if (isLocal) {
 							var responseText = jqXHR.responseText;
 							var responseXML = jqXHR.responseXML || null;
 						} else {
-							var response = $.parseJSON(jqXHR.responseText).query.results;
+							if (data)
+								var response = data.query.results;
+							else
+
+								var response = $.parseJSON(jqXHR.responseText).query.results;
 							// response could be .result or .xml
 							if (response.xml) {
 

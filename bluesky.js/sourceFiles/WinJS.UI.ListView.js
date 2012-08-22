@@ -331,9 +331,34 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
-
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
+
+						// Handle right-click selection
+                        $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
+                        	event.preventDefault();
+                        	if (that.selectionMode != "none") {
+
+                        		event.stopPropagation();
+
+                        		// Get the index of the right-clicked item
+                        		var itemIndex = $(this).data("itemIndex");
+
+                        		//that.selection.add(itemIndex);
+                        		var $containerNode = $(this.parentNode)
+
+                        		if ($containerNode.hasClass("win-selected"))
+                        			that.selection.remove(itemIndex);// remove selection
+                        		else
+                        			if (that.selectionMode == "multi")
+                        				that.selection.add(itemIndex);
+                        			else
+                        				that.selection.set(itemIndex);
+
+                        		that._lastSelectedItemIndex = itemIndex;
+                        		that._notifySelectionChanged(that.element);
+                        	}
+                        });
 
                         // If the user clicks on the item, call our oniteminvoked function
                         $(".win-item", $thisItemContainer).click(function () {

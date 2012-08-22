@@ -110,3 +110,27 @@ option
 	/* Following is necessary to make it work on iOS (tbd: safari too? */
 	background-size: 200px 1200px;
 }
+
+/* ignore click events on listview selection border */
+.win-selectionbordercontainer, .win-selectionbackground,.win-selectioncheckmarkbackground, .win-selectioncheckmark
+{
+    pointer-events:none;
+}
+
+/* AppBar styles */
+#appBar
+{
+	height: 78px;
+	background-color: rgba(0,0,0,0.95);
+	padding: 5px;
+	position: fixed;
+	bottom: 0px;
+	width: 100%;
+	z-index: 10000;
+}
+
+.win-commandimage {
+    background: url("http://bluesky.io/images/icons.png") repeat scroll 0 0 transparent !important;
+    height: 40px;
+    width: 40px;
+}
