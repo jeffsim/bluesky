@@ -255,7 +255,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				// TODO (CLEANUP): Use jQuery's promise functionality here?
 				return new WinJS.Promise(function (onComplete) {
 					$element.fadeOut("fast", function () {
-						$element.css({ "visibility": "hidden" });
+						$element.css({ "visibility": "hidden", "display": "block" });
 						onComplete();
 					});
 				});

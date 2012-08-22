@@ -430,18 +430,24 @@ WinJS.Namespace.define("WinJS", {
 				if (!isLocal)
 					options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=json&callback=";
+								  "%22%3B&format=json&callback=?";
+				//	jQuery.support.cors = true; 
 				// TODO: Progress
 				$.ajax({
 					url: options.url,
 					data: options.data,
+					dataType: "jsonp",
 					success: function (data, textStatus, jqXHR) {
 						// Since we're using YQL, data contains the XML Document with the result. Extract it
 						if (isLocal) {
 							var responseText = jqXHR.responseText;
 							var responseXML = jqXHR.responseXML || null;
 						} else {
-							var response = $.parseJSON(jqXHR.responseText).query.results;
+							if (data)
+								var response = data.query.results;
+							else
+
+								var response = $.parseJSON(jqXHR.responseText).query.results;
 							// response could be .result or .xml
 							if (response.xml) {
 
@@ -3023,9 +3029,11 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// If caller specified values with which to pre-populate this list, then do so now.  Note that
 			// we do not trigger item insertion in the initialization scenario.
 			if (list) {
-				for (var i in list)
+				for (var i = 0; i < list.length; i++) {
 					this._addValue(list[i]);
+				}
 			}
+
 
 			if (options) {
 				WinJS.UI.setOptions(options);
@@ -4836,18 +4844,20 @@ WinJS.Namespace.define("WinJS.UI", {
 		    },
 
 
-		    // ================================================================
-		    //
-		    // public function: WinJS.UI.ISelection.getIndices
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
-		    //
+			// ================================================================
+			//
+			// public function: WinJS.UI.ISelection.getIndices
+			//
+			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+			//
 		    getIndices: function () {
-		        var indices = [];
-		        this._selectedItems.forEach(function (item) {
-		            indices.push(item.index);
-		        });
-		        return indices;
+		    	var indices = [];
+		    	var that = this;
+		    	this._selectedItems.forEach(function (item) {
+		    		var itemIndex = item.index || that._list._itemDataSource._list.indexOf(item);
+		    		indices.push(itemIndex);
+		    	});
+		    	return indices;
 		    },
 
 
@@ -7982,7 +7992,7 @@ WinJS.Namespace.define("WinJS.UI", {
 				// TODO (CLEANUP): Use jQuery's promise functionality here?
 				return new WinJS.Promise(function (onComplete) {
 					$element.fadeOut("fast", function () {
-						$element.css({ "visibility": "hidden" });
+						$element.css({ "visibility": "hidden", "display": "block" });
 						onComplete();
 					});
 				});
@@ -8397,9 +8407,34 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
-
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
+
+						// Handle right-click selection
+                        $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
+                        	event.preventDefault();
+                        	if (that.selectionMode != "none") {
+
+                        		event.stopPropagation();
+
+                        		// Get the index of the right-clicked item
+                        		var itemIndex = $(this).data("itemIndex");
+
+                        		//that.selection.add(itemIndex);
+                        		var $containerNode = $(this.parentNode)
+
+                        		if ($containerNode.hasClass("win-selected"))
+                        			that.selection.remove(itemIndex);// remove selection
+                        		else
+                        			if (that.selectionMode == "multi")
+                        				that.selection.add(itemIndex);
+                        			else
+                        				that.selection.set(itemIndex);
+
+                        		that._lastSelectedItemIndex = itemIndex;
+                        		that._notifySelectionChanged(that.element);
+                        	}
+                        });
 
                         // If the user clicks on the item, call our oniteminvoked function
                         $(".win-item", $thisItemContainer).click(function () {

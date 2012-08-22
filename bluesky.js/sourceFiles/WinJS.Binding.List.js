@@ -27,9 +27,11 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// If caller specified values with which to pre-populate this list, then do so now.  Note that
 			// we do not trigger item insertion in the initialization scenario.
 			if (list) {
-				for (var i in list)
+				for (var i = 0; i < list.length; i++) {
 					this._addValue(list[i]);
+				}
 			}
+
 
 			if (options) {
 				WinJS.UI.setOptions(options);
