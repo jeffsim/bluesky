@@ -5090,6 +5090,12 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
                 var $el = $(element);
 
+				// TODO: Does Win8 animate hidden content into visibility?
+                //if ($el.css("visibility") == "hidden" || $el.css("display") == "none" || $el.css("opacity") == 0) {
+                	//numAnimations--;
+                	//continue;
+                //}
+
                 // Store initial position type, since setting offset below will force it to relative
                 var originalPosition = $el.css("position");
 
@@ -5172,10 +5178,17 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
                 // If undefined or null element then nothing to animate.  decrement the number of animations we're waiting to have finish...
                 if (!element) {
                     numAnimations--;
-                    return;
+                    continue;
                 }
 
                 var $el = $(element);
+
+            	// If hidden then don't animate
+                if ($el.css("visibility") == "hidden" || $el.css("display") == "none" || $el.css("opacity") == 0) {
+                	numAnimations--;
+                	continue;
+                }
+
                 var elementOffset = i < offset.length ? offset[i] : offset[offset.length - 1];
                 var offsetTop = parseInt(elementOffset.top);
                 var offsetLeft = parseInt(elementOffset.left);
@@ -8304,6 +8317,14 @@ WinJS.Namespace.define("WinJS.UI", {
                         // and jump to the next column
                         if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
+                        	// If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                        	if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                        		$groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                        	}
+
+                        	// Track width of the current group for the above limit
+                        	groupRenderStartX = surfaceWidth;
+							
                             // Track the current group key so that we know when we switch to a new group
                             currentGroupKey = item.groupKey;
 

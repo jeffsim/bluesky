@@ -8304,6 +8304,14 @@ WinJS.Namespace.define("WinJS.UI", {
                         // and jump to the next column
                         if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
+                        	// If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                        	if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                        		$groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                        	}
+
+                        	// Track width of the current group for the above limit
+                        	groupRenderStartX = surfaceWidth;
+							
                             // Track the current group key so that we know when we switch to a new group
                             currentGroupKey = item.groupKey;
 
