@@ -8,8 +8,8 @@ Check out the samples: http://sampleBrowser.bluesky.io
 <tr><td>Firefox (latest)</td><td><b>182 of 185</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
 <tr><td>Chrome (latest)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
 <tr><td>IE 10</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (iPad)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (mac)</td><td><b>147 of 150</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (iPad)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (mac)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
 <tr><td>IE 9</td><td><b>181 of 185</b> tests passing.</td><td>Same as above, plus WinJS.xhr with binary data failing</td></tr>
 </table>
 
