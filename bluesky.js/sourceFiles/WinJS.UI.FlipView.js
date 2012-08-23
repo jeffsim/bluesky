@@ -197,7 +197,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 // Make the current page visible
                 // TODO: Do I still need these two lines?
-                if (typeof this.currentPage === "undefined")
+                if (typeof this.currentPage === "undefined" || this.currentPage == -1)
                     this.currentPage = 0;
                 this._makePageVisible(this._currentPage);
             },

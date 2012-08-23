@@ -67,6 +67,12 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (options.groupHeaderTemplate)
                     this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
             }
+
+        	// We want to know when the browser is resized so that we can relayout our items.
+            this.resizing = false;
+            this._prevWidth = "";
+            this._prevHeight = "";
+            window.addEventListener("resize", this._windowResized.bind(this));
         },
 
 		// ================================================================
@@ -74,6 +80,30 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
         {
+        	// ================================================================
+        	//
+        	// private event: WinJS.SemanticZoom._windowResized
+        	//
+        	//		Called when the browser window is resized; resize ourselves
+        	//
+        	_windowResized: function (eventData) {
+
+        		// If size hasn't changed, then nothing to do.
+        		var newWidth = this.$rootElement.innerWidth();
+        		var newHeight = this.$rootElement.innerHeight();
+        		if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
+        			return;
+
+        		// tbd: instead of re-rendering completely, should do a "movePosition"
+        		// tbd-perf: only relayout if size has changed at the listview items' size granularity
+        		//var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
+        		this._resizing = true;
+        		this._doRender();
+        		this._resizing = false;
+        		//anim.execute();
+        	},
+
+
             // ================================================================
             //
             // private Function: WinJS.UI.ListView._doRender
@@ -434,7 +464,8 @@ WinJS.Namespace.define("WinJS.UI", {
                     $surfaceDiv.css("width", surfaceWidth).show();
 
                     // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
+                    if (!that._resizing)
+                    	WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
                 });
             },
 
@@ -656,18 +687,6 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
             },
 
-
-            // on Window resize, re-render ourselves
-            // tbd-perf: consider batching these
-            _windowResized: function (w, h) {
-                // tbd: instead of re-rendering completely, should do a "movePosition"
-                // tbd-perf: only relayout if size has changed at the listview items' size granularity
-                //var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
-                this.render();
-                //anim.execute();
-            },
-
-
         	// ================================================================
         	//
         	// private function: WinJS.ListView._notifySelectionChanged
@@ -778,7 +797,7 @@ WinJS.Namespace.define("WinJS.UI", {
 												"<div class='win-selectionborder win-selectionborderright'></div>" +
 												"<div class='win-selectionborder win-selectionborderbottom'></div>" +
 												"<div class='win-selectionborder win-selectionborderleft'></div>" +
-												"</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'>X&nbsp;</div>"
+												"</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
 										));
                     }
                 });

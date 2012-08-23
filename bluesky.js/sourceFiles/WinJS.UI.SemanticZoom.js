@@ -87,13 +87,46 @@ WinJS.Namespace.define("WinJS.UI", {
         	this._locked = false;
         	this._zoomedOut = false;
         	this._zoomFactor = 0.65;
+
+        	// We want to know when the browser is resized so that we can relayout our items.
+        	window.addEventListener("resize", this._windowResized.bind(this));
+        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I
+        	// can't quite get it to work.
+        	//window.removeEventListener("resize", this._zoomedInListView._windowResized);
+        	//window.removeEventListener("resize", this._zoomedOutListView._windowResized);
         },
 
 		// ================================================================
 		// WinJS.UI.SemanticZoom Member functions
 		// ================================================================
 
-		{
+        {
+
+        	// ================================================================
+        	//
+        	// private event: WinJS.SemanticZoom._windowResized
+        	//
+        	//		Called when the browser window is resized; resize ourselves
+        	//
+        	_windowResized: function (eventData) {
+
+				// If size hasn't changed, then nothing to do.
+        		var newWidth = this.$rootElement.innerWidth();
+        		var newHeight = this.$rootElement.innerHeight();
+        		if (parseInt(this._$zoomContainer.css("width")) == newWidth && parseInt(this._$zoomContainer.css("height")) == newHeight)
+        			return;
+
+        		// Set dimensions
+        		var dimensions = { width: newWidth, height: newHeight };
+        		this._$zoomContainer.css(dimensions);
+        		this._$zoomedInContainer.css(dimensions);
+        		this._$zoomedOutContainer.css(dimensions);
+        		this._$zoomedInSubContainer.css(dimensions);
+        		this._$zoomedOutSubContainer.css(dimensions);
+        		this._$zoomedInElement.css(dimensions);
+        		this._$zoomedOutElement.css(dimensions);
+        	},
+
 
 			// ================================================================
 			//

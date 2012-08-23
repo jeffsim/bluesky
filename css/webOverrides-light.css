@@ -130,7 +130,7 @@ option
 }
 
 .win-commandimage {
-    background: url("http://bluesky.io/images/icons.png") repeat scroll 0 0 transparent !important;
+    background: url("http://bluesky.io/images/icons-dark.png") repeat scroll 0 0 transparent !important;
     height: 40px;
     width: 40px;
 }
@@ -139,3 +139,14 @@ button:disabled .win-commandimage, button:disabled:active .win-commandimage {
     opacity: .5;
 }
     
+.win-selectioncheckmark
+{
+    background: url("http://bluesky.io/images/icons-dark.png") repeat scroll 0px 0px transparent;
+    height: 36px;
+    width: 36px;
+    transform: scale(.65);
+    -moz-transform: scale(.65);
+    -webkit-transform: scale(.65);
+    margin-right: -7px;
+    margin-top: -7px;
+}
