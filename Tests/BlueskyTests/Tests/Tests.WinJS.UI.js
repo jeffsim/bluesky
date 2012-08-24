@@ -51,6 +51,7 @@ testHarness.addTestFile("WinJS.UI Tests", {
 		test.nyi("setOptions with declarative string (ala Rating control in html)");
 	},
 
+
 	// ==========================================================================
 	// 
 	// Test WinJS.UI.setOptions' onEvent handling
@@ -96,6 +97,36 @@ testHarness.addTestFile("WinJS.UI Tests", {
 		testControl.raiseEvent("iteminvoked");
 		testControl.raiseEvent("foo");
 		test.assert(testVal1 == 1 && testVal2 == 2, "Failed to set event handlers in setOptions");
+	},
+
+
+    // ==========================================================================
+    // 
+    // Test WinJS.UI.eventHandler functionality
+    //
+	eventHandler: function (test) {
+
+	    test.start("WinJS.UI.eventHandler tests");
+
+	    var handler = function () {
+	    };
+
+	    WinJS.UI.eventHandler(handler);
+
+	    test.assert(handler._supportedForProcessing, "eventHandler did not assign supportedForProcessing");
+	},
+
+
+    // ==========================================================================
+    // 
+    // Test WinJS.UI.scopedSelect functionality
+    //
+	scopedSelect: function (test) {
+
+	    test.start("WinJS.UI.scopedSelect tests");
+
+	    var element = WinJS.UI.scopedSelect(".testFrame");
+	    test.assert(element == $(".testFrame")[0], "scopedSelect returned incorrect element");
 	},
 
 

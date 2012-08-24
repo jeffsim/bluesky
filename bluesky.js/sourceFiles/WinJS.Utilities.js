@@ -55,6 +55,31 @@ WinJS.Namespace.define("WinJS.Utilities", {
 	},
 
 
+    // ================================================================
+    //
+    // public function: WinJS.Utilities.markSupportedForProcessing
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh967819.aspx 
+    //
+	markSupportedForProcessing: function (handler) {
+
+	    handler._supportedForProcessing = true;
+	},
+
+
+    // ================================================================
+    //
+    // public function: WinJS.Utilities.requireSupportedForProcessing
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh967820.aspx
+    //
+	requireSupportedForProcessing: function (handler) {
+
+	    if (this.strictProcessing && !handler._supportedForProcessing)
+	        throw "requireSupportedForProcessing";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
+	},
+
+
 	// ================================================================
 	//
 	// public function: WinJS.Utilities.createEventProperties

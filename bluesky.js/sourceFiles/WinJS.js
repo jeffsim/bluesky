@@ -253,8 +253,12 @@ var WinJS = {
 	//		TODO: Stubbed out for now
 	//
 	//		NYI NYI NYI
-	//
+    //
+    _strictProcessing: false,
 	strictProcessing: function () {
-	}
+
+        // NOTE: THIS FUNCTION HAS BEEN DEPRECATED.  Remove after Win8 RTM
+	    this._strictProcessing = true;
+	},
 
 };

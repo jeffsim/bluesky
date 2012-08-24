@@ -410,9 +410,9 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Get the index of the clicked item container's item
                             var itemIndex = $(this).data("itemIndex");
 
-                            // Track last tapped item for the semanticzoom _getCurrentPosition helper function, since we don't have focus yet
+                            // Track last tapped item for the semanticzoom _getCurrentItem helper function, since we don't have focus yet
                             // TODO: Remove this when we have keyboard focus support
-                            that._lastTappedItem = itemIndex;
+                            that._currentItem = itemIndex;
 
                             // Call invoke
                             if (that.tapBehavior != "none") {
@@ -887,6 +887,46 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
             },
 
+            // ================================================================
+            //
+            // public property: WinJS.ListView.indexOfLastVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700698.aspx
+            //
+            indexOfLastVisible: {
+
+                get: function () {
+                    var curScrollRect = {
+                        left: this.$viewport.scrollLeft(),
+                        top: this.$viewport.scrollTop(),
+                        width: this.$viewport.innerWidth(),
+                        height: this.$viewport.innerHeight()
+                    };
+
+                    // Items are sorted in order, so just find the last one that's in the current viewport
+                    if (this.layout.horizontal) {
+                        var viewLeftEdge = this.$viewport.scrollLeft();
+                        for (var i = this.items.length - 1; i >= 0; i--) {
+                            var itemRightEdge = parseInt(this.items[i].element.parentNode.style.left) +
+                                                parseInt(this.items[i].element.parentNode.style.width);
+                            if (itemRightEdge > viewLeftEdge)
+                                return i;
+                        }
+                    } else {
+                        var viewTopEdge = this.$viewport.scrollTop();
+                        for (var i = this.items.length - 1; i >= 0; i--) {
+                            for (var i = 0; i < this.items.length; i++)
+                                var itemBottomEdge = parseInt(this.items[i].element.parentNode.style.right) +
+                                                     parseInt(this.items[i].element.parentNode.style.height);
+                            if (itemBottomEdge > viewTopEdge)
+                                return i;
+                        }
+                    }
+                    // No item is visible
+                    return -1;  // TODO: What does win8 return here?
+                }
+            },
+
 
             // ================================================================
             //
@@ -924,7 +964,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 var that = this;
 
                 // TODO: Update this to use focus when that gets added in R3
-                var index = that._lastTappedItem || that.indexOfFirstVisible;
+                var index = that._currentItem || that.indexOfFirstVisible;
 
                 // TODO: use datasource.getitem
                 var item = that._itemDataSource._list.getItem(index);
@@ -1026,6 +1066,148 @@ WinJS.Namespace.define("WinJS.UI", {
                         }
                     }
                 });*/
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.ensureVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211820.aspx
+            //
+            ensureVisible: function (itemIndex) {
+
+                if (itemIndex < this.indexOfFirstVisible || itemIndex > this.indexOfLastVisible)
+                    this.indexOfFirstVisible = itemIndex;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.elementFromIndex
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh758351.aspx
+            //
+            elementFromIndex: function (itemIndex) {
+
+                var item = this._itemDataSource._list.getItem(itemIndex);
+                return item ? item.element : null;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.elementFromIndex
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700675.aspx
+            //
+            indexOfElement: function (element) {
+
+                for (var i = 0; i < this.items.length; i++)
+                    if (this.items[i].element == element)
+                        return i;
+                return -1;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.currentItem
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440977.aspx
+            //
+            currentItem: {
+
+                get: function () {
+                    if (this._currentItem) {
+                        var itemWithIndex = this._itemDataSource._list.getItemFromKey(this._currentItem.key);
+                        return {
+                            index: itemWithIndex.index,
+                            key: this._currentItem.key,
+                            hasFocus: true,             // TODO: Changes when we have focus
+                            showFocus: true,            // TODO: Changes when we have focus
+                        }
+                    } else {
+                        return {
+                            index: -1,
+                            key: null,
+                            hasFocus: false,
+                            showFocus: false
+                        };
+                    }
+                },
+
+                set: function (value) {
+
+                    if (value.index) {
+
+                        this._currentItem = this.items[value.index];
+                        $(this._curentItem).focus();
+
+                    } else if (value.key) {
+
+                        this._currentItem = this._itemDataSource._list.getItemFromKey(value.key);
+                        $(this._curentItem).focus();
+
+                    } else {
+
+                        // Clearing
+                        if (this._currentItem) {
+                            $(this._currentItem).blur();
+                            this._currentItem = null;
+                        }
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.resetGroupHeader
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700726.aspx
+            //
+            _groupHeaderRecycleFunction: null,
+            resetGroupHeader: {
+                get: function () {
+                    if (!this._warnedResetGroupHeader) {
+                        this._warnedResetGroupHeader = true;
+                        console.warn("bluesky: resetGroupHeader is NYI");
+                    }
+                    return _groupHeaderRecycleFunction;
+                },
+                set: function (value) {
+                    if (!this._warnedResetGroupHeader) {
+                        this._warnedResetGroupHeader = true;
+                        console.warn("bluesky: resetGroupHeader is NYI");
+                    }
+                    _groupHeaderRecycleFunction = value;
+                }
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.resetItem
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211846.aspx
+            //
+            _itemRecycleFunction: null,
+            resetItem: {
+                get: function () {
+                    if (!this._warnedResetItem) {
+                        this._warnedResetItem = true;
+                        console.warn("bluesky: resetItem is NYI");
+                    }
+                    return _itemRecycleFunction;
+                },
+                set: function (value) {
+                    if (!this._warnedResetItem) {
+                        this._warnedResetItem = true;
+                        console.warn("bluesky: resetItem is NYI");
+                    }
+                    _itemRecycleFunction = value;
+                }
             }
         })
 });

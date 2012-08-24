@@ -237,6 +237,7 @@ WinJS.Namespace.define("WinJS.UI", {
     //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779762.aspx
     // 
+    _warnedExecuteAnimationNYI: false,
     executeAnimation: function (anim) {
 
         // TODO: Implement this.
@@ -245,7 +246,47 @@ WinJS.Namespace.define("WinJS.UI", {
             _warnedExecuteAnimationNYI = true;
         }
     },
-    _warnedExecuteAnimationNYI: false,
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.setControl
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440977.aspx
+    //
+    //  TODO: HMM - trying to do this on Win8 gives a "function not known" exception.  Doc or code bug?
+    //
+    setControl: function (handler) {
+
+        // Per todo above, not sure what to do here; drop a warning to the console
+        /*DEBUG*/
+        console.warn("WinJS.UI.setControl is not implemented, as it does not appear to exist on Win8!");
+        /*ENDDEBUG*/
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.eventHandler
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh967816.aspx
+    //
+    eventHandler: function (handler) {
+
+        WinJS.Utilities.markSupportedForProcessing(handler);
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.scopedSelect
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/Hh921605.aspx
+    //
+    scopedSelect: function (selector) {
+
+        return document.querySelector(selector);
+    },
 
 
     // ================================================================
@@ -297,6 +338,7 @@ WinJS.Namespace.define("WinJS.UI", {
         select: "select",
         none: "none"
     },
+
 
     // ================================================================
     //
@@ -556,7 +598,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        });
 		    },
 
-
+            
 		    // ================================================================
 		    //
 		    // public function: WinJS.UI.ISelection.set
