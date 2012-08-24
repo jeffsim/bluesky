@@ -8574,6 +8574,172 @@ WinJS.Namespace.define("WinJS.UI", {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.UI.IZoomableView.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+/*DEBUG*/
+
+// ================================================================
+//
+// WinJS.UI.IZoomableView
+//
+//		This is the root WinJS.UI.IZoomableView interface
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229794.aspx
+//
+//		IZoomableView is an interface (abstract), so technically nothing
+//		is needed here.  However, for debug builds we warn if the developer
+//		neglected to implement any of the required functions
+//
+
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.IZoomableView
+	//
+	IZoomableView: WinJS.Class.define(null,
+
+		// ================================================================
+		//
+		// WinJS.UI.IZoomableView Member functions
+		//
+		// ================================================================
+
+        {
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.getPanAxis
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229792.aspx
+        	//
+        	getPanAxis: function () {
+        		if (!this._warnedGetPanAxis) {
+        			console.warn("bluesky Warning: IZoomableView.getPanAxis has not been implemented on a derived class");
+        			this._warnedGetPanAxis = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.configureForZoom
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229789.aspx
+        	//
+        	_warnedConfigureForZoom: false,
+        	configureForZoom: function (isZoomedOut, isCurrentView, triggerZoom, prefetchedPages) {
+        		if (!this._warnedConfigureForZoom) {
+        			console.warn("bluesky Warning: IZoomableView.configureForZoom has not been implemented on a derived class");
+        			this._warnedConfigureForZoom = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.setCurrentItem
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229796.aspx
+        	//
+        	_warnedSetCurrentItem: false,
+        	setCurrentItem: function (x, y) {
+        		if (!this._warnedSetCurrentItem) {
+        			console.warn("bluesky Warning: IZoomableView.setCurrentItem has not been implemented on a derived class");
+        			this._warnedSetCurrentItem = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.getCurrentItem
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229791.aspx
+        	//
+        	_warnedGetCurrentItem: false,
+        	getCurrentItem: function () {
+        		if (!this._warnedGetCurrentItem) {
+        			console.warn("bluesky Warning: IZoomableView.getCurrentItem has not been implemented on a derived class");
+        			this._warnedGetCurrentItem = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.beginZoom
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229788.aspx
+        	//
+        	_warnedBeginZoom: false,
+        	beginZoom: function () {
+        		if (!this._warnedBeginZoom) {
+        			console.warn("bluesky Warning: IZoomableView.beginZoom has not been implemented on a derived class");
+        			this._warnedBeginZoom = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.positionItem
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229795.aspx
+        	//
+        	_warnedPositionItem: false,
+        	positionItem: function (/*@override*/item, position) {
+        		if (!this._warnedPositionItem) {
+        			console.warn("bluesky Warning: IZoomableView.positionItem has not been implemented on a derived class");
+        			this._warnedPositionItem = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.endZoom
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229790.aspx
+        	//
+        	_warnedEndZoom: false,
+        	endZoom: function (isCurrentView) {
+        		if (!this._warnedEndZoom) {
+        			console.warn("bluesky Warning: IZoomableView.endZoom has not been implemented on a derived class");
+        			this._warnedEndZoom = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.handlePointer
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229793.aspx
+        	//
+        	_warnedHandlePointer: false,
+        	handlePointer: function (pointerId) {
+        		if (!this._warnedHandlePointer) {
+        			console.warn("bluesky Warning: IZoomableView.handlePointer has not been implemented on a derived class");
+        			this._warnedHandlePointer = true;
+        		}
+        	}
+        })
+});
+/*ENDDEBUG*/
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: WinJS.UI.SemanticZoom.js
 // ==                                                          == //
 // ============================================================== //
@@ -8645,23 +8811,37 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	WinJS.UI.processAll(this.element);
 
-        	// Start out with zoomedin visible, zoomedout hidden
-        	this._showElement(this._$zoomedInContainer);
-        	this._hideElement(this._$zoomedOutContainer);
+            // Start out with zoomedin visible, zoomedout hidden
+            // TODO (CLEANUP): Should listview.configureForZoom handle this?
+        	this._$zoomedInContainer.css("visibility", "visible");
+        	this._$zoomedOutContainer.css("visibility", "hidden");
 
         	// When the user clicks on an item in the zoomedout control, zoom into it in the zoomedincontrol
-        	// TODO: This only works with ListViews for now.  Need to generalize through IZoomableView in R2/R3
-        	this._zoomedInListView = this._$zoomedInElement[0].winControl;
-        	this._zoomedOutListView = this._$zoomedOutElement[0].winControl;
-        	/*DEBUG*/
-        	
-        	if (!this._zoomedOutListView || !this._zoomedOutListView.selection)
-        		console.error("SemanticZoom only works with ListView subcontrols for R1; IZoomableView will come in R2/R3");
-        	if (this._zoomedInListView._groupDataSource != this._zoomedOutListView._itemDataSource)
-        		console.error("SemanticZoom currently only works with a grouped listview as the zoomed-in view, and that listview's groupdatasource as the zoomed-out view.  Check the GroupedListview sample for a working example");
+        	this._zoomedInView = this._$zoomedInElement[0].winControl;
+        	this._zoomedOutView = this._$zoomedOutElement[0].winControl;
 
-        	/*ENDDEBUG*/
-        	this._zoomedOutListView.oniteminvoked = this._zoomedOutListItemClicked.bind(this);
+            // If zoomedinview is a listview, then forward SemanticZoom calls to it's private functions
+        	if (!this._zoomedInView.beginZoom) {
+        	    this._zoomedInView.beginZoom = this._zoomedInView._beginZoom;
+        	    this._zoomedInView.endZoom = this._zoomedInView._endZoom;
+        	    this._zoomedInView.getCurrentItem = this._zoomedInView._getCurrentItem;
+        	    this._zoomedInView.configureForZoom = this._zoomedInView._configureForZoom
+        	    this._zoomedInView.positionItem = this._zoomedInView._positionItem;
+        	}
+
+            // If _zoomedOutView is a listview, then forward SemanticZoom calls to it's private functions
+        	if (!this._zoomedOutView.beginZoom) {
+        	    this._zoomedOutView.beginZoom = this._zoomedOutView._beginZoom;
+        	    this._zoomedOutView.endZoom = this._zoomedOutView._endZoom;
+        	    this._zoomedOutView.getCurrentItem = this._zoomedOutView._getCurrentItem;
+        	    this._zoomedOutView.configureForZoom = this._zoomedOutView._configureForZoom;
+        	    this._zoomedOutView.positionItem = this._zoomedOutView._positionItem;
+        	}
+
+            // Call configureForZoom
+        	var that = this;
+        	this._zoomedInView.configureForZoom(false, true, function () { that.zoomedOut = true; }, 1);
+        	this._zoomedOutView.configureForZoom(true, false, function () { that.zoomedOut = false; }, 100);
 
         	// Initialize values
         	this._enableButton = true;
@@ -8671,10 +8851,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	// We want to know when the browser is resized so that we can relayout our items.
         	window.addEventListener("resize", this._windowResized.bind(this));
-        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I
-        	// can't quite get it to work.
-        	//window.removeEventListener("resize", this._zoomedInListView._windowResized);
-        	//window.removeEventListener("resize", this._zoomedOutListView._windowResized);
+
+        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I can't quite get it to work.
+        	//window.removeEventListener("resize", this._zoomedInView._windowResized);
+        	//window.removeEventListener("resize", this._zoomedOutView._windowResized);
         },
 
 		// ================================================================
@@ -8691,7 +8871,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	//
         	_windowResized: function (eventData) {
 
-				// If size hasn't changed, then nothing to do.
+        		// If size hasn't changed, then nothing to do.
         		var newWidth = this.$rootElement.innerWidth();
         		var newHeight = this.$rootElement.innerHeight();
         		if (parseInt(this._$zoomContainer.css("width")) == newWidth && parseInt(this._$zoomContainer.css("height")) == newHeight)
@@ -8709,231 +8889,264 @@ WinJS.Namespace.define("WinJS.UI", {
         	},
 
 
-			// ================================================================
-			//
-			// public event: WinJS.SemanticZoom.onzoomchanged
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
-			//
-			onzoomchanged: {
-				get: function () {
-					// Return the tracked hander
-					return this._onzoomchanged;
-				},
+        	// ================================================================
+        	//
+        	// public event: WinJS.SemanticZoom.onzoomchanged
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
+        	//
+        	onzoomchanged: {
 
-				set: function (callback) {
+        		get: function () {
+        			// Return the tracked hander
+        			return this._onzoomchanged;
+        		},
 
-					// Remove previous on* handler if one was specified
-					if (this._onzoomchanged)
-						this.removeEventListener("zoomchanged", this._onzoomchanged);
+        		set: function (callback) {
 
-					// track the specified handler for this.get
-					this._onzoomchanged = callback;
-					this.addEventListener("zoomchanged", callback);
-				}
-			},
+        			// Remove previous on* handler if one was specified
+        			if (this._onzoomchanged)
+        				this.removeEventListener("zoomchanged", this._onzoomchanged);
 
-
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.enableButton
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
-			//
-			_enableButton: true,
-			enableButton: {
-				get: function () {
-					return this._enableButton;
-				},
-				set: function (value) {
-					this._enableButton = value;
-					this._enableButton ? this._addZoomButton() : this._removeZoomButton();
-				}
-			},
+        			// track the specified handler for this.get
+        			this._onzoomchanged = callback;
+        			this.addEventListener("zoomchanged", callback);
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.locked
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
-			//
-			_locked: false,
-			locked: {
-				get: function () {
-					return this._locked;
-				},
-				set: function (value) {
-					this._locked = value;
-				}
-			},
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.enableButton
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
+        	//
+        	_enableButton: true,
+        	enableButton: {
+
+        		get: function () {
+        			return this._enableButton;
+        		},
+        		set: function (value) {
+        			this._enableButton = value;
+        			this._enableButton ? this._addZoomButton() : this._removeZoomButton();
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.zoomedOut
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
-			//
-			_zoomedOut: false,
-			zoomedOut: {
-				get: function () {
-					return this._zoomedOut;
-				},
-				set: function (isZoomedOut) {
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.locked
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
+        	//
+        	_locked: false,
+        	locked: {
 
-					// If the ZoomControl is locked, then ignore zoom set
-					if (this._locked)
-						return;
-
-					// If same, then ignore
-					if (this._zoomedOut == isZoomedOut)
-						return;
-
-					this._zoomedOut = isZoomedOut;
-
-					// hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
-					// Promises which are fulfilled when the animation has finished; we wait until both
-					// animations are done before triggering onzoomchanged
-					var promises = [];
-					if (isZoomedOut) {
-						// We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
-						promises.push(this._hideElement(this._$zoomedInContainer));
-						promises.push(this._showElement(this._$zoomedOutContainer));
-
-						// Also hide the zoom button, which isn't visible when zoomed out
-						this._$zoomButton.hide().css({ "visibility": "hidden" });
-					} else {
-
-						// We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
-						promises.push(this._showElement(this._$zoomedInContainer));
-						promises.push(this._hideElement(this._$zoomedOutContainer));
-
-						// Also show the zoom button, which is visible when zoomed out (if enableButton is true)
-						if (this.enableButton)
-							this._$zoomButton.show().css({ "visibility": "visible" });
-					}
-
-					// Per above, wait until both animations have completed before triggering onzoomchanged.
-					var that = this;
-					WinJS.Promise.join(promises).then(function () {
-						// Notify listeners that zoom changed
-						var event = document.createEvent("CustomEvent");
-						event.initCustomEvent("zoomchanged", true, false, {});
-						that.element.dispatchEvent(event);
-					});
-				}
-			},
+        		get: function () {
+        			return this._locked;
+        		},
+        		set: function (value) {
+        			this._locked = value;
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.zoomFactor
-			//
-			//		TODO: NYI; not leveraging this yet.
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
-			//
-			_zoomFactor: 0.65,
-			zoomFactor: {
-				get: function () {
-					return this._zoomFactor;
-				}
-			},
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.zoomedOut
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
+            //
+        	_zoomedOut: false,
+        	zoomedOut: {
+
+        	    get: function () {
+        	        return this._zoomedOut;
+        	    },
+        	    set: function (isZoomedOut) {
+        	        // If the ZoomControl is locked, then ignore zoom set
+        	        if (this._locked)
+        	            return;
+
+        	        // If same, then ignore
+        	        if (this._zoomedOut == isZoomedOut)
+        	            return;
+
+        	        this._zoomedOut = isZoomedOut;
+
+        	        // Trigger beginZoom on both the zoomedIn and zoomedOut Views
+        	        this._zoomedInView.beginZoom();
+        	        this._zoomedOutView.beginZoom();
+
+        	        // TODO (R3): For R1/R2 we're just fading between views when zooming.  In R3 when we add the 'zoom' animation,
+        	        //			  we'll need to set initial view scroll offsets here so that they smoothly animate
+        	        var itemPromise = (isZoomedOut ? this._zoomedInView : this._zoomedOutView).getCurrentItem();
+        	        var that = this;
+        	        itemPromise.then(function (current) {
+
+        	            // hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
+        	            // Promises which are fulfilled when the animation has finished; we wait until both
+        	            // animations are done before triggering onzoomchanged
+        	            var promises = [];
+        	            if (isZoomedOut) {
+
+        	                // Set position of the zooming-to ZoomableView
+        	                that._zoomedOutView.positionItem(current.item, current.position);
+
+        	                // We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
+        	                promises.push(that._hideElement(that._$zoomedInContainer));
+        	                promises.push(that._showElement(that._$zoomedOutContainer));
+
+        	                // Also hide the zoom button, which isn't visible when zoomed out
+        	                that._$zoomButton.hide().css({ "visibility": "hidden" });
+
+        	            } else {
+
+        	                // Set position of the zooming-to ZoomableView
+        	                that._zoomedInView.positionItem(current.item, current.position);
+
+        	                // We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
+        	                promises.push(that._showElement(that._$zoomedInContainer));
+        	                promises.push(that._hideElement(that._$zoomedOutContainer));
+
+        	                // Also show the zoom button, which is visible when zoomed out (if enableButton is true)
+        	                if (that.enableButton)
+        	                    that._$zoomButton.show().css({ "visibility": "visible" });
+        	            }
+
+        	            // Per above, wait until both animations have completed before triggering onzoomchanged.
+        	            WinJS.Promise.join(promises).then(function () {
+
+        	                // Trigger endZoom on both the zoomedIn and zoomedOut Views
+        	                that._zoomedInView.endZoom();
+        	                that._zoomedOutView.endZoom();
+
+        	                // Notify listeners that zoom changed
+        	                var event = document.createEvent("CustomEvent");
+        	                event.initCustomEvent("zoomchanged", true, false, {});
+        	                that.element.dispatchEvent(event);
+        	            });
+        	        });
+        	    }
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._showElement
-			//
-			_showElement: function ($element) {
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.zoomFactor
+        	//
+        	//		TODO: NYI; not leveraging this yet.
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
+        	//
+        	_zoomFactor: 0.65,
+        	zoomFactor: {
 
-				// TODO: Animate zoom (in R2)
-				// TODO (CLEANUP): Use jQuery's promise functionality here?
-				return new WinJS.Promise(function (onComplete) {
-					$element.fadeIn("fast", function () {
-						$element.css({ "visibility": "visible" });
-						onComplete();
-					});
-				});
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._hideElement
-			//
-			_hideElement: function ($element) {
-
-				// TODO: Animate zoom (in R2)
-				// TODO (CLEANUP): Use jQuery's promise functionality here?
-				return new WinJS.Promise(function (onComplete) {
-					$element.fadeOut("fast", function () {
-						$element.css({ "visibility": "hidden", "display": "block" });
-						onComplete();
-					});
-				});
-			},
+        		get: function () {
+        			return this._zoomFactor;
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._addZoomButton
-			//
-			_addZoomButton: function () {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._showElement
+        	//
+        	_showElement: function ($element) {
 
-				this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
-				this.$rootElement.append(this._$zoomButton);
-				var that = this;
-				this._$zoomButton.click(function () {
-					that.zoomedOut = true;
-				});
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._removeZoomButton
-			//
-			_removeZoomButton: function () {
-
-				this._$zoomButton.remove();
-			},
+        		// TODO: Animate zoom (in R2)
+        		return new WinJS.Promise(function (onComplete) {
+        		    $element.fadeIn("fast", function () {
+        				$element.css({ "visibility": "visible" });
+        				onComplete();
+        			});
+        		});
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._zoomedOutListItemClicked
-			//
-			//		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
-			//		scrolled to the clicked-on group.
-			//
-			_zoomedOutListItemClicked: function (eventData) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._hideElement
+        	//
+        	_hideElement: function ($element) {
 
-				// Zoom out
-				this.zoomedOut = false;
+        		// TODO: Animate zoom (in R2)
+        	    return new WinJS.Promise(function (onComplete) {
+        	        if ($element.css("visibility") == "visible") {
+        	            $element.fadeOut("fast", function () {
+        	                $element.css({ "visibility": "hidden", "display": "block" });
+        	                onComplete();
+        	            });
+        	        }
+        		});
+        	},
 
-				// Gor now, Semantic Zoom works with grouped lists only, so we can find the first item
-				// in the invoked group, and scroll to it in the zoomed-in listview.
-				// TODO: Support other datasources than grouped lists
-				var that = this;
-				eventData.detail.itemPromise.then(function (clickedGroup) {
 
-					// Find the first item in the zoomedinlistview that is in the clicked group
-					// TODO (CLEANUP): Should use IListDataSource for this.
-					var list = that._zoomedInListView._itemDataSource._list;
-					for (var i = 0; i < list.length; i++) {
-						var item = list.getItem(i);
-						if (item.groupKey == clickedGroup.key) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._addZoomButton
+        	//
+        	_addZoomButton: function () {
 
-							// Bring the selected item/group (?) into view
-							that._zoomedInListView.indexOfFirstVisible = i;
-							break;
-						}
-					}
-				});
-			}
-		})
+        		this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
+        		this.$rootElement.append(this._$zoomButton);
+        		var that = this;
+        		this._$zoomButton.click(function () {
+        			that.zoomedOut = true;
+        		});
+        	},
+
+
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._removeZoomButton
+        	//
+        	_removeZoomButton: function () {
+
+        		this._$zoomButton.remove();
+        	},
+
+
+            /*
+            // ================================================================
+            //
+            // private function: WinJS.SemanticZoom._zoomedOutListItemClicked
+            //
+            //		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
+            //		scrolled to the clicked-on group.
+            //
+            _zoomedOutListItemClicked: function (eventData) {
+
+                // Set the item the zoomedin list
+                console.error("NYI: eventData x,y", eventData);
+                this._zoomedInView.setCurrentItem(eventData.x, eventData.y);
+
+                // Zoom back in to the zoomedin list
+                that.zoomedOut = false;
+                return;
+
+        		// Zoom out
+
+        		// For now, Semantic Zoom works with grouped lists only, so we can find the first item
+        		// in the invoked group, and scroll to it in the zoomed-in listview.
+        		// TODO: Support other datasources than grouped lists
+        		eventData.detail.itemPromise.then(function (clickedItem) {
+        		    that._zoomed
+        			// Find the first item in the zoomedinlistview that is in the clicked group
+        			// TODO (CLEANUP): Should use IListDataSource for this.
+        			var list = that._zoomedInView._itemDataSource._list;
+        			for (var i = 0; i < list.length; i++) {
+        				var item = list.getItem(i);
+        				if (item.groupKey == clickedGroup.key) {
+        					// Bring the selected item/group (?) into view
+        					that._zoomedInView.indexOfFirstVisible = i;
+        					break;
+        				}
+        			}
+        		});
+            }*/
+        })
 });
 
 
@@ -9021,11 +9234,15 @@ WinJS.Namespace.define("WinJS.UI", {
                     this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
             }
 
-        	// We want to know when the browser is resized so that we can relayout our items.
-            this.resizing = false;
+            this._disableAnimation = false;
+
+            // We want to know when the browser is resized so that we can relayout our items.
             this._prevWidth = "";
             this._prevHeight = "";
-            window.addEventListener("resize", this._windowResized.bind(this));
+            // TODO: I've disabled resize because (1) it's too slow (since we're re-rendering everything on resize (until R3)), and (2) I'm
+            // leaking the event - when the user changes pages, the old items remain in memory so they previous page's listviews get resize
+            // events.  I'm not sure where to drop the unbinding - possibly winControl.unload? - but for now I'm just disabling it.
+            //   	window.addEventListener("resize", this._windowResized.bind(this));
         },
 
 		// ================================================================
@@ -9033,28 +9250,29 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
         {
-        	// ================================================================
-        	//
-        	// private event: WinJS.SemanticZoom._windowResized
-        	//
-        	//		Called when the browser window is resized; resize ourselves
-        	//
-        	_windowResized: function (eventData) {
 
-        		// If size hasn't changed, then nothing to do.
-        		var newWidth = this.$rootElement.innerWidth();
-        		var newHeight = this.$rootElement.innerHeight();
-        		if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
-        			return;
+            // ================================================================
+            //
+            // private event: WinJS.ListView._windowResized
+            //
+            //		Called when the browser window is resized; resize ourselves
+            //
+            _windowResized: function (eventData) {
 
-        		// tbd: instead of re-rendering completely, should do a "movePosition"
-        		// tbd-perf: only relayout if size has changed at the listview items' size granularity
-        		//var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
-        		this._resizing = true;
-        		this._doRender();
-        		this._resizing = false;
-        		//anim.execute();
-        	},
+                // If size hasn't changed, then nothing to do.
+                var newWidth = this.$rootElement.innerWidth();
+                var newHeight = this.$rootElement.innerHeight();
+                if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
+                    return;
+
+                // tbd: instead of re-rendering completely, should do a "movePosition"
+                // tbd-perf: only relayout if size has changed at the listview items' size granularity
+                //var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
+                this._disableAnimation = true;
+                this._doRender();
+                this._disableAnimation = false;
+                //anim.execute();
+            },
 
 
             // ================================================================
@@ -9212,14 +9430,14 @@ WinJS.Namespace.define("WinJS.UI", {
                         // and jump to the next column
                         if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
-                        	// If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
-                        	if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                        		$groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
-                        	}
+                            // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                            if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                                $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                            }
 
-                        	// Track width of the current group for the above limit
-                        	groupRenderStartX = surfaceWidth;
-							
+                            // Track width of the current group for the above limit
+                            groupRenderStartX = surfaceWidth;
+
                             // Track the current group key so that we know when we switch to a new group
                             currentGroupKey = item.groupKey;
 
@@ -9229,7 +9447,7 @@ WinJS.Namespace.define("WinJS.UI", {
 								.clone()
 								.addClass("win-groupheader")
 								.show();
-                            
+
                             // Give the cloned element a unique identifier
                             // TODO (CLEANUP): can I do this in Binding.processAll?
                             blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
@@ -9326,30 +9544,30 @@ WinJS.Namespace.define("WinJS.UI", {
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
-						// Handle right-click selection
+                        // Handle right-click selection
                         $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
-                        	event.preventDefault();
-                        	if (that.selectionMode != "none") {
+                            event.preventDefault();
+                            if (that.selectionMode != "none") {
 
-                        		event.stopPropagation();
+                                event.stopPropagation();
 
-                        		// Get the index of the right-clicked item
-                        		var itemIndex = $(this).data("itemIndex");
+                                // Get the index of the right-clicked item
+                                var itemIndex = $(this).data("itemIndex");
 
-                        		//that.selection.add(itemIndex);
-                        		var $containerNode = $(this.parentNode)
+                                //that.selection.add(itemIndex);
+                                var $containerNode = $(this.parentNode)
 
-                        		if ($containerNode.hasClass("win-selected"))
-                        			that.selection.remove(itemIndex);// remove selection
-                        		else
-                        			if (that.selectionMode == "multi")
-                        				that.selection.add(itemIndex);
-                        			else
-                        				that.selection.set(itemIndex);
+                                if ($containerNode.hasClass("win-selected"))
+                                    that.selection.remove(itemIndex);// remove selection
+                                else
+                                    if (that.selectionMode == "multi")
+                                        that.selection.add(itemIndex);
+                                    else
+                                        that.selection.set(itemIndex);
 
-                        		that._lastSelectedItemIndex = itemIndex;
-                        		that._notifySelectionChanged(that.element);
-                        	}
+                                that._lastSelectedItemIndex = itemIndex;
+                                that._notifySelectionChanged(that.element);
+                            }
                         });
 
                         // If the user clicks on the item, call our oniteminvoked function
@@ -9358,20 +9576,24 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Get the index of the clicked item container's item
                             var itemIndex = $(this).data("itemIndex");
 
+                            // Track last tapped item for the semanticzoom _getCurrentPosition helper function, since we don't have focus yet
+                            // TODO: Remove this when we have keyboard focus support
+                            that._lastTappedItem = itemIndex;
+
                             // Call invoke
                             if (that.tapBehavior != "none") {
-								// TODO: Clean this up
-                            	if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
+                                // TODO: Clean this up
+                                if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
 
-                            		// Create a Promise with the clicked item
-                            		var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+                                    // Create a Promise with the clicked item
+                                    var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
 
-                            		// Call the callback
-                            		that._notifyItemInvoked(this.parentNode, {
-                            			itemIndex: itemIndex,
-                            			itemPromise: promise
-                            		});
-                            	}
+                                    // Call the callback
+                                    that._notifyItemInvoked(this.parentNode, {
+                                        itemIndex: itemIndex,
+                                        itemPromise: promise
+                                    });
+                                }
                             }
 
                             // Handle selection
@@ -9410,6 +9632,10 @@ WinJS.Namespace.define("WinJS.UI", {
                                 that._lastSelectedItemIndex = itemIndex;
                                 that._notifySelectionChanged(that.element);
                             }
+
+                            // Semantic Zoom support
+                            if (that._triggerZoom && that._isZoomedOut)
+                                that._triggerZoom();
                         });
                     }
 
@@ -9417,8 +9643,8 @@ WinJS.Namespace.define("WinJS.UI", {
                     $surfaceDiv.css("width", surfaceWidth).show();
 
                     // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._resizing)
-                    	WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
+                    if (!that._disableAnimation)
+                        WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
                 });
             },
 
@@ -9640,29 +9866,29 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
             },
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.ListView._notifySelectionChanged
-        	//
+            // ================================================================
+            //
+            // private function: WinJS.ListView._notifySelectionChanged
+            //
             _notifySelectionChanged: function (pageElement, eventData) {
 
-            	// TODO: What to pass for data?
+                // TODO: What to pass for data?
 
-            	var event = document.createEvent("CustomEvent");
-            	event.initCustomEvent("selectionchanged", true, false, eventData);
-            	pageElement.dispatchEvent(event);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("selectionchanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.ListView._notifyItemInvoked
-        	//
+            // ================================================================
+            //
+            // private function: WinJS.ListView._notifyItemInvoked
+            //
             _notifyItemInvoked: function (pageElement, eventData) {
 
-            	var event = document.createEvent("CustomEvent");
-            	event.initCustomEvent("iteminvoked", true, false, eventData);
-            	pageElement.dispatchEvent(event);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("iteminvoked", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -9681,9 +9907,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 set: function (callback) {
 
-                	// Remove previous on* handler if one was specified
-                	if (this._oniteminvoked)
-                		this.removeEventListener("iteminvoked", this._oniteminvoked);
+                    // Remove previous on* handler if one was specified
+                    if (this._oniteminvoked)
+                        this.removeEventListener("iteminvoked", this._oniteminvoked);
 
                     // track the specified handler for this.get
                     this._oniteminvoked = callback;
@@ -9706,9 +9932,9 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
-                	// Remove previous on* handler if one was specified
-                	if (this._onselectionchanged)
-                		this.removeEventListener("selectionchanged", this._onselectionchanged);
+                    // Remove previous on* handler if one was specified
+                    if (this._onselectionchanged)
+                        this.removeEventListener("selectionchanged", this._onselectionchanged);
 
                     // track the specified handler for this.get
                     this._onselectionchanged = callback;
@@ -9757,49 +9983,215 @@ WinJS.Namespace.define("WinJS.UI", {
             },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.ListView.scrollPosition
-        	//
+            // ================================================================
+            //
+            // public property: WinJS.ListView.scrollPosition
+            //
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211847.aspx
-        	//
+            //
             scrollPosition: {
-            	get: function () {
-					if (this.layout.horizontal)
-						return this.$viewport.scrollLeft();
-					else
-						return this.$viewport.scrollTop();
-            	},
-            	set: function (value) {
-            		if (this.layout.horizontal)
-            			this.$viewport.scrollLeft(value);
-					else
-            			this.$viewport.scrollTop(value);
-            	}
+                get: function () {
+                    if (this.layout.horizontal)
+                        return this.$viewport.scrollLeft();
+                    else
+                        return this.$viewport.scrollTop();
+                },
+                set: function (value) {
+                    if (this.layout.horizontal)
+                        this.$viewport.scrollLeft(value);
+                    else
+                        this.$viewport.scrollTop(value);
+                }
             },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.ListView.indexOfFirstVisible
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
-        	//
+            // ================================================================
+            //
+            // public property: WinJS.ListView.indexOfFirstVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
+            //
             indexOfFirstVisible: {
-            	get: function () {
-            		console.warn("ListView.indexOfFirstVisible getter is NYI; returning 0");
-            		return 0;
-            	},
-            	set: function (index) {
-            		// Get the position of the item at index 'index', and scroll to it
-            		var item = this.items[index].element.parentNode;
-            		var listMargin = parseInt(this.$scrollSurface.css("marginLeft"));
-            		var itemMargin = parseInt($(item).css("marginLeft"));
-            		if (this.layout.horizontal)
-            			this.scrollPosition = item.offsetLeft + listMargin - itemMargin;
-            		else
-            			this.scrollPosition = item.offsetTop;
-            	}
+
+                get: function () {
+                    var curScrollRect = {
+                        left: this.$viewport.scrollLeft(),
+                        top: this.$viewport.scrollTop(),
+                        width: this.$viewport.innerWidth(),
+                        height: this.$viewport.innerHeight()
+                    };
+
+                    // Items are sorted in order, so just find the first one that's in the current viewport
+                    if (this.layout.horizontal) {
+                        var viewLeftEdge = this.$viewport.scrollLeft();
+                        for (var i = 0; i < this.items.length; i++) {
+                            var itemRightEdge = parseInt(this.items[i].element.parentNode.style.left) +
+                                                parseInt(this.items[i].element.parentNode.style.width);
+                            if (itemRightEdge > viewLeftEdge)
+                                return i;
+                        }
+                    } else {
+                        var viewTopEdge = this.$viewport.scrollTop();
+                        for (var i = 0; i < this.items.length; i++) {
+                            var itemBottomEdge = parseInt(this.items[i].element.parentNode.style.right) +
+                                                 parseInt(this.items[i].element.parentNode.style.height);
+                            if (itemBottomEdge > viewTopEdge)
+                                return i;
+                        }
+                    }
+                    // No item is visible
+                    return -1;  // TODO: What does win8 return here?
+                },
+
+                set: function (index) {
+                    // Get the position of the item at index 'index', and scroll to it
+                    var item = this.items[index].element.parentNode;
+                    if (this.layout.horizontal)
+                        this.scrollPosition = item.offsetLeft - parseInt(this.items[0].element.parentNode.style.left) + $(this.items[0].element.parentNode).css("marginLeft");
+                    else
+                        this.scrollPosition = item.offsetTop - parseInt(this.items[0].element.parentNode.style.top) + $(this.items[0].element.parentNode).css("marginTop");
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._beginZoom
+            //
+            //		SemanticZoom support function
+            //
+            _beginZoom: function () {
+
+                // TODO (R3): For R1/R2, We fade between lists for Semantic zooming in/out - so we don't
+                // need to worry about scrollbars and the like.  So we get off easy here until R3!
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._beginZoom
+            //
+            //		SemanticZoom support function
+            //
+            _endZoom: function (isCurrentView) {
+
+                // TODO (R3): For R1/R2, We fade between lists for Semantic zooming in/out - so we don't
+                // need to worry about scrollbars and the like.  So we get off easy here until R3!
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._getCurrentItem
+            //
+            //		SemanticZoom support function
+            //
+            _getCurrentItem: function () {
+                var that = this;
+
+                // TODO: Update this to use focus when that gets added in R3
+                var index = that._lastTappedItem || that.indexOfFirstVisible;
+
+                // TODO: use datasource.getitem
+                var item = that._itemDataSource._list.getItem(index);
+                var container = item.element.parentNode;
+                return WinJS.Promise.wrap({
+                    item: item,
+                    position: {
+                        left: container.offsetLeft,
+                        top: container.offsetTop,
+                        width: container.offsetWidth,
+                        height: container.offsetHeight
+                    }
+                });
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._configureForZoom
+            //
+            //		SemanticZoom support function
+            //
+            _configureForZoom: function (isZoomedOut, isCurrentView, triggerZoom, prefetchedPages) {
+
+                // Track if we're the zoomedout or zoomedin view.
+                this._isZoomedOut = isZoomedOut;
+
+                // Call this._triggerZoom when the user clicks on an item
+                this._triggerZoom = triggerZoom;
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._positionItem
+            //
+            //		SemanticZoom support function
+            //
+            _positionItem: function (item, position) {
+
+                console.log(item);
+                if (!item) {
+                    this.indexOfFirstVisible = 0;
+                    return;
+                }
+                // Get the first item whose key matches "key"
+                if (this._isZoomedOut) {
+                    // TODO: Haven't tested this one.
+                    for (var i = 0; i < this.items.length; i++) {
+                        if (this.items[i].key == item.groupKey) {
+                            this.indexOfFirstVisible = i;
+                            return;
+                        }
+                    }
+                } else {
+                    for (var i = 0; i < this.items.length; i++) {
+                        if (this.items[i].groupKey == item.key) {
+                            this.indexOfFirstVisible = i;
+                            return;
+                        }
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._setCurrentItem
+            //
+            //		SemanticZoom support function
+            //
+            _setCurrentItem: function (x, y) {
+
+                //  Get the item at location x,y
+                console.error("NYI: Get the item at location x,y");
+                var item = null;
+
+                this.indexOfFirstVisible = 0;/*
+
+                    // todo: use datasource.getitem
+                    var list = this._itemDataSource._list;
+                    for (var i = 0; i < list.length; i++) {
+                        var item = list.getItem(i);
+                        if (item.groupKey == clickedGroup.key) {
+                            // Bring the selected item/group (?) into view
+                      //      that._zoomedInView.indexOfFirstVisible = i;
+
+                            var pos = {
+                                left: $focusedElement[0].offsetLeft,
+                                top: $focusedElement[0].offsetTop,
+                                width: $focusedElement[0].offsetWidth,
+                                height: $focusedElement[0].offsetHeight
+                            };
+
+
+                            return WinJS.Promise.wrap({ item: groupItem, position: pos });
+
+                            break;
+                        }
+                    }
+                });*/
             }
         })
 });

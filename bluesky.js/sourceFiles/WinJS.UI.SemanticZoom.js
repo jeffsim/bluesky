@@ -64,23 +64,37 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	WinJS.UI.processAll(this.element);
 
-        	// Start out with zoomedin visible, zoomedout hidden
-        	this._showElement(this._$zoomedInContainer);
-        	this._hideElement(this._$zoomedOutContainer);
+            // Start out with zoomedin visible, zoomedout hidden
+            // TODO (CLEANUP): Should listview.configureForZoom handle this?
+        	this._$zoomedInContainer.css("visibility", "visible");
+        	this._$zoomedOutContainer.css("visibility", "hidden");
 
         	// When the user clicks on an item in the zoomedout control, zoom into it in the zoomedincontrol
-        	// TODO: This only works with ListViews for now.  Need to generalize through IZoomableView in R2/R3
-        	this._zoomedInListView = this._$zoomedInElement[0].winControl;
-        	this._zoomedOutListView = this._$zoomedOutElement[0].winControl;
-        	/*DEBUG*/
-        	
-        	if (!this._zoomedOutListView || !this._zoomedOutListView.selection)
-        		console.error("SemanticZoom only works with ListView subcontrols for R1; IZoomableView will come in R2/R3");
-        	if (this._zoomedInListView._groupDataSource != this._zoomedOutListView._itemDataSource)
-        		console.error("SemanticZoom currently only works with a grouped listview as the zoomed-in view, and that listview's groupdatasource as the zoomed-out view.  Check the GroupedListview sample for a working example");
+        	this._zoomedInView = this._$zoomedInElement[0].winControl;
+        	this._zoomedOutView = this._$zoomedOutElement[0].winControl;
 
-        	/*ENDDEBUG*/
-        	this._zoomedOutListView.oniteminvoked = this._zoomedOutListItemClicked.bind(this);
+            // If zoomedinview is a listview, then forward SemanticZoom calls to it's private functions
+        	if (!this._zoomedInView.beginZoom) {
+        	    this._zoomedInView.beginZoom = this._zoomedInView._beginZoom;
+        	    this._zoomedInView.endZoom = this._zoomedInView._endZoom;
+        	    this._zoomedInView.getCurrentItem = this._zoomedInView._getCurrentItem;
+        	    this._zoomedInView.configureForZoom = this._zoomedInView._configureForZoom
+        	    this._zoomedInView.positionItem = this._zoomedInView._positionItem;
+        	}
+
+            // If _zoomedOutView is a listview, then forward SemanticZoom calls to it's private functions
+        	if (!this._zoomedOutView.beginZoom) {
+        	    this._zoomedOutView.beginZoom = this._zoomedOutView._beginZoom;
+        	    this._zoomedOutView.endZoom = this._zoomedOutView._endZoom;
+        	    this._zoomedOutView.getCurrentItem = this._zoomedOutView._getCurrentItem;
+        	    this._zoomedOutView.configureForZoom = this._zoomedOutView._configureForZoom;
+        	    this._zoomedOutView.positionItem = this._zoomedOutView._positionItem;
+        	}
+
+            // Call configureForZoom
+        	var that = this;
+        	this._zoomedInView.configureForZoom(false, true, function () { that.zoomedOut = true; }, 1);
+        	this._zoomedOutView.configureForZoom(true, false, function () { that.zoomedOut = false; }, 100);
 
         	// Initialize values
         	this._enableButton = true;
@@ -90,10 +104,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	// We want to know when the browser is resized so that we can relayout our items.
         	window.addEventListener("resize", this._windowResized.bind(this));
-        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I
-        	// can't quite get it to work.
-        	//window.removeEventListener("resize", this._zoomedInListView._windowResized);
-        	//window.removeEventListener("resize", this._zoomedOutListView._windowResized);
+
+        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I can't quite get it to work.
+        	//window.removeEventListener("resize", this._zoomedInView._windowResized);
+        	//window.removeEventListener("resize", this._zoomedOutView._windowResized);
         },
 
 		// ================================================================
@@ -110,7 +124,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	//
         	_windowResized: function (eventData) {
 
-				// If size hasn't changed, then nothing to do.
+        		// If size hasn't changed, then nothing to do.
         		var newWidth = this.$rootElement.innerWidth();
         		var newHeight = this.$rootElement.innerHeight();
         		if (parseInt(this._$zoomContainer.css("width")) == newWidth && parseInt(this._$zoomContainer.css("height")) == newHeight)
@@ -128,229 +142,262 @@ WinJS.Namespace.define("WinJS.UI", {
         	},
 
 
-			// ================================================================
-			//
-			// public event: WinJS.SemanticZoom.onzoomchanged
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
-			//
-			onzoomchanged: {
-				get: function () {
-					// Return the tracked hander
-					return this._onzoomchanged;
-				},
+        	// ================================================================
+        	//
+        	// public event: WinJS.SemanticZoom.onzoomchanged
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
+        	//
+        	onzoomchanged: {
 
-				set: function (callback) {
+        		get: function () {
+        			// Return the tracked hander
+        			return this._onzoomchanged;
+        		},
 
-					// Remove previous on* handler if one was specified
-					if (this._onzoomchanged)
-						this.removeEventListener("zoomchanged", this._onzoomchanged);
+        		set: function (callback) {
 
-					// track the specified handler for this.get
-					this._onzoomchanged = callback;
-					this.addEventListener("zoomchanged", callback);
-				}
-			},
+        			// Remove previous on* handler if one was specified
+        			if (this._onzoomchanged)
+        				this.removeEventListener("zoomchanged", this._onzoomchanged);
 
-
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.enableButton
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
-			//
-			_enableButton: true,
-			enableButton: {
-				get: function () {
-					return this._enableButton;
-				},
-				set: function (value) {
-					this._enableButton = value;
-					this._enableButton ? this._addZoomButton() : this._removeZoomButton();
-				}
-			},
+        			// track the specified handler for this.get
+        			this._onzoomchanged = callback;
+        			this.addEventListener("zoomchanged", callback);
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.locked
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
-			//
-			_locked: false,
-			locked: {
-				get: function () {
-					return this._locked;
-				},
-				set: function (value) {
-					this._locked = value;
-				}
-			},
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.enableButton
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
+        	//
+        	_enableButton: true,
+        	enableButton: {
+
+        		get: function () {
+        			return this._enableButton;
+        		},
+        		set: function (value) {
+        			this._enableButton = value;
+        			this._enableButton ? this._addZoomButton() : this._removeZoomButton();
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.zoomedOut
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
-			//
-			_zoomedOut: false,
-			zoomedOut: {
-				get: function () {
-					return this._zoomedOut;
-				},
-				set: function (isZoomedOut) {
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.locked
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
+        	//
+        	_locked: false,
+        	locked: {
 
-					// If the ZoomControl is locked, then ignore zoom set
-					if (this._locked)
-						return;
-
-					// If same, then ignore
-					if (this._zoomedOut == isZoomedOut)
-						return;
-
-					this._zoomedOut = isZoomedOut;
-
-					// hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
-					// Promises which are fulfilled when the animation has finished; we wait until both
-					// animations are done before triggering onzoomchanged
-					var promises = [];
-					if (isZoomedOut) {
-						// We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
-						promises.push(this._hideElement(this._$zoomedInContainer));
-						promises.push(this._showElement(this._$zoomedOutContainer));
-
-						// Also hide the zoom button, which isn't visible when zoomed out
-						this._$zoomButton.hide().css({ "visibility": "hidden" });
-					} else {
-
-						// We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
-						promises.push(this._showElement(this._$zoomedInContainer));
-						promises.push(this._hideElement(this._$zoomedOutContainer));
-
-						// Also show the zoom button, which is visible when zoomed out (if enableButton is true)
-						if (this.enableButton)
-							this._$zoomButton.show().css({ "visibility": "visible" });
-					}
-
-					// Per above, wait until both animations have completed before triggering onzoomchanged.
-					var that = this;
-					WinJS.Promise.join(promises).then(function () {
-						// Notify listeners that zoom changed
-						var event = document.createEvent("CustomEvent");
-						event.initCustomEvent("zoomchanged", true, false, {});
-						that.element.dispatchEvent(event);
-					});
-				}
-			},
+        		get: function () {
+        			return this._locked;
+        		},
+        		set: function (value) {
+        			this._locked = value;
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.zoomFactor
-			//
-			//		TODO: NYI; not leveraging this yet.
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
-			//
-			_zoomFactor: 0.65,
-			zoomFactor: {
-				get: function () {
-					return this._zoomFactor;
-				}
-			},
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.zoomedOut
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
+            //
+        	_zoomedOut: false,
+        	zoomedOut: {
+
+        	    get: function () {
+        	        return this._zoomedOut;
+        	    },
+        	    set: function (isZoomedOut) {
+        	        // If the ZoomControl is locked, then ignore zoom set
+        	        if (this._locked)
+        	            return;
+
+        	        // If same, then ignore
+        	        if (this._zoomedOut == isZoomedOut)
+        	            return;
+
+        	        this._zoomedOut = isZoomedOut;
+
+        	        // Trigger beginZoom on both the zoomedIn and zoomedOut Views
+        	        this._zoomedInView.beginZoom();
+        	        this._zoomedOutView.beginZoom();
+
+        	        // TODO (R3): For R1/R2 we're just fading between views when zooming.  In R3 when we add the 'zoom' animation,
+        	        //			  we'll need to set initial view scroll offsets here so that they smoothly animate
+        	        var itemPromise = (isZoomedOut ? this._zoomedInView : this._zoomedOutView).getCurrentItem();
+        	        var that = this;
+        	        itemPromise.then(function (current) {
+
+        	            // hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
+        	            // Promises which are fulfilled when the animation has finished; we wait until both
+        	            // animations are done before triggering onzoomchanged
+        	            var promises = [];
+        	            if (isZoomedOut) {
+
+        	                // Set position of the zooming-to ZoomableView
+        	                that._zoomedOutView.positionItem(current.item, current.position);
+
+        	                // We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
+        	                promises.push(that._hideElement(that._$zoomedInContainer));
+        	                promises.push(that._showElement(that._$zoomedOutContainer));
+
+        	                // Also hide the zoom button, which isn't visible when zoomed out
+        	                that._$zoomButton.hide().css({ "visibility": "hidden" });
+
+        	            } else {
+
+        	                // Set position of the zooming-to ZoomableView
+        	                that._zoomedInView.positionItem(current.item, current.position);
+
+        	                // We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
+        	                promises.push(that._showElement(that._$zoomedInContainer));
+        	                promises.push(that._hideElement(that._$zoomedOutContainer));
+
+        	                // Also show the zoom button, which is visible when zoomed out (if enableButton is true)
+        	                if (that.enableButton)
+        	                    that._$zoomButton.show().css({ "visibility": "visible" });
+        	            }
+
+        	            // Per above, wait until both animations have completed before triggering onzoomchanged.
+        	            WinJS.Promise.join(promises).then(function () {
+
+        	                // Trigger endZoom on both the zoomedIn and zoomedOut Views
+        	                that._zoomedInView.endZoom();
+        	                that._zoomedOutView.endZoom();
+
+        	                // Notify listeners that zoom changed
+        	                var event = document.createEvent("CustomEvent");
+        	                event.initCustomEvent("zoomchanged", true, false, {});
+        	                that.element.dispatchEvent(event);
+        	            });
+        	        });
+        	    }
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._showElement
-			//
-			_showElement: function ($element) {
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.zoomFactor
+        	//
+        	//		TODO: NYI; not leveraging this yet.
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
+        	//
+        	_zoomFactor: 0.65,
+        	zoomFactor: {
 
-				// TODO: Animate zoom (in R2)
-				// TODO (CLEANUP): Use jQuery's promise functionality here?
-				return new WinJS.Promise(function (onComplete) {
-					$element.fadeIn("fast", function () {
-						$element.css({ "visibility": "visible" });
-						onComplete();
-					});
-				});
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._hideElement
-			//
-			_hideElement: function ($element) {
-
-				// TODO: Animate zoom (in R2)
-				// TODO (CLEANUP): Use jQuery's promise functionality here?
-				return new WinJS.Promise(function (onComplete) {
-					$element.fadeOut("fast", function () {
-						$element.css({ "visibility": "hidden", "display": "block" });
-						onComplete();
-					});
-				});
-			},
+        		get: function () {
+        			return this._zoomFactor;
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._addZoomButton
-			//
-			_addZoomButton: function () {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._showElement
+        	//
+        	_showElement: function ($element) {
 
-				this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
-				this.$rootElement.append(this._$zoomButton);
-				var that = this;
-				this._$zoomButton.click(function () {
-					that.zoomedOut = true;
-				});
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._removeZoomButton
-			//
-			_removeZoomButton: function () {
-
-				this._$zoomButton.remove();
-			},
+        		// TODO: Animate zoom (in R2)
+        		return new WinJS.Promise(function (onComplete) {
+        		    $element.fadeIn("fast", function () {
+        				$element.css({ "visibility": "visible" });
+        				onComplete();
+        			});
+        		});
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._zoomedOutListItemClicked
-			//
-			//		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
-			//		scrolled to the clicked-on group.
-			//
-			_zoomedOutListItemClicked: function (eventData) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._hideElement
+        	//
+        	_hideElement: function ($element) {
 
-				// Zoom out
-				this.zoomedOut = false;
+        		// TODO: Animate zoom (in R2)
+        	    return new WinJS.Promise(function (onComplete) {
+        	        if ($element.css("visibility") == "visible") {
+        	            $element.fadeOut("fast", function () {
+        	                $element.css({ "visibility": "hidden", "display": "block" });
+        	                onComplete();
+        	            });
+        	        }
+        		});
+        	},
 
-				// Gor now, Semantic Zoom works with grouped lists only, so we can find the first item
-				// in the invoked group, and scroll to it in the zoomed-in listview.
-				// TODO: Support other datasources than grouped lists
-				var that = this;
-				eventData.detail.itemPromise.then(function (clickedGroup) {
 
-					// Find the first item in the zoomedinlistview that is in the clicked group
-					// TODO (CLEANUP): Should use IListDataSource for this.
-					var list = that._zoomedInListView._itemDataSource._list;
-					for (var i = 0; i < list.length; i++) {
-						var item = list.getItem(i);
-						if (item.groupKey == clickedGroup.key) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._addZoomButton
+        	//
+        	_addZoomButton: function () {
 
-							// Bring the selected item/group (?) into view
-							that._zoomedInListView.indexOfFirstVisible = i;
-							break;
-						}
-					}
-				});
-			}
-		})
+        		this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
+        		this.$rootElement.append(this._$zoomButton);
+        		var that = this;
+        		this._$zoomButton.click(function () {
+        			that.zoomedOut = true;
+        		});
+        	},
+
+
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._removeZoomButton
+        	//
+        	_removeZoomButton: function () {
+
+        		this._$zoomButton.remove();
+        	},
+
+
+            /*
+            // ================================================================
+            //
+            // private function: WinJS.SemanticZoom._zoomedOutListItemClicked
+            //
+            //		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
+            //		scrolled to the clicked-on group.
+            //
+            _zoomedOutListItemClicked: function (eventData) {
+
+                // Set the item the zoomedin list
+                console.error("NYI: eventData x,y", eventData);
+                this._zoomedInView.setCurrentItem(eventData.x, eventData.y);
+
+                // Zoom back in to the zoomedin list
+                that.zoomedOut = false;
+                return;
+
+        		// Zoom out
+
+        		// For now, Semantic Zoom works with grouped lists only, so we can find the first item
+        		// in the invoked group, and scroll to it in the zoomed-in listview.
+        		// TODO: Support other datasources than grouped lists
+        		eventData.detail.itemPromise.then(function (clickedItem) {
+        		    that._zoomed
+        			// Find the first item in the zoomedinlistview that is in the clicked group
+        			// TODO (CLEANUP): Should use IListDataSource for this.
+        			var list = that._zoomedInView._itemDataSource._list;
+        			for (var i = 0; i < list.length; i++) {
+        				var item = list.getItem(i);
+        				if (item.groupKey == clickedGroup.key) {
+        					// Bring the selected item/group (?) into view
+        					that._zoomedInView.indexOfFirstVisible = i;
+        					break;
+        				}
+        			}
+        		});
+            }*/
+        })
 });

@@ -68,11 +68,15 @@ WinJS.Namespace.define("WinJS.UI", {
                     this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
             }
 
-        	// We want to know when the browser is resized so that we can relayout our items.
-            this.resizing = false;
+            this._disableAnimation = false;
+
+            // We want to know when the browser is resized so that we can relayout our items.
             this._prevWidth = "";
             this._prevHeight = "";
-            window.addEventListener("resize", this._windowResized.bind(this));
+            // TODO: I've disabled resize because (1) it's too slow (since we're re-rendering everything on resize (until R3)), and (2) I'm
+            // leaking the event - when the user changes pages, the old items remain in memory so they previous page's listviews get resize
+            // events.  I'm not sure where to drop the unbinding - possibly winControl.unload? - but for now I'm just disabling it.
+            //   	window.addEventListener("resize", this._windowResized.bind(this));
         },
 
 		// ================================================================
@@ -80,28 +84,29 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
         {
-        	// ================================================================
-        	//
-        	// private event: WinJS.SemanticZoom._windowResized
-        	//
-        	//		Called when the browser window is resized; resize ourselves
-        	//
-        	_windowResized: function (eventData) {
 
-        		// If size hasn't changed, then nothing to do.
-        		var newWidth = this.$rootElement.innerWidth();
-        		var newHeight = this.$rootElement.innerHeight();
-        		if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
-        			return;
+            // ================================================================
+            //
+            // private event: WinJS.ListView._windowResized
+            //
+            //		Called when the browser window is resized; resize ourselves
+            //
+            _windowResized: function (eventData) {
 
-        		// tbd: instead of re-rendering completely, should do a "movePosition"
-        		// tbd-perf: only relayout if size has changed at the listview items' size granularity
-        		//var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
-        		this._resizing = true;
-        		this._doRender();
-        		this._resizing = false;
-        		//anim.execute();
-        	},
+                // If size hasn't changed, then nothing to do.
+                var newWidth = this.$rootElement.innerWidth();
+                var newHeight = this.$rootElement.innerHeight();
+                if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
+                    return;
+
+                // tbd: instead of re-rendering completely, should do a "movePosition"
+                // tbd-perf: only relayout if size has changed at the listview items' size granularity
+                //var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
+                this._disableAnimation = true;
+                this._doRender();
+                this._disableAnimation = false;
+                //anim.execute();
+            },
 
 
             // ================================================================
@@ -259,14 +264,14 @@ WinJS.Namespace.define("WinJS.UI", {
                         // and jump to the next column
                         if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
-                        	// If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
-                        	if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                        		$groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
-                        	}
+                            // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                            if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                                $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                            }
 
-                        	// Track width of the current group for the above limit
-                        	groupRenderStartX = surfaceWidth;
-							
+                            // Track width of the current group for the above limit
+                            groupRenderStartX = surfaceWidth;
+
                             // Track the current group key so that we know when we switch to a new group
                             currentGroupKey = item.groupKey;
 
@@ -276,7 +281,7 @@ WinJS.Namespace.define("WinJS.UI", {
 								.clone()
 								.addClass("win-groupheader")
 								.show();
-                            
+
                             // Give the cloned element a unique identifier
                             // TODO (CLEANUP): can I do this in Binding.processAll?
                             blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
@@ -373,30 +378,30 @@ WinJS.Namespace.define("WinJS.UI", {
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
-						// Handle right-click selection
+                        // Handle right-click selection
                         $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
-                        	event.preventDefault();
-                        	if (that.selectionMode != "none") {
+                            event.preventDefault();
+                            if (that.selectionMode != "none") {
 
-                        		event.stopPropagation();
+                                event.stopPropagation();
 
-                        		// Get the index of the right-clicked item
-                        		var itemIndex = $(this).data("itemIndex");
+                                // Get the index of the right-clicked item
+                                var itemIndex = $(this).data("itemIndex");
 
-                        		//that.selection.add(itemIndex);
-                        		var $containerNode = $(this.parentNode)
+                                //that.selection.add(itemIndex);
+                                var $containerNode = $(this.parentNode)
 
-                        		if ($containerNode.hasClass("win-selected"))
-                        			that.selection.remove(itemIndex);// remove selection
-                        		else
-                        			if (that.selectionMode == "multi")
-                        				that.selection.add(itemIndex);
-                        			else
-                        				that.selection.set(itemIndex);
+                                if ($containerNode.hasClass("win-selected"))
+                                    that.selection.remove(itemIndex);// remove selection
+                                else
+                                    if (that.selectionMode == "multi")
+                                        that.selection.add(itemIndex);
+                                    else
+                                        that.selection.set(itemIndex);
 
-                        		that._lastSelectedItemIndex = itemIndex;
-                        		that._notifySelectionChanged(that.element);
-                        	}
+                                that._lastSelectedItemIndex = itemIndex;
+                                that._notifySelectionChanged(that.element);
+                            }
                         });
 
                         // If the user clicks on the item, call our oniteminvoked function
@@ -405,20 +410,24 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Get the index of the clicked item container's item
                             var itemIndex = $(this).data("itemIndex");
 
+                            // Track last tapped item for the semanticzoom _getCurrentPosition helper function, since we don't have focus yet
+                            // TODO: Remove this when we have keyboard focus support
+                            that._lastTappedItem = itemIndex;
+
                             // Call invoke
                             if (that.tapBehavior != "none") {
-								// TODO: Clean this up
-                            	if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
+                                // TODO: Clean this up
+                                if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
 
-                            		// Create a Promise with the clicked item
-                            		var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+                                    // Create a Promise with the clicked item
+                                    var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
 
-                            		// Call the callback
-                            		that._notifyItemInvoked(this.parentNode, {
-                            			itemIndex: itemIndex,
-                            			itemPromise: promise
-                            		});
-                            	}
+                                    // Call the callback
+                                    that._notifyItemInvoked(this.parentNode, {
+                                        itemIndex: itemIndex,
+                                        itemPromise: promise
+                                    });
+                                }
                             }
 
                             // Handle selection
@@ -457,6 +466,10 @@ WinJS.Namespace.define("WinJS.UI", {
                                 that._lastSelectedItemIndex = itemIndex;
                                 that._notifySelectionChanged(that.element);
                             }
+
+                            // Semantic Zoom support
+                            if (that._triggerZoom && that._isZoomedOut)
+                                that._triggerZoom();
                         });
                     }
 
@@ -464,8 +477,8 @@ WinJS.Namespace.define("WinJS.UI", {
                     $surfaceDiv.css("width", surfaceWidth).show();
 
                     // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._resizing)
-                    	WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
+                    if (!that._disableAnimation)
+                        WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
                 });
             },
 
@@ -687,29 +700,29 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
             },
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.ListView._notifySelectionChanged
-        	//
+            // ================================================================
+            //
+            // private function: WinJS.ListView._notifySelectionChanged
+            //
             _notifySelectionChanged: function (pageElement, eventData) {
 
-            	// TODO: What to pass for data?
+                // TODO: What to pass for data?
 
-            	var event = document.createEvent("CustomEvent");
-            	event.initCustomEvent("selectionchanged", true, false, eventData);
-            	pageElement.dispatchEvent(event);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("selectionchanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.ListView._notifyItemInvoked
-        	//
+            // ================================================================
+            //
+            // private function: WinJS.ListView._notifyItemInvoked
+            //
             _notifyItemInvoked: function (pageElement, eventData) {
 
-            	var event = document.createEvent("CustomEvent");
-            	event.initCustomEvent("iteminvoked", true, false, eventData);
-            	pageElement.dispatchEvent(event);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("iteminvoked", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -728,9 +741,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 set: function (callback) {
 
-                	// Remove previous on* handler if one was specified
-                	if (this._oniteminvoked)
-                		this.removeEventListener("iteminvoked", this._oniteminvoked);
+                    // Remove previous on* handler if one was specified
+                    if (this._oniteminvoked)
+                        this.removeEventListener("iteminvoked", this._oniteminvoked);
 
                     // track the specified handler for this.get
                     this._oniteminvoked = callback;
@@ -753,9 +766,9 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
-                	// Remove previous on* handler if one was specified
-                	if (this._onselectionchanged)
-                		this.removeEventListener("selectionchanged", this._onselectionchanged);
+                    // Remove previous on* handler if one was specified
+                    if (this._onselectionchanged)
+                        this.removeEventListener("selectionchanged", this._onselectionchanged);
 
                     // track the specified handler for this.get
                     this._onselectionchanged = callback;
@@ -804,49 +817,215 @@ WinJS.Namespace.define("WinJS.UI", {
             },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.ListView.scrollPosition
-        	//
+            // ================================================================
+            //
+            // public property: WinJS.ListView.scrollPosition
+            //
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211847.aspx
-        	//
+            //
             scrollPosition: {
-            	get: function () {
-					if (this.layout.horizontal)
-						return this.$viewport.scrollLeft();
-					else
-						return this.$viewport.scrollTop();
-            	},
-            	set: function (value) {
-            		if (this.layout.horizontal)
-            			this.$viewport.scrollLeft(value);
-					else
-            			this.$viewport.scrollTop(value);
-            	}
+                get: function () {
+                    if (this.layout.horizontal)
+                        return this.$viewport.scrollLeft();
+                    else
+                        return this.$viewport.scrollTop();
+                },
+                set: function (value) {
+                    if (this.layout.horizontal)
+                        this.$viewport.scrollLeft(value);
+                    else
+                        this.$viewport.scrollTop(value);
+                }
             },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.ListView.indexOfFirstVisible
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
-        	//
+            // ================================================================
+            //
+            // public property: WinJS.ListView.indexOfFirstVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
+            //
             indexOfFirstVisible: {
-            	get: function () {
-            		console.warn("ListView.indexOfFirstVisible getter is NYI; returning 0");
-            		return 0;
-            	},
-            	set: function (index) {
-            		// Get the position of the item at index 'index', and scroll to it
-            		var item = this.items[index].element.parentNode;
-            		var listMargin = parseInt(this.$scrollSurface.css("marginLeft"));
-            		var itemMargin = parseInt($(item).css("marginLeft"));
-            		if (this.layout.horizontal)
-            			this.scrollPosition = item.offsetLeft + listMargin - itemMargin;
-            		else
-            			this.scrollPosition = item.offsetTop;
-            	}
+
+                get: function () {
+                    var curScrollRect = {
+                        left: this.$viewport.scrollLeft(),
+                        top: this.$viewport.scrollTop(),
+                        width: this.$viewport.innerWidth(),
+                        height: this.$viewport.innerHeight()
+                    };
+
+                    // Items are sorted in order, so just find the first one that's in the current viewport
+                    if (this.layout.horizontal) {
+                        var viewLeftEdge = this.$viewport.scrollLeft();
+                        for (var i = 0; i < this.items.length; i++) {
+                            var itemRightEdge = parseInt(this.items[i].element.parentNode.style.left) +
+                                                parseInt(this.items[i].element.parentNode.style.width);
+                            if (itemRightEdge > viewLeftEdge)
+                                return i;
+                        }
+                    } else {
+                        var viewTopEdge = this.$viewport.scrollTop();
+                        for (var i = 0; i < this.items.length; i++) {
+                            var itemBottomEdge = parseInt(this.items[i].element.parentNode.style.right) +
+                                                 parseInt(this.items[i].element.parentNode.style.height);
+                            if (itemBottomEdge > viewTopEdge)
+                                return i;
+                        }
+                    }
+                    // No item is visible
+                    return -1;  // TODO: What does win8 return here?
+                },
+
+                set: function (index) {
+                    // Get the position of the item at index 'index', and scroll to it
+                    var item = this.items[index].element.parentNode;
+                    if (this.layout.horizontal)
+                        this.scrollPosition = item.offsetLeft - parseInt(this.items[0].element.parentNode.style.left) + $(this.items[0].element.parentNode).css("marginLeft");
+                    else
+                        this.scrollPosition = item.offsetTop - parseInt(this.items[0].element.parentNode.style.top) + $(this.items[0].element.parentNode).css("marginTop");
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._beginZoom
+            //
+            //		SemanticZoom support function
+            //
+            _beginZoom: function () {
+
+                // TODO (R3): For R1/R2, We fade between lists for Semantic zooming in/out - so we don't
+                // need to worry about scrollbars and the like.  So we get off easy here until R3!
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._beginZoom
+            //
+            //		SemanticZoom support function
+            //
+            _endZoom: function (isCurrentView) {
+
+                // TODO (R3): For R1/R2, We fade between lists for Semantic zooming in/out - so we don't
+                // need to worry about scrollbars and the like.  So we get off easy here until R3!
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._getCurrentItem
+            //
+            //		SemanticZoom support function
+            //
+            _getCurrentItem: function () {
+                var that = this;
+
+                // TODO: Update this to use focus when that gets added in R3
+                var index = that._lastTappedItem || that.indexOfFirstVisible;
+
+                // TODO: use datasource.getitem
+                var item = that._itemDataSource._list.getItem(index);
+                var container = item.element.parentNode;
+                return WinJS.Promise.wrap({
+                    item: item,
+                    position: {
+                        left: container.offsetLeft,
+                        top: container.offsetTop,
+                        width: container.offsetWidth,
+                        height: container.offsetHeight
+                    }
+                });
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._configureForZoom
+            //
+            //		SemanticZoom support function
+            //
+            _configureForZoom: function (isZoomedOut, isCurrentView, triggerZoom, prefetchedPages) {
+
+                // Track if we're the zoomedout or zoomedin view.
+                this._isZoomedOut = isZoomedOut;
+
+                // Call this._triggerZoom when the user clicks on an item
+                this._triggerZoom = triggerZoom;
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._positionItem
+            //
+            //		SemanticZoom support function
+            //
+            _positionItem: function (item, position) {
+
+                console.log(item);
+                if (!item) {
+                    this.indexOfFirstVisible = 0;
+                    return;
+                }
+                // Get the first item whose key matches "key"
+                if (this._isZoomedOut) {
+                    // TODO: Haven't tested this one.
+                    for (var i = 0; i < this.items.length; i++) {
+                        if (this.items[i].key == item.groupKey) {
+                            this.indexOfFirstVisible = i;
+                            return;
+                        }
+                    }
+                } else {
+                    for (var i = 0; i < this.items.length; i++) {
+                        if (this.items[i].groupKey == item.key) {
+                            this.indexOfFirstVisible = i;
+                            return;
+                        }
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._setCurrentItem
+            //
+            //		SemanticZoom support function
+            //
+            _setCurrentItem: function (x, y) {
+
+                //  Get the item at location x,y
+                console.error("NYI: Get the item at location x,y");
+                var item = null;
+
+                this.indexOfFirstVisible = 0;/*
+
+                    // todo: use datasource.getitem
+                    var list = this._itemDataSource._list;
+                    for (var i = 0; i < list.length; i++) {
+                        var item = list.getItem(i);
+                        if (item.groupKey == clickedGroup.key) {
+                            // Bring the selected item/group (?) into view
+                      //      that._zoomedInView.indexOfFirstVisible = i;
+
+                            var pos = {
+                                left: $focusedElement[0].offsetLeft,
+                                top: $focusedElement[0].offsetTop,
+                                width: $focusedElement[0].offsetWidth,
+                                height: $focusedElement[0].offsetHeight
+                            };
+
+
+                            return WinJS.Promise.wrap({ item: groupItem, position: pos });
+
+                            break;
+                        }
+                    }
+                });*/
             }
         })
 });

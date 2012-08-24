@@ -53,6 +53,7 @@ namespace buildBluesky
                @"\WinJS.UI.FlipView.js",
                @"\WinJS.UI.ListLayout.js",
                @"\WinJS.UI.GridLayout.js",
+               @"\WinJS.UI.IZoomableView.js",
                @"\WinJS.UI.SemanticZoom.js",
                @"\WinJS.UI.ListView.js",
                @"\Windows.UI.Popups.UICommand.js",
