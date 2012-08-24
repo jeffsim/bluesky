@@ -1,82 +1,90 @@
 ﻿<!DOCTYPE html>
 <head>
-	<meta charset="utf-8" />
-	<title>bluesky test harness</title>
+    <meta charset="utf-8" />
+    <title>bluesky test harness</title>
 
-	<!-- All hail jQuery -->
-<!--	<script type='text/javascript' src='../js/jQuery-1.7.2.min.js'></script> -->
-	<script type='text/javascript' src='../js/jQuery-1.8.0.js'></script>
+    <!-- All hail jQuery -->
+    <!--	<script type='text/javascript' src='../js/jQuery-1.7.2.min.js'></script> -->
+    <script type='text/javascript' src='../js/jQuery-1.8.0.js'></script>
 
-	<!-- Make it easier to work with cookies -->
-	<script type='text/javascript' src='../js/jQuery-cookie.js'></script>
+    <!-- Make it easier to work with cookies -->
+    <script type='text/javascript' src='../js/jQuery-cookie.js'></script>
 
-	<!-- Include bluesky.js file.  We use the debug-specific version here for extra validation. -->
-	<!-- TODO: Need to figure out how to also test that the release/minified version works.  Apologies to my future self for procrastinating on this -->
-	<script type='text/javascript' src='../bluesky/bluesky-debug.js'></script>
-	<script type='text/javascript' src='../bluesky/bluesky-MiscWinJSPolyFills.js'></script>
+    <!-- Include bluesky.js file.  We use the debug-specific version here for extra validation. -->
+    <!-- TODO: Need to figure out how to also test that the release/minified version works.  Apologies to my future self for procrastinating on this -->
+    <script type='text/javascript' src='../bluesky/bluesky-debug.js'></script>
+    <script type='text/javascript' src='../bluesky/bluesky-MiscWinJSPolyFills.js'></script>
 
-	<!-- Include bluesky styles.  First include the win8 stylesheet, then include styles necessary to make it work on the web -->
-	<link rel="stylesheet" href="http://bluesky.io/css/ui-light.css" />
-	<link rel="stylesheet" href="../bluesky/webOverrides-light.css" />
+    <!-- Include bluesky styles.  First include the win8 stylesheet, then include styles necessary to make it work on the web -->
+    <link rel="stylesheet" href="http://bluesky.io/css/ui-light.css" />
+    <link rel="stylesheet" href="../bluesky/webOverrides-light.css" />
 
-	<!-- Include the test harness (before the test files) -->
-	<script type='text/javascript' src='testHarness.js'></script>
+    <!-- Include the test harness (before the test files) -->
+    <script type='text/javascript' src='testHarness.js'></script>
 
-	<!-- INCLUDE ALL TEST FILES HERE -->
-	<script type='text/javascript' src='../Tests/Tests.WinJS.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.xhr.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Application.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Navigation.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Promise.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Binding.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Binding.List.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Binding.FilteredList.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Binding.GroupedList.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Binding.Template.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.AppBar.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.AppBarCommand.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.DOMEventMixin.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.Animation.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.Fragments.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.Pages.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.SemanticZoom.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.HtmlControl.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.Rating.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.Flyout.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.FlipView.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.UI.ListView.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Utilities.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.WinJS.Utilities.QueryCollection.js'></script>
-	<script type='text/javascript' src='../Tests/Tests.blueskyUtils.js'></script>
+    <!-- INCLUDE ALL TEST FILES HERE -->
+    <script type='text/javascript' src='../Tests/Tests.WinJS.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.xhr.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Application.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Navigation.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Promise.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Binding.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Binding.List.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Binding.FilteredList.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Binding.GroupedList.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Binding.Template.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.AppBar.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.AppBarCommand.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.DOMEventMixin.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.Animation.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.Fragments.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.Pages.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.SemanticZoom.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.HtmlControl.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.Rating.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.Flyout.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.FlipView.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.UI.ListView.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Utilities.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.WinJS.Utilities.QueryCollection.js'></script>
+    <script type='text/javascript' src='../Tests/Tests.blueskyUtils.js'></script>
 
-	<!-- Make the test harness look pretty -->
-	<link rel="stylesheet" href="testHarness.css" />
+    <!-- Make the test harness look pretty -->
+    <link rel="stylesheet" href="testHarness.css" />
+
+    <!-- Add horz scrollbar on smaller displays (e.g. iPad) -->
+    <style>
+        html
+        {
+            overflow-x: auto;
+        }
+    </style>
 
 </head>
 <body>
-	<div class="testControl">
-		<div class="testTitle">Bluesky test harness</div>
-		<button id="startTests">Start tests</button>
-		<div class="testFileSelector">Test file to run:<select id="testFileDropdown"></select></div>
-		<br />
-		<div class="testSelector">Test to run:<select id="testDropdown"></select></div>
-		<div class="testResultHeader">
-			<span class="testResultTitle">Test Results:</span>
-			<span class="finalResults"></span>
-			<span class="numAsserts">0 asserts</span>
-		</div>
-		<div class="testResults"></div>
-	</div>
-	<div class="testFrameTitle">Test working space:</div>
-	<div class="testFrame"></div>
-	<div class="optionsButton">Options</div>
-	<div class="optionsFrame">
-		<div class="optionsFrameTitle">Test harness options</div>
-		<div class="options">
-			<input type="checkbox" id="allowExceptions" /><label for="allowExceptions">Rethrow exceptions</label><br />
-			<input type="checkbox" id="showNYI" /><label for="showNYI">Show NYI tests</label>
-		</div>
-		<div class="optionsCloseButton">Close</div>
-	</div>
+    <div class="testControl">
+        <div class="testTitle">Bluesky test harness</div>
+        <button id="startTests">Start tests</button>
+        <div class="testFileSelector">Test file to run:<select id="testFileDropdown"></select></div>
+        <br />
+        <div class="testSelector">Test to run:<select id="testDropdown"></select></div>
+        <div class="testResultHeader">
+            <span class="testResultTitle">Test Results:</span>
+            <span class="finalResults"></span>
+            <span class="numAsserts">0 asserts</span>
+        </div>
+        <div class="testResults"></div>
+    </div>
+    <div class="testFrameTitle">Test working space:</div>
+    <div class="testFrame"></div>
+    <div class="optionsButton">Options</div>
+    <div class="optionsFrame">
+        <div class="optionsFrameTitle">Test harness options</div>
+        <div class="options">
+            <input type="checkbox" id="allowExceptions" /><label for="allowExceptions">Rethrow exceptions</label><br />
+            <input type="checkbox" id="showNYI" /><label for="showNYI">Show NYI tests</label>
+        </div>
+        <div class="optionsCloseButton">Close</div>
+    </div>
 </body>

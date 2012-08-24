@@ -5139,6 +5139,12 @@ WinJS.Namespace.define("WinJS.UI", {
 					that.hide();
 			});
 
+		    // When the AppBar loses focus, hide it
+			this.$rootElement.focusout(function () {
+			    if (!that._sticky)
+			        that.hide();
+			});
+
 			// Capture right-click
 			$("body").bind("contextmenu", function (event) {
 				// Prevent default to keep browser's context menu from showing
@@ -5371,6 +5377,9 @@ WinJS.Namespace.define("WinJS.UI", {
 				// NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
 				//if (event.preventDefault)
 				//	return;
+
+			    // Give the appbar focus
+				this.element.focus();
 
 				this.$rootElement.css("visibility", "visible").css("display", "block");
 				this._hidden = false;
@@ -5656,7 +5665,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
         			if (this.icon.indexOf("url(") == 0)
         				$(".win-commandimage", this.$rootElement).css({
-        					"backgroundImage": this._icon + " !important",
+        				    "backgroundImage": this._icon,
         					"backgroundPosition": ""
         				});
         			else if (iconIndex >= 0) {
@@ -10047,9 +10056,9 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Get the position of the item at index 'index', and scroll to it
                     var item = this.items[index].element.parentNode;
                     if (this.layout.horizontal)
-                        this.scrollPosition = item.offsetLeft - parseInt(this.items[0].element.parentNode.style.left) + parseInt($(this.items[0].element.parentNode).css("marginLeft"));
+                        this.scrollPosition = item.offsetLeft - parseInt(this.items[0].element.parentNode.style.left) + $(this.items[0].element.parentNode).css("marginLeft");
                     else
-                        this.scrollPosition = item.offsetTop - parseInt(this.items[0].element.parentNode.style.top) + parseInt($(this.items[0].element.parentNode).css("marginTop"));
+                        this.scrollPosition = item.offsetTop - parseInt(this.items[0].element.parentNode.style.top) + $(this.items[0].element.parentNode).css("marginTop");
                 }
             },
 
@@ -10131,11 +10140,11 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _positionItem: function (item, position) {
 
+                console.log(item);
                 if (!item) {
                     this.indexOfFirstVisible = 0;
                     return;
                 }
-
                 // Get the first item whose key matches "key"
                 if (this._isZoomedOut) {
                     // TODO: Haven't tested this one.

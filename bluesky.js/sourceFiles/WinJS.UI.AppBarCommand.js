@@ -111,7 +111,7 @@ WinJS.Namespace.define("WinJS.UI", {
         			var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
         			if (this.icon.indexOf("url(") == 0)
         				$(".win-commandimage", this.$rootElement).css({
-        					"backgroundImage": this._icon + " !important",
+        				    "backgroundImage": this._icon,
         					"backgroundPosition": ""
         				});
         			else if (iconIndex >= 0) {

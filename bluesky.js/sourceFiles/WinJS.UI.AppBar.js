@@ -70,6 +70,12 @@ WinJS.Namespace.define("WinJS.UI", {
 					that.hide();
 			});
 
+		    // When the AppBar loses focus, hide it
+			this.$rootElement.focusout(function () {
+			    if (!that._sticky)
+			        that.hide();
+			});
+
 			// Capture right-click
 			$("body").bind("contextmenu", function (event) {
 				// Prevent default to keep browser's context menu from showing
@@ -302,6 +308,9 @@ WinJS.Namespace.define("WinJS.UI", {
 				// NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
 				//if (event.preventDefault)
 				//	return;
+
+			    // Give the appbar focus
+				this.element.focus();
 
 				this.$rootElement.css("visibility", "visible").css("display", "block");
 				this._hidden = false;
