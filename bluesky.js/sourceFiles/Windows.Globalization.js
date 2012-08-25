@@ -55,7 +55,7 @@ WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
                         break;
 
                     case "dayofweek":
-                        result += this._abbreviatedDays[date.getDayOfWeek()];
+                        result += this._abbreviatedDays[date.getDay()];
                         break;
                 }
                 result += " ";

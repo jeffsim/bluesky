@@ -24,6 +24,26 @@ $(document).ready(function () {
 	}
 });
 
+// ================================================================
+//
+// Add toStaticHTML
+//
+if (!window.toStaticHTML) {
+    var warnedStaticHTML = false;
+    window.toStaticHTML = function (html) {
+
+        if (!warnedStaticHTML) {
+            console.warn("bluesky: toStaticHTML is not present on non-IE browsers, and has been polyfilled to just return the source HTML; consider changing code for perf.  This warning will appear only once.");
+            warnedStaticHTML = true;
+        }
+
+        // this doesn't work: var sanitized = $(html).find("script,noscript,style,p").remove().end().html();
+        //return sanitized;
+        // TODO: Stub
+        return html;
+    }
+}
+
 if (!$.browser.msie) {
 
 	// ================================================================
