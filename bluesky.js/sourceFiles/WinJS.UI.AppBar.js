@@ -48,6 +48,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		    $root.attr("role", "menubar");
 		    $root.css("z-index", "1001");
 		    $root.css("visibility", this._hidden ? "hidden" : "visible");
+		    $root.css("display", this._hidden ? "none" : "block");
 		    this.placement = options.placement || "bottom";
 
 		    if (this._layout == "custom") {
@@ -88,7 +89,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // Capture right-click
 		    $("body").bind("contextmenu", function (event) {
-		        console.log(22);
+
 		        // Prevent default to keep browser's context menu from showing
 		        // Don't StopPropagation though, so that other appbars get the event
 		        event.preventDefault();
@@ -357,7 +358,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        //if (event.preventDefault)
 		        //	return;
 
-		        this.$rootElement.css("visibility", "hidden");
+		        this.$rootElement.css("visibility", "hidden").css("display", "none");
 
 		        this._hidden = true;
 		        this.$clickEater.hide();

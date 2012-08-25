@@ -375,6 +375,10 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
+                        // If item is selected, then add border
+                        if (that.selection._containsItemByKey(item.key))
+                            that._addSelectionBorderToElement(item.element);
+
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
@@ -400,7 +404,6 @@ WinJS.Namespace.define("WinJS.UI", {
                                         that.selection.set(itemIndex);
 
                                 that._lastSelectedItemIndex = itemIndex;
-                                that._notifySelectionChanged(that.element);
                             }
                         });
 
@@ -489,21 +492,15 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _getItemMargins: function () {
 
-                // Next, calculate the margin that should be added around each list item's win-container DIV.  This is obtained
-                // from the following css selector:     .win-listview > .win-horizontal .win-container
-                // To do this, create an element in the DOM that matches that selector, and grab it's marginTop/marginBottom values.
-                // TODO: Find a cleaner way of calculating this?
-                var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
-                var $container = $("<div class='win-listview'><div class='" + orientation + "'><div id='_cont1' class='win-container'></div></div></div>")
-					.hide()
-					.appendTo($("body"));
+                var $container = $("<div id='_cont1' class='win-container'></div>")
+					.appendTo(this.$scrollSurface);
 
                 // Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
                 var itemMargins = {
-                    vertical: parseInt($("#_cont1").css("marginTop")) +
-							  parseInt($("#_cont1").css("marginBottom")),
-                    horizontal: parseInt($("#_cont1").css("marginLeft")) +
-							  parseInt($("#_cont1").css("marginRight"))
+                    vertical: parseInt($container.css("marginTop")) +
+							  parseInt($container.css("marginBottom")),
+                    horizontal: parseInt($container.css("marginLeft")) +
+							  parseInt($container.css("marginRight"))
                 };
 
                 // Clean up after ourselves and remove the element from the DOM.
@@ -791,7 +788,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     var $containerNode = $(item.element.parentNode);
                     var itemWasSelected = $containerNode.hasClass("win-selected");
-                    var itemIsNowSelected = that.selection._selectedItems.indexOf(item) >= 0;
+                    var itemIsNowSelected = that.selection._containsItemByKey(item.key);
 
                     if (itemWasSelected && !itemIsNowSelected) {
 
@@ -801,19 +798,32 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     } else if (!itemWasSelected && itemIsNowSelected) {
 
-                            // add selection
-                            // TODO (PERF-MINOR): Precreate and clone these DIVs
-                        $containerNode.addClass("win-selected");
-                        $(item.element).before($("<div class='win-selectionbackground'></div>"))
-									   .after($("<div class='win-selectionbordercontainer'>" +
-												"<div class='win-selectionborder win-selectionbordertop'></div>" +
-												"<div class='win-selectionborder win-selectionborderright'></div>" +
-												"<div class='win-selectionborder win-selectionborderbottom'></div>" +
-												"<div class='win-selectionborder win-selectionborderleft'></div>" +
-												"</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
-										));
+                        // add selection border
+                        that._addSelectionBorderToElement(item.element);
                     }
                 });
+
+                this._notifySelectionChanged(this.element);
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._addSelectionBorderToElement
+            //
+            _addSelectionBorderToElement: function (element) {
+
+                // TODO (PERF-MINOR): Precreate and clone these DIVs
+                var $containerNode = $(element.parentNode);
+                $containerNode.addClass("win-selected");
+                $(element).before($("<div class='win-selectionbackground'></div>"))
+                               .after($("<div class='win-selectionbordercontainer'>" +
+                                        "<div class='win-selectionborder win-selectionbordertop'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderright'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderbottom'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderleft'></div>" +
+                                        "</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
+                                ));
             },
 
 
@@ -848,6 +858,10 @@ WinJS.Namespace.define("WinJS.UI", {
             indexOfFirstVisible: {
 
                 get: function () {
+
+                    if (!this.$viewport)
+                        return 0;
+
                     var curScrollRect = {
                         left: this.$viewport.scrollLeft(),
                         top: this.$viewport.scrollTop(),
@@ -878,6 +892,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (index) {
+
+                    if (index >= this.items.length)
+                        return;
+
                     // Get the position of the item at index 'index', and scroll to it
                     var item = this.items[index].element.parentNode;
                     if (this.layout.horizontal)

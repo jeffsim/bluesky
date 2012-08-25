@@ -86,7 +86,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 						key: groupKey,
 						groupSize: 1,
 						// TODO: Index etc
-						data: this._list._groupDataSelector(eventData.value)
+						data: this._list._groupDataSelector(eventData.detail.value)
 					};
 
 					this._groupItems[groupKey] = newGroupItem;

@@ -429,6 +429,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
 		    //
+		    // ================================================================
+		    //
+		    // public function: WinJS.UI.ISelection.add
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
+		    //
 		    add: function (items) {
 		        var that = this;
 		        return new WinJS.Promise(function (c) {
@@ -444,7 +450,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		            // We want to get values from our listview's actual databound list.
 		            var curList = that._list.itemDataSource._list;
 
-		            items.forEach(function (value) {
+		            for (var i = 0; i < items.length; i++) {
+		                var value = items[i];
 		                var item;
 		                if (typeof value === "number") {
 		                    // value is an index
@@ -456,18 +463,22 @@ WinJS.Namespace.define("WinJS.UI", {
 		                    } else if (value.index !== undefined) {
 		                        item = curList.getItem(value);
 		                    }
-		                        /*DEBUG*/
+		                    /*DEBUG*/
 		                    else {
 		                        console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
 		                    }
 		                    /*ENDDEBUG*/
 		                }
+		                // The item we obtained above may have an index; if this selection's list is a filtered list, then that index may
+		                // be wrong (since it's for the full list).  So: copy the item and set its index here.
+		                item = WinJS.Binding.List.copyItem(item);
+		                item.index = i;
 
 		                if (that._selectedItems.indexOf(item) == -1)
 		                    that._selectedItems.push(item);
-		            });
+		            }
 
-		            // TODO: Notify our list
+		            // Notify our list
 		            that._list._selectionChanged();
 
 		            c(items);
@@ -642,6 +653,23 @@ WinJS.Namespace.define("WinJS.UI", {
 		            console.error("WinJS.UI.ISelection.getRanges is NYI");
 		            c([]);
 		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.ISelection._containsItemByKey
+		    //
+		    //		Returns true if this selection contains an item with the specified key
+		    //
+		    _containsItemByKey: function (key) {
+
+		        for (var i = 0; i < this._selectedItems.length; i++)
+		            if (this._selectedItems[i].key == key)
+		                return true;
+
+                // Item with specified key not found
+		        return false;
 		    }
 		})
 });

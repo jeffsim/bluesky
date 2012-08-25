@@ -400,225 +400,230 @@ WinJS.Namespace.define("WinJS.UI", {
 //	
 WinJS.Namespace.define("WinJS", {
 
-	// ================================================================
-	//
-	// public function: WinJS.xhr
-	//
-	//   ABOUT THIS FUNCTION:
-	//   First, read the explanation above concerning CORS and YQL
-	//   We have two models for xhr:
-	//  	1.  One is the "proper" approach, which mimics Win8's and uses XMLHttpRequest and is all full of goodness,
-	//  		except for the fact that it won't work cross-domain, and so a slew of LocalContext win8 apps would fall over.
-	//  	2.  The other is the "fast prototype" approach, which uses jQuery and YQL to allow cross-domain and is all full of goodness,
-	//  		except for the fact that it's ugly and pained and introduces additional layers into xhr request.
-	//  
-	//   At this stage of bluesky, we're more interested in enabling quick win8-->web ports, so we use the second approach as the default
-	//   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
-	//   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
-	//
-	xhr: function (options) {
+    // ================================================================
+    //
+    // public function: WinJS.xhr
+    //
+    //   ABOUT THIS FUNCTION:
+    //   First, read the explanation above concerning CORS and YQL
+    //   We have two models for xhr:
+    //  	1.  One is the "proper" approach, which mimics Win8's and uses XMLHttpRequest and is all full of goodness,
+    //  		except for the fact that it won't work cross-domain, and so a slew of LocalContext win8 apps would fall over.
+    //  	2.  The other is the "fast prototype" approach, which uses jQuery and YQL to allow cross-domain and is all full of goodness,
+    //  		except for the fact that it's ugly and pained and introduces additional layers into xhr request.
+    //  
+    //   At this stage of bluesky, we're more interested in enabling quick win8-->web ports, so we use the second approach as the default
+    //   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
+    //   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
+    //
+    xhr: function (options) {
 
-		var request;
-		var requestType = options && options.type || "GET";
+        var request;
+        var requestType = options && options.type || "GET";
 
-		if (Bluesky.Settings.ProxyCrossDomainXhrCalls) {
-			// The following code is the second approach described above - proxy calls through YQL to enable cross-domain
-			return new WinJS.Promise(function (onComplete, onError, onProgress) {
+        if (Bluesky.Settings.ProxyCrossDomainXhrCalls) {
+            // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+            return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-				// TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
-				var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
-				// If this isn't a local request, then run it through the proxy to enable cross-domain
-				// TODO: Check if it's same-domain and don't proxy if so
-				// Use JSON format to support binary objects (xml format borks on them)
-				if (isLocal) {
-					var dataType = undefined;
-				} else {
-					options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
+                // TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
+                var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
+                // If this isn't a local request, then run it through the proxy to enable cross-domain
+                // TODO: Check if it's same-domain and don't proxy if so
+                // Use JSON format to support binary objects (xml format borks on them)
+                if (isLocal) {
+                    var dataType = undefined;
+                } else {
+                    options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=json&callback=?";
-					var dataType = "jsonp";
-				}
-				//	jQuery.support.cors = true; 
-				// TODO: Progress
-				$.ajax({
-					url: options.url,
-					data: options.data,
-					dataType: dataType,
-					success: function (data, textStatus, jqXHR) {
-						// Since we're using YQL, data contains the XML Document with the result. Extract it
-						if (isLocal) {
-							var responseText = jqXHR.responseText;
-							var responseXML = jqXHR.responseXML || null;
-						} else {
-							if (data)
-								var response = data.query.results;
-							else
+								  "%22%3B&format=xml";//json&callback=?";
+                    var dataType = undefined;// "jsonp";
+                }
+                //	jQuery.support.cors = true; 
+                // TODO: Progress
+                $.ajax({
+                    url: options.url,
+                    data: options.data,
+                    dataType: dataType,
+                    success: function (data, textStatus, jqXHR) {
+                        // Since we're using YQL, data contains the XML Document with the result. Extract it
+                        if (isLocal) {
+                            var responseText = jqXHR.responseText;
+                            var responseXML = jqXHR.responseXML || null;
+                        } else {
 
-								var response = $.parseJSON(jqXHR.responseText).query.results;
-							// response could be .result or .xml
-							if (response.xml) {
+                            var responseText = jqXHR.responseText;
+                            var responseXML = jqXHR.responseXML ? jqXHR.responseXML.querySelector("query > results") : null;
+                            /*
+                            if (!data)
+                                data = $.parseJSON(jqXHR.responseText);
 
-								// Parse the xml response (which is a JSON object) into an xml object
-								var responseXML = "<xml>" + _xmlToJSON(response.xml) + "</xml>";
-								var parser = new DOMParser();
-								var responseXML = parser.parseFromString(responseXML, "application/xml");
-							} else {
-								var responseText = response.xml || response.result;
-								var responseXML = null;
-							}
-						}
+                            var response = data.query.results;
 
-						onComplete({
-							responseType: "",
-							responseText: responseText,
-							response: responseText,
-							responseXML: responseXML,
-							readyState: 4,
-							DONE: 4,
-							statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
-							status: jqXHR.status
-						});
-					},
-					error: function (jqXHR, textStatus, errorThrown) {
-						// TODO: all return flags.
-						// TODO: Support other errors
-						if (jqXHR.status == 404)
-							onError({ number: -2146697211 });	// Win8's 404 error code
-						else
-							onError({ number: 1 });	// TODO: What to do here?
-					},
-					type: requestType
-				});
-			});
+                            var responseText = response.result;
 
-		} else {
-			// The following code is the first approach described above - use XMLHttpRequest which does not support cross-domain
+                            // Parse the JSON object response into an xml object
+                            var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
 
-			return new WinJS.Promise(function (onComplete, onError, onProgress) {
+                            var parser = new DOMParser();
+                            var responseXML = parser.parseFromString(responseXML, "application/xml");
+                            $("type", responseXML).remove();*/
+                        }
 
-				// track if we've completed the request already
-				var requestCompleted = false;
+                        onComplete({
+                            responseType: "",
+                            responseText: responseText,
+                            response: responseText,
+                            responseXML: responseXML,
+                            readyState: 4,
+                            DONE: 4,
+                            statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
+                            status: jqXHR.status
+                        });
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        // TODO: all return flags.
+                        // TODO: Support other errors
+                        if (jqXHR.status == 404)
+                            onError({ number: -2146697211 });	// Win8's 404 error code
+                        else
+                            onError({ number: 1 });	// TODO: What to do here?
+                    },
+                    type: requestType
+                });
+            });
 
-				// Create the request
-				request = new XMLHttpRequest();
+        } else {
+            // The following code is the first approach described above - use XMLHttpRequest which does not support cross-domain
 
-				// Listen for changes
-				request.onreadystatechange = function () {
+            return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-					// If the request was cancelled, then just break out
-					if (request.cancelled || requestCompleted)
-						return;
+                // track if we've completed the request already
+                var requestCompleted = false;
 
-					// Request completed?
-					if (request.readyState == 4) {
-						// Successful completion or failure?
-						if (request.status >= 200 && request.status < 300) {
-							onComplete(request);
-						}
-						else
-							onError(request);
+                // Create the request
+                request = new XMLHttpRequest();
 
-						// Ignore subsequent changes
-						requestCompleted = true;
-					} else {
-						// Report progress (TODO: Promise doesn't support progress yet)
-						// onProgress(request);
-					}
-				};
+                // Listen for changes
+                request.onreadystatechange = function () {
 
-				// Open the request
-				request.open(requestType, options.url, true);
+                    // If the request was cancelled, then just break out
+                    if (request.cancelled || requestCompleted)
+                        return;
 
-				// Add request headers
-				if (options.headers)
-					options.headers.forEach(function (header) {
-						request.setRequestHeader(key, header);
-					});
+                    // Request completed?
+                    if (request.readyState == 4) {
+                        // Successful completion or failure?
+                        if (request.status >= 200 && request.status < 300) {
+                            onComplete(request);
+                        }
+                        else
+                            onError(request);
 
-				// Finally, send the request
-				request.send(options.data);
-			},
+                        // Ignore subsequent changes
+                        requestCompleted = true;
+                    } else {
+                        // Report progress (TODO: Promise doesn't support progress yet)
+                        // onProgress(request);
+                    }
+                };
+
+                // Open the request
+                request.open(requestType, options.url, true);
+
+                // Add request headers
+                if (options.headers)
+                    options.headers.forEach(function (header) {
+                        request.setRequestHeader(key, header);
+                    });
+
+                // Finally, send the request
+                request.send(options.data);
+            },
 
 			// Error handler
 			function () {
-				request.cancelled = true;
-				request.abort();
+			    request.cancelled = true;
+			    request.abort();
 			});
-		}
-	}
+        }
+    }
 });
-
 
 // ================================================================
 //
-// private function _xmlToJSON
+// private function _JSONtoXML
 //
 //		The YQL proxy that we're using for WinJS.xhr returns XML data as JSON objects; we need to convert it
 //		to an XMLDocument since that's what WinJS.xhr return.
 //
 //		Original source: http://ruchirawageesha.blogspot.com/2011/06/xml-to-json-and-json-to-xml-conversion.html
 //
-function _xmlToJSON(json) {
+function _JSONtoXML(json) {
 
-	var cloneNS = function (ns) {
-		var nns = {};
-		for (var n in ns) {
-			if (ns.hasOwnProperty(n)) {
-				nns[n] = ns[n];
-			}
-		}
-		return nns;
-	};
+    var cloneNS = function (ns) {
+        var nns = {};
+        for (var n in ns) {
+            if (ns.hasOwnProperty(n)) {
+                nns[n] = ns[n];
+            }
+        }
+        return nns;
+    };
 
-	var processLeaf = function (lname, child, ns) {
-		var body = "";
-		if (child instanceof Array) {
-			for (var i = 0; i < child.length; i++) {
-				body += processLeaf(lname, child[i], cloneNS(ns));
-			}
-			return body;
-		} else if (child && typeof child === "object") {
-			var el = "<" + lname;
-			var attributes = "";
-			var text = "";
-			if (child["@xmlns"]) {
-				var xmlns = child["@xmlns"];
-				for (var prefix in xmlns) {
-					if (xmlns.hasOwnProperty(prefix)) {
-						if (prefix === "$") {
-							if (ns[prefix] !== xmlns[prefix]) {
-								attributes += " " + "xmlns=\"" + xmlns[prefix] + "\"";
-								ns[prefix] = xmlns[prefix];
-							}
-						} else if (!ns[prefix] || (ns[prefix] !== xmlns[prefix])) {
-							attributes += " xmlns:" + prefix + "=\"" + xmlns[prefix] + "\"";
-							ns[prefix] = xmlns[prefix];
-						}
-					}
-				}
-			}
-			for (var key in child) {
-				if (child.hasOwnProperty(key) && key !== "@xmlns") {
-					var obj = child[key];
-					if (key === "$") {
-						text += obj;
-					} else if (key.indexOf("@") === 0) {
-						attributes += " " + key.substring(1) + "=\"" + obj + "\"";
-					} else {
-						body += processLeaf(key, obj, cloneNS(ns));
-					}
-				}
-			}
-			body = text + body;
-			return (body !== "") ? el + attributes + ">" + body + "</" + lname + ">" : el + attributes + "/>"
-		}
-	};
-	for (var lname in json) {
-		if (json.hasOwnProperty(lname) && lname.indexOf("@") == -1) {
-			return processLeaf(lname, json[lname], {});
-		}
-	}
-	return null;
+    var processLeaf = function (lname, child, ns) {
+        var body = "";
+        if (child instanceof Array) {
+            for (var i = 0; i < child.length; i++) {
+                body += processLeaf(lname, child[i], cloneNS(ns));
+            }
+            return body;
+        } else if (child && typeof child === "object") {
+            var el = "<" + lname;
+            var attributes = "";
+            var text = "";
+            if (child["@xmlns"]) {
+                var xmlns = child["@xmlns"];
+                for (var prefix in xmlns) {
+                    if (xmlns.hasOwnProperty(prefix)) {
+                        if (prefix === "$") {
+                            if (ns[prefix] !== xmlns[prefix]) {
+                                attributes += " " + "xmlns=\"" + xmlns[prefix] + "\"";
+                                ns[prefix] = xmlns[prefix];
+                            }
+                        } else if (!ns[prefix] || (ns[prefix] !== xmlns[prefix])) {
+                            attributes += " xmlns:" + prefix + "=\"" + xmlns[prefix] + "\"";
+                            ns[prefix] = xmlns[prefix];
+                        }
+                    }
+                }
+            }
+            for (var key in child) {
+                if (child.hasOwnProperty(key) && key !== "@xmlns") {
+                    var obj = child[key];
+                    if (key === "$") {
+                        text += obj;
+                    } else if (key.indexOf("@") === 0) {
+                        attributes += " " + key.substring(1) + "=\"" + obj + "\"";
+                    } else {
+                        body += processLeaf(key, obj, cloneNS(ns));
+                    }
+                }
+            }
+            body = text + body;
+            return (body !== "") ? el + attributes + ">" + body + "</" + lname + ">" : el + attributes + "/>"
+        } else {
+            var escaped = child.replace(/</g, "&lt;").replace(/>/g, "&gt;");//.replace("\r", "").replace("\n", "");
+            escaped = escaped.replace(/\r/g, "").replace(/\n/g, "");
+            escaped = escaped.replace(/&/g, "&amp;");
+            return "<" + lname + ">" + escaped + "</" + lname + ">";
+        }
+    };
+    for (var lname in json) {
+        if (json.hasOwnProperty(lname) && lname.indexOf("@") == -1) {
+            return processLeaf(lname, json[lname], {});
+        }
+    }
+    return null;
 }
 
 
@@ -879,23 +884,69 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
 WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
 
     // =========================================================
-	//
-	//	WinJS.Globalization.DateTimeFormatting.DateTimeFormatter
-	//
+    //
+    //	WinJS.Globalization.DateTimeFormatting.DateTimeFormatter
+    //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.globalization.datetimeformatting.datetimeformatter
     //
-	DateTimeFormatter: WinJS.Class.define(function (formatTemplate) {
+    DateTimeFormatter: WinJS.Class.define(function (formatTemplate) {
 
-		this._formatTemplate = formatTemplate;
-	},
+        this._formatTemplate = formatTemplate;
+    },
     {
-    	format: function (date) {
-    		// TODO: Parse the format string.  For now, hardcoded to what stockSample needs
-    		if (this._formatTemplate == "hour minute")
-    			return date.toLocaleString();
-    		else
-    			return "";
-    	}
+        format: function (date) {
+            var parts = this._formatTemplate.split(" ");
+            var result = "";
+            // TODO: Parse the format string.  For now, hardcoded to what the bluesky samples need
+            for (var i = 0; i < parts.length; i++) {
+                var part = parts[i];
+                var partParts = part.split(".");
+                switch (partParts[0]) {
+                    case "hour":
+                        if (i < parts.length - 1 && parts[i + 1] == "minute") {
+                            result += date.getHours() + ":" + date.getMinutes();
+                            i++;
+                        }
+                        else
+                            result += date.getHours();
+                        break;
+
+                    case "minute":
+                        result += date.getMinutes();
+                        break;
+
+                    case "year":
+                        if (partParts[1] && partParts[1] == "abbreviated")
+                            result += date.getFullYear() - 2000;
+                        else
+                            result += date.getFullYear();
+                        break;
+
+                    case "month":
+                        if (partParts[1] && partParts[1] == "abbreviated")
+                            result += this._abbreviatedMonths[date.getMonth()];
+                        else
+                            result += this._fullMonths[date.getMonth()];
+                        break;
+
+                    case "day":
+                        result += date.getDate();
+                        break;
+
+                    case "dayofweek":
+                        result += this._abbreviatedDays[date.getDayOfWeek()];
+                        break;
+                }
+                result += " ";
+            }
+            return result;
+        },
+        // TODO: Start with Mon or Sun?
+        _fullDays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        _abbreviatedDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        _fullMonths: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        _abbreviatedMonths: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
     })
 });
 
@@ -4032,7 +4083,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 						key: groupKey,
 						groupSize: 1,
 						// TODO: Index etc
-						data: this._list._groupDataSelector(eventData.value)
+						data: this._list._groupDataSelector(eventData.detail.value)
 					};
 
 					this._groupItems[groupKey] = newGroupItem;
@@ -4771,6 +4822,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
 		    //
+		    // ================================================================
+		    //
+		    // public function: WinJS.UI.ISelection.add
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
+		    //
 		    add: function (items) {
 		        var that = this;
 		        return new WinJS.Promise(function (c) {
@@ -4786,7 +4843,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		            // We want to get values from our listview's actual databound list.
 		            var curList = that._list.itemDataSource._list;
 
-		            items.forEach(function (value) {
+		            for (var i = 0; i < items.length; i++) {
+		                var value = items[i];
 		                var item;
 		                if (typeof value === "number") {
 		                    // value is an index
@@ -4798,18 +4856,22 @@ WinJS.Namespace.define("WinJS.UI", {
 		                    } else if (value.index !== undefined) {
 		                        item = curList.getItem(value);
 		                    }
-		                        /*DEBUG*/
+		                    /*DEBUG*/
 		                    else {
 		                        console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
 		                    }
 		                    /*ENDDEBUG*/
 		                }
+		                // The item we obtained above may have an index; if this selection's list is a filtered list, then that index may
+		                // be wrong (since it's for the full list).  So: copy the item and set its index here.
+		                item = WinJS.Binding.List.copyItem(item);
+		                item.index = i;
 
 		                if (that._selectedItems.indexOf(item) == -1)
 		                    that._selectedItems.push(item);
-		            });
+		            }
 
-		            // TODO: Notify our list
+		            // Notify our list
 		            that._list._selectionChanged();
 
 		            c(items);
@@ -4984,6 +5046,23 @@ WinJS.Namespace.define("WinJS.UI", {
 		            console.error("WinJS.UI.ISelection.getRanges is NYI");
 		            c([]);
 		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.ISelection._containsItemByKey
+		    //
+		    //		Returns true if this selection contains an item with the specified key
+		    //
+		    _containsItemByKey: function (key) {
+
+		        for (var i = 0; i < this._selectedItems.length; i++)
+		            if (this._selectedItems[i].key == key)
+		                return true;
+
+                // Item with specified key not found
+		        return false;
 		    }
 		})
 });
@@ -5163,6 +5242,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		    $root.attr("role", "menubar");
 		    $root.css("z-index", "1001");
 		    $root.css("visibility", this._hidden ? "hidden" : "visible");
+		    $root.css("display", this._hidden ? "none" : "block");
 		    this.placement = options.placement || "bottom";
 
 		    if (this._layout == "custom") {
@@ -5203,7 +5283,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // Capture right-click
 		    $("body").bind("contextmenu", function (event) {
-		        console.log(22);
+
 		        // Prevent default to keep browser's context menu from showing
 		        // Don't StopPropagation though, so that other appbars get the event
 		        event.preventDefault();
@@ -5472,7 +5552,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        //if (event.preventDefault)
 		        //	return;
 
-		        this.$rootElement.css("visibility", "hidden");
+		        this.$rootElement.css("visibility", "hidden").css("display", "none");
 
 		        this._hidden = true;
 		        this.$clickEater.hide();
@@ -9624,6 +9704,10 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
+                        // If item is selected, then add border
+                        if (that.selection._containsItemByKey(item.key))
+                            that._addSelectionBorderToElement(item.element);
+
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
@@ -9649,7 +9733,6 @@ WinJS.Namespace.define("WinJS.UI", {
                                         that.selection.set(itemIndex);
 
                                 that._lastSelectedItemIndex = itemIndex;
-                                that._notifySelectionChanged(that.element);
                             }
                         });
 
@@ -9738,21 +9821,15 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _getItemMargins: function () {
 
-                // Next, calculate the margin that should be added around each list item's win-container DIV.  This is obtained
-                // from the following css selector:     .win-listview > .win-horizontal .win-container
-                // To do this, create an element in the DOM that matches that selector, and grab it's marginTop/marginBottom values.
-                // TODO: Find a cleaner way of calculating this?
-                var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
-                var $container = $("<div class='win-listview'><div class='" + orientation + "'><div id='_cont1' class='win-container'></div></div></div>")
-					.hide()
-					.appendTo($("body"));
+                var $container = $("<div id='_cont1' class='win-container'></div>")
+					.appendTo(this.$scrollSurface);
 
                 // Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
                 var itemMargins = {
-                    vertical: parseInt($("#_cont1").css("marginTop")) +
-							  parseInt($("#_cont1").css("marginBottom")),
-                    horizontal: parseInt($("#_cont1").css("marginLeft")) +
-							  parseInt($("#_cont1").css("marginRight"))
+                    vertical: parseInt($container.css("marginTop")) +
+							  parseInt($container.css("marginBottom")),
+                    horizontal: parseInt($container.css("marginLeft")) +
+							  parseInt($container.css("marginRight"))
                 };
 
                 // Clean up after ourselves and remove the element from the DOM.
@@ -10040,7 +10117,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     var $containerNode = $(item.element.parentNode);
                     var itemWasSelected = $containerNode.hasClass("win-selected");
-                    var itemIsNowSelected = that.selection._selectedItems.indexOf(item) >= 0;
+                    var itemIsNowSelected = that.selection._containsItemByKey(item.key);
 
                     if (itemWasSelected && !itemIsNowSelected) {
 
@@ -10050,19 +10127,32 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     } else if (!itemWasSelected && itemIsNowSelected) {
 
-                            // add selection
-                            // TODO (PERF-MINOR): Precreate and clone these DIVs
-                        $containerNode.addClass("win-selected");
-                        $(item.element).before($("<div class='win-selectionbackground'></div>"))
-									   .after($("<div class='win-selectionbordercontainer'>" +
-												"<div class='win-selectionborder win-selectionbordertop'></div>" +
-												"<div class='win-selectionborder win-selectionborderright'></div>" +
-												"<div class='win-selectionborder win-selectionborderbottom'></div>" +
-												"<div class='win-selectionborder win-selectionborderleft'></div>" +
-												"</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
-										));
+                        // add selection border
+                        that._addSelectionBorderToElement(item.element);
                     }
                 });
+
+                this._notifySelectionChanged(this.element);
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._addSelectionBorderToElement
+            //
+            _addSelectionBorderToElement: function (element) {
+
+                // TODO (PERF-MINOR): Precreate and clone these DIVs
+                var $containerNode = $(element.parentNode);
+                $containerNode.addClass("win-selected");
+                $(element).before($("<div class='win-selectionbackground'></div>"))
+                               .after($("<div class='win-selectionbordercontainer'>" +
+                                        "<div class='win-selectionborder win-selectionbordertop'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderright'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderbottom'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderleft'></div>" +
+                                        "</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
+                                ));
             },
 
 
@@ -10097,6 +10187,10 @@ WinJS.Namespace.define("WinJS.UI", {
             indexOfFirstVisible: {
 
                 get: function () {
+
+                    if (!this.$viewport)
+                        return 0;
+
                     var curScrollRect = {
                         left: this.$viewport.scrollLeft(),
                         top: this.$viewport.scrollTop(),
@@ -10127,6 +10221,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (index) {
+
+                    if (index >= this.items.length)
+                        return;
+
                     // Get the position of the item at index 'index', and scroll to it
                     var item = this.items[index].element.parentNode;
                     if (this.layout.horizontal)
@@ -10450,7 +10548,6 @@ WinJS.Namespace.define("WinJS.UI", {
                     }
                     return _itemRecycleFunction;
                 },
-
                 set: function (value) {
                     if (!this._warnedResetItem) {
                         this._warnedResetItem = true;
