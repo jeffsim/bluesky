@@ -35,7 +35,7 @@
                 initializeUserStocks();
 
                 // Configure the app bar with this page's settings
-            //BLUESKY-TODO    configureAppBar();
+                configureAppBar();
 
                 // Initialize the Market News list view control
                 News.initialize();

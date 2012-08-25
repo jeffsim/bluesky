@@ -69,12 +69,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        event.initCustomEvent("beforeshow", true, false, {});
 		        this.element.dispatchEvent(event);
 
-
 		        // show
 		        var $anchor = $(anchor);
 		        var $flyout = $(this.element);
 		        $flyout
                     .addClass("win-flyout")
+			        .addClass("win-overlay")
                     .css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
 
 		        var info = {
@@ -111,22 +111,33 @@ WinJS.Namespace.define("WinJS.UI", {
 		                       this._getLeftPosition(info, true) || this._getRightPosition(info, true);
 		                break;
 		        }
+
 		        $flyout
                     .remove()
                     .appendTo($("body"))
                     .css({
                         "left": dest.left,
                         "top": dest.top,
-                        "z-index": "10000",
                         "visibility": "visible"
                     });
 
-		        // Hide it
+		        // Add Flyout clickeater
+		        this.$clickEater = $("<div class='win-flyoutmenuclickeater'></div>");
+		        this.$clickEater.appendTo($("body")).show();
+		        this.$clickEater.click(function () {
+		            that.hide();
+		        });
+
+		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
+		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
+		        // the focusout event if it happened very recently.
+		        this.$rootElement.mousedown(function (event) {
+		            WinJS.UI._flyoutClicked = Date.now();
+		        });
+
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
-		            // Enable light dismiss
-		            $('body').bind('click', that._lightDismissHandler.bind(that));
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -156,6 +167,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		        event.initCustomEvent("beforehide", true, false, {});
 		        this.element.dispatchEvent(event);
 
+		        this.$clickEater.remove();
+
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
@@ -172,7 +185,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._alignment = null;
 		    },
 
-
+		    /*
 		    // ================================================================
 		    //
 		    // private function: WinJS.Flyout._lightDismissHandler
@@ -193,7 +206,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this.hide();
 		    },
 
-
+            */
 		    // ================================================================
 		    //
 		    // private function: WinJS.Flyout._getLeftPosition
@@ -279,9 +292,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onafterhide)
-		        		this.removeEventListener("afterhide", this._onafterhide);
+		            // Remove previous on* handler if one was specified
+		            if (this._onafterhide)
+		                this.removeEventListener("afterhide", this._onafterhide);
 
 		            // track the specified handler for this.get
 		            this._onafterhide = callback;
@@ -299,19 +312,19 @@ WinJS.Namespace.define("WinJS.UI", {
 		    onaftershow: {
 
 		        get: function () {
-                    // Return the tracked hander (if any)
+		            // Return the tracked hander (if any)
 		            return this._onaftershow;
-                },
+		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onaftershow)
-		        		this.removeEventListener("aftershow", this._onaftershow);
+		            // Remove previous on* handler if one was specified
+		            if (this._onaftershow)
+		                this.removeEventListener("aftershow", this._onaftershow);
 
-                    // track the specified handler for this.get
-                    this._onaftershow = callback;
-                    this.addEventListener("aftershow", callback);
-                }
+		            // track the specified handler for this.get
+		            this._onaftershow = callback;
+		            this.addEventListener("aftershow", callback);
+		        }
 		    },
 
 
@@ -322,16 +335,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforehide: {
-                
+
 		        get: function () {
 		            // Return the tracked hander (if any)
 		            return this._onbeforehide;
 		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onbeforehide)
-		        		this.removeEventListener("beforehide", this._onbeforehide);
+		            // Remove previous on* handler if one was specified
+		            if (this._onbeforehide)
+		                this.removeEventListener("beforehide", this._onbeforehide);
 
 		            // track the specified handler for this.get
 		            this._onbeforehide = callback;
@@ -347,16 +360,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforeshow: {
-                
+
 		        get: function () {
 		            // Return the tracked hander (if any)
 		            return this._onbeforeshow;
 		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onbeforeshow)
-		        		this.removeEventListener("beforeshow", this._onbeforeshow);
+		            // Remove previous on* handler if one was specified
+		            if (this._onbeforeshow)
+		                this.removeEventListener("beforeshow", this._onbeforeshow);
 
 		            // track the specified handler for this.get
 		            this._onbeforeshow = callback;
@@ -391,7 +404,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		            return this._alignment;
 		        },
 		        set: function () {
-		        	console.warn("Flyout.alignment is NYI");
+		            console.warn("Flyout.alignment is NYI");
 		        }
 		    },
 

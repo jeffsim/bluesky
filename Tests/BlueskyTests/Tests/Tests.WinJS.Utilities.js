@@ -45,6 +45,7 @@ testHarness.addTestFile("WinJS.Utilities Tests", {
         });
     },
 
+
     // ==========================================================================
     // 
     // Test WinJS.Utilities.markSupportedForProcessing functionality
@@ -56,8 +57,39 @@ testHarness.addTestFile("WinJS.Utilities Tests", {
         var handler = function () {
         };
 
-        var element = WinJS.Utilities.markSupportedForProcessing(handler);
+        WinJS.Utilities.markSupportedForProcessing(handler);
         test.assert(handler._supportedForProcessing, "eventHandler did not assign supportedForProcessing");
+    },
+
+
+    // ==========================================================================
+    // 
+    // Test WinJS.Utilities.requireSupportedForProcessing functionality
+    //
+    requireSupportedForProcessing: function (test) {
+
+        test.start("WinJS.Utilities.requireSupportedForProcessing tests");
+
+        var handler = function () {
+        };
+
+        WinJS.strictProcessing();
+        WinJS.Utilities.markSupportedForProcessing(handler);
+
+        // test that requireSupportedForProcessing works if the handler has been marked as such.  
+        requireSupportedForProcessing(handler);
+
+        // Now test that requireSupportedForProcessing throws an exception if the handler has not been marked as such
+        var handler2 = function () {
+        };
+        var error;
+        try {
+            requireSupportedForProcessing(handler2);
+        } catch (ex) {
+            error = ex;
+        }
+        test.assert(error, "requireSupportedForProcessing did not throw an error");
+        test.assert(error && error.message == "requireSupportedForProcessing", "requireSupportedForProcessing threw the wrong error (" + error.message + ")");
     },
 
 
