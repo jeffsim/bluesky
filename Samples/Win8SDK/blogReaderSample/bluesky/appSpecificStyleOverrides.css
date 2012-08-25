@@ -1,0 +1,79 @@
+
+
+body {
+}
+
+.itemspage .item-overlay {
+    background-color: rgba(0, 0, 0, 0.65);
+    bottom: 0;
+    height: 60px;
+    position: absolute;
+}
+
+p {
+    margin: 0;
+}
+
+.fragment section {
+    position: absolute !important;
+    top: 120px;
+    margin-top: 0px;
+    height: auto !important;
+    bottom: 0px;
+}
+
+.win-item {
+    cursor: pointer;
+}
+
+.groupeditemslist .item-image {
+    height: 250px;
+}
+
+
+.titlearea {
+    display: inline-block;
+    margin-left: 20px;
+}
+
+/* Part of above.  */
+.fragment header[role="banner"] .win-backbutton {
+    vertical-align: top; /*shift button to top to align */
+    margin-left: 55px; /* shift title to align with body */
+}
+
+.splitpage .itemlistsection {
+    position: absolute !important;
+    top: 140px;
+    margin-top: 0px;
+    height: auto !important;
+    bottom: 0px;
+    width: 550px;
+}
+
+    .splitpage .itemlistsection .item-date {
+        width: 110px;
+        height: 110px;
+        top: 0px;
+        position: absolute;
+        left: 0px;
+    }
+
+    .splitpage .itemlistsection .item-info {
+        width: 370px;
+        height: 110px;
+        position: absolute;
+        top: 0px;
+        left: 120px;
+    }
+
+.splitpage .articlesection {
+    position: absolute !important;
+    top: 140px;
+    margin-top: 0px;
+    height: auto !important;
+    left: 630px;
+    bottom: 0px;
+    right: 0px;
+    overflow-y: auto !important;
+}

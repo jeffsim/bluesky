@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "Controls_AppBar", "Controls_AppBar.jsproj", "{92850C78-648C-477B-8C1E-239B5FB1FD7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp.csproj", "{47B9BC46-CD10-4C05-ACB3-2CC24393218E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{47B9BC46-CD10-4C05-ACB3-2CC24393218E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47B9BC46-CD10-4C05-ACB3-2CC24393218E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47B9BC46-CD10-4C05-ACB3-2CC24393218E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47B9BC46-CD10-4C05-ACB3-2CC24393218E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92850C78-648C-477B-8C1E-239B5FB1FD7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92850C78-648C-477B-8C1E-239B5FB1FD7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92850C78-648C-477B-8C1E-239B5FB1FD7C}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{92850C78-648C-477B-8C1E-239B5FB1FD7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92850C78-648C-477B-8C1E-239B5FB1FD7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92850C78-648C-477B-8C1E-239B5FB1FD7C}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

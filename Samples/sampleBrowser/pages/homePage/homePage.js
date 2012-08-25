@@ -232,13 +232,23 @@
 
 			// Add the Win8 SDK sample items
 			list.push({
-				group: this.listGroups[2],
-				backgroundImage: "http://bluesky.io/samples/previews/stockSample.jpg",
-				DisplayName: "e2e Stock sample",
-				itemTemplate: 'sdkTemplate',
-				url: "http://stockSample.bluesky.io",
-				githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/stockSample",
-				msdnUrl: "http://code.msdn.microsoft.com/windowsapps/StocksSample-d61665c0"
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/stockSample.jpg",
+			    DisplayName: "e2e Stock sample",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://stockSample.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/stockSample",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/StocksSample-d61665c0"
+			});
+
+			list.push({
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/newsReader.png",
+			    DisplayName: "NewsReader sample",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://newsReader.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/blogReaderSample",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/Getting-started-with-310271df"
 			});
 
 			list.push({
