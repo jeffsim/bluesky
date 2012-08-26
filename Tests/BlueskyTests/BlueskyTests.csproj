@@ -62,6 +62,12 @@
     <Content Include="Tests\supportFiles\xhr\get1.jpg" />
     <Content Include="Tests\supportFiles\xhr\get1.txt" />
     <Content Include="Tests\supportFiles\xhr\get1.xml" />
+    <Content Include="Tests\Tests.Windows.Storage.FileIO.js" />
+    <Content Include="Tests\Tests.Windows.Storage.js" />
+    <Content Include="Tests\Tests.Windows.Storage.PathIO.js" />
+    <Content Include="Tests\Tests.Windows.Storage.Search.js" />
+    <Content Include="Tests\Tests.Windows.Storage.StorageFile.js" />
+    <Content Include="Tests\Tests.Windows.Storage.StorageFolder.js" />
     <Content Include="Tests\Tests.WinJS.Binding.js" />
     <Content Include="Tests\Tests.WinJS.UI.AppBar.js" />
     <Content Include="Tests\Tests.WinJS.UI.AppBarCommand.js" />

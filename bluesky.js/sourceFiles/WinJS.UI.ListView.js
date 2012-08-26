@@ -481,7 +481,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     $surfaceDiv.css("width", surfaceWidth).show();
 
                     // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._disableAnimation)
+                    if (!that._disableAnimation && !that._disableEntranceAnimation)
                         WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
                 });
             },
