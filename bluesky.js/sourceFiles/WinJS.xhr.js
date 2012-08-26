@@ -80,8 +80,11 @@ WinJS.Namespace.define("WinJS", {
                             var responseXML = jqXHR.responseXML || null;
                         } else {
 
+                            // TODO (CLEANUP): Clean all this up
                             var responseText = jqXHR.responseText;
                             var responseXML = jqXHR.responseXML ? jqXHR.responseXML.querySelector("query > results") : null;
+                            if (responseXML)
+                                responseText = responseXML.innerText;
                             /*
                             if (!data)
                                 data = $.parseJSON(jqXHR.responseText);

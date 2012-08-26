@@ -238,7 +238,7 @@ var WinJS = {
 		for (var memberKey in members) {
 
 			var member = members[memberKey];
-			if (member == null)
+			if (!member)
 				continue;
 
 			// allow the member to show in for..in loops
@@ -269,9 +269,13 @@ var WinJS = {
 	//		TODO: Stubbed out for now
 	//
 	//		NYI NYI NYI
-	//
+    //
+    _strictProcessing: false,
 	strictProcessing: function () {
-	}
+
+        // NOTE: THIS FUNCTION HAS BEEN DEPRECATED.  Remove after Win8 RTM
+	    this._strictProcessing = true;
+	},
 
 };
 
@@ -396,225 +400,233 @@ WinJS.Namespace.define("WinJS.UI", {
 //	
 WinJS.Namespace.define("WinJS", {
 
-	// ================================================================
-	//
-	// public function: WinJS.xhr
-	//
-	//   ABOUT THIS FUNCTION:
-	//   First, read the explanation above concerning CORS and YQL
-	//   We have two models for xhr:
-	//  	1.  One is the "proper" approach, which mimics Win8's and uses XMLHttpRequest and is all full of goodness,
-	//  		except for the fact that it won't work cross-domain, and so a slew of LocalContext win8 apps would fall over.
-	//  	2.  The other is the "fast prototype" approach, which uses jQuery and YQL to allow cross-domain and is all full of goodness,
-	//  		except for the fact that it's ugly and pained and introduces additional layers into xhr request.
-	//  
-	//   At this stage of bluesky, we're more interested in enabling quick win8-->web ports, so we use the second approach as the default
-	//   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
-	//   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
-	//
-	xhr: function (options) {
+    // ================================================================
+    //
+    // public function: WinJS.xhr
+    //
+    //   ABOUT THIS FUNCTION:
+    //   First, read the explanation above concerning CORS and YQL
+    //   We have two models for xhr:
+    //  	1.  One is the "proper" approach, which mimics Win8's and uses XMLHttpRequest and is all full of goodness,
+    //  		except for the fact that it won't work cross-domain, and so a slew of LocalContext win8 apps would fall over.
+    //  	2.  The other is the "fast prototype" approach, which uses jQuery and YQL to allow cross-domain and is all full of goodness,
+    //  		except for the fact that it's ugly and pained and introduces additional layers into xhr request.
+    //  
+    //   At this stage of bluesky, we're more interested in enabling quick win8-->web ports, so we use the second approach as the default
+    //   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
+    //   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
+    //
+    xhr: function (options) {
 
-		var request;
-		var requestType = options && options.type || "GET";
+        var request;
+        var requestType = options && options.type || "GET";
 
-		if (Bluesky.Settings.ProxyCrossDomainXhrCalls) {
-			// The following code is the second approach described above - proxy calls through YQL to enable cross-domain
-			return new WinJS.Promise(function (onComplete, onError, onProgress) {
+        if (Bluesky.Settings.ProxyCrossDomainXhrCalls) {
+            // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+            return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-				// TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
-				var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
-				// If this isn't a local request, then run it through the proxy to enable cross-domain
-				// TODO: Check if it's same-domain and don't proxy if so
-				// Use JSON format to support binary objects (xml format borks on them)
-				if (isLocal) {
-					var dataType = undefined;
-				} else {
-					options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
+                // TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
+                var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
+                // If this isn't a local request, then run it through the proxy to enable cross-domain
+                // TODO: Check if it's same-domain and don't proxy if so
+                // Use JSON format to support binary objects (xml format borks on them)
+                if (isLocal) {
+                    var dataType = undefined;
+                } else {
+                    options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=json&callback=?";
-					var dataType = "jsonp";
-				}
-				//	jQuery.support.cors = true; 
-				// TODO: Progress
-				$.ajax({
-					url: options.url,
-					data: options.data,
-					dataType: dataType,
-					success: function (data, textStatus, jqXHR) {
-						// Since we're using YQL, data contains the XML Document with the result. Extract it
-						if (isLocal) {
-							var responseText = jqXHR.responseText;
-							var responseXML = jqXHR.responseXML || null;
-						} else {
-							if (data)
-								var response = data.query.results;
-							else
+								  "%22%3B&format=xml";//json&callback=?";
+                    var dataType = undefined;// "jsonp";
+                }
+                //	jQuery.support.cors = true; 
+                // TODO: Progress
+                $.ajax({
+                    url: options.url,
+                    data: options.data,
+                    dataType: dataType,
+                    success: function (data, textStatus, jqXHR) {
+                        // Since we're using YQL, data contains the XML Document with the result. Extract it
+                        if (isLocal) {
+                            var responseText = jqXHR.responseText;
+                            var responseXML = jqXHR.responseXML || null;
+                        } else {
 
-								var response = $.parseJSON(jqXHR.responseText).query.results;
-							// response could be .result or .xml
-							if (response.xml) {
+                            // TODO (CLEANUP): Clean all this up
+                            var responseText = jqXHR.responseText;
+                            var responseXML = jqXHR.responseXML ? jqXHR.responseXML.querySelector("query > results") : null;
+                            if (responseXML)
+                                responseText = responseXML.innerText;
+                            /*
+                            if (!data)
+                                data = $.parseJSON(jqXHR.responseText);
 
-								// Parse the xml response (which is a JSON object) into an xml object
-								var responseXML = "<xml>" + _xmlToJSON(response.xml) + "</xml>";
-								var parser = new DOMParser();
-								var responseXML = parser.parseFromString(responseXML, "application/xml");
-							} else {
-								var responseText = response.xml || response.result;
-								var responseXML = null;
-							}
-						}
+                            var response = data.query.results;
 
-						onComplete({
-							responseType: "",
-							responseText: responseText,
-							response: responseText,
-							responseXML: responseXML,
-							readyState: 4,
-							DONE: 4,
-							statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
-							status: jqXHR.status
-						});
-					},
-					error: function (jqXHR, textStatus, errorThrown) {
-						// TODO: all return flags.
-						// TODO: Support other errors
-						if (jqXHR.status == 404)
-							onError({ number: -2146697211 });	// Win8's 404 error code
-						else
-							onError({ number: 1 });	// TODO: What to do here?
-					},
-					type: requestType
-				});
-			});
+                            var responseText = response.result;
 
-		} else {
-			// The following code is the first approach described above - use XMLHttpRequest which does not support cross-domain
+                            // Parse the JSON object response into an xml object
+                            var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
 
-			return new WinJS.Promise(function (onComplete, onError, onProgress) {
+                            var parser = new DOMParser();
+                            var responseXML = parser.parseFromString(responseXML, "application/xml");
+                            $("type", responseXML).remove();*/
+                        }
 
-				// track if we've completed the request already
-				var requestCompleted = false;
+                        onComplete({
+                            responseType: "",
+                            responseText: responseText,
+                            response: responseText,
+                            responseXML: responseXML,
+                            readyState: 4,
+                            DONE: 4,
+                            statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
+                            status: jqXHR.status
+                        });
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        // TODO: all return flags.
+                        // TODO: Support other errors
+                        if (jqXHR.status == 404)
+                            onError({ number: -2146697211 });	// Win8's 404 error code
+                        else
+                            onError({ number: 1 });	// TODO: What to do here?
+                    },
+                    type: requestType
+                });
+            });
 
-				// Create the request
-				request = new XMLHttpRequest();
+        } else {
+            // The following code is the first approach described above - use XMLHttpRequest which does not support cross-domain
 
-				// Listen for changes
-				request.onreadystatechange = function () {
+            return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-					// If the request was cancelled, then just break out
-					if (request.cancelled || requestCompleted)
-						return;
+                // track if we've completed the request already
+                var requestCompleted = false;
 
-					// Request completed?
-					if (request.readyState == 4) {
-						// Successful completion or failure?
-						if (request.status >= 200 && request.status < 300) {
-							onComplete(request);
-						}
-						else
-							onError(request);
+                // Create the request
+                request = new XMLHttpRequest();
 
-						// Ignore subsequent changes
-						requestCompleted = true;
-					} else {
-						// Report progress (TODO: Promise doesn't support progress yet)
-						// onProgress(request);
-					}
-				};
+                // Listen for changes
+                request.onreadystatechange = function () {
 
-				// Open the request
-				request.open(requestType, options.url, true);
+                    // If the request was cancelled, then just break out
+                    if (request.cancelled || requestCompleted)
+                        return;
 
-				// Add request headers
-				if (options.headers)
-					options.headers.forEach(function (header) {
-						request.setRequestHeader(key, header);
-					});
+                    // Request completed?
+                    if (request.readyState == 4) {
+                        // Successful completion or failure?
+                        if (request.status >= 200 && request.status < 300) {
+                            onComplete(request);
+                        }
+                        else
+                            onError(request);
 
-				// Finally, send the request
-				request.send(options.data);
-			},
+                        // Ignore subsequent changes
+                        requestCompleted = true;
+                    } else {
+                        // Report progress (TODO: Promise doesn't support progress yet)
+                        // onProgress(request);
+                    }
+                };
+
+                // Open the request
+                request.open(requestType, options.url, true);
+
+                // Add request headers
+                if (options.headers)
+                    options.headers.forEach(function (header) {
+                        request.setRequestHeader(key, header);
+                    });
+
+                // Finally, send the request
+                request.send(options.data);
+            },
 
 			// Error handler
 			function () {
-				request.cancelled = true;
-				request.abort();
+			    request.cancelled = true;
+			    request.abort();
 			});
-		}
-	}
+        }
+    }
 });
-
 
 // ================================================================
 //
-// private function _xmlToJSON
+// private function _JSONtoXML
 //
 //		The YQL proxy that we're using for WinJS.xhr returns XML data as JSON objects; we need to convert it
 //		to an XMLDocument since that's what WinJS.xhr return.
 //
 //		Original source: http://ruchirawageesha.blogspot.com/2011/06/xml-to-json-and-json-to-xml-conversion.html
 //
-function _xmlToJSON(json) {
+function _JSONtoXML(json) {
 
-	var cloneNS = function (ns) {
-		var nns = {};
-		for (var n in ns) {
-			if (ns.hasOwnProperty(n)) {
-				nns[n] = ns[n];
-			}
-		}
-		return nns;
-	};
+    var cloneNS = function (ns) {
+        var nns = {};
+        for (var n in ns) {
+            if (ns.hasOwnProperty(n)) {
+                nns[n] = ns[n];
+            }
+        }
+        return nns;
+    };
 
-	var processLeaf = function (lname, child, ns) {
-		var body = "";
-		if (child instanceof Array) {
-			for (var i = 0; i < child.length; i++) {
-				body += processLeaf(lname, child[i], cloneNS(ns));
-			}
-			return body;
-		} else if (child && typeof child === "object") {
-			var el = "<" + lname;
-			var attributes = "";
-			var text = "";
-			if (child["@xmlns"]) {
-				var xmlns = child["@xmlns"];
-				for (var prefix in xmlns) {
-					if (xmlns.hasOwnProperty(prefix)) {
-						if (prefix === "$") {
-							if (ns[prefix] !== xmlns[prefix]) {
-								attributes += " " + "xmlns=\"" + xmlns[prefix] + "\"";
-								ns[prefix] = xmlns[prefix];
-							}
-						} else if (!ns[prefix] || (ns[prefix] !== xmlns[prefix])) {
-							attributes += " xmlns:" + prefix + "=\"" + xmlns[prefix] + "\"";
-							ns[prefix] = xmlns[prefix];
-						}
-					}
-				}
-			}
-			for (var key in child) {
-				if (child.hasOwnProperty(key) && key !== "@xmlns") {
-					var obj = child[key];
-					if (key === "$") {
-						text += obj;
-					} else if (key.indexOf("@") === 0) {
-						attributes += " " + key.substring(1) + "=\"" + obj + "\"";
-					} else {
-						body += processLeaf(key, obj, cloneNS(ns));
-					}
-				}
-			}
-			body = text + body;
-			return (body !== "") ? el + attributes + ">" + body + "</" + lname + ">" : el + attributes + "/>"
-		}
-	};
-	for (var lname in json) {
-		if (json.hasOwnProperty(lname) && lname.indexOf("@") == -1) {
-			return processLeaf(lname, json[lname], {});
-		}
-	}
-	return null;
+    var processLeaf = function (lname, child, ns) {
+        var body = "";
+        if (child instanceof Array) {
+            for (var i = 0; i < child.length; i++) {
+                body += processLeaf(lname, child[i], cloneNS(ns));
+            }
+            return body;
+        } else if (child && typeof child === "object") {
+            var el = "<" + lname;
+            var attributes = "";
+            var text = "";
+            if (child["@xmlns"]) {
+                var xmlns = child["@xmlns"];
+                for (var prefix in xmlns) {
+                    if (xmlns.hasOwnProperty(prefix)) {
+                        if (prefix === "$") {
+                            if (ns[prefix] !== xmlns[prefix]) {
+                                attributes += " " + "xmlns=\"" + xmlns[prefix] + "\"";
+                                ns[prefix] = xmlns[prefix];
+                            }
+                        } else if (!ns[prefix] || (ns[prefix] !== xmlns[prefix])) {
+                            attributes += " xmlns:" + prefix + "=\"" + xmlns[prefix] + "\"";
+                            ns[prefix] = xmlns[prefix];
+                        }
+                    }
+                }
+            }
+            for (var key in child) {
+                if (child.hasOwnProperty(key) && key !== "@xmlns") {
+                    var obj = child[key];
+                    if (key === "$") {
+                        text += obj;
+                    } else if (key.indexOf("@") === 0) {
+                        attributes += " " + key.substring(1) + "=\"" + obj + "\"";
+                    } else {
+                        body += processLeaf(key, obj, cloneNS(ns));
+                    }
+                }
+            }
+            body = text + body;
+            return (body !== "") ? el + attributes + ">" + body + "</" + lname + ">" : el + attributes + "/>"
+        } else {
+            var escaped = child.replace(/</g, "&lt;").replace(/>/g, "&gt;");//.replace("\r", "").replace("\n", "");
+            escaped = escaped.replace(/\r/g, "").replace(/\n/g, "");
+            escaped = escaped.replace(/&/g, "&amp;");
+            return "<" + lname + ">" + escaped + "</" + lname + ">";
+        }
+    };
+    for (var lname in json) {
+        if (json.hasOwnProperty(lname) && lname.indexOf("@") == -1) {
+            return processLeaf(lname, json[lname], {});
+        }
+    }
+    return null;
 }
 
 
@@ -875,23 +887,69 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
 WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
 
     // =========================================================
-	//
-	//	WinJS.Globalization.DateTimeFormatting.DateTimeFormatter
-	//
+    //
+    //	WinJS.Globalization.DateTimeFormatting.DateTimeFormatter
+    //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.globalization.datetimeformatting.datetimeformatter
     //
-	DateTimeFormatter: WinJS.Class.define(function (formatTemplate) {
+    DateTimeFormatter: WinJS.Class.define(function (formatTemplate) {
 
-		this._formatTemplate = formatTemplate;
-	},
+        this._formatTemplate = formatTemplate;
+    },
     {
-    	format: function (date) {
-    		// TODO: Parse the format string.  For now, hardcoded to what stockSample needs
-    		if (this._formatTemplate == "hour minute")
-    			return date.toLocaleString();
-    		else
-    			return "";
-    	}
+        format: function (date) {
+            var parts = this._formatTemplate.split(" ");
+            var result = "";
+            // TODO: Parse the format string.  For now, hardcoded to what the bluesky samples need
+            for (var i = 0; i < parts.length; i++) {
+                var part = parts[i];
+                var partParts = part.split(".");
+                switch (partParts[0]) {
+                    case "hour":
+                        if (i < parts.length - 1 && parts[i + 1] == "minute") {
+                            result += date.getHours() + ":" + date.getMinutes();
+                            i++;
+                        }
+                        else
+                            result += date.getHours();
+                        break;
+
+                    case "minute":
+                        result += date.getMinutes();
+                        break;
+
+                    case "year":
+                        if (partParts[1] && partParts[1] == "abbreviated")
+                            result += date.getFullYear() - 2000;
+                        else
+                            result += date.getFullYear();
+                        break;
+
+                    case "month":
+                        if (partParts[1] && partParts[1] == "abbreviated")
+                            result += this._abbreviatedMonths[date.getMonth()];
+                        else
+                            result += this._fullMonths[date.getMonth()];
+                        break;
+
+                    case "day":
+                        result += date.getDate();
+                        break;
+
+                    case "dayofweek":
+                        result += this._abbreviatedDays[date.getDay()];
+                        break;
+                }
+                result += " ";
+            }
+            return result;
+        },
+        // TODO: Start with Mon or Sun?
+        _fullDays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        _abbreviatedDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        _fullMonths: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        _abbreviatedMonths: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
     })
 });
 
@@ -2519,392 +2577,395 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 
 WinJS.Namespace.define("WinJS.Binding", {
 
-	// shouldn't be constructed outside of bluesky.js
-	_ListBase: WinJS.Class.define(function () { }, {
-
-		/*DEBUG*/
-		// The functions in this debug block are abstract, so if we get into them it means a derived class didn't implement them
-		getItem: function (index) {
-			console.error("Unexpected call into abstract function _ListBase.getItem");
-		},
-
-		getItemFromKey: function (key) {
-			console.error("Unexpected call into abstract function _ListBase.getItemFromKey");
-		},
-		indexOfKey: function (key) {
-			console.error("Unexpected call into abstract function _ListBase.indexOfKey");
-		},
-		length: {
-			get: function () {
-				console.error("Unexpected call into abstract function _ListBase.length.getter");
-			},
-			set: function () {
-				console.error("Unexpected call into abstract function _ListBase.length.setter");
-			}
-		},
-
-		/*ENDDEBUG*/
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.getAt
-		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700749.aspx
-		//
-		getAt: function (index) {
-
-			// Return the value at the specified index.  Note: this multiple level of abstraction is to support
-			// Grouped and Filtered lists when they come online.
-			return this.getItem(index).data;
-		},
-
-
-		// ================================================================
-		//
-		// private function: WinJS.Binding.List._getValues
-		//
-		//		Returns an array that contains the values in this._items
-		//
-		_getValues: function () {
-
-			// _items is a set (not an array) so we can't just return it but need to array'ize it.
-			var values = [];
-			for (var i = 0; i < this.length; i++) {
-				var item = this.getItem(i);
-				if (item)
-					values[i] = this.getItem(i).data;
-			}
-
-			return values;
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.concat
-		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700739.aspx
-		//
-		concat: function (items) {
-
-			// NOTE: Win8 does not return a WinJS.Binding.List (as of release preview), so neither do we.
-			// This applies to numerous other functions here as well.
-			return this._getValues().concat(items);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.join
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700759.aspx
-		//
-		join: function (separator) {
-
-			return this._getValues().join(separator || ",");
-		},
-
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.forEach
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700747.aspx
-		//
-		forEach: function (callback, thisArg) {
-
-			this._getValues().forEach(callback, thisArg);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.map
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700766.aspx
-		//
-		map: function (callback, thisArg) {
-
-			return this._getValues().map(callback, thisArg);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.some
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700804.aspx
-		//
-		some: function (callback, thisArg) {
-
-			return this._getValues().some(callback, thisArg);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.every
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700744.aspx
-		//
-		every: function (callback, thisArg) {
-
-			return this._getValues().every(callback, thisArg);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.reduce
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700784.aspx
-		//
-		reduce: function (callback, initialValue) {
-
-			return this._getValues().reduce(callback, initialValue);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.reduceRight
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700782.aspx
-		//
-		reduceRight: function (callback, initialValue) {
-
-			return this._getValues().reduceRight(callback, initialValue);
-		},
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.indexOf
-		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700757.aspx
-		//
-		indexOf: function (searchElement, fromIndex) {
-
-			return this._getValues().indexOf(searchElement, fromIndex);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.lastIndexOf
-		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700760.aspx
-		//
-		lastIndexOf: function (searchElement, fromIndex) {
-
-			var list = this._getValues();
-			// Interesting; lastIndexOf doesn't like 'undefined' for fromIndex - at
-			// least on FF13.  indexOf (above) doesn't have this problem.  If fromIndex
-			// isn't specified then set it to last item in the list
-			if (fromIndex === undefined)
-				fromIndex = list.length - 1;
-			return list.lastIndexOf(searchElement, fromIndex);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.slice
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700802.aspx
-		//
-		slice: function (start, end) {
-
-			return this._getValues().slice(start, end);
-		},
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.filter
-		//
-		//		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700745.aspx
-		//
-		filter: function (callback, thisArg) {
-
-			return this._getValues().filter(callback, thisArg);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.createFiltered
-		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700741.aspx
-		//
-		createFiltered: function (inclusionFunction) {
-
-			return new WinJS.Binding.FilteredListProjection(this, inclusionFunction);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.createGrouped
-		//
-		//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700742.aspx
-		//
-		createGrouped: function (groupKeySelector, groupDataSelector) {
-
-			return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
-		},
-
-		// ================================================================
-		//
-		// private function: WinJS.Binding.List.copyItem
-		//
-		//		Creates a copy of a list item
-		//
-		copyItem: function (item) {
-			return {
-				key: item.key,
-				data: item.data,
-				groupKey: item.groupKey,
-				groupSize: item.groupSize,
-			};
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.addEventListener
-		//
-		//		MSDN: TODO
-		//
-		addEventListener: function (eventName, listener) {
-
-			// TODO: Can I leverage DOMEventMixin here now?
-		
-			// Create the list of event listeners for the specified event if it does not yet exist
-			// TODO: Apply this version of addEventListener to other controls.
-			if (!this._eventListeners[eventName])
-				this._eventListeners[eventName] = [];
-
-			// Add the listener to the list of listeners for the specified eventName
-			this._eventListeners[eventName].push(listener);
-
-			// Add DOM element event handlers (e.g. click).
-			// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-			//this.element.addEventListener(eventName, listener);
-		},
-
-
-		// ================================================================
-		//
-		// public function: WinJS.Binding.List.removeEventListener
-		//
-		//		MSDN: TODO
-		//
-		removeEventListener: function (eventName, listener) {
-
-			/*DEBUG*/
-			// Parameter validation
-			if (!this._eventListeners[eventName])
-				console.warn("WinJS.Binding.List.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-			/*ENDDEBUG*/
-
-			// TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
-
-			// Remove the listener from the list of listeners for the specified eventName
-			var listeners = this._eventListeners[eventName];
-			for (var i = 0; i < listeners.length; i++) {
-				if (listener === listeners[i]) {
-					listeners.splice(i, 1);
-					return;
-				}
-			}
-
-			// Remove DOM element event handlers (e.g. click).
-			// TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-		//	this.element.removeEventListener(eventName, listener);
-		},
-
-		// ================================================================
-		//
-		// private function: WinJS.Binding.List._notifyItemChanged
-		//
-		//		Notify any listeners that an item in the list changed
-		//
-		_notifyItemChanged: function (eventData) {
-
-			// TODO: These event listeners are all very similar; how best to generalize?
-			var eventInfo = {
-				target: this,
-				type: "itemchanged",
-				detail: eventData
-			};
-			for (var i in this._eventListeners.itemchanged)
-				this._eventListeners.itemchanged[i](eventInfo);
-		},
-
-
-		// ================================================================
-		//
-		// private function: WinJS.Binding.List._notifyItemRemoved
-		//
-		//		Notify any listeners that an item in the list was removed
-		//
-		_notifyItemRemoved: function (eventData) {
-
-			var eventInfo = {
-				target: this,
-				type: "itemremoved",
-				detail: eventData
-			};
-			for (var i in this._eventListeners.itemremoved)
-				this._eventListeners.itemremoved[i](eventInfo);
-		},
-
-
-		// ================================================================
-		//
-		// private function: WinJS.Binding.List._notifyItemInserted
-		//
-		//		Notify any listeners that an item in the list was inserted
-		//
-		_notifyItemInserted: function (eventData) {
-
-			var eventInfo = {
-				target: this,
-				type: "iteminserted",
-				detail: eventData
-			};
-			for (var i in this._eventListeners.iteminserted)
-				this._eventListeners.iteminserted[i](eventInfo);
-		},
-		// Events
-		oniteminserted: {
-			get: function () { return this._eventListeners["iteminserted"]; },
-			set: function (callback) { this.addEventListener("iteminserted", callback); }	// TODO: iteminserted or oniteminserted?
-		},
-		onitemchanged: {
-			get: function () { return this._eventListeners["itemchanged"]; },
-			set: function (callback) { this.addEventListener("itemchanged", callback); }
-		},
-		onitemremoved: {
-			get: function () { return this._eventListeners["itemremoved"]; },
-			set: function (callback) { this.addEventListener("itemremoved", callback); }
-		},
-
-		onitemmoved: {
-			get: function () { return this._eventListeners["itemmoved"]; },
-			set: function (callback) { this.addEventListener("itemmoved", callback); }
-		},
-		onreload: {
-			get: function () { return this._eventListeners["reload"]; },
-			set: function (callback) { this.addEventListener("reload", callback); }
-		},
-		onitemmutated: {
-			get: function () { return this._eventListeners["itemmutated"]; },
-			set: function (callback) { this.addEventListener("itemmutated", callback); }
-		}
-	}),
+    // shouldn't be constructed outside of bluesky.js
+    _ListBase: WinJS.Class.define(function () { }, {
+
+        /*DEBUG*/
+        // The functions in this debug block are abstract, so if we get into them it means a derived class didn't implement them
+        getItem: function (index) {
+            console.error("Unexpected call into abstract function _ListBase.getItem");
+        },
+
+        getItemFromKey: function (key) {
+            console.error("Unexpected call into abstract function _ListBase.getItemFromKey");
+        },
+        indexOfKey: function (key) {
+            console.error("Unexpected call into abstract function _ListBase.indexOfKey");
+        },
+        length: {
+            get: function () {
+                console.error("Unexpected call into abstract function _ListBase.length.getter");
+            },
+            set: function () {
+                console.error("Unexpected call into abstract function _ListBase.length.setter");
+            }
+        },
+
+        /*ENDDEBUG*/
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.getAt
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700749.aspx
+        //
+        getAt: function (index) {
+
+            // Return the value at the specified index.  Note: this multiple level of abstraction is to support
+            // Grouped and Filtered lists when they come online.
+            return this.getItem(index).data;
+        },
+
+
+        // ================================================================
+        //
+        // private function: WinJS.Binding._ListBase._getValues
+        //
+        //		Returns an array that contains the values in this._items
+        //
+        _getValues: function () {
+
+            // _items is a set (not an array) so we can't just return it but need to array'ize it.
+            var values = [];
+            for (var i = 0; i < this.length; i++) {
+                var item = this.getItem(i);
+                if (item)
+                    values[i] = this.getItem(i).data;
+            }
+
+            return values;
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.concat
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700739.aspx
+        //
+        concat: function (items) {
+
+            // NOTE: Win8 does not return a WinJS.Binding.List (as of release preview), so neither do we.
+            // This applies to numerous other functions here as well.
+            return this._getValues().concat(items);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.join
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700759.aspx
+        //
+        join: function (separator) {
+
+            return this._getValues().join(separator || ",");
+        },
+
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.forEach
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700747.aspx
+        //
+        forEach: function (callback, thisArg) {
+
+            this._getValues().forEach(callback, thisArg);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.map
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700766.aspx
+        //
+        map: function (callback, thisArg) {
+
+            return this._getValues().map(callback, thisArg);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.some
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700804.aspx
+        //
+        some: function (callback, thisArg) {
+
+            return this._getValues().some(callback, thisArg);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.every
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700744.aspx
+        //
+        every: function (callback, thisArg) {
+
+            return this._getValues().every(callback, thisArg);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.reduce
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700784.aspx
+        //
+        reduce: function (callback, initialValue) {
+
+            return this._getValues().reduce(callback, initialValue);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.reduceRight
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700782.aspx
+        //
+        reduceRight: function (callback, initialValue) {
+
+            return this._getValues().reduceRight(callback, initialValue);
+        },
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.indexOf
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700757.aspx
+        //
+        indexOf: function (searchElement, fromIndex) {
+
+            return this._getValues().indexOf(searchElement, fromIndex);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.lastIndexOf
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700760.aspx
+        //
+        lastIndexOf: function (searchElement, fromIndex) {
+
+            var list = this._getValues();
+            // Interesting; lastIndexOf doesn't like 'undefined' for fromIndex - at
+            // least on FF13.  indexOf (above) doesn't have this problem.  If fromIndex
+            // isn't specified then set it to last item in the list
+            if (fromIndex === undefined)
+                fromIndex = list.length - 1;
+            return list.lastIndexOf(searchElement, fromIndex);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.slice
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700802.aspx
+        //
+        slice: function (start, end) {
+
+            return this._getValues().slice(start, end);
+        },
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.filter
+        //
+        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700745.aspx
+        //
+        filter: function (callback, thisArg) {
+
+            return this._getValues().filter(callback, thisArg);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.createFiltered
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700741.aspx
+        //
+        createFiltered: function (inclusionFunction) {
+
+            return new WinJS.Binding.FilteredListProjection(this, inclusionFunction);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.createGrouped
+        //
+        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700742.aspx
+        //
+        createGrouped: function (groupKeySelector, groupDataSelector) {
+
+            return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
+        },
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.addEventListener
+        //
+        //		MSDN: TODO
+        //
+        addEventListener: function (eventName, listener) {
+
+            // TODO: Can I leverage DOMEventMixin here now?
+
+            // Create the list of event listeners for the specified event if it does not yet exist
+            // TODO: Apply this version of addEventListener to other controls.
+            if (!this._eventListeners[eventName])
+                this._eventListeners[eventName] = [];
+
+            // Add the listener to the list of listeners for the specified eventName
+            this._eventListeners[eventName].push(listener);
+
+            // Add DOM element event handlers (e.g. click).
+            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+            //this.element.addEventListener(eventName, listener);
+        },
+
+
+        // ================================================================
+        //
+        // public function: WinJS.Binding._ListBase.removeEventListener
+        //
+        //		MSDN: TODO
+        //
+        removeEventListener: function (eventName, listener) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!this._eventListeners[eventName])
+                console.warn("WinJS.Binding.List.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+            /*ENDDEBUG*/
+
+            // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
+
+            // Remove the listener from the list of listeners for the specified eventName
+            var listeners = this._eventListeners[eventName];
+            for (var i = 0; i < listeners.length; i++) {
+                if (listener === listeners[i]) {
+                    listeners.splice(i, 1);
+                    return;
+                }
+            }
+
+            // Remove DOM element event handlers (e.g. click).
+            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+            //	this.element.removeEventListener(eventName, listener);
+        },
+
+        // ================================================================
+        //
+        // private function: WinJS.Binding._ListBase._notifyItemChanged
+        //
+        //		Notify any listeners that an item in the list changed
+        //
+        _notifyItemChanged: function (eventData) {
+
+            // TODO: These event listeners are all very similar; how best to generalize?
+            var eventInfo = {
+                target: this,
+                type: "itemchanged",
+                detail: eventData
+            };
+            for (var i in this._eventListeners.itemchanged)
+                this._eventListeners.itemchanged[i](eventInfo);
+        },
+
+
+        // ================================================================
+        //
+        // private function: WinJS.Binding._ListBase._notifyItemRemoved
+        //
+        //		Notify any listeners that an item in the list was removed
+        //
+        _notifyItemRemoved: function (eventData) {
+
+            var eventInfo = {
+                target: this,
+                type: "itemremoved",
+                detail: eventData
+            };
+            for (var i in this._eventListeners.itemremoved)
+                this._eventListeners.itemremoved[i](eventInfo);
+        },
+
+
+        // ================================================================
+        //
+        // private function: WinJS.Binding._ListBase._notifyItemInserted
+        //
+        //		Notify any listeners that an item in the list was inserted
+        //
+        _notifyItemInserted: function (eventData) {
+
+            var eventInfo = {
+                target: this,
+                type: "iteminserted",
+                detail: eventData
+            };
+            for (var i in this._eventListeners.iteminserted)
+                this._eventListeners.iteminserted[i](eventInfo);
+        },
+        // Events
+        oniteminserted: {
+            get: function () { return this._eventListeners["iteminserted"]; },
+            set: function (callback) { this.addEventListener("iteminserted", callback); }	// TODO: iteminserted or oniteminserted?
+        },
+        onitemchanged: {
+            get: function () { return this._eventListeners["itemchanged"]; },
+            set: function (callback) { this.addEventListener("itemchanged", callback); }
+        },
+        onitemremoved: {
+            get: function () { return this._eventListeners["itemremoved"]; },
+            set: function (callback) { this.addEventListener("itemremoved", callback); }
+        },
+
+        onitemmoved: {
+            get: function () { return this._eventListeners["itemmoved"]; },
+            set: function (callback) { this.addEventListener("itemmoved", callback); }
+        },
+        onreload: {
+            get: function () { return this._eventListeners["reload"]; },
+            set: function (callback) { this.addEventListener("reload", callback); }
+        },
+        onitemmutated: {
+            get: function () { return this._eventListeners["itemmutated"]; },
+            set: function (callback) { this.addEventListener("itemmutated", callback); }
+        }
+    }, {
+
+        // ================================================================
+        //
+        // private function: WinJS.Binding._ListBase.copyItem
+        //
+        //		Creates a copy of a list item
+        //
+        copyItem: function (item) {
+            return {
+                key: item.key,
+                data: item.data,
+                groupKey: item.groupKey,
+                groupSize: item.groupSize,
+            };
+        },
+
+    }),
 });
+
+
 
 
 
@@ -3228,7 +3289,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 					var key = this._keys[index];
 					var prevItem = this._items[key];
-					var newItem = this.copyItem(prevItem);
+					var newItem = WinJS.Binding._ListBase.copyItem(prevItem);
 					newItem.data = value;
 					newItem.index = index;
 					this._items[key] = newItem;
@@ -3681,7 +3742,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// initialize grouped items
 			for (var i = 0; i < sourceList.length ; i++) {
 				var item = sourceList.getItem(i);
-				item = this.copyItem(item);
+				item = WinJS.Binding._ListBase.copyItem(item);
 				item.groupKey = groupKeySelector(item.data);
 				this._addItem(item);
 			}
@@ -4028,7 +4089,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 						key: groupKey,
 						groupSize: 1,
 						// TODO: Index etc
-						data: this._list._groupDataSelector(eventData.value)
+						data: this._list._groupDataSelector(eventData.detail.value)
 					};
 
 					this._groupItems[groupKey] = newGroupItem;
@@ -4452,18 +4513,18 @@ WinJS.Namespace.define("WinJS.UI", {
     //
     processAll: function (rootElement) {
 
-    	// TODO (CLEANUP): This and .process() share an awful lot of similarity...
+        // TODO (CLEANUP): This and .process() share an awful lot of similarity...
 
         return new WinJS.Promise(function (onComplete) {
 
-        	// If the caller didn't specify a root element, then process the entire document.
+            // If the caller didn't specify a root element, then process the entire document.
             if (!rootElement)
-            	rootElement = document;
+                rootElement = document;
             else {
-            	// Process the element
-            	blueskyUtils.ensureDatasetReady(rootElement);
-            	if (rootElement.dataset && rootElement.dataset.winControl)
-            		WinJS.UI._processElement(rootElement);
+                // Process the element
+                blueskyUtils.ensureDatasetReady(rootElement);
+                if (rootElement.dataset && rootElement.dataset.winControl)
+                    WinJS.UI._processElement(rootElement);
             }
 
             // Add winControl objects to all elements tagged as data-win-control
@@ -4519,20 +4580,20 @@ WinJS.Namespace.define("WinJS.UI", {
         var controlConstructor = window;
         for (var i = 0; i < parts.length; i++) {
 
-        	/*DEBUG*/
-        	if (!controlConstructor)
-        		break;
-        	/*ENDDEBUG*/
+            /*DEBUG*/
+            if (!controlConstructor)
+                break;
+            /*ENDDEBUG*/
 
-        	controlConstructor = controlConstructor[parts[i]];
+            controlConstructor = controlConstructor[parts[i]];
         }
 
-    	/*DEBUG*/
+        /*DEBUG*/
         if (!controlConstructor) {
-        	console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
-        	return;
+            console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
+            return;
         }
-    	/*ENDDEBUG*/
+        /*ENDDEBUG*/
 
         // Now that we have a pointer to the actual control constructor, instantiate the wincontrol
         element.winControl = new controlConstructor(element, options);
@@ -4575,6 +4636,7 @@ WinJS.Namespace.define("WinJS.UI", {
     //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779762.aspx
     // 
+    _warnedExecuteAnimationNYI: false,
     executeAnimation: function (anim) {
 
         // TODO: Implement this.
@@ -4583,7 +4645,47 @@ WinJS.Namespace.define("WinJS.UI", {
             _warnedExecuteAnimationNYI = true;
         }
     },
-    _warnedExecuteAnimationNYI: false,
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.setControl
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440977.aspx
+    //
+    //  TODO: HMM - trying to do this on Win8 gives a "function not known" exception.  Doc or code bug?
+    //
+    setControl: function (handler) {
+
+        // Per todo above, not sure what to do here; drop a warning to the console
+        /*DEBUG*/
+        console.warn("WinJS.UI.setControl is not implemented, as it does not appear to exist on Win8!");
+        /*ENDDEBUG*/
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.eventHandler
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh967816.aspx
+    //
+    eventHandler: function (handler) {
+
+        WinJS.Utilities.markSupportedForProcessing(handler);
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.scopedSelect
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/Hh921605.aspx
+    //
+    scopedSelect: function (selector) {
+
+        return document.querySelector(selector);
+    },
 
 
     // ================================================================
@@ -4635,6 +4737,7 @@ WinJS.Namespace.define("WinJS.UI", {
         select: "select",
         none: "none"
     },
+
 
     // ================================================================
     //
@@ -4728,7 +4831,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		    add: function (items) {
 		        var that = this;
 		        return new WinJS.Promise(function (c) {
-
 		            // If items is not an array, then convert it into one for simplicity
 		            if (items.length === undefined)
 		                items = [items];
@@ -4740,7 +4842,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		            // We want to get values from our listview's actual databound list.
 		            var curList = that._list.itemDataSource._list;
 
-		            items.forEach(function (value) {
+		            for (var i = 0; i < items.length; i++) {
+		                var value = items[i];
 		                var item;
 		                if (typeof value === "number") {
 		                    // value is an index
@@ -4759,11 +4862,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		                    /*ENDDEBUG*/
 		                }
 
-		                if (that._selectedItems.indexOf(item) == -1)
-		                    that._selectedItems.push(item);
-		            });
+		                if (!that._containsItemByKey(item.key)) {
+		                    // The item we obtained above may have an index; if this selection's list is a filtered list, then that index may
+		                    // be wrong (since it's for the full list).  So: copy the item and set its index here.
+		                    item = WinJS.Binding._ListBase.copyItem(item);
+		                    item.index = i;
 
-		            // TODO: Notify our list
+		                    that._selectedItems.push(item);
+		                }
+		            }
+
+		            // Notify our list
 		            that._list._selectionChanged();
 
 		            c(items);
@@ -4811,7 +4920,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		                    /*ENDDEBUG*/
 		                }
 
-		                var indexOfItem = that._selectedItems.indexOf(item);
+		                var indexOfItem = that._getIndexByKey(item.key);
 		                if (indexOfItem != -1)
 		                    that._selectedItems.splice(indexOfItem, 1);
 		            });
@@ -4852,20 +4961,22 @@ WinJS.Namespace.define("WinJS.UI", {
 		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.UI.ISelection.getIndices
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
-			//
+		    // ================================================================
+		    //
+		    // public function: WinJS.UI.ISelection.getIndices
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+		    //
 		    getIndices: function () {
-		    	var indices = [];
-		    	var that = this;
-		    	this._selectedItems.forEach(function (item) {
-		    		var itemIndex = item.index || that._list._itemDataSource._list.indexOf(item);
-		    		indices.push(itemIndex);
-		    	});
-		    	return indices;
+		        var indices = [];
+		        var that = this;
+		        this._selectedItems.forEach(function (item) {
+		            // Our items' indices may have changed (e.g. due to list changing), so get updated index here.
+		            // TODO: Should Iselection listen to changes on _list._itemDataSource?
+		            var itemIndex = that._list._itemDataSource._list.indexOf(item);
+		            indices.push(itemIndex);
+		        });
+		        return indices;
 		    },
 
 
@@ -4903,7 +5014,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    set: function (items) {
 		        var that = this;
-		        return this.clear().then(function () {
+		        return new WinJS.Promise(function () {
+		            that._selectedItems = [];
 		            return that.add(items);
 		        });
 		    },
@@ -4917,12 +5029,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    selectAll: function () {
 		        var that = this;
-		        this.clear().then(function () {
-		            that._list.itemDataSource.getCount().then(function (count) {
-		                for (var i = 0; i < count; i++) {
-		                    that.add(i);
-		                }
-		            });
+		        that._selectedItems = [];
+		        that._list.itemDataSource.getCount().then(function (count) {
+		            for (var i = 0; i < count; i++) {
+		                that.add(i);
+		            }
 		        });
 		    },
 
@@ -4938,6 +5049,35 @@ WinJS.Namespace.define("WinJS.UI", {
 		            console.error("WinJS.UI.ISelection.getRanges is NYI");
 		            c([]);
 		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.ISelection._containsItemByKey
+		    //
+		    //		Returns true if this selection contains an item with the specified key
+		    //
+		    _containsItemByKey: function (key) {
+
+		        return this._getIndexByKey(key) != -1;
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.ISelection._getIndexByKey
+		    //
+		    //		Returns Index of the item in _selectedItems with the specified key, or -1 if not found
+		    //
+		    _getIndexByKey: function (key) {
+
+		        for (var i = 0; i < this._selectedItems.length; i++)
+		            if (this._selectedItems[i].key == key)
+		                return i;
+
+		        // Item with specified key not found
+		        return -1;
 		    }
 		})
 });
@@ -5077,11 +5217,11 @@ WinJS.Class.mix(WinJS.UI.BaseControl, WinJS.UI.DOMEventMixin);
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.UI.AppBar
-	//
-	AppBar: WinJS.Class.derive(WinJS.UI.BaseControl,
+    // ================================================================
+    //
+    // public Object: WinJS.UI.AppBar
+    //
+    AppBar: WinJS.Class.derive(WinJS.UI.BaseControl,
 
 		// ================================================================
 		//
@@ -5091,440 +5231,592 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (element, options) {
 
-			/*DEBUG*/
-			// Parameter validation
-			if (!element)
-				console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
-			/*ENDDEBUG*/
+		    /*DEBUG*/
+		    // Parameter validation
+		    if (!element)
+		        console.error("WinJS.UI.AppBar constructor: Undefined or null element specified");
+		    /*ENDDEBUG*/
 
-			options = options || {};
+		    options = options || {};
 
-			// Set default options
-			this._hidden = options.hidden == "false" ? false : true;
-			this._disabled = options.disabled == "true" ? true : false;
-			this._sticky = options.sticky == "true" ? true : false;
-			this._layout = options.layout || "commands";
-			// TODO: layout
+		    // Set default options
+		    this._hidden = (!!options.hidden || options.hidden == "false") ? false : true;
+		    this._disabled = (options.disabled || options.disabled == "true") ? true : false;
+		    this._sticky = (options.sticky || options.sticky == "true") ? true : false;
+		    this._layout = options.layout || "commands";
 
-			// Call into our base class' constructor
-			WinJS.UI.BaseControl.call(this, element, options);
+		    // Call into our base class' constructor
+		    WinJS.UI.BaseControl.call(this, element, options);
 
-			// Create our DOM hierarchy
-			var $root = this.$rootElement;
-			$root.addClass("win-overlay");
-			$root.addClass("win-appbar");
-			$root.addClass("win-commandlayout");
-			$root.attr("role", "menubar");
-			$root.css("z-index", "1001");
-			$root.css("visibility", this._hidden ? "hidden" : "visible");
-			this.placement = options.placement || "bottom";
+		    // Create our DOM hierarchy
+		    var $root = this.$rootElement;
+		    $root.addClass("win-overlay");
+		    $root.addClass("win-appbar");
+		    $root.addClass("win-commandlayout");
+		    $root.attr("role", "menubar");
+		    $root.css("z-index", "1001");
+		    $root.css("visibility", this._hidden ? "hidden" : "visible");
+		    $root.css("display", this._hidden ? "none" : "block");
+		    this.placement = options.placement || "bottom";
 
-			if (this._layout == "custom") {
-				WinJS.UI.processAll(this.element);
-			}
+		    if (this._layout == "custom") {
+		        WinJS.UI.processAll(this.element);
+		    }
 
-			// Populate commands
-			this._commands = [];
-			var that = this;
-			$("button, hr", $root).each(function (i, button) {
-				WinJS.UI.processAll(button);
-				that._commands.push(button.winControl);
-			});
+		    // Populate commands
+		    this._commands = [];
+		    var that = this;
+		    $("button, hr", $root).each(function (i, button) {
+		        WinJS.UI.processAll(button);
+		        if (button.winControl) {
+		            that._commands.push(button.winControl);
+		            that.addEventListener("beforehide", button.winControl._appBarHiding.bind(button.winControl));
+		        }
+		    });
 
-			// Create click eater
-			this.$clickEater = $("<div class='win-appbarclickeater' style='z-index:1000'></div>");
-			this.$clickEater.appendTo($("body"));
-			this.$clickEater.click(function () {
-				if (!that._sticky)
-					that.hide();
-			});
+		    // Create click eater (once)
+		    // TODO (PERF-MINOR): Check if WinJS.UI._$appBarClickEater exists instead of looking through the DOM.  Doing it this way for now
+		    // since I'm not 100% sure how appbar persistence is expected to work across page navs, and want a 100% working solution...
+		    if ($(".win-appbarclickeater", $("body")).length == 0) {
+		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>");
+		        WinJS.UI._$appBarClickEater.appendTo($("body"));
+		    }
 
-			// Capture right-click
-			$("body").bind("contextmenu", function (event) {
-				// Prevent default to keep browser's context menu from showing
+		    // Handle clicks on the appbar click eater
+		    WinJS.UI._$appBarClickEater.bind("click", this._clickEaterFunction.bind(this));
 
-				// Don't StopPropagation though, so that other appbars get the event
-				event.preventDefault();
-				if (that._hidden)
-					that.show();
-				else
-					that.hide();
-			});
+		    // When the AppBar loses focus, hide it
+		    this.$rootElement.focusout(function (event) {
+
+		        // TODO (CLEANUP): If a flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
+		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
+		        // the focusout event if it happened very recently.
+		        if (WinJS.UI._flyoutClicked && Date.now() - WinJS.UI._flyoutClicked < 250)
+		            return;
+
+		        // TODO (CLEANUP): Similar hackiness to above
+		        if (that._appBarCommandClickedTime && Date.now() - that._appBarCommandClickedTime < 250)
+		            return;
+
+		        if (!that._sticky) {
+		            that._hiddenDueToFocusOut = Date.now();
+		            that.hide();
+		        }
+		    });
+
+		    // Capture right-click
+		    $("body").bind("contextmenu", { appBar: this }, this._rightClickHandler);
+
+		    // When we're removed from the DOM, unload ourselves
+		    this.$rootElement.bind("DOMNodeRemoved", this._unload);
 		},
 
 		// ================================================================
 		// WinJS.UI.AppBar Member functions
 		// ================================================================
 
-
 		{
-			// ================================================================
-			//
-			// public property: WinJS.AppBar.layout
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700558.aspx
-			//
-			_layout: "commands",
-			layout: {
-				get: function () {
-					return this._layout;
-				},
-				set: function (value) {
-					this._layout = value;
-					// TODO: Anything to do here?
-				}
-			},
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._rightClickHandler
+		    //
+		    _rightClickHandler: function (event) {
+
+		        // Prevent default to keep browser's context menu from showing
+		        // Don't StopPropagation though, so that other appbars get the event
+		        event.preventDefault();
+
+		        var appBar = event.data.appBar;
+		        // If the user right-clicked while the appbar is visible, then we get a focusout (above) to hide it, and we come here and re-show it, but we shouldn't!
+		        // So, if this is happening very soon after a focusout, then don't show
+		        if (appBar._hiddenDueToFocusOut && Date.now() - appBar._hiddenDueToFocusOut < 200)
+		            return;
+
+		        if (appBar._hidden)
+		            appBar.show();
+		        else
+		            appBar.hide();
+		    },
 
 
-			// ================================================================
-			//
-			// public property: WinJS.AppBar.placement
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700567.aspx
-			//
-			_placement: "bottom",
-			placement: {
-				get: function () {
-					return this._placement;
-				},
-				set: function (value) {
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._clickEaterFunction
+		    //
+		    _clickEaterFunction: function () {
 
-					this._placement = value;
-
-					// Oddly, the win-bottom/win-top classes don't define bottom/top values.  Do so explicitly here.
-					if (this._placement == "bottom") {
-						this.$rootElement.addClass("win-bottom");
-						this.$rootElement.css({ "top": "auto", "bottom": "0px" });
-					} else {
-						this.$rootElement.addClass("win-top");
-						this.$rootElement.css({ "top": "0px", "bottom": "auto" });
-					}
-				}
-			},
+		        // If we're not sticky and the user clicked off of the appbar, then hide the appbar
+		        if (!this._sticky)
+		            this.hide();
+		    },
 
 
-			// ================================================================
-			//
-			// public property: WinJS.AppBar.commands
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700535.aspx
-			//
-			_commands: [],
-			commands: {
-				set: function (newCommands) {
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._unload
+		    //
+		    _unload: function (event) {
 
-					if (this._layout == "custom")
-						return;
+		        // This is called if the appbar OR an element on the appbar (e.g. an appbarcommand) is removed; make sure it's the appbar
+		        if (event.target == this) {
 
-					// TODO: Does Win8 animate?
-					this._commands = [];
-					this.$rootElement.empty();
+		            var appBar = this.winControl;
 
-					if (!newCommands)
-						return;
+		            // Remove our click listener from the appbar click eater
+		            WinJS.UI._$appBarClickEater.unbind("click", appBar._clickEaterFunction);
 
-					// Caller can specify one item - if they did then convert it to an array
-					if (!(newCommands instanceof Array))
-						newCommands = [newCommands];
+		            // TODO: What if there are other appbars visible?
+		            WinJS.UI._$appBarClickEater.hide();
 
-					for (var i = 0; i < newCommands.length; i++) {
-						this._commands.push(newCommands[i]);
-						this.$rootElement.append(newCommands[i].element);
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("beforehide", true, true, {});
+		            appBar.dispatchEvent(event);
 
-						// the command needs to listen to our hide events so that it can hide flyout (if it has one)
-						this.addEventListener("beforehide", newCommands[i]._appBarHiding.bind(newCommands[i]));
-					}
-				}
-			},
+                    // Unbind commands' appbarhiding listeners
+		            for (var i = 0; i < appBar._commands.length; i++) {
+		                appBar.removeEventListener("beforehide", appBar._commands[i]._appBarHiding);
+		            }
 
+		            // Remove our right-click listener from body
+		            $("body").unbind("contextmenu", appBar._rightClickHandler);
 
-			// ================================================================
-			//
-			// public function: WinJS.AppBar.hideCommands
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700551.aspx
-			//
-			hideCommands: function (commands) {
-
-				if (!commands)
-					return;
-				if (!(commands instanceof Array))
-					commands = [commands];
-
-				// TODO: Animate removal of commands
-				for (var i = 0; i < commands.length; i++) {
-					var command = commands[i];
-					if (typeof command === "string") {
-						command = this.getCommandById(command);
-					}
-					command._hidden = true;
-					command.$rootElement.css("visibility", "hidden");
-				}
-			},
+                    // And remove our listener for when we're removed from the DOM
+		            appBar.$rootElement.unbind("DOMNodeRemoved", appBar._unload);
+                }
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.AppBar.showCommands
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700570.aspx
-			//
-			showCommands: function (commands) {
-
-				if (!commands)
-					return;
-				if (!(commands instanceof Array))
-					commands = [commands];
-
-				// TODO: Animate addition of commands
-				for (var i = 0; i < commands.length; i++) {
-					var command = commands[i];
-					if (typeof command === "string")
-						command = this.getCommandById(command);
-					command._hidden = false;
-					command.$rootElement.css("visibility", "visible");
-				}
-			},
+		    // ================================================================
+		    //
+		    // public property: WinJS.AppBar.layout
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700558.aspx
+		    //
+		    _layout: "commands",
+		    layout: {
+		        get: function () {
+		            return this._layout;
+		        },
+		        set: function (value) {
+		            this._layout = value;
+		            // TODO: Anything to do here?
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.AppBar.showOnlyCommands
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700574.aspx
-			//
-			showOnlyCommands: function (commands) {
+		    // ================================================================
+		    //
+		    // public property: WinJS.AppBar.placement
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700567.aspx
+		    //
+		    _placement: "bottom",
+		    placement: {
+		        get: function () {
+		            return this._placement;
+		        },
+		        set: function (value) {
 
-				if (!commands)
-					commands = [];
-				if (!(commands instanceof Array))
-					commands = [commands];
+		            this._placement = value;
 
-				// TODO: Animate addition of commands?
-				// TODO (CLEANUP): Do this better.  Currently hiding everything and then showing only the ones specified.
-				for (var i = 0; i < this._commands.length; i++) {
-					this._commands[i]._hidden = true;
-					this._commands[i].$rootElement.css("visibility", "hidden");
-				}
-				this.showCommands(commands);
-			},
-
-
-			// ================================================================
-			//
-			// public function: WinJS.AppBar.getCommandById
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700547.aspx
-			//
-			getCommandById: function (id) {
-				if (!this._commands)
-					return null;
-
-				for (var i = 0; i < this._commands.length; i++)
-					if (this._commands[i].id == id)
-						return this._commands[i];
-
-				return null;
-			},
+		            // Oddly, the win-bottom/win-top classes don't define bottom/top values.  Do so explicitly here.
+		            if (this._placement == "bottom") {
+		                this.$rootElement.addClass("win-bottom");
+		                this.$rootElement.css({ "top": "auto", "bottom": "0px" });
+		            } else {
+		                this.$rootElement.addClass("win-top");
+		                this.$rootElement.css({ "top": "0px", "bottom": "auto" });
+		            }
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public property: WinJS.AppBar.disabled
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700540.aspx
-			//
-			_disabled: false,
-			disabled: {
-				get: function () {
-					return this._disabled;
-				},
-				set: function (value) {
+		    // ================================================================
+		    //
+		    // public property: WinJS.AppBar.commands
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700535.aspx
+		    //
+		    _commands: [],
+		    commands: {
+		        set: function (commands) {
 
-					this._disabled = value;
+		            if (this._layout == "custom")
+		                return;
 
-					if (this._disabled && !this._hidden) {
-						// Don't call this.hide() since win8 doesn't fire events when hiding due to disabled = true
-						// TODO: Animate
-						this.$rootElement.css("visibility", "hidden");
-						this._hidden = true;
-					}
-				}
-			},
+                    // Unbind previous commands' appbarhiding listeners
+		            for (var i = 0; i < commands.length; i++) {
+		                this.removeEventListener("beforehide", commands[i]._appBarHiding);
+		            }
 
+		            // TODO: Does Win8 animate?
+		            this._commands = [];
+		            this.$rootElement.empty();
 
-			// ================================================================
-			//
-			// public function: WinJS.AppBar.show
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229676.aspx
-			//
-			show: function () {
-				if (this._disabled)
-					return;
-				// TODO: Animate
-				var event = document.createEvent("CustomEvent");
-				event.initCustomEvent("beforeshow", true, true, {});
-				this.element.dispatchEvent(event);
+		            if (!commands || (typeof commands.length !== "undefined" && commands.length == 0))
+		                return;
 
-				// Did any listener cancel the event?  If so then don't show
-				// NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
-				//if (event.preventDefault)
-				//	return;
+		            // the 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		            commands = this._realizeCommands(commands);
 
-				this.$rootElement.css("visibility", "visible").css("display", "block");
-				this._hidden = false;
-				this.$clickEater.show();
-				var event = document.createEvent("CustomEvent");
-				event.initCustomEvent("aftershow", true, true, {});
-				this.element.dispatchEvent(event);
-			},
+		            for (var i = 0; i < commands.length; i++) {
+		                this._commands.push(commands[i]);
+		                this.$rootElement.append(commands[i].element);
+
+		                // the command needs to listen to our hide events so that it can hide flyout (if it has one)
+		                this.addEventListener("beforehide", commands[i]._appBarHiding.bind(commands[i]));
+		            }
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.AppBar.hide
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229668.aspx
-			//
-			hide: function () {
-				// TODO: Animate
 
-				if (this._disabled)
-					return;
-				// TODO: Generalize this oft-repeated pattern.
-				var event = document.createEvent("CustomEvent");
-				event.initCustomEvent("beforehide", true, true, {});
-				this.element.dispatchEvent(event);
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._realizeCommands
+		    //
+		    _realizeCommands: function (commands) {
 
-				// Did any listener cancel the event?  If so then don't hide
-				// NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
-				//if (event.preventDefault)
-				//	return;
+		        // Caller can specify one item - if they did then convert it to an array
+		        if (typeof commands === "string" || !commands.length)
+		            commands = [commands];
 
-				this.$rootElement.css("visibility", "hidden");
+		        var realizedCommands = [];
 
-				this._hidden = true;
-				this.$clickEater.hide();
-
-				var event = document.createEvent("CustomEvent");
-				event.initCustomEvent("afterhide", true, true, {});
-				this.element.dispatchEvent(event);
-			},
+		        // TODO: The MSDN win8 docs say that these functions can take (1) a [array of] string[s], or (2) a [array of] commandbar[s].  However, the MSDN samples
+		        //       ALSO pass DOMElements (sigh), so we handle all cases here.  Update this when win8 and MSDN stabilize.
+		        // Also note: the docs are unclear on whether or not you can mix-and-match, so we handle them all.
+		        for (var i = 0; i < commands.length; i++) {
+		            var command = commands[i];
+		            if (typeof command === "string") {
+		                command = this.getCommandById(command);
+		            } else if (command instanceof Element) {
+		                command = command.winControl;
+		            }
+		            realizedCommands.push(command);
+		        }
+		        return realizedCommands;
+		    },
 
 
-			// ================================================================
-			//
-			// public property: WinJS.AppBar.hidden
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229665.aspx
-			//
-			_hidden: true,
-			hidden: {
-				get:
+		    // ================================================================
+		    //
+		    // public function: WinJS.AppBar.hideCommands
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700551.aspx
+		    //
+		    hideCommands: function (commands) {
+
+		        if (!commands)
+		            return;
+
+		        // The 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		        commands = this._realizeCommands(commands);
+
+		        // TODO: Animate removal of commands
+		        for (var i = 0; i < commands.length; i++) {
+		            var command = commands[i];
+		            command._hidden = true;
+		            command.$rootElement.css("visibility", "hidden");
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.AppBar.showCommands
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700570.aspx
+		    //
+		    showCommands: function (commands) {
+
+		        if (!commands)
+		            return;
+
+		        // The 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		        commands = this._realizeCommands(commands);
+
+		        // TODO: Animate addition of commands
+		        for (var i = 0; i < commands.length; i++) {
+		            var command = commands[i];
+		            command._hidden = false;
+		            command.$rootElement.css("visibility", "visible");
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.AppBar.showOnlyCommands
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700574.aspx
+		    //
+		    showOnlyCommands: function (commands) {
+
+		        if (!commands)
+		            commands = [];
+
+		        // The 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		        commands = this._realizeCommands(commands);
+
+		        // TODO: Animate addition of commands?
+		        // TODO (CLEANUP): Do this better.  Currently hiding everything and then showing only the ones specified.
+		        for (var i = 0; i < this._commands.length; i++) {
+		            this._commands[i]._hidden = true;
+		            this._commands[i].$rootElement.css("visibility", "hidden");
+		        }
+		        this.showCommands(commands);
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.AppBar.getCommandById
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700547.aspx
+		    //
+		    getCommandById: function (id) {
+		        if (!this._commands)
+		            return null;
+
+		        for (var i = 0; i < this._commands.length; i++)
+		            if (this._commands[i].id == id)
+		                return this._commands[i];
+
+		        return null;
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.AppBar.disabled
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700540.aspx
+		    //
+		    _disabled: false,
+		    disabled: {
+		        get: function () {
+		            return this._disabled;
+		        },
+		        set: function (value) {
+
+		            this._disabled = value;
+
+		            if (this._disabled && !this._hidden) {
+		                // Don't call this.hide() since win8 doesn't fire events when hiding due to disabled = true
+		                // TODO: Animate
+		                this.$rootElement.css("visibility", "hidden");
+		                this._hidden = true;
+		            }
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.AppBar.sticky
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700576.aspx
+		    //
+		    _sticky: false,
+		    sticky: {
+		        get: function () {
+		            return this._sticky;
+		        },
+		        set: function (value) {
+
+		            this._sticky = value;
+		            if (this._sticky)
+		                WinJS.UI._$appBarClickEater.hide();
+		            else if (!this._hidden)
+		                WinJS.UI._$appBarClickEater.show();
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.AppBar.show
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229676.aspx
+		    //
+		    show: function () {
+		        if (this._disabled)
+		            return;
+		        // TODO: Animate
+		        var event = document.createEvent("CustomEvent");
+		        event.initCustomEvent("beforeshow", true, true, {});
+		        this.element.dispatchEvent(event);
+
+		        // Did any listener cancel the event?  If so then don't show
+		        // NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
+		        //if (event.preventDefault)
+		        //	return;
+
+		        // Give the appbar focus
+		        this.element.focus();
+
+		        var that = this;
+		        this.$rootElement.css("visibility", "visible").fadeIn("fast", function () {
+		            that.$rootElement.css("display", "block")
+		            that._hidden = false;
+		            if (!that._sticky)
+		                WinJS.UI._$appBarClickEater.show();
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("aftershow", true, true, {});
+		            that.element.dispatchEvent(event);
+		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.AppBar.hide
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229668.aspx
+		    //
+		    hide: function () {
+		        // TODO: Animate
+
+		        if (this._disabled)
+		            return;
+		        // TODO: Generalize this oft-repeated pattern.
+		        var event = document.createEvent("CustomEvent");
+		        event.initCustomEvent("beforehide", true, true, {});
+		        this.element.dispatchEvent(event);
+
+		        // Did any listener cancel the event?  If so then don't hide
+		        // NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
+		        //if (event.preventDefault)
+		        //	return;
+
+		        var that = this;
+		        this.$rootElement.fadeOut("fast", function () {
+		            that.$rootElement.css("visibility", "hidden").css("display", "none")
+
+		            that._hidden = true;
+		            WinJS.UI._$appBarClickEater.hide();
+
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("afterhide", true, true, {});
+		            that.element.dispatchEvent(event);
+		        });
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public property: WinJS.AppBar.hidden
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229665.aspx
+		    //
+		    _hidden: true,
+		    hidden: {
+		        get:
         		function () {
-        			return this._hidden;
+        		    return this._hidden;
         		}
-			},
+		    },
 
 
-			// ================================================================
-			//
-			// public event: WinJS.AppBar.onafterhide
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212515.aspx
-			//
-			onafterhide: {
-				get: function () {
-					// Return the tracked hander (if any)
-					return this._onafterhide;
-				},
+		    // ================================================================
+		    //
+		    // public event: WinJS.AppBar.onafterhide
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212515.aspx
+		    //
+		    onafterhide: {
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onafterhide;
+		        },
 
-				set: function (callback) {
-					// Remove previous on* handler if one was specified
-					if (this._onafterhide)
-						this.removeEventListener("afterhide", this._onafterhide);
+		        set: function (callback) {
+		            // Remove previous on* handler if one was specified
+		            if (this._onafterhide)
+		                this.removeEventListener("afterhide", this._onafterhide);
 
-					// track the specified handler for this.get
-					this._onafterhide = callback;
-					this.addEventListener("afterhide", callback);
-				}
-			},
-
-
-			// ================================================================
-			//
-			// public event: WinJS.AppBar.onaftershow
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212516.aspx
-			//
-			onaftershow: {
-
-				get: function () {
-					// Return the tracked hander (if any)
-					return this._onaftershow;
-				},
-
-				set: function (callback) {
-					// Remove previous on* handler if one was specified
-					if (this._onaftershow)
-						this.removeEventListener("aftershow", this._onaftershow);
-
-					// track the specified handler for this.get
-					this._onaftershow = callback;
-					this.addEventListener("aftershow", callback);
-				}
-			},
+		            // track the specified handler for this.get
+		            this._onafterhide = callback;
+		            this.addEventListener("afterhide", callback);
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public event: WinJS.AppBar.onbeforehide
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212517.aspx
-			//
-			onbeforehide: {
+		    // ================================================================
+		    //
+		    // public event: WinJS.AppBar.onaftershow
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212516.aspx
+		    //
+		    onaftershow: {
 
-				get: function () {
-					// Return the tracked hander (if any)
-					return this._onbeforehide;
-				},
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onaftershow;
+		        },
 
-				set: function (callback) {
-					// Remove previous on* handler if one was specified
-					if (this._onbeforehide)
-						this.removeEventListener("beforehide", this._onbeforehide);
+		        set: function (callback) {
+		            // Remove previous on* handler if one was specified
+		            if (this._onaftershow)
+		                this.removeEventListener("aftershow", this._onaftershow);
 
-					// track the specified handler for this.get
-					this._onbeforehide = callback;
-					this.addEventListener("beforehide", callback);
-				}
-			},
+		            // track the specified handler for this.get
+		            this._onaftershow = callback;
+		            this.addEventListener("aftershow", callback);
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public event: WinJS.AppBar.onbeforeshow
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212518.aspx
-			//
-			onbeforeshow: {
+		    // ================================================================
+		    //
+		    // public event: WinJS.AppBar.onbeforehide
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212517.aspx
+		    //
+		    onbeforehide: {
 
-				get: function () {
-					// Return the tracked hander (if any)
-					return this._onbeforeshow;
-				},
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onbeforehide;
+		        },
 
-				set: function (callback) {
-					// Remove previous on* handler if one was specified
-					if (this._onbeforeshow)
-						this.removeEventListener("beforeshow", this._onbeforeshow);
+		        set: function (callback) {
+		            // Remove previous on* handler if one was specified
+		            if (this._onbeforehide)
+		                this.removeEventListener("beforehide", this._onbeforehide);
 
-					// track the specified handler for this.get
-					this._onbeforeshow = callback;
-					this.addEventListener("beforeshow", callback);
-				}
-			}
+		            // track the specified handler for this.get
+		            this._onbeforehide = callback;
+		            this.addEventListener("beforehide", callback);
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public event: WinJS.AppBar.onbeforeshow
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212518.aspx
+		    //
+		    onbeforeshow: {
+
+		        get: function () {
+		            // Return the tracked hander (if any)
+		            return this._onbeforeshow;
+		        },
+
+		        set: function (callback) {
+		            // Remove previous on* handler if one was specified
+		            if (this._onbeforeshow)
+		                this.removeEventListener("beforeshow", this._onbeforeshow);
+
+		            // track the specified handler for this.get
+		            this._onbeforeshow = callback;
+		            this.addEventListener("beforeshow", callback);
+		        }
+		    }
 		})
 });
 
@@ -5569,13 +5861,15 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	options = options || {};
 
-        	// Set default options
+            // Set default options
+            // TODO (CLEANUP): Clean up how options are defined across all wincontrols
+            // TODO (CLEANUP): Sanity check: can boolean options come in as strings ("true" instead of true)?  If not, then clean up the below
         	this._type = options.type || "button";
         	this._section = options.section || "global";
-        	this._hidden = options.hidden == "true" ? true : false;
+        	this._hidden = (options.hidden || options.hidden == "true") ? true : false;
         	this._label = options.label || "";
         	this.onclick = options.onclick || null;
-        	this._selected = options.selected == "true" ? true : false;
+        	this._selected = (options.selected || options.selected == "true") ? true : false;
 
         	// Create a base element if one was not provided
         	if (!element) {
@@ -5598,7 +5892,10 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
-        	this.disabled = options.disabled == "true" ? true : false;
+        	if (options.disabled)
+        	    debugger;
+
+        	this.disabled = (options.disabled || options.disabled == "true") ? true : false;
 
         	// Create our DOM hierarchy
         	var $root = this.$rootElement;
@@ -5627,11 +5924,17 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Bind click for flyout
         	var that = this;
         	$root.bind("click", function (event) {
-
-        		if (that._flyout) {
-        			event.stopPropagation();
-        			that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
-        		}
+        	    if (that._flyout) {
+        	        event.stopPropagation();
+        	        event.preventDefault();
+        	        that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
+        	    } else {
+        	        // TODO: See comment in appbar constructor on the purpose behind appBarCommandClickedTime
+        	        var appBarNode = that.element.parentNode;
+        	        if (appBarNode && appBarNode.winControl) {
+        	            appBarNode.winControl._appBarCommandClickedTime = Date.now();
+        	        }
+        	    }
         	});
         },
 
@@ -5656,12 +5959,12 @@ WinJS.Namespace.define("WinJS.UI", {
         			var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
         			if (this.icon.indexOf("url(") == 0)
         				$(".win-commandimage", this.$rootElement).css({
-        					"backgroundImage": this._icon + " !important",
+        				    "backgroundImage": this._icon,
         					"backgroundPosition": ""
         				});
         			else if (iconIndex >= 0) {
-        				var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
-
+        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5)) + 3) + "px";
+        			    
         				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
         				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
         				var iconImage = "http://bluesky.io/images/icons-dark.png";
@@ -6613,6 +6916,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				// this is called when the page should be instantiated and its html realized.  Do so now.
 				var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
 				var that = this;
+				targetElement.winControl = this;
 
 				if (parentedPromise) {
 					// When parenting has completed, trigger the subpage's ready function.  The function that called render()
@@ -7042,12 +7346,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        event.initCustomEvent("beforeshow", true, false, {});
 		        this.element.dispatchEvent(event);
 
-
 		        // show
 		        var $anchor = $(anchor);
 		        var $flyout = $(this.element);
 		        $flyout
                     .addClass("win-flyout")
+			        .addClass("win-overlay")
                     .css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
 
 		        var info = {
@@ -7084,30 +7388,71 @@ WinJS.Namespace.define("WinJS.UI", {
 		                       this._getLeftPosition(info, true) || this._getRightPosition(info, true);
 		                break;
 		        }
+
 		        $flyout
                     .remove()
                     .appendTo($("body"))
                     .css({
                         "left": dest.left,
                         "top": dest.top,
-                        "z-index": "10000",
                         "visibility": "visible"
                     });
 
-		        // Hide it
+		        // Add Flyout clickeater
+		        if ($(".win-flyoutmenuclickeater", $("body")).length == 0) {
+		            WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>");
+		            WinJS.UI._$flyoutClickEater.appendTo($("body")).show();
+		            WinJS.UI._$flyoutClickEater.click(this._clickEaterFunction.bind(this));
+		        }
+
+		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
+		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
+		        // the focusout event if it happened very recently.
+		        this.$rootElement.mousedown(function (event) {
+		            WinJS.UI._flyoutClicked = Date.now();
+		        });
+
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
-		            // Enable light dismiss
-		            $('body').bind('click', that._lightDismissHandler.bind(that));
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
 		            that.element.dispatchEvent(event);
 		        });
 
+		        this.$rootElement.bind("DOMNodeRemoved", this._unload);
 		    },
 
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.Flyout._clickEaterFunction
+		    //
+		    _clickEaterFunction: function () {
+		        this.hide();
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.Flyout._unload
+		    //
+		    _unload: function (event) {
+
+		        // This is called if the Flyout OR an element on the Flyout is removed; make sure it's the Flyout
+		        if (event.target == this) {
+
+		            // Remove our click listener from the Flyout click eater
+		            WinJS.UI._$flyoutClickEater.unbind("click", this._clickEaterFunction);
+
+                    // TODO: Same question as in appbar._unload: should we hide? what if there are multiple flyouts visible and only one is unloaded?
+		            WinJS.UI._$flyoutClickEater.hide();
+
+		            // And remove our listener for when we're removed from the DOM
+		            this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+		        }
+		    },
 
 		    // ================================================================
 		    //
@@ -7133,6 +7478,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._hidden = true;
 		        var that = this;
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
+		            WinJS.UI._$flyoutClickEater.hide();
 		            $(that.element).css("visibility", "hidden");
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, false, {});
@@ -7145,7 +7491,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._alignment = null;
 		    },
 
-
+		    /*
 		    // ================================================================
 		    //
 		    // private function: WinJS.Flyout._lightDismissHandler
@@ -7166,7 +7512,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this.hide();
 		    },
 
-
+            */
 		    // ================================================================
 		    //
 		    // private function: WinJS.Flyout._getLeftPosition
@@ -7252,9 +7598,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onafterhide)
-		        		this.removeEventListener("afterhide", this._onafterhide);
+		            // Remove previous on* handler if one was specified
+		            if (this._onafterhide)
+		                this.removeEventListener("afterhide", this._onafterhide);
 
 		            // track the specified handler for this.get
 		            this._onafterhide = callback;
@@ -7272,19 +7618,19 @@ WinJS.Namespace.define("WinJS.UI", {
 		    onaftershow: {
 
 		        get: function () {
-                    // Return the tracked hander (if any)
+		            // Return the tracked hander (if any)
 		            return this._onaftershow;
-                },
+		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onaftershow)
-		        		this.removeEventListener("aftershow", this._onaftershow);
+		            // Remove previous on* handler if one was specified
+		            if (this._onaftershow)
+		                this.removeEventListener("aftershow", this._onaftershow);
 
-                    // track the specified handler for this.get
-                    this._onaftershow = callback;
-                    this.addEventListener("aftershow", callback);
-                }
+		            // track the specified handler for this.get
+		            this._onaftershow = callback;
+		            this.addEventListener("aftershow", callback);
+		        }
 		    },
 
 
@@ -7295,16 +7641,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforehide: {
-                
+
 		        get: function () {
 		            // Return the tracked hander (if any)
 		            return this._onbeforehide;
 		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onbeforehide)
-		        		this.removeEventListener("beforehide", this._onbeforehide);
+		            // Remove previous on* handler if one was specified
+		            if (this._onbeforehide)
+		                this.removeEventListener("beforehide", this._onbeforehide);
 
 		            // track the specified handler for this.get
 		            this._onbeforehide = callback;
@@ -7320,16 +7666,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: TODO
 		    //
 		    onbeforeshow: {
-                
+
 		        get: function () {
 		            // Return the tracked hander (if any)
 		            return this._onbeforeshow;
 		        },
 
 		        set: function (callback) {
-		        	// Remove previous on* handler if one was specified
-		        	if (this._onbeforeshow)
-		        		this.removeEventListener("beforeshow", this._onbeforeshow);
+		            // Remove previous on* handler if one was specified
+		            if (this._onbeforeshow)
+		                this.removeEventListener("beforeshow", this._onbeforeshow);
 
 		            // track the specified handler for this.get
 		            this._onbeforeshow = callback;
@@ -7364,7 +7710,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		            return this._alignment;
 		        },
 		        set: function () {
-		        	console.warn("Flyout.alignment is NYI");
+		            console.warn("Flyout.alignment is NYI");
 		        }
 		    },
 
@@ -8574,6 +8920,172 @@ WinJS.Namespace.define("WinJS.UI", {
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
+//                    File: WinJS.UI.IZoomableView.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+/*DEBUG*/
+
+// ================================================================
+//
+// WinJS.UI.IZoomableView
+//
+//		This is the root WinJS.UI.IZoomableView interface
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229794.aspx
+//
+//		IZoomableView is an interface (abstract), so technically nothing
+//		is needed here.  However, for debug builds we warn if the developer
+//		neglected to implement any of the required functions
+//
+
+WinJS.Namespace.define("WinJS.UI", {
+
+	// ================================================================
+	//
+	// public interface: WinJS.UI.IZoomableView
+	//
+	IZoomableView: WinJS.Class.define(null,
+
+		// ================================================================
+		//
+		// WinJS.UI.IZoomableView Member functions
+		//
+		// ================================================================
+
+        {
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.getPanAxis
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229792.aspx
+        	//
+        	getPanAxis: function () {
+        		if (!this._warnedGetPanAxis) {
+        			console.warn("bluesky Warning: IZoomableView.getPanAxis has not been implemented on a derived class");
+        			this._warnedGetPanAxis = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.configureForZoom
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229789.aspx
+        	//
+        	_warnedConfigureForZoom: false,
+        	configureForZoom: function (isZoomedOut, isCurrentView, triggerZoom, prefetchedPages) {
+        		if (!this._warnedConfigureForZoom) {
+        			console.warn("bluesky Warning: IZoomableView.configureForZoom has not been implemented on a derived class");
+        			this._warnedConfigureForZoom = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.setCurrentItem
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229796.aspx
+        	//
+        	_warnedSetCurrentItem: false,
+        	setCurrentItem: function (x, y) {
+        		if (!this._warnedSetCurrentItem) {
+        			console.warn("bluesky Warning: IZoomableView.setCurrentItem has not been implemented on a derived class");
+        			this._warnedSetCurrentItem = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.getCurrentItem
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229791.aspx
+        	//
+        	_warnedGetCurrentItem: false,
+        	getCurrentItem: function () {
+        		if (!this._warnedGetCurrentItem) {
+        			console.warn("bluesky Warning: IZoomableView.getCurrentItem has not been implemented on a derived class");
+        			this._warnedGetCurrentItem = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.beginZoom
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229788.aspx
+        	//
+        	_warnedBeginZoom: false,
+        	beginZoom: function () {
+        		if (!this._warnedBeginZoom) {
+        			console.warn("bluesky Warning: IZoomableView.beginZoom has not been implemented on a derived class");
+        			this._warnedBeginZoom = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.positionItem
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229795.aspx
+        	//
+        	_warnedPositionItem: false,
+        	positionItem: function (/*@override*/item, position) {
+        		if (!this._warnedPositionItem) {
+        			console.warn("bluesky Warning: IZoomableView.positionItem has not been implemented on a derived class");
+        			this._warnedPositionItem = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.endZoom
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229790.aspx
+        	//
+        	_warnedEndZoom: false,
+        	endZoom: function (isCurrentView) {
+        		if (!this._warnedEndZoom) {
+        			console.warn("bluesky Warning: IZoomableView.endZoom has not been implemented on a derived class");
+        			this._warnedEndZoom = true;
+        		}
+        	},
+
+
+        	// ================================================================
+        	//
+        	// Public function: WinJS.IZoomableView.handlePointer
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229793.aspx
+        	//
+        	_warnedHandlePointer: false,
+        	handlePointer: function (pointerId) {
+        		if (!this._warnedHandlePointer) {
+        			console.warn("bluesky Warning: IZoomableView.handlePointer has not been implemented on a derived class");
+        			this._warnedHandlePointer = true;
+        		}
+        	}
+        })
+});
+/*ENDDEBUG*/
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
 //                    File: WinJS.UI.SemanticZoom.js
 // ==                                                          == //
 // ============================================================== //
@@ -8645,23 +9157,37 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	WinJS.UI.processAll(this.element);
 
-        	// Start out with zoomedin visible, zoomedout hidden
-        	this._showElement(this._$zoomedInContainer);
-        	this._hideElement(this._$zoomedOutContainer);
+            // Start out with zoomedin visible, zoomedout hidden
+            // TODO (CLEANUP): Should listview.configureForZoom handle this?
+        	this._$zoomedInContainer.css("visibility", "visible");
+        	this._$zoomedOutContainer.css("visibility", "hidden");
 
         	// When the user clicks on an item in the zoomedout control, zoom into it in the zoomedincontrol
-        	// TODO: This only works with ListViews for now.  Need to generalize through IZoomableView in R2/R3
-        	this._zoomedInListView = this._$zoomedInElement[0].winControl;
-        	this._zoomedOutListView = this._$zoomedOutElement[0].winControl;
-        	/*DEBUG*/
-        	
-        	if (!this._zoomedOutListView || !this._zoomedOutListView.selection)
-        		console.error("SemanticZoom only works with ListView subcontrols for R1; IZoomableView will come in R2/R3");
-        	if (this._zoomedInListView._groupDataSource != this._zoomedOutListView._itemDataSource)
-        		console.error("SemanticZoom currently only works with a grouped listview as the zoomed-in view, and that listview's groupdatasource as the zoomed-out view.  Check the GroupedListview sample for a working example");
+        	this._zoomedInView = this._$zoomedInElement[0].winControl;
+        	this._zoomedOutView = this._$zoomedOutElement[0].winControl;
 
-        	/*ENDDEBUG*/
-        	this._zoomedOutListView.oniteminvoked = this._zoomedOutListItemClicked.bind(this);
+            // If zoomedinview is a listview, then forward SemanticZoom calls to it's private functions
+        	if (!this._zoomedInView.beginZoom) {
+        	    this._zoomedInView.beginZoom = this._zoomedInView._beginZoom;
+        	    this._zoomedInView.endZoom = this._zoomedInView._endZoom;
+        	    this._zoomedInView.getCurrentItem = this._zoomedInView._getCurrentItem;
+        	    this._zoomedInView.configureForZoom = this._zoomedInView._configureForZoom
+        	    this._zoomedInView.positionItem = this._zoomedInView._positionItem;
+        	}
+
+            // If _zoomedOutView is a listview, then forward SemanticZoom calls to it's private functions
+        	if (!this._zoomedOutView.beginZoom) {
+        	    this._zoomedOutView.beginZoom = this._zoomedOutView._beginZoom;
+        	    this._zoomedOutView.endZoom = this._zoomedOutView._endZoom;
+        	    this._zoomedOutView.getCurrentItem = this._zoomedOutView._getCurrentItem;
+        	    this._zoomedOutView.configureForZoom = this._zoomedOutView._configureForZoom;
+        	    this._zoomedOutView.positionItem = this._zoomedOutView._positionItem;
+        	}
+
+            // Call configureForZoom
+        	var that = this;
+        	this._zoomedInView.configureForZoom(false, true, function () { that.zoomedOut = true; }, 1);
+        	this._zoomedOutView.configureForZoom(true, false, function () { that.zoomedOut = false; }, 100);
 
         	// Initialize values
         	this._enableButton = true;
@@ -8671,10 +9197,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	// We want to know when the browser is resized so that we can relayout our items.
         	window.addEventListener("resize", this._windowResized.bind(this));
-        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I
-        	// can't quite get it to work.
-        	//window.removeEventListener("resize", this._zoomedInListView._windowResized);
-        	//window.removeEventListener("resize", this._zoomedOutListView._windowResized);
+
+        	// TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I can't quite get it to work.
+        	//window.removeEventListener("resize", this._zoomedInView._windowResized);
+        	//window.removeEventListener("resize", this._zoomedOutView._windowResized);
         },
 
 		// ================================================================
@@ -8691,7 +9217,7 @@ WinJS.Namespace.define("WinJS.UI", {
         	//
         	_windowResized: function (eventData) {
 
-				// If size hasn't changed, then nothing to do.
+        		// If size hasn't changed, then nothing to do.
         		var newWidth = this.$rootElement.innerWidth();
         		var newHeight = this.$rootElement.innerHeight();
         		if (parseInt(this._$zoomContainer.css("width")) == newWidth && parseInt(this._$zoomContainer.css("height")) == newHeight)
@@ -8709,231 +9235,264 @@ WinJS.Namespace.define("WinJS.UI", {
         	},
 
 
-			// ================================================================
-			//
-			// public event: WinJS.SemanticZoom.onzoomchanged
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
-			//
-			onzoomchanged: {
-				get: function () {
-					// Return the tracked hander
-					return this._onzoomchanged;
-				},
+        	// ================================================================
+        	//
+        	// public event: WinJS.SemanticZoom.onzoomchanged
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh994989.aspx
+        	//
+        	onzoomchanged: {
 
-				set: function (callback) {
+        		get: function () {
+        			// Return the tracked hander
+        			return this._onzoomchanged;
+        		},
 
-					// Remove previous on* handler if one was specified
-					if (this._onzoomchanged)
-						this.removeEventListener("zoomchanged", this._onzoomchanged);
+        		set: function (callback) {
 
-					// track the specified handler for this.get
-					this._onzoomchanged = callback;
-					this.addEventListener("zoomchanged", callback);
-				}
-			},
+        			// Remove previous on* handler if one was specified
+        			if (this._onzoomchanged)
+        				this.removeEventListener("zoomchanged", this._onzoomchanged);
 
-
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.enableButton
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
-			//
-			_enableButton: true,
-			enableButton: {
-				get: function () {
-					return this._enableButton;
-				},
-				set: function (value) {
-					this._enableButton = value;
-					this._enableButton ? this._addZoomButton() : this._removeZoomButton();
-				}
-			},
+        			// track the specified handler for this.get
+        			this._onzoomchanged = callback;
+        			this.addEventListener("zoomchanged", callback);
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.locked
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
-			//
-			_locked: false,
-			locked: {
-				get: function () {
-					return this._locked;
-				},
-				set: function (value) {
-					this._locked = value;
-				}
-			},
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.enableButton
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/jj126159.aspx
+        	//
+        	_enableButton: true,
+        	enableButton: {
+
+        		get: function () {
+        			return this._enableButton;
+        		},
+        		set: function (value) {
+        			this._enableButton = value;
+        			this._enableButton ? this._addZoomButton() : this._removeZoomButton();
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.zoomedOut
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
-			//
-			_zoomedOut: false,
-			zoomedOut: {
-				get: function () {
-					return this._zoomedOut;
-				},
-				set: function (isZoomedOut) {
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.locked
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229689.aspx
+        	//
+        	_locked: false,
+        	locked: {
 
-					// If the ZoomControl is locked, then ignore zoom set
-					if (this._locked)
-						return;
-
-					// If same, then ignore
-					if (this._zoomedOut == isZoomedOut)
-						return;
-
-					this._zoomedOut = isZoomedOut;
-
-					// hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
-					// Promises which are fulfilled when the animation has finished; we wait until both
-					// animations are done before triggering onzoomchanged
-					var promises = [];
-					if (isZoomedOut) {
-						// We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
-						promises.push(this._hideElement(this._$zoomedInContainer));
-						promises.push(this._showElement(this._$zoomedOutContainer));
-
-						// Also hide the zoom button, which isn't visible when zoomed out
-						this._$zoomButton.hide().css({ "visibility": "hidden" });
-					} else {
-
-						// We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
-						promises.push(this._showElement(this._$zoomedInContainer));
-						promises.push(this._hideElement(this._$zoomedOutContainer));
-
-						// Also show the zoom button, which is visible when zoomed out (if enableButton is true)
-						if (this.enableButton)
-							this._$zoomButton.show().css({ "visibility": "visible" });
-					}
-
-					// Per above, wait until both animations have completed before triggering onzoomchanged.
-					var that = this;
-					WinJS.Promise.join(promises).then(function () {
-						// Notify listeners that zoom changed
-						var event = document.createEvent("CustomEvent");
-						event.initCustomEvent("zoomchanged", true, false, {});
-						that.element.dispatchEvent(event);
-					});
-				}
-			},
+        		get: function () {
+        			return this._locked;
+        		},
+        		set: function (value) {
+        			this._locked = value;
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// public property: WinJS.SemanticZoom.zoomFactor
-			//
-			//		TODO: NYI; not leveraging this yet.
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
-			//
-			_zoomFactor: 0.65,
-			zoomFactor: {
-				get: function () {
-					return this._zoomFactor;
-				}
-			},
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.zoomedOut
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229693.aspx
+            //
+        	_zoomedOut: false,
+        	zoomedOut: {
+
+        	    get: function () {
+        	        return this._zoomedOut;
+        	    },
+        	    set: function (isZoomedOut) {
+        	        // If the ZoomControl is locked, then ignore zoom set
+        	        if (this._locked)
+        	            return;
+
+        	        // If same, then ignore
+        	        if (this._zoomedOut == isZoomedOut)
+        	            return;
+
+        	        this._zoomedOut = isZoomedOut;
+
+        	        // Trigger beginZoom on both the zoomedIn and zoomedOut Views
+        	        this._zoomedInView.beginZoom();
+        	        this._zoomedOutView.beginZoom();
+
+        	        // TODO (R3): For R1/R2 we're just fading between views when zooming.  In R3 when we add the 'zoom' animation,
+        	        //			  we'll need to set initial view scroll offsets here so that they smoothly animate
+        	        var itemPromise = (isZoomedOut ? this._zoomedInView : this._zoomedOutView).getCurrentItem();
+        	        var that = this;
+        	        itemPromise.then(function (current) {
+
+        	            // hide/show the appropriate zoomed in/out container.  _hideElement/_showElement return
+        	            // Promises which are fulfilled when the animation has finished; we wait until both
+        	            // animations are done before triggering onzoomchanged
+        	            var promises = [];
+        	            if (isZoomedOut) {
+
+        	                // Set position of the zooming-to ZoomableView
+        	                that._zoomedOutView.positionItem(current.item, current.position);
+
+        	                // We're zooming out; hide the zoomedInContainer and show the zoomedOutContainer
+        	                promises.push(that._hideElement(that._$zoomedInContainer));
+        	                promises.push(that._showElement(that._$zoomedOutContainer));
+
+        	                // Also hide the zoom button, which isn't visible when zoomed out
+        	                that._$zoomButton.hide().css({ "visibility": "hidden" });
+
+        	            } else {
+
+        	                // Set position of the zooming-to ZoomableView
+        	                that._zoomedInView.positionItem(current.item, current.position);
+
+        	                // We're zooming in; show the zoomedInContainer and hide the zoomedOutContainer
+        	                promises.push(that._showElement(that._$zoomedInContainer));
+        	                promises.push(that._hideElement(that._$zoomedOutContainer));
+
+        	                // Also show the zoom button, which is visible when zoomed out (if enableButton is true)
+        	                if (that.enableButton)
+        	                    that._$zoomButton.show().css({ "visibility": "visible" });
+        	            }
+
+        	            // Per above, wait until both animations have completed before triggering onzoomchanged.
+        	            WinJS.Promise.join(promises).then(function () {
+
+        	                // Trigger endZoom on both the zoomedIn and zoomedOut Views
+        	                that._zoomedInView.endZoom();
+        	                that._zoomedOutView.endZoom();
+
+        	                // Notify listeners that zoom changed
+        	                var event = document.createEvent("CustomEvent");
+        	                event.initCustomEvent("zoomchanged", true, false, {});
+        	                that.element.dispatchEvent(event);
+        	            });
+        	        });
+        	    }
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._showElement
-			//
-			_showElement: function ($element) {
+        	// ================================================================
+        	//
+        	// public property: WinJS.SemanticZoom.zoomFactor
+        	//
+        	//		TODO: NYI; not leveraging this yet.
+        	//
+        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701189.aspx
+        	//
+        	_zoomFactor: 0.65,
+        	zoomFactor: {
 
-				// TODO: Animate zoom (in R2)
-				// TODO (CLEANUP): Use jQuery's promise functionality here?
-				return new WinJS.Promise(function (onComplete) {
-					$element.fadeIn("fast", function () {
-						$element.css({ "visibility": "visible" });
-						onComplete();
-					});
-				});
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._hideElement
-			//
-			_hideElement: function ($element) {
-
-				// TODO: Animate zoom (in R2)
-				// TODO (CLEANUP): Use jQuery's promise functionality here?
-				return new WinJS.Promise(function (onComplete) {
-					$element.fadeOut("fast", function () {
-						$element.css({ "visibility": "hidden", "display": "block" });
-						onComplete();
-					});
-				});
-			},
+        		get: function () {
+        			return this._zoomFactor;
+        		}
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._addZoomButton
-			//
-			_addZoomButton: function () {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._showElement
+        	//
+        	_showElement: function ($element) {
 
-				this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
-				this.$rootElement.append(this._$zoomButton);
-				var that = this;
-				this._$zoomButton.click(function () {
-					that.zoomedOut = true;
-				});
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._removeZoomButton
-			//
-			_removeZoomButton: function () {
-
-				this._$zoomButton.remove();
-			},
+        		// TODO: Animate zoom (in R2)
+        		return new WinJS.Promise(function (onComplete) {
+        		    $element.fadeIn("fast", function () {
+        				$element.css({ "visibility": "visible" });
+        				onComplete();
+        			});
+        		});
+        	},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.SemanticZoom._zoomedOutListItemClicked
-			//
-			//		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
-			//		scrolled to the clicked-on group.
-			//
-			_zoomedOutListItemClicked: function (eventData) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._hideElement
+        	//
+        	_hideElement: function ($element) {
 
-				// Zoom out
-				this.zoomedOut = false;
+        		// TODO: Animate zoom (in R2)
+        	    return new WinJS.Promise(function (onComplete) {
+        	        if ($element.css("visibility") == "visible") {
+        	            $element.fadeOut("fast", function () {
+        	                $element.css({ "visibility": "hidden", "display": "block" });
+        	                onComplete();
+        	            });
+        	        }
+        		});
+        	},
 
-				// Gor now, Semantic Zoom works with grouped lists only, so we can find the first item
-				// in the invoked group, and scroll to it in the zoomed-in listview.
-				// TODO: Support other datasources than grouped lists
-				var that = this;
-				eventData.detail.itemPromise.then(function (clickedGroup) {
 
-					// Find the first item in the zoomedinlistview that is in the clicked group
-					// TODO (CLEANUP): Should use IListDataSource for this.
-					var list = that._zoomedInListView._itemDataSource._list;
-					for (var i = 0; i < list.length; i++) {
-						var item = list.getItem(i);
-						if (item.groupKey == clickedGroup.key) {
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._addZoomButton
+        	//
+        	_addZoomButton: function () {
 
-							// Bring the selected item/group (?) into view
-							that._zoomedInListView.indexOfFirstVisible = i;
-							break;
-						}
-					}
-				});
-			}
-		})
+        		this._$zoomButton = $("<button class='win-semanticzoom-button win-semanticzoom-button-location ltr'></button>");
+        		this.$rootElement.append(this._$zoomButton);
+        		var that = this;
+        		this._$zoomButton.click(function () {
+        			that.zoomedOut = true;
+        		});
+        	},
+
+
+        	// ================================================================
+        	//
+        	// private function: WinJS.SemanticZoom._removeZoomButton
+        	//
+        	_removeZoomButton: function () {
+
+        		this._$zoomButton.remove();
+        	},
+
+
+            /*
+            // ================================================================
+            //
+            // private function: WinJS.SemanticZoom._zoomedOutListItemClicked
+            //
+            //		Called when the user clicks on an item in the zoomed out list view.  Transition to the zoomed-in listview,
+            //		scrolled to the clicked-on group.
+            //
+            _zoomedOutListItemClicked: function (eventData) {
+
+                // Set the item the zoomedin list
+                console.error("NYI: eventData x,y", eventData);
+                this._zoomedInView.setCurrentItem(eventData.x, eventData.y);
+
+                // Zoom back in to the zoomedin list
+                that.zoomedOut = false;
+                return;
+
+        		// Zoom out
+
+        		// For now, Semantic Zoom works with grouped lists only, so we can find the first item
+        		// in the invoked group, and scroll to it in the zoomed-in listview.
+        		// TODO: Support other datasources than grouped lists
+        		eventData.detail.itemPromise.then(function (clickedItem) {
+        		    that._zoomed
+        			// Find the first item in the zoomedinlistview that is in the clicked group
+        			// TODO (CLEANUP): Should use IListDataSource for this.
+        			var list = that._zoomedInView._itemDataSource._list;
+        			for (var i = 0; i < list.length; i++) {
+        				var item = list.getItem(i);
+        				if (item.groupKey == clickedGroup.key) {
+        					// Bring the selected item/group (?) into view
+        					that._zoomedInView.indexOfFirstVisible = i;
+        					break;
+        				}
+        			}
+        		});
+            }*/
+        })
 });
 
 
@@ -8991,6 +9550,7 @@ WinJS.Namespace.define("WinJS.UI", {
             this.tapBehavior = WinJS.UI.TapBehavior.invokeOnly;
             this.swipeBehavior = WinJS.UI.SwipeBehavior.select;
             this.selectionMode = WinJS.UI.SelectionMode.multi;
+
             // Generate our layout definition object.
             // tbd: what's the right win8 default?
             if (options && options.layout && options.layout.type == "WinJS.UI.ListLayout")
@@ -9021,11 +9581,15 @@ WinJS.Namespace.define("WinJS.UI", {
                     this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
             }
 
-        	// We want to know when the browser is resized so that we can relayout our items.
-            this.resizing = false;
+            this._disableAnimation = false;
+
+            // We want to know when the browser is resized so that we can relayout our items.
             this._prevWidth = "";
             this._prevHeight = "";
-            window.addEventListener("resize", this._windowResized.bind(this));
+            // TODO: I've disabled resize because (1) it's too slow (since we're re-rendering everything on resize (until R3)), and (2) I'm
+            // leaking the event - when the user changes pages, the old items remain in memory so they previous page's listviews get resize
+            // events.  I'm not sure where to drop the unbinding - possibly winControl.unload? - but for now I'm just disabling it.
+            //   	window.addEventListener("resize", this._windowResized.bind(this));
         },
 
 		// ================================================================
@@ -9033,28 +9597,29 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
         {
-        	// ================================================================
-        	//
-        	// private event: WinJS.SemanticZoom._windowResized
-        	//
-        	//		Called when the browser window is resized; resize ourselves
-        	//
-        	_windowResized: function (eventData) {
 
-        		// If size hasn't changed, then nothing to do.
-        		var newWidth = this.$rootElement.innerWidth();
-        		var newHeight = this.$rootElement.innerHeight();
-        		if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
-        			return;
+            // ================================================================
+            //
+            // private event: WinJS.ListView._windowResized
+            //
+            //		Called when the browser window is resized; resize ourselves
+            //
+            _windowResized: function (eventData) {
 
-        		// tbd: instead of re-rendering completely, should do a "movePosition"
-        		// tbd-perf: only relayout if size has changed at the listview items' size granularity
-        		//var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
-        		this._resizing = true;
-        		this._doRender();
-        		this._resizing = false;
-        		//anim.execute();
-        	},
+                // If size hasn't changed, then nothing to do.
+                var newWidth = this.$rootElement.innerWidth();
+                var newHeight = this.$rootElement.innerHeight();
+                if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
+                    return;
+
+                // tbd: instead of re-rendering completely, should do a "movePosition"
+                // tbd-perf: only relayout if size has changed at the listview items' size granularity
+                //var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
+                this._disableAnimation = true;
+                this._doRender();
+                this._disableAnimation = false;
+                //anim.execute();
+            },
 
 
             // ================================================================
@@ -9212,14 +9777,14 @@ WinJS.Namespace.define("WinJS.UI", {
                         // and jump to the next column
                         if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
-                        	// If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
-                        	if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                        		$groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
-                        	}
+                            // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                            if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                                $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                            }
 
-                        	// Track width of the current group for the above limit
-                        	groupRenderStartX = surfaceWidth;
-							
+                            // Track width of the current group for the above limit
+                            groupRenderStartX = surfaceWidth;
+
                             // Track the current group key so that we know when we switch to a new group
                             currentGroupKey = item.groupKey;
 
@@ -9229,7 +9794,7 @@ WinJS.Namespace.define("WinJS.UI", {
 								.clone()
 								.addClass("win-groupheader")
 								.show();
-                            
+
                             // Give the cloned element a unique identifier
                             // TODO (CLEANUP): can I do this in Binding.processAll?
                             blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
@@ -9323,33 +9888,36 @@ WinJS.Namespace.define("WinJS.UI", {
                         // Go to the next place to put the next item
                         renderCurY += itemHeight + templateMargins.vertical;
 
+                        // If item is selected, then add border
+                        if (that.selection._containsItemByKey(item.key))
+                            that._addSelectionBorderToElement(item.element);
+
                         // store a reference to the item in the itemcontainer
                         $(".win-item", $thisItemContainer).data("itemIndex", i);
 
-						// Handle right-click selection
+                        // Handle right-click selection
                         $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
-                        	event.preventDefault();
-                        	if (that.selectionMode != "none") {
+                            event.preventDefault();
+                            if (that.selectionMode != "none") {
 
-                        		event.stopPropagation();
+                                event.stopPropagation();
 
-                        		// Get the index of the right-clicked item
-                        		var itemIndex = $(this).data("itemIndex");
+                                // Get the index of the right-clicked item
+                                var itemIndex = $(this).data("itemIndex");
 
-                        		//that.selection.add(itemIndex);
-                        		var $containerNode = $(this.parentNode)
+                                //that.selection.add(itemIndex);
+                                var $containerNode = $(this.parentNode)
 
-                        		if ($containerNode.hasClass("win-selected"))
-                        			that.selection.remove(itemIndex);// remove selection
-                        		else
-                        			if (that.selectionMode == "multi")
-                        				that.selection.add(itemIndex);
-                        			else
-                        				that.selection.set(itemIndex);
+                                if ($containerNode.hasClass("win-selected"))
+                                    that.selection.remove(itemIndex);// remove selection
+                                else
+                                    if (that.selectionMode == "multi")
+                                        that.selection.add(itemIndex);
+                                    else
+                                        that.selection.set(itemIndex);
 
-                        		that._lastSelectedItemIndex = itemIndex;
-                        		that._notifySelectionChanged(that.element);
-                        	}
+                                that._lastSelectedItemIndex = itemIndex;
+                            }
                         });
 
                         // If the user clicks on the item, call our oniteminvoked function
@@ -9358,20 +9926,24 @@ WinJS.Namespace.define("WinJS.UI", {
                             // Get the index of the clicked item container's item
                             var itemIndex = $(this).data("itemIndex");
 
+                            // Track last tapped item for the semanticzoom _getCurrentItem helper function, since we don't have focus yet
+                            // TODO: Remove this when we have keyboard focus support
+                            that._currentItem = itemIndex;
+
                             // Call invoke
                             if (that.tapBehavior != "none") {
-								// TODO: Clean this up
-                            	if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
+                                // TODO: Clean this up
+                                if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
 
-                            		// Create a Promise with the clicked item
-                            		var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+                                    // Create a Promise with the clicked item
+                                    var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
 
-                            		// Call the callback
-                            		that._notifyItemInvoked(this.parentNode, {
-                            			itemIndex: itemIndex,
-                            			itemPromise: promise
-                            		});
-                            	}
+                                    // Call the callback
+                                    that._notifyItemInvoked(this.parentNode, {
+                                        itemIndex: itemIndex,
+                                        itemPromise: promise
+                                    });
+                                }
                             }
 
                             // Handle selection
@@ -9400,7 +9972,7 @@ WinJS.Namespace.define("WinJS.UI", {
                                         if ($containerNode.hasClass("win-selected"))
                                             that.selection.remove(itemIndex);// remove selection
                                         else
-                                            if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
+                                            if (that.selectionMode == "multi")
                                                 that.selection.add(itemIndex);
                                             else
                                                 that.selection.set(itemIndex);
@@ -9410,6 +9982,10 @@ WinJS.Namespace.define("WinJS.UI", {
                                 that._lastSelectedItemIndex = itemIndex;
                                 that._notifySelectionChanged(that.element);
                             }
+
+                            // Semantic Zoom support
+                            if (that._triggerZoom && that._isZoomedOut)
+                                that._triggerZoom();
                         });
                     }
 
@@ -9417,8 +9993,8 @@ WinJS.Namespace.define("WinJS.UI", {
                     $surfaceDiv.css("width", surfaceWidth).show();
 
                     // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._resizing)
-                    	WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
+                    if (!that._disableAnimation)
+                        WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
                 });
             },
 
@@ -9429,21 +10005,15 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _getItemMargins: function () {
 
-                // Next, calculate the margin that should be added around each list item's win-container DIV.  This is obtained
-                // from the following css selector:     .win-listview > .win-horizontal .win-container
-                // To do this, create an element in the DOM that matches that selector, and grab it's marginTop/marginBottom values.
-                // TODO: Find a cleaner way of calculating this?
-                var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
-                var $container = $("<div class='win-listview'><div class='" + orientation + "'><div id='_cont1' class='win-container'></div></div></div>")
-					.hide()
-					.appendTo($("body"));
+                var $container = $("<div id='_cont1' class='win-container'></div>")
+					.appendTo(this.$scrollSurface);
 
                 // Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
                 var itemMargins = {
-                    vertical: parseInt($("#_cont1").css("marginTop")) +
-							  parseInt($("#_cont1").css("marginBottom")),
-                    horizontal: parseInt($("#_cont1").css("marginLeft")) +
-							  parseInt($("#_cont1").css("marginRight"))
+                    vertical: parseInt($container.css("marginTop")) +
+							  parseInt($container.css("marginBottom")),
+                    horizontal: parseInt($container.css("marginLeft")) +
+							  parseInt($container.css("marginRight"))
                 };
 
                 // Clean up after ourselves and remove the element from the DOM.
@@ -9640,29 +10210,29 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
             },
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.ListView._notifySelectionChanged
-        	//
+            // ================================================================
+            //
+            // private function: WinJS.ListView._notifySelectionChanged
+            //
             _notifySelectionChanged: function (pageElement, eventData) {
 
-            	// TODO: What to pass for data?
+                // TODO: What to pass for data?
 
-            	var event = document.createEvent("CustomEvent");
-            	event.initCustomEvent("selectionchanged", true, false, eventData);
-            	pageElement.dispatchEvent(event);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("selectionchanged", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.ListView._notifyItemInvoked
-        	//
+            // ================================================================
+            //
+            // private function: WinJS.ListView._notifyItemInvoked
+            //
             _notifyItemInvoked: function (pageElement, eventData) {
 
-            	var event = document.createEvent("CustomEvent");
-            	event.initCustomEvent("iteminvoked", true, false, eventData);
-            	pageElement.dispatchEvent(event);
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("iteminvoked", true, false, eventData);
+                pageElement.dispatchEvent(event);
             },
 
 
@@ -9681,9 +10251,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 set: function (callback) {
 
-                	// Remove previous on* handler if one was specified
-                	if (this._oniteminvoked)
-                		this.removeEventListener("iteminvoked", this._oniteminvoked);
+                    // Remove previous on* handler if one was specified
+                    if (this._oniteminvoked)
+                        this.removeEventListener("iteminvoked", this._oniteminvoked);
 
                     // track the specified handler for this.get
                     this._oniteminvoked = callback;
@@ -9706,9 +10276,9 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (callback) {
-                	// Remove previous on* handler if one was specified
-                	if (this._onselectionchanged)
-                		this.removeEventListener("selectionchanged", this._onselectionchanged);
+                    // Remove previous on* handler if one was specified
+                    if (this._onselectionchanged)
+                        this.removeEventListener("selectionchanged", this._onselectionchanged);
 
                     // track the specified handler for this.get
                     this._onselectionchanged = callback;
@@ -9731,7 +10301,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     var $containerNode = $(item.element.parentNode);
                     var itemWasSelected = $containerNode.hasClass("win-selected");
-                    var itemIsNowSelected = that.selection._selectedItems.indexOf(item) >= 0;
+                    var itemIsNowSelected = that.selection._containsItemByKey(item.key);
 
                     if (itemWasSelected && !itemIsNowSelected) {
 
@@ -9741,65 +10311,438 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     } else if (!itemWasSelected && itemIsNowSelected) {
 
-                            // add selection
-                            // TODO (PERF-MINOR): Precreate and clone these DIVs
-                        $containerNode.addClass("win-selected");
-                        $(item.element).before($("<div class='win-selectionbackground'></div>"))
-									   .after($("<div class='win-selectionbordercontainer'>" +
-												"<div class='win-selectionborder win-selectionbordertop'></div>" +
-												"<div class='win-selectionborder win-selectionborderright'></div>" +
-												"<div class='win-selectionborder win-selectionborderbottom'></div>" +
-												"<div class='win-selectionborder win-selectionborderleft'></div>" +
-												"</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
-										));
+                        // add selection border
+                        that._addSelectionBorderToElement(item.element);
+                    }
+                });
+
+                this._notifySelectionChanged(this.element);
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._addSelectionBorderToElement
+            //
+            _addSelectionBorderToElement: function (element) {
+
+                // TODO (PERF-MINOR): Precreate and clone these DIVs
+                var $containerNode = $(element.parentNode);
+                $containerNode.addClass("win-selected");
+                $(element).before($("<div class='win-selectionbackground'></div>"))
+                               .after($("<div class='win-selectionbordercontainer'>" +
+                                        "<div class='win-selectionborder win-selectionbordertop'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderright'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderbottom'></div>" +
+                                        "<div class='win-selectionborder win-selectionborderleft'></div>" +
+                                        "</div><div class='win-selectioncheckmarkbackground'></div><div class='win-selectioncheckmark'></div>"
+                                ));
+            },
+
+
+            // ================================================================
+            //
+            // public property: WinJS.ListView.scrollPosition
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211847.aspx
+            //
+            scrollPosition: {
+                get: function () {
+                    if (this.layout.horizontal)
+                        return this.$viewport.scrollLeft();
+                    else
+                        return this.$viewport.scrollTop();
+                },
+                set: function (value) {
+                    if (this.layout.horizontal)
+                        this.$viewport.scrollLeft(value);
+                    else
+                        this.$viewport.scrollTop(value);
+                }
+            },
+
+
+            // ================================================================
+            //
+            // public property: WinJS.ListView.indexOfFirstVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
+            //
+            indexOfFirstVisible: {
+
+                get: function () {
+
+                    if (!this.$viewport)
+                        return 0;
+
+                    var curScrollRect = {
+                        left: this.$viewport.scrollLeft(),
+                        top: this.$viewport.scrollTop(),
+                        width: this.$viewport.innerWidth(),
+                        height: this.$viewport.innerHeight()
+                    };
+
+                    // Items are sorted in order, so just find the first one that's in the current viewport
+                    if (this.layout.horizontal) {
+                        var viewLeftEdge = this.$viewport.scrollLeft();
+                        for (var i = 0; i < this.items.length; i++) {
+                            var itemRightEdge = parseInt(this.items[i].element.parentNode.style.left) +
+                                                parseInt(this.items[i].element.parentNode.style.width);
+                            if (itemRightEdge > viewLeftEdge)
+                                return i;
+                        }
+                    } else {
+                        var viewTopEdge = this.$viewport.scrollTop();
+                        for (var i = 0; i < this.items.length; i++) {
+                            var itemBottomEdge = parseInt(this.items[i].element.parentNode.style.right) +
+                                                 parseInt(this.items[i].element.parentNode.style.height);
+                            if (itemBottomEdge > viewTopEdge)
+                                return i;
+                        }
+                    }
+                    // No item is visible
+                    return -1;  // TODO: What does win8 return here?
+                },
+
+                set: function (index) {
+
+                    if (index >= this.items.length)
+                        return;
+
+                    // Get the position of the item at index 'index', and scroll to it
+                    var item = this.items[index].element.parentNode;
+                    if (this.layout.horizontal)
+                        this.scrollPosition = item.offsetLeft -
+                                              parseInt(this.items[0].element.parentNode.style.left) +
+                                              parseInt($(this.items[0].element.parentNode).css("marginLeft"));
+                    else
+                        this.scrollPosition = item.offsetTop -
+                                              parseInt(this.items[0].element.parentNode.style.top) +
+                                              parseInt($(this.items[0].element.parentNode).css("marginTop"));
+                }
+            },
+
+            // ================================================================
+            //
+            // public property: WinJS.ListView.indexOfLastVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700698.aspx
+            //
+            indexOfLastVisible: {
+
+                get: function () {
+                    var curScrollRect = {
+                        left: this.$viewport.scrollLeft(),
+                        top: this.$viewport.scrollTop(),
+                        width: this.$viewport.innerWidth(),
+                        height: this.$viewport.innerHeight()
+                    };
+
+                    // Items are sorted in order, so just find the last one that's in the current viewport
+                    if (this.layout.horizontal) {
+                        var viewLeftEdge = this.$viewport.scrollLeft();
+                        for (var i = this.items.length - 1; i >= 0; i--) {
+                            var itemRightEdge = parseInt(this.items[i].element.parentNode.style.left) +
+                                                parseInt(this.items[i].element.parentNode.style.width);
+                            if (itemRightEdge > viewLeftEdge)
+                                return i;
+                        }
+                    } else {
+                        var viewTopEdge = this.$viewport.scrollTop();
+                        for (var i = this.items.length - 1; i >= 0; i--) {
+                            for (var i = 0; i < this.items.length; i++)
+                                var itemBottomEdge = parseInt(this.items[i].element.parentNode.style.right) +
+                                                     parseInt(this.items[i].element.parentNode.style.height);
+                            if (itemBottomEdge > viewTopEdge)
+                                return i;
+                        }
+                    }
+                    // No item is visible
+                    return -1;  // TODO: What does win8 return here?
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._beginZoom
+            //
+            //		SemanticZoom support function
+            //
+            _beginZoom: function () {
+
+                // TODO (R3): For R1/R2, We fade between lists for Semantic zooming in/out - so we don't
+                // need to worry about scrollbars and the like.  So we get off easy here until R3!
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._beginZoom
+            //
+            //		SemanticZoom support function
+            //
+            _endZoom: function (isCurrentView) {
+
+                // TODO (R3): For R1/R2, We fade between lists for Semantic zooming in/out - so we don't
+                // need to worry about scrollbars and the like.  So we get off easy here until R3!
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._getCurrentItem
+            //
+            //		SemanticZoom support function
+            //
+            _getCurrentItem: function () {
+                var that = this;
+
+                // TODO: Update this to use focus when that gets added in R3
+                var index = that._currentItem || that.indexOfFirstVisible;
+
+                // TODO: use datasource.getitem
+                var item = that._itemDataSource._list.getItem(index);
+                var container = item.element.parentNode;
+                return WinJS.Promise.wrap({
+                    item: item,
+                    position: {
+                        left: container.offsetLeft,
+                        top: container.offsetTop,
+                        width: container.offsetWidth,
+                        height: container.offsetHeight
                     }
                 });
             },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.ListView.scrollPosition
-        	//
-            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211847.aspx
-        	//
-            scrollPosition: {
-            	get: function () {
-					if (this.layout.horizontal)
-						return this.$viewport.scrollLeft();
-					else
-						return this.$viewport.scrollTop();
-            	},
-            	set: function (value) {
-            		if (this.layout.horizontal)
-            			this.$viewport.scrollLeft(value);
-					else
-            			this.$viewport.scrollTop(value);
-            	}
+            // ================================================================
+            //
+            // private function: WinJS.ListView._configureForZoom
+            //
+            //		SemanticZoom support function
+            //
+            _configureForZoom: function (isZoomedOut, isCurrentView, triggerZoom, prefetchedPages) {
+
+                // Track if we're the zoomedout or zoomedin view.
+                this._isZoomedOut = isZoomedOut;
+
+                // Call this._triggerZoom when the user clicks on an item
+                this._triggerZoom = triggerZoom;
             },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.ListView.indexOfFirstVisible
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700691.aspx
-        	//
-            indexOfFirstVisible: {
-            	get: function () {
-            		console.warn("ListView.indexOfFirstVisible getter is NYI; returning 0");
-            		return 0;
-            	},
-            	set: function (index) {
-            		// Get the position of the item at index 'index', and scroll to it
-            		var item = this.items[index].element.parentNode;
-            		var listMargin = parseInt(this.$scrollSurface.css("marginLeft"));
-            		var itemMargin = parseInt($(item).css("marginLeft"));
-            		if (this.layout.horizontal)
-            			this.scrollPosition = item.offsetLeft + listMargin - itemMargin;
-            		else
-            			this.scrollPosition = item.offsetTop;
-            	}
+            // ================================================================
+            //
+            // private function: WinJS.ListView._positionItem
+            //
+            //		SemanticZoom support function
+            //
+            _positionItem: function (item, position) {
+
+                console.log(item);
+                if (!item) {
+                    this.indexOfFirstVisible = 0;
+                    return;
+                }
+                // Get the first item whose key matches "key"
+                if (this._isZoomedOut) {
+                    // TODO: Haven't tested this one.
+                    for (var i = 0; i < this.items.length; i++) {
+                        if (this.items[i].key == item.groupKey) {
+                            this.indexOfFirstVisible = i;
+                            return;
+                        }
+                    }
+                } else {
+                    for (var i = 0; i < this.items.length; i++) {
+                        if (this.items[i].groupKey == item.key) {
+                            this.indexOfFirstVisible = i;
+                            return;
+                        }
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.ListView._setCurrentItem
+            //
+            //		SemanticZoom support function
+            //
+            _setCurrentItem: function (x, y) {
+
+                //  Get the item at location x,y
+                console.error("NYI: Get the item at location x,y");
+                var item = null;
+
+                this.indexOfFirstVisible = 0;/*
+
+                    // todo: use datasource.getitem
+                    var list = this._itemDataSource._list;
+                    for (var i = 0; i < list.length; i++) {
+                        var item = list.getItem(i);
+                        if (item.groupKey == clickedGroup.key) {
+                            // Bring the selected item/group (?) into view
+                      //      that._zoomedInView.indexOfFirstVisible = i;
+
+                            var pos = {
+                                left: $focusedElement[0].offsetLeft,
+                                top: $focusedElement[0].offsetTop,
+                                width: $focusedElement[0].offsetWidth,
+                                height: $focusedElement[0].offsetHeight
+                            };
+
+
+                            return WinJS.Promise.wrap({ item: groupItem, position: pos });
+
+                            break;
+                        }
+                    }
+                });*/
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.ensureVisible
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211820.aspx
+            //
+            ensureVisible: function (itemIndex) {
+
+                if (itemIndex < this.indexOfFirstVisible || itemIndex > this.indexOfLastVisible)
+                    this.indexOfFirstVisible = itemIndex;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.elementFromIndex
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh758351.aspx
+            //
+            elementFromIndex: function (itemIndex) {
+
+                var item = this._itemDataSource._list.getItem(itemIndex);
+                return item ? item.element : null;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.elementFromIndex
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700675.aspx
+            //
+            indexOfElement: function (element) {
+
+                for (var i = 0; i < this.items.length; i++)
+                    if (this.items[i].element == element)
+                        return i;
+                return -1;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.currentItem
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh440977.aspx
+            //
+            currentItem: {
+
+                get: function () {
+                    if (this._currentItem) {
+                        var itemWithIndex = this._itemDataSource._list.getItemFromKey(this._currentItem.key);
+                        return {
+                            index: itemWithIndex.index,
+                            key: this._currentItem.key,
+                            hasFocus: true,             // TODO: Changes when we have focus
+                            showFocus: true,            // TODO: Changes when we have focus
+                        }
+                    } else {
+                        return {
+                            index: -1,
+                            key: null,
+                            hasFocus: false,
+                            showFocus: false
+                        };
+                    }
+                },
+
+                set: function (value) {
+
+                    if (value.index) {
+
+                        this._currentItem = this.items[value.index];
+                        $(this._curentItem).focus();
+
+                    } else if (value.key) {
+
+                        this._currentItem = this._itemDataSource._list.getItemFromKey(value.key);
+                        $(this._curentItem).focus();
+
+                    } else {
+
+                        // Clearing
+                        if (this._currentItem) {
+                            $(this._currentItem).blur();
+                            this._currentItem = null;
+                        }
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.resetGroupHeader
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700726.aspx
+            //
+            _groupHeaderRecycleFunction: null,
+            resetGroupHeader: {
+                get: function () {
+                    if (!this._warnedResetGroupHeader) {
+                        this._warnedResetGroupHeader = true;
+                        console.warn("bluesky: resetGroupHeader is NYI");
+                    }
+                    return _groupHeaderRecycleFunction;
+                },
+                set: function (value) {
+                    if (!this._warnedResetGroupHeader) {
+                        this._warnedResetGroupHeader = true;
+                        console.warn("bluesky: resetGroupHeader is NYI");
+                    }
+                    _groupHeaderRecycleFunction = value;
+                }
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.ListView.resetItem
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211846.aspx
+            //
+            _itemRecycleFunction: null,
+            resetItem: {
+                get: function () {
+                    if (!this._warnedResetItem) {
+                        this._warnedResetItem = true;
+                        console.warn("bluesky: resetItem is NYI");
+                    }
+                    return _itemRecycleFunction;
+                },
+                set: function (value) {
+                    if (!this._warnedResetItem) {
+                        this._warnedResetItem = true;
+                        console.warn("bluesky: resetItem is NYI");
+                    }
+                    _itemRecycleFunction = value;
+                }
             }
         })
 });
@@ -10324,6 +11267,31 @@ WinJS.Namespace.define("WinJS.Utilities", {
 				promiseComplete();
 			});
 		});
+	},
+
+
+    // ================================================================
+    //
+    // public function: WinJS.Utilities.markSupportedForProcessing
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh967819.aspx 
+    //
+	markSupportedForProcessing: function (handler) {
+
+	    handler._supportedForProcessing = true;
+	},
+
+
+    // ================================================================
+    //
+    // public function: WinJS.Utilities.requireSupportedForProcessing
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh967820.aspx
+    //
+	requireSupportedForProcessing: function (handler) {
+
+	    if (this.strictProcessing && !handler._supportedForProcessing)
+	        throw "requireSupportedForProcessing";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
 	},
 
 

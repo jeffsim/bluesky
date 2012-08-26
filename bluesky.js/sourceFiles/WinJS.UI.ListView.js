@@ -900,9 +900,13 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Get the position of the item at index 'index', and scroll to it
                     var item = this.items[index].element.parentNode;
                     if (this.layout.horizontal)
-                        this.scrollPosition = item.offsetLeft - parseInt(this.items[0].element.parentNode.style.left) + $(this.items[0].element.parentNode).css("marginLeft");
+                        this.scrollPosition = item.offsetLeft -
+                                              parseInt(this.items[0].element.parentNode.style.left) +
+                                              parseInt($(this.items[0].element.parentNode).css("marginLeft"));
                     else
-                        this.scrollPosition = item.offsetTop - parseInt(this.items[0].element.parentNode.style.top) + $(this.items[0].element.parentNode).css("marginTop");
+                        this.scrollPosition = item.offsetTop -
+                                              parseInt(this.items[0].element.parentNode.style.top) +
+                                              parseInt($(this.items[0].element.parentNode).css("marginTop"));
                 }
             },
 
