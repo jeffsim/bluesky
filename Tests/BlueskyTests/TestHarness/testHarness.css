@@ -5,7 +5,7 @@
 
 .testControl
 {
-	width: 600px;
+	width: 650px;
 	padding: 5px;
 	background-color: #eee;
 	position: absolute;
@@ -29,7 +29,7 @@
 		background-color: #bbb;
 		position: absolute;
 		top: 141px;
-		width: 595px;
+		width: 645px;
 		left: 5px;
 		height: 30px;
 		border-bottom: solid 1px #999;
@@ -63,7 +63,7 @@
 	.testControl .testResults
 	{
 		background-color: #ddd;
-		width: 590px;
+		width: 640px;
 		font-size: 14pt;
 		overflow-y: scroll;
 		overflow-x: hidden;
@@ -185,7 +185,7 @@
 	font-size: 16pt;
 	position: absolute;
 	top: 10px;
-	left: 650px;
+	left: 700px;
 }
 
 .testFrame
@@ -197,7 +197,7 @@
 	border: solid 4px #999;
 	padding: 5px;
 	top: 40px;
-	left: 650px;
+	left: 700px;
 	overflow: hidden;
 }
 
@@ -207,7 +207,7 @@
 	font-size: 12pt;
 	position: absolute;
 	top: 18px;
-	left: 540px;
+	left: 590px;
 	background-color: #ccc;
 	padding: 6px;
 }

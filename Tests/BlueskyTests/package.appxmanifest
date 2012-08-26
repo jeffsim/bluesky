@@ -19,9 +19,19 @@
         <DefaultTile ShowName="allLogos" />
         <SplashScreen Image="images\splashscreen.png" />
       </VisualElements>
+      <Extensions>
+        <Extension Category="windows.fileTypeAssociation">
+          <FileTypeAssociation Name="data">
+            <SupportedFileTypes>
+              <FileType>.dat</FileType>
+            </SupportedFileTypes>
+          </FileTypeAssociation>
+        </Extension>
+      </Extensions>
     </Application>
   </Applications>
   <Capabilities>
+    <Capability Name="documentsLibrary" />
     <Capability Name="internetClient" />
   </Capabilities>
 </Package>

@@ -74,6 +74,11 @@
     <Content Include="Tests\supportFiles\listView\listView.html" />
     <Content Include="Tests\supportFiles\semanticZoom\simpleZoom.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
+    <Content Include="Tests\Tests.Windows.Storage.PathIO.js" />
+    <Content Include="Tests\Tests.Windows.Storage.Search.js" />
+    <Content Include="Tests\Tests.Windows.Storage.FileIO.js" />
+    <Content Include="Tests\Tests.Windows.Storage.js" />
+    <Content Include="Tests\Tests.Windows.Storage.StorageFolder.js" />
     <Content Include="Tests\Tests.WinJS.Application.js" />
     <Content Include="Tests\Tests.WinJS.Binding.FilteredList.js" />
     <Content Include="Tests\Tests.WinJS.Binding.GroupedList.js" />
@@ -92,6 +97,7 @@
     <Content Include="Tests\Tests.WinJS.UI.HtmlControl.js" />
     <Content Include="Tests\Tests.WinJS.UI.js" />
     <Content Include="Tests\Tests.WinJS.UI.AppBar.js" />
+    <Content Include="Tests\Tests.Windows.Storage.StorageFile.js" />
     <Content Include="Tests\Tests.WinJS.UI.ListView.js" />
     <Content Include="Tests\Tests.WinJS.UI.Pages.js" />
     <Content Include="Tests\Tests.WinJS.UI.Rating.js" />
