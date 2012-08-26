@@ -31,11 +31,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		    options = options || {};
 
 		    // Set default options
-		    this._hidden = options.hidden == "false" ? false : true;
-		    this._disabled = options.disabled == "true" ? true : false;
-		    this._sticky = options.sticky == "true" ? true : false;
+		    this._hidden = (!!options.hidden || options.hidden == "false") ? false : true;
+		    this._disabled = (options.disabled || options.disabled == "true") ? true : false;
+		    this._sticky = (options.sticky || options.sticky == "true") ? true : false;
 		    this._layout = options.layout || "commands";
-		    // TODO: layout
 
 		    // Call into our base class' constructor
 		    WinJS.UI.BaseControl.call(this, element, options);
@@ -60,18 +59,22 @@ WinJS.Namespace.define("WinJS.UI", {
 		    var that = this;
 		    $("button, hr", $root).each(function (i, button) {
 		        WinJS.UI.processAll(button);
-		        that._commands.push(button.winControl);
-		        that.addEventListener("beforehide", button.winControl._appBarHiding.bind(button.winControl));
+		        if (button.winControl) {
+		            that._commands.push(button.winControl);
+		            that.addEventListener("beforehide", button.winControl._appBarHiding.bind(button.winControl));
+		        }
 		    });
 
-		    // Create click eater
-		    this.$clickEater = $("<div class='win-appbarclickeater'></div>");
-		    this.$clickEater.prependTo($("body"));
-		    this.$clickEater.click(function () {
-		        console.log("clickEater");
-		        if (!that._sticky)
-		            that.hide();
-		    });
+		    // Create click eater (once)
+		    // TODO (PERF-MINOR): Check if WinJS.UI._$appBarClickEater exists instead of looking through the DOM.  Doing it this way for now
+		    // since I'm not 100% sure how appbar persistence is expected to work across page navs, and want a 100% working solution...
+		    if ($(".win-appbarclickeater", $("body")).length == 0) {
+		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>");
+		        WinJS.UI._$appBarClickEater.appendTo($("body"));
+		    }
+
+		    // Handle clicks on the appbar click eater
+		    WinJS.UI._$appBarClickEater.bind("click", this._clickEaterFunction.bind(this));
 
 		    // When the AppBar loses focus, hide it
 		    this.$rootElement.focusout(function (event) {
@@ -81,6 +84,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // the focusout event if it happened very recently.
 		        if (WinJS.UI._flyoutClicked && Date.now() - WinJS.UI._flyoutClicked < 250)
 		            return;
+
+		        // TODO (CLEANUP): Similar hackiness to above
+		        if (that._appBarCommandClickedTime && Date.now() - that._appBarCommandClickedTime < 250)
+		            return;
+
 		        if (!that._sticky) {
 		            that._hiddenDueToFocusOut = Date.now();
 		            that.hide();
@@ -88,30 +96,88 @@ WinJS.Namespace.define("WinJS.UI", {
 		    });
 
 		    // Capture right-click
-		    $("body").bind("contextmenu", function (event) {
+		    $("body").bind("contextmenu", { appBar: this }, this._rightClickHandler);
 
-		        // Prevent default to keep browser's context menu from showing
-		        // Don't StopPropagation though, so that other appbars get the event
-		        event.preventDefault();
-
-		        // If the user right-clicked while the appbar is visible, then we get a focusout (above) to hide it, and we come here and re-show it, but we shouldn't!
-		        // So, if this is happening very soon after a focusout, then don't show
-		        if (that._hiddenDueToFocusOut && Date.now() - that._hiddenDueToFocusOut < 200)
-		            return;
-
-		        if (that._hidden)
-		            that.show();
-		        else
-		            that.hide();
-		    });
+		    // When we're removed from the DOM, unload ourselves
+		    this.$rootElement.bind("DOMNodeRemoved", this._unload);
 		},
 
 		// ================================================================
 		// WinJS.UI.AppBar Member functions
 		// ================================================================
 
-
 		{
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._rightClickHandler
+		    //
+		    _rightClickHandler: function (event) {
+
+		        // Prevent default to keep browser's context menu from showing
+		        // Don't StopPropagation though, so that other appbars get the event
+		        event.preventDefault();
+
+		        var appBar = event.data.appBar;
+		        // If the user right-clicked while the appbar is visible, then we get a focusout (above) to hide it, and we come here and re-show it, but we shouldn't!
+		        // So, if this is happening very soon after a focusout, then don't show
+		        if (appBar._hiddenDueToFocusOut && Date.now() - appBar._hiddenDueToFocusOut < 200)
+		            return;
+
+		        if (appBar._hidden)
+		            appBar.show();
+		        else
+		            appBar.hide();
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._clickEaterFunction
+		    //
+		    _clickEaterFunction: function () {
+
+		        // If we're not sticky and the user clicked off of the appbar, then hide the appbar
+		        if (!this._sticky)
+		            this.hide();
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._unload
+		    //
+		    _unload: function (event) {
+
+		        // This is called if the appbar OR an element on the appbar (e.g. an appbarcommand) is removed; make sure it's the appbar
+		        if (event.target == this) {
+
+		            var appBar = this.winControl;
+
+		            // Remove our click listener from the appbar click eater
+		            WinJS.UI._$appBarClickEater.unbind("click", appBar._clickEaterFunction);
+
+		            // TODO: What if there are other appbars visible?
+		            WinJS.UI._$appBarClickEater.hide();
+
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("beforehide", true, true, {});
+		            appBar.dispatchEvent(event);
+
+                    // Unbind commands' appbarhiding listeners
+		            for (var i = 0; i < appBar._commands.length; i++) {
+		                appBar.removeEventListener("beforehide", appBar._commands[i]._appBarHiding);
+		            }
+
+		            // Remove our right-click listener from body
+		            $("body").unbind("contextmenu", appBar._rightClickHandler);
+
+                    // And remove our listener for when we're removed from the DOM
+		            appBar.$rootElement.unbind("DOMNodeRemoved", appBar._unload);
+                }
+		    },
+
+
 		    // ================================================================
 		    //
 		    // public property: WinJS.AppBar.layout
@@ -165,29 +231,63 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    _commands: [],
 		    commands: {
-		        set: function (newCommands) {
+		        set: function (commands) {
 
 		            if (this._layout == "custom")
 		                return;
+
+                    // Unbind previous commands' appbarhiding listeners
+		            for (var i = 0; i < commands.length; i++) {
+		                this.removeEventListener("beforehide", commands[i]._appBarHiding);
+		            }
 
 		            // TODO: Does Win8 animate?
 		            this._commands = [];
 		            this.$rootElement.empty();
 
-		            if (!newCommands)
+		            if (!commands || (typeof commands.length !== "undefined" && commands.length == 0))
 		                return;
 
-		            // Caller can specify one item - if they did then convert it to an array
-		            if (!(newCommands instanceof Array))
-		                newCommands = [newCommands];
+		            // the 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		            commands = this._realizeCommands(commands);
 
-		            for (var i = 0; i < newCommands.length; i++) {
-		                this._commands.push(newCommands[i]);
-		                this.$rootElement.append(newCommands[i].element);
+		            for (var i = 0; i < commands.length; i++) {
+		                this._commands.push(commands[i]);
+		                this.$rootElement.append(commands[i].element);
+
 		                // the command needs to listen to our hide events so that it can hide flyout (if it has one)
-		                this.addEventListener("beforehide", newCommands[i]._appBarHiding.bind(newCommands[i]));
+		                this.addEventListener("beforehide", commands[i]._appBarHiding.bind(commands[i]));
 		            }
 		        }
+		    },
+
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.AppBar._realizeCommands
+		    //
+		    _realizeCommands: function (commands) {
+
+		        // Caller can specify one item - if they did then convert it to an array
+		        if (typeof commands === "string" || !commands.length)
+		            commands = [commands];
+
+		        var realizedCommands = [];
+
+		        // TODO: The MSDN win8 docs say that these functions can take (1) a [array of] string[s], or (2) a [array of] commandbar[s].  However, the MSDN samples
+		        //       ALSO pass DOMElements (sigh), so we handle all cases here.  Update this when win8 and MSDN stabilize.
+		        // Also note: the docs are unclear on whether or not you can mix-and-match, so we handle them all.
+		        for (var i = 0; i < commands.length; i++) {
+		            var command = commands[i];
+		            if (typeof command === "string") {
+		                command = this.getCommandById(command);
+		            } else if (command instanceof Element) {
+		                command = command.winControl;
+		            }
+		            realizedCommands.push(command);
+		        }
+		        return realizedCommands;
 		    },
 
 
@@ -201,15 +301,13 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        if (!commands)
 		            return;
-		        if (!(commands instanceof Array))
-		            commands = [commands];
+
+		        // The 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		        commands = this._realizeCommands(commands);
 
 		        // TODO: Animate removal of commands
 		        for (var i = 0; i < commands.length; i++) {
 		            var command = commands[i];
-		            if (typeof command === "string") {
-		                command = this.getCommandById(command);
-		            }
 		            command._hidden = true;
 		            command.$rootElement.css("visibility", "hidden");
 		        }
@@ -226,14 +324,13 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        if (!commands)
 		            return;
-		        if (!(commands instanceof Array))
-		            commands = [commands];
+
+		        // The 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		        commands = this._realizeCommands(commands);
 
 		        // TODO: Animate addition of commands
 		        for (var i = 0; i < commands.length; i++) {
 		            var command = commands[i];
-		            if (typeof command === "string")
-		                command = this.getCommandById(command);
 		            command._hidden = false;
 		            command.$rootElement.css("visibility", "visible");
 		        }
@@ -250,8 +347,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        if (!commands)
 		            commands = [];
-		        if (!(commands instanceof Array))
-		            commands = [commands];
+
+		        // The 'commands' parameter can be one of several things.  Convert it into an array of AppBarCommand objects
+		        commands = this._realizeCommands(commands);
 
 		        // TODO: Animate addition of commands?
 		        // TODO (CLEANUP): Do this better.  Currently hiding everything and then showing only the ones specified.
@@ -308,6 +406,28 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
+		    // public property: WinJS.AppBar.sticky
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700576.aspx
+		    //
+		    _sticky: false,
+		    sticky: {
+		        get: function () {
+		            return this._sticky;
+		        },
+		        set: function (value) {
+
+		            this._sticky = value;
+		            if (this._sticky)
+		                WinJS.UI._$appBarClickEater.hide();
+		            else if (!this._hidden)
+		                WinJS.UI._$appBarClickEater.show();
+		        }
+		    },
+
+
+		    // ================================================================
+		    //
 		    // public function: WinJS.AppBar.show
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229676.aspx
@@ -328,12 +448,16 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // Give the appbar focus
 		        this.element.focus();
 
-		        this.$rootElement.css("visibility", "visible").css("display", "block");
-		        this._hidden = false;
-		        this.$clickEater.show();
-		        var event = document.createEvent("CustomEvent");
-		        event.initCustomEvent("aftershow", true, true, {});
-		        this.element.dispatchEvent(event);
+		        var that = this;
+		        this.$rootElement.css("visibility", "visible").fadeIn("fast", function () {
+		            that.$rootElement.css("display", "block")
+		            that._hidden = false;
+		            if (!that._sticky)
+		                WinJS.UI._$appBarClickEater.show();
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("aftershow", true, true, {});
+		            that.element.dispatchEvent(event);
+		        });
 		    },
 
 
@@ -358,14 +482,17 @@ WinJS.Namespace.define("WinJS.UI", {
 		        //if (event.preventDefault)
 		        //	return;
 
-		        this.$rootElement.css("visibility", "hidden").css("display", "none");
+		        var that = this;
+		        this.$rootElement.fadeOut("fast", function () {
+		            that.$rootElement.css("visibility", "hidden").css("display", "none")
 
-		        this._hidden = true;
-		        this.$clickEater.hide();
+		            that._hidden = true;
+		            WinJS.UI._$appBarClickEater.hide();
 
-		        var event = document.createEvent("CustomEvent");
-		        event.initCustomEvent("afterhide", true, true, {});
-		        this.element.dispatchEvent(event);
+		            var event = document.createEvent("CustomEvent");
+		            event.initCustomEvent("afterhide", true, true, {});
+		            that.element.dispatchEvent(event);
+		        });
 		    },
 
 

@@ -61,6 +61,10 @@ testHarness.addTestFile("WinJS.UI.Pages Tests", {
 
 					// notify the test harness that we've completed this async test
 					onTestComplete(test);
+				},
+                _testValue: 100,
+                customFunc: function () {
+                    this._testValue = 200;
 				}
 			});
 
@@ -69,6 +73,11 @@ testHarness.addTestFile("WinJS.UI.Pages Tests", {
 
 			// Verify we created the page
 			test.assert(testPage.ready, "Failed to create the page");
+
+		    // Verify the custom function is present
+			test.assert(testPage.customFunc, "Custom function not present");
+			testPage.customFunc();
+			test.assert(testPage._testValue == 200, "Custom function not called");
 
 			// Just return; there's nothing else to do until the page's ready function is called (above)
 		});

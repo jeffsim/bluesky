@@ -103,6 +103,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 				// this is called when the page should be instantiated and its html realized.  Do so now.
 				var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
 				var that = this;
+				targetElement.winControl = this;
 
 				if (parentedPromise) {
 					// When parenting has completed, trigger the subpage's ready function.  The function that called render()

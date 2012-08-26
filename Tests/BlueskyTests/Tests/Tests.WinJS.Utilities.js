@@ -77,7 +77,7 @@ testHarness.addTestFile("WinJS.Utilities Tests", {
         WinJS.Utilities.markSupportedForProcessing(handler);
 
         // test that requireSupportedForProcessing works if the handler has been marked as such.  
-        requireSupportedForProcessing(handler);
+        WinJS.Utilities.requireSupportedForProcessing(handler);
 
         // Now test that requireSupportedForProcessing throws an exception if the handler has not been marked as such
         var handler2 = function () {
@@ -89,7 +89,7 @@ testHarness.addTestFile("WinJS.Utilities Tests", {
             error = ex;
         }
         test.assert(error, "requireSupportedForProcessing did not throw an error");
-        test.assert(error && error.message == "requireSupportedForProcessing", "requireSupportedForProcessing threw the wrong error (" + error.message + ")");
+        test.assert(error && error.message == "requireSupportedForProcessing is not defined", "requireSupportedForProcessing threw the wrong error (" + error.message + ")");
     },
 
 

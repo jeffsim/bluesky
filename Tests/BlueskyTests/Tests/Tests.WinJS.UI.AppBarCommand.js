@@ -56,6 +56,11 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 					test.assert($label.length == 1, "Label not present");
 					test.assert($label.hasClass("win-label"), "Label does not have win-label class");
 				});
+
+			    // Cleanup
+				$appBar.detach();
+				$(".win-appbarclickeater").remove();
+
 				onTestComplete(test);
 			});
 		});
@@ -113,11 +118,10 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 					var $label = $($("span", $button)[2]);
 					test.assert($label.length == 1, "Label not present");
 					test.assert($label.hasClass("win-label"), "Label does not have win-label class");
-					onTestComplete(test);
 				});
 
-				// TODO: test with invalid element.  must be <button> for button,toggle,flyout, and <hr> for flyout
-				$testDiv.remove();
+			    // TODO: test with invalid element.  must be <button> for button,toggle,flyout, and <hr> for flyout
+				$testDiv.detach();
 				$(".win-appbarclickeater").remove();
 				onTestComplete(test);
 			}
@@ -172,7 +176,7 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 					test.assert(this == button3, "button3: incorrect this");
 
 					// Cleanup
-					$testDiv.remove();
+					$testDiv.detach();
 					$(".win-appbarclickeater").remove();
 					onTestComplete(test);
 				}
@@ -234,7 +238,7 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 			}
 			appBar.onafterhide = function () {
 
-				$testDiv.remove();
+			    $testDiv.detach();
 				$(".win-appbarclickeater").remove();
 				onTestComplete(test);
 			}
@@ -249,7 +253,7 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 	flyout: function (test) {
 
 		test.start("AppBarCommand.flyout property tests");
-
+		test.timeoutLength = 20000;
 		// This is an async test, so it must use test.doAsync and call onTestComplete when done
 		return test.doAsync(function (onTestComplete) {
 
@@ -258,7 +262,6 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 			var appBar = new WinJS.UI.AppBar($testDiv[0]);
 			var $flyoutDiv = testHarness.addTestElement("<div id='flyoutId' style='width:200px;height:200px;background-color:green'>Hello</div>");
 			var flyout = new WinJS.UI.Flyout($flyoutDiv[0]);
-
 			var button1 = new WinJS.UI.AppBarCommand(null, { id: "id1", icon: "undo", label: "undo", section: "selection", extraClass: "testClass", tooltip: "World" });
 			var button2 = new WinJS.UI.AppBarCommand(null, { id: "id2", icon: "redo", label: "redo", section: "global", type: "flyout", flyout: 'flyoutId' });
 			var button3 = new WinJS.UI.AppBarCommand(null, { type: "separator" });
@@ -268,10 +271,14 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 
 				// call up the flyout 
 				flyout.onaftershow = function () {
-					flyout.onaftershow = null;
-					$testDiv.remove();
-					$flyoutDiv.remove();
-					$(".win-appbarclickeater").remove();
+				    flyout.onaftershow = null;
+				    
+				    // TODO: jQuery's .remove() does not trigger DOMNodeRemoved.  See :http://forum.jquery.com/topic/problem-with-bindings-and-domnoderemoved-and-domnoderemovedfromdocument-events
+                    // So, we CAN'T use jquery to remove the appbar.
+				    $testDiv[0].parentNode.removeChild($testDiv[0]);
+				    $flyoutDiv[0].parentNode.removeChild($flyoutDiv[0]);
+					//$(".win-appbarclickeater").remove();
+					//$(".win-flyoutmenuclickeater").remove();
 					onTestComplete(test);
 				}
 				$("#id2").click();
@@ -416,7 +423,7 @@ testHarness.addTestFile("WinJS.UI.AppBarCommand Tests", {
 				button1.tooltip = "Foo";
 				test.assert(button1.tooltip == "Foo", "2: button1 tooltip incorrect");
 
-				$testDiv.remove();
+				$testDiv.detach();
 				$(".win-appbarclickeater").remove();
 				onTestComplete(test);
 			}

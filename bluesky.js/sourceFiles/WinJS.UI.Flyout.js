@@ -122,11 +122,11 @@ WinJS.Namespace.define("WinJS.UI", {
                     });
 
 		        // Add Flyout clickeater
-		        this.$clickEater = $("<div class='win-flyoutmenuclickeater'></div>");
-		        this.$clickEater.appendTo($("body")).show();
-		        this.$clickEater.click(function () {
-		            that.hide();
-		        });
+		        if ($(".win-flyoutmenuclickeater", $("body")).length == 0) {
+		            WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>");
+		            WinJS.UI._$flyoutClickEater.appendTo($("body")).show();
+		            WinJS.UI._$flyoutClickEater.click(this._clickEaterFunction.bind(this));
+		        }
 
 		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
 		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
@@ -144,8 +144,38 @@ WinJS.Namespace.define("WinJS.UI", {
 		            that.element.dispatchEvent(event);
 		        });
 
+		        this.$rootElement.bind("DOMNodeRemoved", this._unload);
 		    },
 
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.Flyout._clickEaterFunction
+		    //
+		    _clickEaterFunction: function () {
+		        this.hide();
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.Flyout._unload
+		    //
+		    _unload: function (event) {
+
+		        // This is called if the Flyout OR an element on the Flyout is removed; make sure it's the Flyout
+		        if (event.target == this) {
+
+		            // Remove our click listener from the Flyout click eater
+		            WinJS.UI._$flyoutClickEater.unbind("click", this._clickEaterFunction);
+
+                    // TODO: Same question as in appbar._unload: should we hide? what if there are multiple flyouts visible and only one is unloaded?
+		            WinJS.UI._$flyoutClickEater.hide();
+
+		            // And remove our listener for when we're removed from the DOM
+		            this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+		        }
+		    },
 
 		    // ================================================================
 		    //
@@ -167,12 +197,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		        event.initCustomEvent("beforehide", true, false, {});
 		        this.element.dispatchEvent(event);
 
-		        this.$clickEater.remove();
-
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
+		            WinJS.UI._$flyoutClickEater.hide();
 		            $(that.element).css("visibility", "hidden");
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, false, {});

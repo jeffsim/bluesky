@@ -253,6 +253,15 @@
 
 			list.push({
 			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/appbarSample.png",
+			    DisplayName: "AppBar",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://appbarSample.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/appbarSample",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/App-bar-sample-a57eeae9"
+			});
+			list.push({
+			    group: this.listGroups[2],
 			    backgroundImage: "http://bluesky.io/samples/previews/messageDialog.png",
 			    DisplayName: "MessageDialog",
 			    itemTemplate: 'sdkTemplate',

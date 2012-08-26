@@ -114,18 +114,18 @@ WinJS.Namespace.define("WinJS.UI", {
     //
     processAll: function (rootElement) {
 
-    	// TODO (CLEANUP): This and .process() share an awful lot of similarity...
+        // TODO (CLEANUP): This and .process() share an awful lot of similarity...
 
         return new WinJS.Promise(function (onComplete) {
 
-        	// If the caller didn't specify a root element, then process the entire document.
+            // If the caller didn't specify a root element, then process the entire document.
             if (!rootElement)
-            	rootElement = document;
+                rootElement = document;
             else {
-            	// Process the element
-            	blueskyUtils.ensureDatasetReady(rootElement);
-            	if (rootElement.dataset && rootElement.dataset.winControl)
-            		WinJS.UI._processElement(rootElement);
+                // Process the element
+                blueskyUtils.ensureDatasetReady(rootElement);
+                if (rootElement.dataset && rootElement.dataset.winControl)
+                    WinJS.UI._processElement(rootElement);
             }
 
             // Add winControl objects to all elements tagged as data-win-control
@@ -181,20 +181,20 @@ WinJS.Namespace.define("WinJS.UI", {
         var controlConstructor = window;
         for (var i = 0; i < parts.length; i++) {
 
-        	/*DEBUG*/
-        	if (!controlConstructor)
-        		break;
-        	/*ENDDEBUG*/
+            /*DEBUG*/
+            if (!controlConstructor)
+                break;
+            /*ENDDEBUG*/
 
-        	controlConstructor = controlConstructor[parts[i]];
+            controlConstructor = controlConstructor[parts[i]];
         }
 
-    	/*DEBUG*/
+        /*DEBUG*/
         if (!controlConstructor) {
-        	console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
-        	return;
+            console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
+            return;
         }
-    	/*ENDDEBUG*/
+        /*ENDDEBUG*/
 
         // Now that we have a pointer to the actual control constructor, instantiate the wincontrol
         element.winControl = new controlConstructor(element, options);
@@ -429,16 +429,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
 		    //
-		    // ================================================================
-		    //
-		    // public function: WinJS.UI.ISelection.add
-		    //
-		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872198.aspx
-		    //
 		    add: function (items) {
 		        var that = this;
 		        return new WinJS.Promise(function (c) {
-
 		            // If items is not an array, then convert it into one for simplicity
 		            if (items.length === undefined)
 		                items = [items];
@@ -463,19 +456,21 @@ WinJS.Namespace.define("WinJS.UI", {
 		                    } else if (value.index !== undefined) {
 		                        item = curList.getItem(value);
 		                    }
-		                    /*DEBUG*/
+		                        /*DEBUG*/
 		                    else {
 		                        console.warn("Invalid value passed to WinJS.UI.ISelection.add; an object must have either key or index specified.");
 		                    }
 		                    /*ENDDEBUG*/
 		                }
-		                // The item we obtained above may have an index; if this selection's list is a filtered list, then that index may
-		                // be wrong (since it's for the full list).  So: copy the item and set its index here.
-		                item = WinJS.Binding.List.copyItem(item);
-		                item.index = i;
 
-		                if (that._selectedItems.indexOf(item) == -1)
+		                if (!that._containsItemByKey(item.key)) {
+		                    // The item we obtained above may have an index; if this selection's list is a filtered list, then that index may
+		                    // be wrong (since it's for the full list).  So: copy the item and set its index here.
+		                    item = WinJS.Binding._ListBase.copyItem(item);
+		                    item.index = i;
+
 		                    that._selectedItems.push(item);
+		                }
 		            }
 
 		            // Notify our list
@@ -526,7 +521,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		                    /*ENDDEBUG*/
 		                }
 
-		                var indexOfItem = that._selectedItems.indexOf(item);
+		                var indexOfItem = that._getIndexByKey(item.key);
 		                if (indexOfItem != -1)
 		                    that._selectedItems.splice(indexOfItem, 1);
 		            });
@@ -567,20 +562,22 @@ WinJS.Namespace.define("WinJS.UI", {
 		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.UI.ISelection.getIndices
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
-			//
+		    // ================================================================
+		    //
+		    // public function: WinJS.UI.ISelection.getIndices
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh872197.aspx
+		    //
 		    getIndices: function () {
-		    	var indices = [];
-		    	var that = this;
-		    	this._selectedItems.forEach(function (item) {
-		    		var itemIndex = item.index || that._list._itemDataSource._list.indexOf(item);
-		    		indices.push(itemIndex);
-		    	});
-		    	return indices;
+		        var indices = [];
+		        var that = this;
+		        this._selectedItems.forEach(function (item) {
+		            // Our items' indices may have changed (e.g. due to list changing), so get updated index here.
+		            // TODO: Should Iselection listen to changes on _list._itemDataSource?
+		            var itemIndex = that._list._itemDataSource._list.indexOf(item);
+		            indices.push(itemIndex);
+		        });
+		        return indices;
 		    },
 
 
@@ -609,7 +606,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        });
 		    },
 
-            
+
 		    // ================================================================
 		    //
 		    // public function: WinJS.UI.ISelection.set
@@ -618,7 +615,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    set: function (items) {
 		        var that = this;
-		        return this.clear().then(function () {
+		        return new WinJS.Promise(function () {
+		            that._selectedItems = [];
 		            return that.add(items);
 		        });
 		    },
@@ -632,12 +630,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    selectAll: function () {
 		        var that = this;
-		        this.clear().then(function () {
-		            that._list.itemDataSource.getCount().then(function (count) {
-		                for (var i = 0; i < count; i++) {
-		                    that.add(i);
-		                }
-		            });
+		        that._selectedItems = [];
+		        that._list.itemDataSource.getCount().then(function (count) {
+		            for (var i = 0; i < count; i++) {
+		                that.add(i);
+		            }
 		        });
 		    },
 
@@ -664,12 +661,24 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //
 		    _containsItemByKey: function (key) {
 
+		        return this._getIndexByKey(key) != -1;
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.ISelection._getIndexByKey
+		    //
+		    //		Returns Index of the item in _selectedItems with the specified key, or -1 if not found
+		    //
+		    _getIndexByKey: function (key) {
+
 		        for (var i = 0; i < this._selectedItems.length; i++)
 		            if (this._selectedItems[i].key == key)
-		                return true;
+		                return i;
 
-                // Item with specified key not found
-		        return false;
+		        // Item with specified key not found
+		        return -1;
 		    }
 		})
 });

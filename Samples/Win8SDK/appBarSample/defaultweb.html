@@ -27,8 +27,69 @@ Copyright (c) Microsoft Corporation. All rights reserved
 	<style>
 		.details
 		{
-			left: 750px !important;
+			left: 600px !important;
 		}
+	    #customLayoutAppBar
+	    {
+            height:108px;
+	    }
+	    #customLayoutAppBar button {
+            position:absolute;
+            top:0px;
+            left:0px;
+            right:0px;
+            bottom:0px;
+	    }
+        #output {
+        width: 600px;
+        }
+	    #customLayoutAppBar h1 {
+	        position: absolute;
+	        top: 40px;
+	        left: 120px;
+	        bottom: 0px;
+	    }
+	    #scenarioFullscreen
+	    {
+            position:fixed !important;
+            top:0px !important;
+            left:0px !important;
+            right:0px !important;
+            bottom:0px !important;
+            z-index: 998;
+	    }
+	        #scenarioFullscreen #scenarioHideListView
+	        {
+                z-index: 999;
+	        }
+	    #scenarioFullscreen header
+	    {
+            position:absolute !important;
+            top:0px !important;
+            left:0px !important;
+            right:0px !important;
+            height:120px !important;
+	    }
+	    #scenarioFullscreen section
+	    {
+            position:fixed !important;
+            top:120px !important;
+            left:0px !important;
+            right:0px !important;
+            bottom:0px !important;
+	    }
+	        #scenarioFullscreen .titlearea
+	        {
+                position: absolute;
+                top: 0px;
+                left:120px;
+	        }
+	        #scenarioFullscreen .smallListIconTextItem-Detail
+	        {
+                position:absolute;
+                top:0px;
+                left:70px;
+	        }
 	</style>
 
 	<!-- bluesky scripts -->

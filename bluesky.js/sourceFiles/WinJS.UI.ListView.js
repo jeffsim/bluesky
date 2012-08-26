@@ -38,6 +38,7 @@ WinJS.Namespace.define("WinJS.UI", {
             this.tapBehavior = WinJS.UI.TapBehavior.invokeOnly;
             this.swipeBehavior = WinJS.UI.SwipeBehavior.select;
             this.selectionMode = WinJS.UI.SelectionMode.multi;
+
             // Generate our layout definition object.
             // tbd: what's the right win8 default?
             if (options && options.layout && options.layout.type == "WinJS.UI.ListLayout")
@@ -459,7 +460,7 @@ WinJS.Namespace.define("WinJS.UI", {
                                         if ($containerNode.hasClass("win-selected"))
                                             that.selection.remove(itemIndex);// remove selection
                                         else
-                                            if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
+                                            if (that.selectionMode == "multi")
                                                 that.selection.add(itemIndex);
                                             else
                                                 that.selection.set(itemIndex);

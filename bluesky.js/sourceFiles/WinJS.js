@@ -222,7 +222,7 @@ var WinJS = {
 		for (var memberKey in members) {
 
 			var member = members[memberKey];
-			if (member == null)
+			if (!member)
 				continue;
 
 			// allow the member to show in for..in loops

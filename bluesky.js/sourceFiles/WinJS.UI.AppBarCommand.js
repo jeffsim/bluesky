@@ -24,13 +24,15 @@ WinJS.Namespace.define("WinJS.UI", {
 
         	options = options || {};
 
-        	// Set default options
+            // Set default options
+            // TODO (CLEANUP): Clean up how options are defined across all wincontrols
+            // TODO (CLEANUP): Sanity check: can boolean options come in as strings ("true" instead of true)?  If not, then clean up the below
         	this._type = options.type || "button";
         	this._section = options.section || "global";
-        	this._hidden = options.hidden == "true" ? true : false;
+        	this._hidden = (options.hidden || options.hidden == "true") ? true : false;
         	this._label = options.label || "";
         	this.onclick = options.onclick || null;
-        	this._selected = options.selected == "true" ? true : false;
+        	this._selected = (options.selected || options.selected == "true") ? true : false;
 
         	// Create a base element if one was not provided
         	if (!element) {
@@ -53,7 +55,10 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
-        	this.disabled = options.disabled == "true" ? true : false;
+        	if (options.disabled)
+        	    debugger;
+
+        	this.disabled = (options.disabled || options.disabled == "true") ? true : false;
 
         	// Create our DOM hierarchy
         	var $root = this.$rootElement;
@@ -82,11 +87,17 @@ WinJS.Namespace.define("WinJS.UI", {
         	// Bind click for flyout
         	var that = this;
         	$root.bind("click", function (event) {
-
-        		if (that._flyout) {
-        			event.stopPropagation();
-        			that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
-        		}
+        	    if (that._flyout) {
+        	        event.stopPropagation();
+        	        event.preventDefault();
+        	        that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
+        	    } else {
+        	        // TODO: See comment in appbar constructor on the purpose behind appBarCommandClickedTime
+        	        var appBarNode = that.element.parentNode;
+        	        if (appBarNode && appBarNode.winControl) {
+        	            appBarNode.winControl._appBarCommandClickedTime = Date.now();
+        	        }
+        	    }
         	});
         },
 
@@ -115,8 +126,8 @@ WinJS.Namespace.define("WinJS.UI", {
         					"backgroundPosition": ""
         				});
         			else if (iconIndex >= 0) {
-        				var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
-
+        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5)) + 3) + "px";
+        			    
         				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
         				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
         				var iconImage = "http://bluesky.io/images/icons-dark.png";

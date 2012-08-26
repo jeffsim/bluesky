@@ -49,7 +49,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 			// initialize grouped items
 			for (var i = 0; i < sourceList.length ; i++) {
 				var item = sourceList.getItem(i);
-				item = this.copyItem(item);
+				item = WinJS.Binding._ListBase.copyItem(item);
 				item.groupKey = groupKeySelector(item.data);
 				this._addItem(item);
 			}

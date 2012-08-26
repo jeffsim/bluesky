@@ -223,7 +223,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 					var key = this._keys[index];
 					var prevItem = this._items[key];
-					var newItem = this.copyItem(prevItem);
+					var newItem = WinJS.Binding._ListBase.copyItem(prevItem);
 					newItem.data = value;
 					newItem.index = index;
 					this._items[key] = newItem;
