@@ -73,6 +73,17 @@
     <Content Include="Tests\supportFiles\fragments\fragment2.css" />
     <Content Include="Tests\supportFiles\listView\listView.html" />
     <Content Include="Tests\supportFiles\semanticZoom\simpleZoom.html" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\Icon.png" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\Icon2.gif" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\img1.jpg" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\test.txt" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\xmlfile.xml" />
+    <Content Include="Tests\supportFiles\storage\img1.jpg" />
+    <Content Include="Tests\supportFiles\storage\img2.jpg" />
+    <Content Include="Tests\supportFiles\storage\img3.jpg" />
+    <Content Include="Tests\supportFiles\storage\readlinestest1.dat" />
+    <Content Include="Tests\supportFiles\storage\readtest1.dat" />
+    <Content Include="Tests\supportFiles\storage\msappx.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
     <Content Include="Tests\Tests.Windows.Storage.PathIO.js" />
     <Content Include="Tests\Tests.Windows.Storage.Search.js" />
@@ -106,7 +117,6 @@
     <Content Include="Tests\Tests.WinJS.Utilities.QueryCollection.js" />
     <Content Include="Tests\supportFiles\externalTemplate1.html" />
     <Content Include="Tests\supportFiles\htmlControl1.html" />
-    <Content Include="Tests\supportFiles\nav1.html" />
     <Content Include="Tests\supportFiles\nav2.html" />
     <Content Include="Tests\supportFiles\nav3.html" />
     <Content Include="Tests\supportFiles\pagesDefine1.js" />

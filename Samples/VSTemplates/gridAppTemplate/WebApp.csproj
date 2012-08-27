@@ -106,25 +106,6 @@
   <ItemGroup>
     <Content Include="defaultWeb.html" />
     <Content Include="js\jquery-1.7.2.min.js" />
-    <Content Include="js\webWinJS\history.js" />
-    <Content Include="js\webWinJS\parseCss.js" />
-    <Content Include="js\webWinJS\webWinJS.Utilities.js" />
-    <Content Include="js\webWinJS\Windows.js" />
-    <Content Include="js\webWinJS\WinJS.Application.js" />
-    <Content Include="js\webWinJS\WinJS.Binding.FilteredList.js" />
-    <Content Include="js\webWinJS\WinJS.Binding.GroupedList.js" />
-    <Content Include="js\webWinJS\WinJS.Binding.GroupsList.js" />
-    <Content Include="js\webWinJS\WinJS.Binding.js" />
-    <Content Include="js\webWinJS\WinJS.Binding.List.js" />
-    <Content Include="js\webWinJS\WinJS.Binding.Template.js" />
-    <Content Include="js\webWinJS\WinJS.js" />
-    <Content Include="js\webWinJS\WinJS.Promise.js" />
-    <Content Include="js\webWinJS\WinJS.Navigation.js" />
-    <Content Include="js\webWinJS\WinJS.UI.AppBar.js" />
-    <Content Include="js\webWinJS\WinJS.UI.js" />
-    <Content Include="js\webWinJS\WinJS.UI.ListView.js" />
-    <Content Include="js\webWinJS\WinJS.UI.Pages.js" />
-    <Content Include="js\webWinJS\WinJS.Utilities.js" />
     <Content Include="web.config" />
     <Content Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
