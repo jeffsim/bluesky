@@ -82,6 +82,7 @@
     <Content Include="Tests\supportFiles\storage\img2.jpg" />
     <Content Include="Tests\supportFiles\storage\img3.jpg" />
     <Content Include="Tests\supportFiles\storage\readlinestest1.dat" />
+    <Content Include="Tests\supportFiles\storage\readtest2.dat" />
     <Content Include="Tests\supportFiles\storage\readtest1.dat" />
     <Content Include="Tests\supportFiles\storage\msappx.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />

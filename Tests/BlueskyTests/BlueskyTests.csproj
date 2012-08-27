@@ -58,6 +58,16 @@
     <Content Include="Tests\supportFiles\fragments\fragment4.css" />
     <Content Include="Tests\supportFiles\fragments\fragment4.html" />
     <Content Include="Tests\supportFiles\fragments\fragment4.js" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\Icon.png" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\Icon2.gif" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\img1.jpg" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\IMG_0965.JPG" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\test.txt" />
+    <Content Include="Tests\supportFiles\storage\contentTypes\xmlfile.xml" />
+    <Content Include="Tests\supportFiles\storage\img1.jpg" />
+    <Content Include="Tests\supportFiles\storage\img2.jpg" />
+    <Content Include="Tests\supportFiles\storage\img3.jpg" />
+    <Content Include="Tests\supportFiles\storage\msappx.html" />
     <Content Include="Tests\supportFiles\xhr\get1.html" />
     <Content Include="Tests\supportFiles\xhr\get1.jpg" />
     <Content Include="Tests\supportFiles\xhr\get1.txt" />
@@ -140,6 +150,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="js\jQuery-1.8.0.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Tests\supportFiles\storage\readlinestest1.dat" />
+    <Content Include="Tests\supportFiles\storage\readtest1.dat" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

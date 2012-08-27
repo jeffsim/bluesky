@@ -124,10 +124,6 @@ testHarness.addTestFile("Windows.Storage Tests", {
             var packageFolder = Windows.ApplicationModel.Package.current.installedLocation;
 
             var copyToFolder = function (destFolder, fileName) {
-                // TODO: How to do this in win8 in one call? The following doesn't work...
-  //              return packageFolder.getItemAsync("Tests/supportFiles/storage/" + fileName).done(function (file) {
-    //                return file.copyAsync(destFolder, file.name, Windows.Storage.NameCollisionOption.replaceExisting);
-      //          });
 
                 return packageFolder.getItemAsync("Tests").done(function (item) {
                     item.getItemAsync("supportFiles").done(function (item) {
@@ -183,16 +179,16 @@ testHarness.addTestFile("Windows.Storage Tests", {
     nyiTests: function (test) {
 
         test.start("Not Yet implemented tests; mix these into the various Tests.Windows.Storage.*.js files");
-        test.assert(false, "R1: CreationCollisionOptions");
-        test.assert(false, "R1: ApplicationData.LocalSettings, RoamingSettings");
-        test.assert(false, "R1: KnownFolders");
+        test.assert(false, "R1: KnownFolders (documents, pictures, etc).  Need to think through cross-app - ideally push to cloud?");
+        test.assert(false, "R1: Limits of browser.localStorage");
         test.assert(false, "R1: ApplicationData, ApplicationDataContainer, ApplicationDataContainerSettings");
-        test.assert(false, "R2: creation errors");
-        test.assert(false, "R2: Windows.Storage.Streams.DataReader (et al)");        
+        test.assert(false, "R1: \\ and / in path");
+        test.assert(false, "R1: ApplicationData.LocalSettings");
+        test.assert(false, "R2: Windows.Storage.Streams (e.g. DataReader et al)");
         test.assert(false, "R3: MRU");
         test.assert(false, "R3: manifest/permissions? test on win8 by removing documentslibrary from perms - gives access denied on KnownFolders.documentsLibrary.createFileAsync");
-        test.assert(false, "R3: Roaming data: CachedFileManager, RoamingFolder, FoamingSettings, RoamingStorageQuota");
-        test.assert(false, "R3: DownloadsFolder");
+        test.assert(false, "R3: Roaming data: CachedFileManager, RoamingFolder, FoamingSettings, RoamingStorageQuota, RoamingSettings");
+        test.assert(false, "R3: DownloadsFolder; have to think through what that means in bluesky.");
         test.assert(false, "R3: Misc other classes in Windows.Storage");
     }
 });

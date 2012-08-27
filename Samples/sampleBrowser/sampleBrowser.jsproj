@@ -56,7 +56,6 @@
     <Content Include="images\smalllogo.png" />
     <Content Include="images\splashscreen.png" />
     <Content Include="images\storelogo.png" />
-    <Content Include="js\data.js" />
     <Content Include="js\default.js" />
     <Content Include="js\jquery-1.7.2.min.js" />
     <Content Include="js\navigator.js" />
