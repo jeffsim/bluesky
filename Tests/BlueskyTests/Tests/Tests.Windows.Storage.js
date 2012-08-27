@@ -182,9 +182,10 @@ testHarness.addTestFile("Windows.Storage Tests", {
         test.assert(false, "R1: KnownFolders (documents, pictures, etc).  Need to think through cross-app - ideally push to cloud?");
         test.assert(false, "R1: Limits of browser.localStorage");
         test.assert(false, "R1: ApplicationData, ApplicationDataContainer, ApplicationDataContainerSettings");
-        test.assert(false, "R1: \\ and / in path");
         test.assert(false, "R1: ApplicationData.LocalSettings");
+        test.assert(false, "R1: \\ and / in path");
         test.assert(false, "R2: Windows.Storage.Streams (e.g. DataReader et al)");
+        test.assert(false, "R2: Query* functions in Windows.Storage.StorageFolder");
         test.assert(false, "R3: MRU");
         test.assert(false, "R3: manifest/permissions? test on win8 by removing documentslibrary from perms - gives access denied on KnownFolders.documentsLibrary.createFileAsync");
         test.assert(false, "R3: Roaming data: CachedFileManager, RoamingFolder, FoamingSettings, RoamingStorageQuota, RoamingSettings");

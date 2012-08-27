@@ -110,7 +110,6 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
     // Test StorageFile.GetFileFromPathAsync
     //
     GetFileFromPathAsync: function (test) {
-        console.log(3);
         test.start("GetFileFromPathAsync tests");
         test.timeoutLength = 5000;
         return test.doAsync(function (onTestComplete) {
