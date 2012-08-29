@@ -23,7 +23,11 @@ var testHarness = {
         var $testFileDropdown = $("#testFileDropdown");
         $testFileDropdown.append("<option value='all' selected='selected'>All tests</option>");
         for (var i = 0; i < this.testFiles.length; i++) {
-            $testFileDropdown.append("<option value='" + i + "'>" + this.testFiles[i].description + "</option>");
+            var desc = this.testFiles[i].description;
+            if (desc.length > 35) {
+                desc = "..." + desc.substr(desc.length - 32);
+            }
+            $testFileDropdown.append("<option value='" + i + "'>" + desc + "</option>");
         }
 
         // If the user changes the test file to run dropdown, then populate the tests to run dropdown
@@ -413,6 +417,7 @@ var testHarness = {
             var testFile = testHarness.testFiles[selectedTestFileIndex];
             var i = 0;
             for (var test in testFile.tests) {
+              
                 $testDropdown.append("<option value='" + test + "'>" + test + "</option>");
             }
         }
@@ -618,7 +623,7 @@ $(document).ready(function () {
     // TODO: Cookie these values.
 
     // To select a particular test file, call _setTestFile with the index of the testFile in the test files dropdown, or 'all' for all
-    testHarness._setTestFile(0);
+    testHarness._setTestFile(5);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
     testHarness._setTest("basicAppbar");

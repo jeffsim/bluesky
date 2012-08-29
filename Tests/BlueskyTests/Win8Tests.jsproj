@@ -86,6 +86,9 @@
     <Content Include="Tests\supportFiles\storage\readtest1.dat" />
     <Content Include="Tests\supportFiles\storage\msappx.html" />
     <Content Include="Tests\Tests.blueskyUtils.js" />
+    <Content Include="Tests\Tests.Windows.Storage.ApplicationDataContainerSettings.js" />
+    <Content Include="Tests\Tests.Windows.Storage.ApplicationDataContainer.js" />
+    <Content Include="Tests\Tests.Windows.Storage.ApplicationData.js" />
     <Content Include="Tests\Tests.Windows.Storage.PathIO.js" />
     <Content Include="Tests\Tests.Windows.Storage.Search.js" />
     <Content Include="Tests\Tests.Windows.Storage.FileIO.js" />
