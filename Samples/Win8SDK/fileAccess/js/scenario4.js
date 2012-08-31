@@ -21,7 +21,10 @@
     function writeToStream() {
         if (SdkSample.sampleFile !== null) {
             var textArea = document.getElementById("textarea");
-            var userContent = textArea.innerText;
+
+            // BLUESKY-CHANGE: IE passes the contents of a textarea control back through 'innerText', but FF does not.
+            var userContent = textArea.innerText || textArea.value;
+
             var outputDiv = document.getElementById("output");
             if (userContent !== "") {
                 SdkSample.sampleFile.openTransactedWriteAsync().then(function (transaction) {

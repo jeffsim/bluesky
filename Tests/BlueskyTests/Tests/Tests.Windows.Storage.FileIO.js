@@ -16,7 +16,7 @@ testHarness.addTestFile("Windows.Storage.FileIO Tests", {
     readTextAsync: function (test) {
 
         test.start("FileIO.readTextAsync tests");
-
+        test.timeoutLength = 20000;
         var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
 
         test.nyi("Test encoding");
@@ -29,7 +29,7 @@ testHarness.addTestFile("Windows.Storage.FileIO Tests", {
                     var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
 
                     return appFolder.getItemAsync("Tests").then(function (item) {
-                        return item.getItemAsync("supportFiles").then(function (item) {
+                        return item.getFolderAsync("supportFiles").then(function (item) {
                             return item.getItemAsync("storage").then(function (item) {
                                 return item.getItemAsync(fileName).then(function (file) {
                                     return Windows.Storage.FileIO.readTextAsync(file);
@@ -39,8 +39,7 @@ testHarness.addTestFile("Windows.Storage.FileIO Tests", {
                     });
                 }
                 // NOTE: test case insensitivity at the same time
-                return getStorageTestFile("readTeST1.dAt").then(function (fileContents) {
-
+                return getStorageTestFile("readTeST1.dat").then(function (fileContents) {
                     test.assert(fileContents == "Hello There", "File contents incorrect");
                     onComplete();
                 });
@@ -104,7 +103,7 @@ testHarness.addTestFile("Windows.Storage.FileIO Tests", {
         test.start("FileIO.writeTextAsync tests");
 
         var appData = Windows.Storage.ApplicationData.current;
-        var tempFolder = appData.localFolder;
+        var localFolder = appData.localFolder;
         test.nyi("Test encoding");
 
         return test.doAsync(function (onTestComplete) {
@@ -112,12 +111,12 @@ testHarness.addTestFile("Windows.Storage.FileIO Tests", {
             // Test simple write
             return new WinJS.Promise(function (onComplete) {
 
-                tempFolder.createFileAsync("writeTextAsyncTest1.dat", Windows.Storage.CreationCollisionOption.replaceExisting)
+                localFolder.createFileAsync("writeTextAsyncTest1.dat", Windows.Storage.CreationCollisionOption.replaceExisting)
                    .then(function (testFile) {
                        Windows.Storage.FileIO.writeTextAsync(testFile, "Hello world").then(function () {
 
                            // Verify the file's contents are there
-                           tempFolder.getFileAsync("writeTextAsyncTest1.dat").then(function (readFile) {
+                           localFolder.getFileAsync("writeTextAsyncTest1.dat").then(function (readFile) {
                                Windows.Storage.FileIO.readTextAsync(readFile).then(function (fileContents) {
                                    test.assert(fileContents == "Hello world", "File contents incorrect");
                                    onTestComplete(test);

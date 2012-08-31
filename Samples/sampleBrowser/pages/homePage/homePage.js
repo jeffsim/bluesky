@@ -320,14 +320,34 @@
 			});
 
 			list.push({
-				group: this.listGroups[2],
-				backgroundImage: "http://bluesky.io/samples/previews/listviewinteraction.jpg",
-				DisplayName: "ListView Interaction",
-				itemTemplate: 'sdkTemplate',
-				url: "http://listviewinteraction.bluesky.io",
-				githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/listViewInteractionModel",
-				msdnUrl: "http://code.msdn.microsoft.com/windowsapps/ListView-selection-detail-95e06ade"
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/appData.png",
+			    DisplayName: "Application Data",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://appData.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/ApplicationData",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/ApplicationData-sample-fb043eb2"
 			});
+			list.push({
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/fileAccess.png",
+			    DisplayName: "File Access",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://fileAccess.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/FileAccess",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/File-access-sample-d723e597"
+			});
+
+			list.push({
+			    group: this.listGroups[2],
+			    backgroundImage: "http://bluesky.io/samples/previews/listviewinteraction.jpg",
+			    DisplayName: "ListView Interaction",
+			    itemTemplate: 'sdkTemplate',
+			    url: "http://listviewinteraction.bluesky.io",
+			    githubUrl: "https://github.com/jeffsim/bluesky/tree/master/Samples/Win8SDK/listViewInteractionModel",
+			    msdnUrl: "http://code.msdn.microsoft.com/windowsapps/ListView-selection-detail-95e06ade"
+			});
+            
 
 			list.push({
 				group: this.listGroups[2],

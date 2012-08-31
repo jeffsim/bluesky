@@ -9,19 +9,30 @@
 var appData = Windows.Storage.ApplicationData.current;
 var localFolder = appData.localFolder;
 var tempFolder = appData.temporaryFolder;
+var roamingFolder = appData.roamingFolder;
 var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
 
-function cleanUpStorageFileTest() {
-    return localFolder.getItemAsync("TestX").then(function (item) {
-        return item.deleteAsync(Windows.Storage.StorageDeleteOption.permanentDelete).then(function () {
-            return localFolder.getItemAsync("Test2").then(function (item) {
-                return item.deleteAsync(Windows.Storage.StorageDeleteOption.permanentDelete);
-            }, function (error) {
-            });
-        }, function (error) {
-        });
+function cleanTestFolder(folder) {
+    var folder1Promise = folder.getItemAsync("TestX").then(function (item) {
+        return item.deleteAsync(Windows.Storage.StorageDeleteOption.permanentDelete);
     }, function (error) {
+        // folder wasn't found - test must have deleted it.  That's fine, just ignore.
     });
+
+    var folder2Promise = folder.getItemAsync("Test2").then(function (item) {
+        return item.deleteAsync(Windows.Storage.StorageDeleteOption.permanentDelete);
+    }, function (error) {
+        // folder wasn't found - test must have deleted it.  That's fine, just ignore.
+    });
+
+    return WinJS.Promise.join([folder1Promise, folder2Promise]);
+}
+
+function cleanUpStorageFileTest() {
+    var promise1 = cleanTestFolder(localFolder);
+    var promise2 = cleanTestFolder(tempFolder);
+    var promise3 = cleanTestFolder(roamingFolder);
+    return WinJS.Promise.join([promise1, promise2, promise3]);
 }
 
 // Add our tests into the test harness's list of tests
@@ -109,7 +120,7 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
     // 
     // Test StorageFile.GetFileFromPathAsync
     //
-    GetFileFromPathAsync: function (test) {
+    getFileFromPathAsync: function (test) {
         test.start("GetFileFromPathAsync tests");
         test.timeoutLength = 5000;
         return test.doAsync(function (onTestComplete) {
@@ -128,6 +139,7 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
         });
     },
 
+
     // ==========================================================================
     // 
     // Test StorageFile.path
@@ -140,7 +152,7 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
                 path_Folder(test, tempFolder).then(function () {
                     // We can't modify app folder, so we need a different test for it
                     Windows.Storage.StorageFile.getFileFromPathAsync(appFolder.path + "\\Tests\\supportFiles\\storage\\readtest2.dat").then(function (file) {
-                        test.assert(file.path == appFolder.path + "\\Tests\\supportFiles\\storage\\readtest2.dat", "path incorrect");
+                        test.assert(pathCompare(file.path, appFolder.path + "\\Tests\\supportFiles\\storage\\readtest2.dat"), "appfolder path incorrect");
                         cleanUpStorageFileTest().then(function () {
                             onTestComplete(test);
                         });
@@ -183,7 +195,6 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
     // Test StorageFile.deleteAsync
     //
     deleteAsync: function (test) {
-        console.log(5);
         test.start("deleteAsync tests");
         test.timeoutLength = 5000;
         return test.doAsync(function (onTestComplete) {
@@ -201,10 +212,10 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
 
     // ==========================================================================
     // 
-    // Test StorageFile.renameAsync_File
+    // Test StorageFile.renameAsync
     //
-    renameAsync_File: function (test) {
-        test.start("renameAsync file tests");
+    renameAsync: function (test) {
+        test.start("renameAsync tests");
         test.timeoutLength = 5000;
 
         var newFolder, newFile;
@@ -324,7 +335,9 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
             // test file from appfolder
             getStorageTestFile("readtest2.DAt").then(function (file) {
                 return file.getBasicPropertiesAsync().then(function (props) {
-                    test.assert(props.size == 14, "4: File size incorrect");
+                    // NOTE: File sizes differ slightly because on windows the size includes the 3 bytes that windows prepends onto the file, but since 
+                    // bluesky only supports text reads now, we ignore them.  This will be fixed post-R1 when we add binary file support.
+                    test.assert(props.size == 14 || props.size == 11, "4: File size incorrect");
                     test.assert(file.displayName == "readtest2.DAt", "4 displayname incorrect");
                     test.assert(file.name == "readtest2.DAt", "4 name incorrect");
                     test.assert(file.displayType == "DAT File", "4 displayType incorrect");
@@ -366,8 +379,10 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
                 // test file from tempfolder
                 return new WinJS.Promise(function (onComplete) {
 
+                    var testFolder;
                     var createTestFile = function () {
                         return localFolder.createFolderAsync("PropsTest2", Windows.Storage.CreationCollisionOption.replaceExisting).then(function (folder) {
+                            testFolder = folder;
                             test.assert(folder.displayName == "PropsTest2", "6 displayname incorrect");
                             test.assert(folder.name == "PropsTest2", "6 name incorrect");
                             test.assert(folder.displayType == "File folder", "6 displayType incorrect");
@@ -388,7 +403,11 @@ testHarness.addTestFile("Windows.Storage.StorageFile Tests", {
                         test.assert(item.isOfType(Windows.Storage.StorageItemTypes.file), "7 incorrect isOfType");
                         item.getBasicPropertiesAsync().then(function (props) {
                             test.assert(props.size == 11, "7: File size incorrect");
-                            onTestComplete(test);
+                            cleanUpStorageFileTest().then(function () {
+                                testFolder.deleteAsync().then(function () {
+                                    onTestComplete(test);
+                                });
+                            });
                         });
                     });
                 });
@@ -966,10 +985,11 @@ function path_Folder(test, folder) {
 
     return new WinJS.Promise(function (c) {
         return setupFileFolderTest(folder).then(function () {
-            test.assert(testFile1.path == testFolder1.path + "\\" + testFile1.name, "testFile1 path incorrect");
-            test.assert(testFile1a.path == testFolder1a.path + "\\" + testFile1a.name, "testFile1a path incorrect");
-            test.assert(testFile2.path == testFolder2.path + "\\" + testFile2.name, "testFile2 path incorrect");
-            test.assert(testFile2a.path == testFolder2a.path + "\\" + testFile2a.name, "testFile2a path incorrect");
+            // NOTE: bluesky uses "/" in paths everywhere, while win8 uses a mix of \\ and /.
+            test.assert(pathCompare(testFile1.path, testFolder1.path + "\\" + testFile1.name), "testFile1 path incorrect");
+            test.assert(pathCompare(testFile1a.path, testFolder1a.path + "\\" + testFile1a.name), "testFile1a path incorrect");
+            test.assert(pathCompare(testFile2.path, testFolder2.path + "\\" + testFile2.name), "testFile2 path incorrect");
+            test.assert(pathCompare(testFile2a.path, testFolder2a.path + "\\" + testFile2a.name), "testFile2a path incorrect");
             c();
         });
     });
@@ -1023,11 +1043,11 @@ function properties_Folder(test, folder) {
                         // TODO: Test properties added by other apps - can you do that in bluesky?
                         test.assert(props["System.IsFolder"] == false, "IsFolder wrong");
                         test.assert(props["System.ItemType"] == ".dat", "ItemType wrong");
-                        test.assert(props["System.ItemTypeText"] == "DAT File", "ItemTypeText wrong");
+                        test.assert(props["System.ItemTypeText"] == "DAT File", "ItemTypeText wrong.  " + props["System.ItemTypeText"]);
                         test.assert(props["System.FileAttributes"] == 32, "FileAttributes");
                         var itemFolderName = props["System.ItemFolderNameDisplay"];
                         var itemFolderPath = folder.path + "\\" + itemFolderName + "\\" + props["System.ItemName"];
-                        test.assert(itemFolderPath == props["System.ItemPathDisplay"], "itemFolderPath incorrect");
+                        test.assert(pathCompare(props["System.ItemPathDisplay"], itemFolderPath), "itemFolderPath incorrect");
                         c();
                     });
                 });
@@ -1088,8 +1108,9 @@ function copyAndReplaceAsync_FileToFolder(test, sourceFolder, destFolder) {
 
                             return Windows.Storage.FileIO.readTextAsync(file).then(function (fileContents) {
                                 test.assert(fileContents == "Hello", "File2 contents incorrect");
-
-                                c();
+                                return cleanUpStorageFileTest().then(function () {
+                                    c();
+                                });
                             });
                         });
                     });
@@ -1130,7 +1151,9 @@ function moveAndReplaceAsync_FileToFolder(test, sourceFolder, destFolder) {
 
                         // ensure old file is not there
                         // TODO: Can't test since Promise doesn't support errors yet
-                        c();
+                        cleanUpStorageFileTest().then(function () {
+                            c();
+                        });
                     });
                 });
             });
@@ -1167,7 +1190,7 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
 
                         return testFolder1.getFileAsync("newFile.dat").then(function (file) {
                             test.assert(file.name == "newFile.dat", "1b: new file name incorrect");
-                            test.assert(file.path.indexOf(testFolder1.path + "\\newFile.dat") == 0, "1: path invalid");
+                            test.assert(pathIndexOf(file.path, testFolder1.path + "\\newFile.dat") == 0, "1: path invalid");
 
                             // Ensure old file doesn't exist
                             // TODO: Can't until Promise supports errors
@@ -1181,7 +1204,9 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1213,7 +1238,9 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1243,7 +1270,9 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1254,12 +1283,12 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
                 return testFolder2.getFileAsync("newFile.dat").then(function (newFile) {
                     // verify we were passed the new file and it's in the right place
                     test.assert(newFile.name == "newFile.dat", "4: new file name incorrect");
-                    test.assert(newFile.path == testFolder2.path + "\\" + newFile.name, "4: folder incorrect");
+                    test.assert(pathCompare(newFile.path, testFolder2.path + "\\" + newFile.name), "4: folder incorrect");
 
                     // Now read the file from the folder and verify it's present and correct
                     return testFolder2.getItemAsync("newFile.dat").then(function (file) {
                         test.assert(file.name == "newFile.dat", "4b: new file name incorrect");
-                        test.assert(file.path == testFolder2.path + "\\" + file.name, "4b: folder incorrect");
+                        test.assert(pathCompare(file.path, testFolder2.path + "\\" + file.name), "4b: folder incorrect");
 
                         // Verify contents of the new file
                         return Windows.Storage.FileIO.readTextAsync(file).then(function (fileContents) {
@@ -1278,7 +1307,9 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1288,19 +1319,21 @@ function moveAsync_FileToFolder(test, sourceFolder, destFolder) {
                 return testFolder2.getFileAsync("testFile2.dat").then(function (newFile) {
                     // verify we were passed the new file and it's in the right place
                     test.assert(newFile.name == "testFile2.dat", "5: new file name incorrect");
-                    test.assert(newFile.path == testFolder2.path + "\\" + newFile.name, "5: folder incorrect");
+                    test.assert(pathCompare(newFile.path, testFolder2.path + "\\" + newFile.name), "5: folder incorrect");
 
                     // Now read the file from the folder and verify it's present and correct
                     return testFolder2.getItemAsync("testFile2.dat").then(function (file) {
                         test.assert(file.name == "testFile2.dat", "5b: new file name incorrect");
-                        test.assert(file.path == testFolder2.path + "\\" + file.name, "5b: folder incorrect");
+                        test.assert(pathCompare(file.path, testFolder2.path + "\\" + file.name), "5b: folder incorrect");
 
                         // Verify contents of the new file
                         return Windows.Storage.FileIO.readTextAsync(file).then(function (fileContents) {
                             test.assert(fileContents == "Hello", "5 File1 contents incorrect");
 
-                            // Verify old file is not there (TODO: Can't without Promise error)
-                            c();
+                            return cleanUpStorageFileTest().then(function () {
+                                // Verify old file is not there (TODO: Can't without Promise error)
+                                c();
+                            });
                         });
                     });
                 });
@@ -1339,11 +1372,11 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
 
                     return testFolder1.getFileAsync("newFile.dat").then(function (file) {
                         test.assert(file.name == "newFile.dat", "1b: new file name incorrect");
-                        test.assert(file.path.indexOf(testFolder1.path + "\\newFile.dat") == 0, "1: path invalid");
+                        test.assert(pathIndexOf(file.path, testFolder1.path + "\\newFile.dat") == 0, "1: path invalid");
 
-                        return testFolder1.getFileAsync("testFile1.dat").then(function (file) {
-                            test.assert(file.name == "testFile1.dat", "1c: new file name incorrect");
-                            test.assert(file.path.indexOf(testFolder1.path + "\\testFile1.dat") == 0, "1d: path invalid");
+                        return testFolder1.getFileAsync("TestFile1.dat").then(function (file) {
+                            test.assert(file.name == "TestFile1.dat", "1c: new file name incorrect");
+                            test.assert(pathIndexOf(file.path, testFolder1.path + "\\testFile1.dat") == 0, "1d: path invalid");
                             return Windows.Storage.FileIO.readTextAsync(newFile).then(function (fileContents) {
                                 test.assert(fileContents == "Hello", "File2 contents incorrect");
                                 c();
@@ -1357,7 +1390,9 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1384,7 +1419,9 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1415,7 +1452,9 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1425,12 +1464,12 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
             return testFile1a.copyAsync(testFolder2, "newFile.dat", Windows.Storage.NameCollisionOption.replaceExisting).then(function (newFile) {
                 // verify we were passed the new file and it's in the right place
                 test.assert(newFile.name == "newFile.dat", "4: new file name incorrect");
-                test.assert(newFile.path == testFolder2.path + "\\" + newFile.name, "4: folder incorrect");
+                test.assert(pathCompare(newFile.path, testFolder2.path + "\\" + newFile.name), "4: folder incorrect");
 
                 // Now read the file from the folder and verify it's present and correct
                 return testFolder2.getItemAsync("newFile.dat").then(function (file) {
                     test.assert(file.name == "newFile.dat", "4b: new file name incorrect");
-                    test.assert(file.path == testFolder2.path + "\\" + file.name, "4b: folder incorrect");
+                    test.assert(pathCompare(file.path, testFolder2.path + "\\" + file.name), "4b: folder incorrect");
 
                     // Verify contents of the new file
                     return Windows.Storage.FileIO.readTextAsync(file).then(function (fileContents) {
@@ -1439,7 +1478,7 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
                         // Verify old file is still there
                         return testFolder1a.getFileAsync(testFile1a.name).then(function (file2) {
                             test.assert(file2.name == "testFile1a.dat", "4c: new file name incorrect");
-                            test.assert(file2.path.indexOf(testFolder1a.path + "\\testFile1a.dat") == 0, "4d: path invalid");
+                            test.assert(pathIndexOf(file2.path, testFolder1a.path + "\\testFile1a.dat") == 0, "4d: path invalid");
 
                             return Windows.Storage.FileIO.readTextAsync(file2).then(function (fileContents) {
                                 test.assert(fileContents == "Hello", "4e File1 contents incorrect");
@@ -1456,7 +1495,9 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(sourceFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(sourceFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1465,12 +1506,12 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
             return testFile1a.copyAsync(testFolder2, "testFile2.dat", Windows.Storage.NameCollisionOption.replaceExisting).then(function (newFile) {
                 // verify we were passed the new file and it's in the right place
                 test.assert(newFile.name == "testFile2.dat", "5: new file name incorrect");
-                test.assert(newFile.path == testFolder2.path + "\\" + newFile.name, "5: folder incorrect");
+                test.assert(pathCompare(newFile.path, testFolder2.path + "\\" + newFile.name), "5: folder incorrect");
 
                 // Now read the file from the folder and verify it's present and correct
                 return testFolder2.getItemAsync("testFile2.dat").then(function (file) {
                     test.assert(file.name == "testFile2.dat", "5b: new file name incorrect");
-                    test.assert(file.path == testFolder2.path + "\\" + file.name, "5b: folder incorrect");
+                    test.assert(pathCompare(file.path, testFolder2.path + "\\" + file.name), "5b: folder incorrect");
 
                     // Verify contents of the new file
                     return Windows.Storage.FileIO.readTextAsync(file).then(function (fileContents) {
@@ -1479,11 +1520,13 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
                         // Verify old file is still there
                         return testFolder1a.getFileAsync(testFile1a.name).then(function (file2) {
                             test.assert(file2.name == "testFile1a.dat", "5c: new file name incorrect");
-                            test.assert(file2.path.indexOf(testFolder1a.path + "\\testFile1a.dat") == 0, "5d: path invalid");
+                            test.assert(pathIndexOf(file2.path, testFolder1a.path + "\\testFile1a.dat") == 0, "5d: path invalid");
 
                             return Windows.Storage.FileIO.readTextAsync(file2).then(function (fileContents) {
                                 test.assert(fileContents == "Hello", "5e File1 contents incorrect");
-                                c();
+                                cleanUpStorageFileTest().then(function () {
+                                    c();
+                                });
                             });
                         });
                     });
@@ -1495,7 +1538,6 @@ function copyAsync_FileToFolder(test, sourceFolder, destFolder) {
 }
 
 function renameAsync_Folder(test, testFolder) {
-
     return setupFileFolderTest(testFolder).then(function () {
         return new WinJS.Promise(function (c) {
             // test: rename folder to new (nonexisting) name
@@ -1504,22 +1546,22 @@ function renameAsync_Folder(test, testFolder) {
                 return testFolder.getFolderAsync("newFolderName").then(function (f) {
                     test.assert(f.name == "newFolderName", "1: New folder not found");
                     test.assert(f.attributes == 16, "1: New folder has invalid attributes");
-                    test.assert(f.path.indexOf(testFolder.path + "\\newFolderName") == 0, "1: path invalid");
+                    test.assert(pathIndexOf(f.path, testFolder.path + "\\newFolderName") == 0, "1: path invalid");
 
                     // Verify file is still in renamed folder
                     f.getItemAsync("testFile2.dat").then(function (item) {
                         test.assert(item.name == "testFile2.dat", "1: file not in renamed folder");
-                        test.assert(item.path.indexOf(testFolder.path + "\\newFolderName\\testFile2.dat") == 0, "1: file path invalid");
+                        test.assert(pathIndexOf(item.path, testFolder.path + "\\newFolderName\\testFile2.dat") == 0, "1: file path invalid");
 
                         // Verify subfolder is still in renamed folder
                         f.getItemAsync("Test3").then(function (sf) {
                             test.assert(sf.name == "Test3", "1: subfolder not in renamed folder");
-                            test.assert(sf.path.indexOf(testFolder.path + "\\newFolderName\\Test3") == 0, "1b: folder path invalid");
+                            test.assert(pathIndexOf(sf.path, testFolder.path + "\\newFolderName\\Test3") == 0, "1b: folder path invalid");
 
                             // Verify file is still in subfolder
                             sf.getItemAsync("testFile2a.dat").then(function (file2) {
                                 test.assert(file2.name == "testFile2a.dat", "1: subfolder not in renamed folder");
-                                test.assert(file2.path.indexOf(testFolder.path + "\\newFolderName\\Test3\\testFile2a.dat") == 0, "1c: file path invalid");
+                                test.assert(pathIndexOf(file2.path, testFolder.path + "\\newFolderName\\Test3\\testFile2a.dat") == 0, "1c: file path invalid");
 
                                 c();
                             });
@@ -1531,7 +1573,9 @@ function renameAsync_Folder(test, testFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(testFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(testFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1543,22 +1587,21 @@ function renameAsync_Folder(test, testFolder) {
                 return testFolder.getFolderAsync("newFolderName").then(function (f) {
                     test.assert(f.name == "newFolderName", "2: New folder not found");
                     test.assert(f.attributes == 16, "2: New folder has invalid attributes");
-                    test.assert(f.path.indexOf(testFolder.path + "\\newFolderName") == 0, "2: path invalid");
-
+                    test.assert(pathIndexOf(f.path, testFolder.path + "\\newFolderName") == 0, "2: path invalid");
                     // Verify file is still in renamed folder
                     f.getItemAsync("testFile2.dat").then(function (item) {
                         test.assert(item.name == "testFile2.dat", "2: file not in renamed folder");
-                        test.assert(item.path.indexOf(testFolder.path + "\\newFolderName\\testFile2.dat") == 0, "2b: path invalid");
+                        test.assert(pathIndexOf(item.path, testFolder.path + "\\newFolderName\\testFile2.dat") == 0, "2b: path invalid");
 
                         // Verify subfolder is still in renamed folder
                         f.getItemAsync("Test3").then(function (sf) {
                             test.assert(sf.name == "Test3", "2: subfolder not in renamed folder");
-                            test.assert(sf.path.indexOf(testFolder.path + "\\newFolderName\\Test3") == 0, "2c: path invalid");
+                            test.assert(pathIndexOf(sf.path, testFolder.path + "\\newFolderName\\Test3") == 0, "2c: path invalid");
 
                             // Verify file is still in subfolder
                             sf.getItemAsync("testFile2a.dat").then(function (file2) {
                                 test.assert(file2.name == "testFile2a.dat", "2: subfolder not in renamed folder");
-                                test.assert(file2.path.indexOf(testFolder.path + "\\newFolderName\\Test3\\testFile2a.dat") == 0, "2d: path invalid");
+                                test.assert(pathIndexOf(file2.path, testFolder.path + "\\newFolderName\\Test3\\testFile2a.dat") == 0, "2d: path invalid");
 
                                 c();
                             });
@@ -1570,7 +1613,9 @@ function renameAsync_Folder(test, testFolder) {
     }).then(function () {
 
         // Prep for next text
-        return setupFileFolderTest(testFolder);
+        return cleanUpStorageFileTest().then(function () {
+            setupFileFolderTest(testFolder);
+        });
 
     }).then(function () {
         return new WinJS.Promise(function (c) {
@@ -1582,19 +1627,19 @@ function renameAsync_Folder(test, testFolder) {
                 return testFolder.getFolderAsync("TestX").then(function (oldFolder) {
                     test.assert(oldFolder.name == "TestX", "3: Old folder not found");
                     test.assert(oldFolder.attributes == 16, "3: Old folder has invalid attributes");
-                    test.assert(oldFolder.path.indexOf(testFolder.path + "\\TestX") == 0, "3: path invalid");
+                    test.assert(pathIndexOf(oldFolder.path, testFolder.path + "\\TestX") == 0, "3: path invalid");
 
                     testFolder.getFolderAsync(testFolder2.name).then(function (f) {
 
                         // Verify file is still in renamed folder
                         f.getItemAsync("testFile2.dat").then(function (item) {
                             test.assert(item.name == "testFile2.dat", "1: file not in renamed folder");
-                            test.assert(item.path.indexOf(testFolder.path + "\\" + testFolder2.name + "\\" + "testFile2.dat") == 0, "3b: path invalid");
+                            test.assert(pathIndexOf(item.path, testFolder.path + "\\" + testFolder2.name + "\\" + "testFile2.dat") == 0, "3b: path invalid");
 
                             // Verify subfolder is still in renamed folder
                             f.getItemAsync("Test3").then(function (sf) {
                                 test.assert(sf.name == "Test3", "1: subfolder not in renamed folder");
-                                test.assert(sf.path.indexOf(testFolder.path + "\\" + testFolder2.name + "\\" + "Test3") == 0, "3c: path invalid");
+                                test.assert(pathIndexOf(sf.path, testFolder.path + "\\" + testFolder2.name + "\\" + "Test3") == 0, "3c: path invalid");
 
                                 // Verify file is still in subfolder
                                 sf.getItemAsync("testFile2a.dat").then(function (file2) {
@@ -1660,4 +1705,31 @@ function setupFileFolderTest(testFolder) {
             c();
         });
     });
+}
+
+// TODO: Win8 uses a combination of / and \ in paths, while bluesky uses only /.  Should 
+// return Win8-consistent values.
+function pathCompare(path1, path2) {
+    path1 = path1.toLowerCase();
+    path2 = path2.toLowerCase();
+    return path1 == path2 || path1 == path2.replace(/\\/g, "/") ||
+           path1.replace(/\\/g, "/") == path2 || path1.replace(/\\/g, "/") == path2.replace(/\\/g, "/");
+}
+
+function pathIndexOf(sourcePath, toCheck) {
+    var v;
+    sourcePath = sourcePath.toLowerCase();
+    toCheck = toCheck.toLowerCase();
+    v = sourcePath.indexOf(toCheck);
+    if (v > -1)
+        return v;
+    var toCheck2 = toCheck.replace(/\\/g, "/");
+    v = sourcePath.indexOf(toCheck2);
+    if (v > -1)
+        return v;
+    var source2 = sourcePath.replace(/\\/g, "/");
+    v = source2.indexOf(toCheck);
+    if (v > -1)
+        return v;
+    return source2.indexOf(toCheck2);
 }

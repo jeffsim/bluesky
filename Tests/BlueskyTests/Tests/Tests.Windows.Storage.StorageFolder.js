@@ -25,6 +25,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                             file.properties.retrievePropertiesAsync(["System.FileName", "System.FileAttributes"]).then(function (props) {
                                 test.assert(props.size == 2, "Incorrect number of properties returned");
                                 test.assert(props["System.FileAttributes"] == 16, "FileAttributes wrong");
+
                                 test.assert(props["System.FileName"] == "storage", "Name wrong");
                                 onTestComplete(test);
                             });
@@ -48,13 +49,12 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
             var appData = Windows.Storage.ApplicationData.current;
 
             var createFileAsync_Folder = function (test, folder) {
-
                 return setupFileFolderTest(folder).then(function () {
                     return new WinJS.Promise(function (c) {
                         // Create the test file
                         return folder.createFileAsync("createTest.xml", Windows.Storage.CreationCollisionOption.replaceExisting).then(function (file) {
                             // validate file exists
-                            test.assert(file.path == folder.path + "\\" + file.name, "File path incorrect");
+                            test.assert(pathCompare(file.path, folder.path + "\\" + file.name), "File path incorrect");
                             test.assert(file.displayName == "createTest.xml", "File displayName incorrect");
                             test.assert(file.name == "createTest.xml", "File name incorrect");
                             test.assert(file.fileType == ".xml", "File fileType incorrect");
@@ -64,7 +64,9 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                             test.assert(file.dateCreated.getYear() == (new Date()).getYear(), "File dateCreated incorrect");
 
                             return cleanUpStorageFileTest().then(function () {
-                                c();
+                                file.deleteAsync().then(function () {
+                                    c();
+                                });
                             });
                         });
                     });
@@ -75,12 +77,19 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                         return new WinJS.Promise(function (c) {
                             // Create the test file
                             return folder.createFileAsync("createTest.xml").then(function (file) {
-                                test.assert(false, "shouldn't be here");
-                            }, function (error) {
-                                test.assert(error.message == "Cannot create a file when that file already exists.\r\n", "Incorrect error message");
-                                return cleanUpStorageFileTest().then(function () {
-                                    c();
-                                });
+                                return folder.createFileAsync("createTest.xml").then(
+                                    // success handler
+                                    function (file) {
+                                        test.assert(false, "shouldn't be here");
+                                    },
+
+                                    // Error handler
+                                    function (error) {
+                                        test.assert(error.message == "Cannot create a file when that file already exists.\r\n", "Incorrect error message");
+                                        return cleanUpStorageFileTest().then(function () {
+                                            c();
+                                        });
+                                    });
                             });
                         });
                     })
@@ -113,7 +122,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                         // Create the test folder
                         return folder.createFolderAsync("TestFolder3", Windows.Storage.CreationCollisionOption.replaceExisting).then(function (item) {
                             // validate folder exists
-                            test.assert(item.path == folder.path + "\\" + item.name, "folder path incorrect");
+                            test.assert(pathCompare(item.path, folder.path + "\\" + item.name), "folder path incorrect");
                             test.assert(item.displayName == "TestFolder3", "folder displayName incorrect");
                             test.assert(item.name == "TestFolder3", "folder name incorrect");
                             test.assert(!item.fileType, "folder fileType incorrect");
@@ -124,7 +133,9 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                             test.assert(item.isOfType(Windows.Storage.StorageItemTypes.folder), "1 incorrect isOfType");
                             test.assert(folder.isOfType(Windows.Storage.StorageItemTypes.folder), "2 incorrect isOfType");
                             return cleanUpStorageFileTest().then(function () {
-                                c();
+                                return item.deleteAsync().then(function () {
+                                    c();
+                                });
                             });
                         });
                     });
@@ -134,12 +145,16 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                     return setupFileFolderTest(folder).then(function () {
                         return new WinJS.Promise(function (c) {
                             // Create the test folder
-                            return folder.createFolderAsync("TestFolder3").then(function (file) {
-                                test.assert(false, "shouldn't be here");
-                            }, function (error) {
-                                test.assert(error.message == "Cannot create a file when that file already exists.\r\n", "Incorrect error message");
-                                return cleanUpStorageFileTest().then(function () {
-                                    c();
+                            return folder.createFolderAsync("TestFolder3").then(function (folder2) {
+                                return folder.createFolderAsync("TestFolder3").then(function (file) {
+                                    test.assert(false, "shouldn't be here");
+                                }, function (error) {
+                                    test.assert(error.message == "Cannot create a file when that file already exists.\r\n", "Incorrect error message");
+                                    return cleanUpStorageFileTest().then(function () {
+                                        return folder2.deleteAsync().then(function () {
+                                            c();
+                                        });
+                                    });
                                 });
                             });
                         });
@@ -293,7 +308,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                 return setupFileFolderTest(folder).then(function () {
                     return new WinJS.Promise(function (c) {
                         return folder.getFolderAsync("TestX").then(function (item) {
-                            test.assert(item.path == folder.path + "\\" + item.name, "Subfolder path incorrect");
+                            test.assert(pathCompare(item.path, folder.path + "\\" + item.name), "Subfolder path incorrect");
                             return cleanUpStorageFileTest().then(function () {
                                 c();
                             });
@@ -327,7 +342,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                     return new WinJS.Promise(function (c) {
                         testFolder1a.createFileAsync("testFile1b.dat").then(function () {
                             return testFolder1a.getFileAsync("testFile1a.dat").then(function (item) {
-                                test.assert(item.path == testFolder1a.path + "\\testFile1a.dat", "Subfolder path incorrect");
+                                test.assert(pathCompare(item.path, testFolder1a.path + "\\testFile1a.dat"), "Subfolder path incorrect");
                                 return cleanUpStorageFileTest().then(function () {
                                     c();
                                 });
@@ -364,7 +379,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                         // test with file
                         return testFolder1a.createFileAsync("testFile1b.dat").then(function () {
                             return testFolder1a.getItemAsync("testFile1a.dat").then(function (item) {
-                                test.assert(item.path == testFolder1a.path + "\\testFile1a.dat", "Subfolder path incorrect");
+                                test.assert(pathCompare(item.path, testFolder1a.path + "\\testFile1a.dat"), "Subfolder path incorrect");
                                 test.assert(item.attributes == 32, "file attributes wrong");
                                 return cleanUpStorageFileTest().then(function () {
                                     c();
@@ -379,7 +394,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                         return new WinJS.Promise(function (c) {
                             // Create the test folder
                             return folder.getItemAsync("TestX").then(function (item) {
-                                test.assert(item.path == folder.path + "\\TestX", "Subfolder path incorrect");
+                                test.assert(pathCompare(item.path, folder.path + "\\TestX"), "Subfolder path incorrect");
                                 test.assert(item.attributes == 16, "file attributes wrong");
                                 return cleanUpStorageFileTest().then(function () {
                                     c();
@@ -494,7 +509,7 @@ testHarness.addTestFile("Windows.Storage.StorageFolder Tests", {
                         return folder.getFolderAsync("TestX").then(function (item) {
                             item.getFoldersAsync().then(function (sfs) {
                                 test.assert(sfs.size == 1, "Incorrect size");
-                                test.assert(sfs[0].path == folder.path + "\\" + item.name + "\\" + sfs[0].name, "Subfolder path incorrect");
+                                test.assert(pathCompare(sfs[0].path, folder.path + "\\" + item.name + "\\" + sfs[0].name), "Subfolder path incorrect");
                                 return cleanUpStorageFileTest().then(function () {
                                     c();
                                 });

@@ -42,7 +42,7 @@ testHarness.addTestFile("Windows.Storage.ApplicationDataContainer Tests", {
         test.start("ApplicationDataContainer.name tests");
 
         // Test pre-defined settings containers
-        test.assert(appData.localSettings.name == "", "localSettings name wrong");
+        test.assert(appData.localSettings.name == "", "localSettings name wrong.  " + appData.localSettings.name);
         test.assert(appData.roamingSettings.name == "", "roamingSettings name wrong");
             
         // Test custom created settings containers

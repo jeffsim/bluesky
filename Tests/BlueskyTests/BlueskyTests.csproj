@@ -72,6 +72,9 @@
     <Content Include="Tests\supportFiles\xhr\get1.jpg" />
     <Content Include="Tests\supportFiles\xhr\get1.txt" />
     <Content Include="Tests\supportFiles\xhr\get1.xml" />
+    <Content Include="Tests\Tests.Windows.Storage.ApplicationData.js" />
+    <Content Include="Tests\Tests.Windows.Storage.ApplicationDataContainer.js" />
+    <Content Include="Tests\Tests.Windows.Storage.ApplicationDataContainerSettings.js" />
     <Content Include="Tests\Tests.Windows.Storage.FileIO.js" />
     <Content Include="Tests\Tests.Windows.Storage.js" />
     <Content Include="Tests\Tests.Windows.Storage.PathIO.js" />
@@ -153,7 +156,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Tests\supportFiles\storage\readlinestest1.dat" />
-    <Content Include="Tests\supportFiles\storage\readtest1.dat" />
+    <None Include="Tests\supportFiles\storage\readtest1.dat" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Tests\supportFiles\storage\readtest2.dat" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -21,7 +21,6 @@ testHarness.addTestFile("Windows.Storage.ApplicationDataContainerSettings Tests"
         test1.values["test1value2"] = "123";
         test2.values["test2value1"] = "xyz";
         test2.values["test2value2"] = "789";
-
         test1.values.clear();
 
         test.assert(!test1.values["test1value1"], "v1 not cleared");
@@ -117,12 +116,15 @@ testHarness.addTestFile("Windows.Storage.ApplicationDataContainerSettings Tests"
         test.assert(test1.values.test3 == "hello", "test3 not set");
         test.assert(test1.values["test3"] == "hello", "2 test3 not set");
         test.assert(test1.values.lookup("test3") == "hello", "2 lookup 1 not set");
+
         test.assert(test1.values.test1value2 == "world", "test1value2 not set");
         test.assert(test1.values["test1value2"] == "world", "2 test1value2 not set");
         test.assert(test1.values.lookup("test1value2") == "world", "2 lookup 2 not set");
+
         test.assert(test2.values.test4 == "after", "test4 not set");
         test.assert(test2.values["test4"] == "after", "2 test4 not set");
         test.assert(test2.values.lookup("test4") == "after", "2 lookup 3 not set");
+
         test.assert(test2.values.test2value2 == "dinner", "test4 not set");
         test.assert(test2.values["test2value2"] == "dinner", "2 test4 not set");
         test.assert(test2.values.lookup("test2value2") == "dinner", "2 lookup 4 not set");

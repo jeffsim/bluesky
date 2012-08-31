@@ -51,7 +51,9 @@
 
     function containersDisplayOutput() {
         var hasContainer = localSettings.containers.hasKey(containerName);
+        console.log(containerName, settingName);
         var hasSetting = hasContainer ? localSettings.containers.lookup(containerName).values.hasKey(settingName) : false;
+        console.log(2, containerName, settingName, hasSetting);
 
         document.getElementById("containersOutput").innerText = "Container Exists: " + /*@static_cast(String)*/hasContainer + "\nSetting Exists: " + /*@static_cast(String)*/hasSetting;
     }

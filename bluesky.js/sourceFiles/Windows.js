@@ -18,21 +18,21 @@ WinJS.Namespace.define("Windows", {
     UI: {
         ViewManagement: {
 
-        	ApplicationView: {
-        		value: null,
-        	},
+            ApplicationView: {
+                value: null,
+            },
 
             ApplicationViewState: {
 
-            	view: {
-					value: this.filled,
-            	},
+                view: {
+                    value: this.filled,
+                },
 
-            	// Enumeration
-            	fullScreenLandscape: 0,
-            	filled: 1,
-            	snapped: 2,
-				fullScreenPortrait: 3
+                // Enumeration
+                fullScreenLandscape: 0,
+                filled: 1,
+                snapped: 2,
+                fullScreenPortrait: 3
             }
         }
     },
@@ -40,39 +40,17 @@ WinJS.Namespace.define("Windows", {
 
     // ================================================================
     //
-    // Windows.ApplicationModel
+    // Windows.Graphics
     //
-    //		This is the root Windows.ApplicationModel namespace/object
+    //		TODO: Stubbed out for test purposes
     //
-	//		NYI NYI NYI; just enough to get Windows.Application app lifecycle management unblocked
+    //		NYI NYI NYI
     //
-    ApplicationModel: {
-        isWeb: true,
-        Activation: {
-            ActivationKind: {
-                launch: 0
-            },
-
-            ApplicationExecutionState: {
-                terminated: 0
+    Graphics: {
+        Display: {
+            DisplayProperties: {
             }
         }
-    },
-
-
-	// ================================================================
-	//
-	// Windows.Graphics
-	//
-	//		TODO: Stubbed out for test purposes
-	//
-	//		NYI NYI NYI
-	//
-    Graphics: {
-    	Display: {
-    		DisplayProperties: {
-    		}
-    	}
     },
 
 });

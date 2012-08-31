@@ -18,6 +18,9 @@ var testHarness = {
     //
     initialize: function () {
 
+        // Start with a clean state
+        localStorage.clear();
+
         // Start by populating the list of runnable test files.  All available testfiles should
         // have added themselves to testHarness.testFiles by the time we get here.
         var $testFileDropdown = $("#testFileDropdown");
@@ -623,10 +626,10 @@ $(document).ready(function () {
     // TODO: Cookie these values.
 
     // To select a particular test file, call _setTestFile with the index of the testFile in the test files dropdown, or 'all' for all
-    testHarness._setTestFile(5);
+    testHarness._setTestFile(0);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
-    testHarness._setTest("basicAppbar");
+    testHarness._setTest("msappProtocol");
 
     // Temp: start the tests now to save me from clicking the button
     $("#startTests").click();

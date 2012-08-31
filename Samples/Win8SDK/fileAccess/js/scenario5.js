@@ -27,6 +27,8 @@
             outputDiv.innerHTML += "File type: " + SdkSample.sampleFile.fileType + "<br />";
 
             // Get basic properties
+            console.log(SdkSample.sampleFile);
+            debugger;
             SdkSample.sampleFile.getBasicPropertiesAsync().then(function (basicProperties) {
                 outputDiv.innerHTML += "Size: " + basicProperties.size + " bytes<br />";
                 outputDiv.innerHTML += "Date modified: " + basicProperties.dateModified + "<br />";

@@ -20,6 +20,7 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
         test.assert(appData.roamingStorageQuota == 100, "roamingStorageQuota is incorrect");
     },
 
+
     // ==========================================================================
     // 
     // Test built-in folders
@@ -30,6 +31,7 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
 
         return test.doAsync(function (onTestComplete) {
 
+            var appData = Windows.Storage.ApplicationData.current;
             test.assert(appData.localFolder, "appData.localFolder not found");
             test.assert(appData.temporaryFolder, "appData.tempFolder not found");
             test.assert(appData.roamingFolder, "appData.roamingFolder not found");
@@ -58,6 +60,7 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
 
         return test.doAsync(function (onTestComplete) {
 
+            var appData = Windows.Storage.ApplicationData.current;
             var curVersion = appData.version;
 
             var setVersionHandler = function (setVersionRequest) {
@@ -69,6 +72,7 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
         });
     },
 
+
     // ==========================================================================
     // 
     // Test version and clearAsync
@@ -77,6 +81,7 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
 
         test.start("clearAsync tests");
         test.timeoutLength = 10000;
+        var appData = Windows.Storage.ApplicationData.current;
         var roamingFolder = appData.roamingFolder;
 
         // TODO: Not really testing roaming here.
@@ -94,9 +99,12 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
                                     test.assert(items.size == 0, "1 Did not clear local");
                                     tempFolder.getItemsAsync().then(function (items2) {
                                         test.assert(items2.size > 0, "1 Did clear temp");
-                                        return cleanUpStorageFileTest().then(function () {
 
-                                            c();
+                                        // Cleanup
+                                        return appData.clearAsync(Windows.Storage.ApplicationDataLocality.roaming).then(function () {
+                                            return appData.clearAsync(Windows.Storage.ApplicationDataLocality.temporary).then(function () {
+                                                c();
+                                            });
                                         });
                                     });
                                 });
@@ -117,9 +125,12 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
                                         test.assert(items.size == 0, "2 Did not clear temp");
                                         localFolder.getItemsAsync().then(function (items2) {
                                             test.assert(items2.size > 0, "2 Did clear local");
-                                            return cleanUpStorageFileTest().then(function () {
 
-                                                c();
+                                            // Cleanup
+                                            return appData.clearAsync(Windows.Storage.ApplicationDataLocality.roaming).then(function () {
+                                                return appData.clearAsync(Windows.Storage.ApplicationDataLocality.local).then(function () {
+                                                    c();
+                                                });
                                             });
                                         });
                                     });
@@ -141,9 +152,12 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
                                         test.assert(items.size > 0, "3 Did clear temp");
                                         localFolder.getItemsAsync().then(function (items2) {
                                             test.assert(items2.size > 0, "3 Did clear local");
-                                            return cleanUpStorageFileTest().then(function () {
 
-                                                c();
+                                            // Cleanup
+                                            return appData.clearAsync(Windows.Storage.ApplicationDataLocality.local).then(function () {
+                                                return appData.clearAsync(Windows.Storage.ApplicationDataLocality.temporary).then(function () {
+                                                    c();
+                                                });
                                             });
                                         });
                                     });
@@ -165,10 +179,8 @@ testHarness.addTestFile("Windows.Storage.ApplicationData Tests", {
                                         test.assert(items.size == 0, "4 Did not clear temp");
                                         localFolder.getItemsAsync().then(function (items2) {
                                             test.assert(items2.size == 0, "4 Did clear local");
-                                            return cleanUpStorageFileTest().then(function () {
 
                                                 onTestComplete(test);
-                                            });
                                         });
                                     });
                                 });

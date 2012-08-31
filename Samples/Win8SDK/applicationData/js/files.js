@@ -55,10 +55,21 @@
     }
 
     function filesReadCounter() {
+        var skip = false;
         roamingFolder.getFileAsync(filename)
             .then(function (file) {
                 return Windows.Storage.FileIO.readTextAsync(file);
-            }).done(function (text) {
+            },
+
+            // BLUESKY-CHANGE: Our WinJS.Promise implementation does not yet bubble errors properly up to done().
+            function (error) {
+                document.getElementById("filesOutput").innerText = "Counter: <not found>";
+                skip = true;
+            })
+
+            .done(function (text) {
+                if (skip)
+                    return;
                 counter = parseInt(text);
                 document.getElementById("filesOutput").innerText = "Counter: " + counter;
             }, function () {

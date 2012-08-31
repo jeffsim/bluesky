@@ -175,3 +175,7 @@ jQuery.extend(jQuery.easing,
         return startValue + deltaValue * curTime * curTime * curTime * curTime * curTime + 1;
     }
 });
+
+// Initialize storage now so that appdata.current is initialized (apps may rely on it now).
+// TODO: Build one place where these inits happen
+Windows.Storage._internalInit();
