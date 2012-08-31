@@ -55,8 +55,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
-        	if (options.disabled)
-        	    debugger;
 
         	this.disabled = (options.disabled || options.disabled == "true") ? true : false;
 

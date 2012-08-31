@@ -1028,7 +1028,6 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _positionItem: function (item, position) {
 
-                console.log(item);
                 if (!item) {
                     this.indexOfFirstVisible = 0;
                     return;

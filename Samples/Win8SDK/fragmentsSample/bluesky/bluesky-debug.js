@@ -663,21 +663,21 @@ WinJS.Namespace.define("Windows", {
     UI: {
         ViewManagement: {
 
-        	ApplicationView: {
-        		value: null,
-        	},
+            ApplicationView: {
+                value: null,
+            },
 
             ApplicationViewState: {
 
-            	view: {
-					value: this.filled,
-            	},
+                view: {
+                    value: this.filled,
+                },
 
-            	// Enumeration
-            	fullScreenLandscape: 0,
-            	filled: 1,
-            	snapped: 2,
-				fullScreenPortrait: 3
+                // Enumeration
+                fullScreenLandscape: 0,
+                filled: 1,
+                snapped: 2,
+                fullScreenPortrait: 3
             }
         }
     },
@@ -685,39 +685,17 @@ WinJS.Namespace.define("Windows", {
 
     // ================================================================
     //
-    // Windows.ApplicationModel
+    // Windows.Graphics
     //
-    //		This is the root Windows.ApplicationModel namespace/object
+    //		TODO: Stubbed out for test purposes
     //
-	//		NYI NYI NYI; just enough to get Windows.Application app lifecycle management unblocked
+    //		NYI NYI NYI
     //
-    ApplicationModel: {
-        isWeb: true,
-        Activation: {
-            ActivationKind: {
-                launch: 0
-            },
-
-            ApplicationExecutionState: {
-                terminated: 0
+    Graphics: {
+        Display: {
+            DisplayProperties: {
             }
         }
-    },
-
-
-	// ================================================================
-	//
-	// Windows.Graphics
-	//
-	//		TODO: Stubbed out for test purposes
-	//
-	//		NYI NYI NYI
-	//
-    Graphics: {
-    	Display: {
-    		DisplayProperties: {
-    		}
-    	}
     },
 
 });
@@ -774,31 +752,78 @@ WinJS.Namespace.define("Windows.Foundation", {
 // Implementation of Windows.Foundation.Collections.IVectorView
 //
 WinJS.Namespace.define("Windows.Foundation.Collections", {
-    IVectorView: WinJS.Class.define(function () {
-        this._items = [];
-    },
-    {
-        // TODO (CLEANUP): Derive this from Array.
-        // TODO (CLEANUP): Function header comment blocks
-        getAt: function (index) {
-            if (index < this._items.length)
-                return this._items[index];
-            return null;
+    IVectorView: WinJS.Class.derive(Array, function () {
+        // constructor
+    }, {
+        // members
+        getAt: function (i) {
+            return this[i];
         },
-
-
-        getMany: function (index, start) {
-            console.error("IVector.getMany NYI");
+        getMany: function (startIndex) {
+            return this.slice(startIndex);
         },
-
         indexOf: function (item) {
-            return this._items.indexOf(item);
+            return this.indexOf(item);
         },
-        size: function () {
-            return this._items.length;
+        size: {
+            get: function () { return this.length; }
         }
     })
 });
+
+
+// =========================================================
+//
+// Implementation of Windows.Foundation.Collections.IMapView
+//
+WinJS.Namespace.define("Windows.Foundation.Collections", {
+    IMapView: WinJS.Class.derive(Object, function () {
+        // constructor
+    }, {
+        // members
+        size: {
+            get: function () { return this.length; }
+        },
+
+        hasKey: function (key) {
+            return this[key] !== undefined;
+        },
+
+        lookup: function (key) {
+            if (this[key] === undefined)
+                return undefined;
+
+            return this[key];
+
+            /* TODO: Following code trips up when 'values' object in ApplicationData.  To repro, uncomment and run applicationdata sdk sample app, scenario 3
+                     For now we just return the original object, which should work for majority of cases.
+
+            // lookup appears to clone objects on win8 so... so do we.
+            //     var clonedObject = jQuery.extend(true, {}, this[key]);
+            // var clonedObject = JSON.parse(JSON.stringify(this[key]))
+            // See following for why this approach: http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
+            // I didn't use Resig's approach because if this[key] is a string (which it often is), then it creates a new object for every character...
+            //  I also didn't use the parse/stringify approach as outlined since it can hit cyclic errors
+            var seen = [];
+            var clonedObject = JSON.parse(JSON.stringify(this[key], function (key, val) {
+                if (typeof val == "object") {
+                    if (seen.indexOf(val) >= 0)
+                        return undefined;
+                    seen.push(val);
+                }
+                return val;
+            }));
+
+            return clonedObject;
+            */
+        },
+
+        split: function (first, second) {
+            console.warn("bluesky NYI: IMapView.split");
+        }
+    })
+});
+
 
 // =========================================================
 //
@@ -822,24 +847,10 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
         },
 
 
-        getAt: function (index) {
-            if (index < this._items.length)
-                return this._items[index];
-            return null;
-        },
-
-
-        getMany: function (index, start) {
-            console.error("IVector.getMany NYI");
-        },
-
         getView: function () {
             console.error("IVector.getView NYI");
         },
 
-        indexOf: function (item) {
-            return this._items.indexOf(item);
-        },
         insertAt: function (index, item) {
             return this._items.splice(index, 0, item);
         },
@@ -859,10 +870,2933 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
             if (index < this._items.length)
                 this._items[index] = item;
         },
-        size: function () {
-            return this._items.length;
-        }
     })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.ApplicationModel.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+
+// ================================================================
+//
+// Windows
+//
+// This is the root Windows namespace/object
+WinJS.Namespace.define("Windows", {
+
+    // ================================================================
+    //
+    // Windows.ApplicationModel
+    //
+    //		This is the root Windows.ApplicationModel namespace/object
+    //
+    //		NYI NYI NYI; just enough to get Windows.Application app lifecycle management unblocked
+    //
+    ApplicationModel: {
+        IsBluesky: true,
+        Activation: {
+            ActivationKind: {
+                launch: 0
+            },
+
+            ApplicationExecutionState: {
+                terminated: 0
+            }
+        },
+    },
+
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.ApplicationModel.Package.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+
+// ================================================================
+//
+// Windows.ApplicationModel.Package
+//
+WinJS.Namespace.define("Windows.ApplicationModel.Package", {
+
+    // =========================================================
+    //
+    // public member: Windows.ApplicationModel.Package
+    //
+    //      MSDN: TODO
+    //
+    _current: null,
+    current: {
+        get: function () {
+            if (!this._current)
+                this._current = new Windows.ApplicationModel._package();
+            return this._current;
+        }
+    }
+});
+
+
+// ================================================================
+//
+// Windows.ApplicationModel._package
+//
+// This is the root Windows namespace/object
+//
+WinJS.Namespace.define("Windows.ApplicationModel", {
+
+    // =========================================================
+    //
+    // private class: Windows.ApplicationModel._package
+    //
+    _package: WinJS.Class.define(
+
+        function () {
+            
+            this.installedLocation = null;
+
+            // TODO: What should these values be?
+            this.id = {
+                version: {
+                    major: 0,
+                    minor: 0,
+                    build: 0,
+                    revision: 0
+                },
+                architecture: "web",
+                resourceId: "100",
+                publisher: "bluesky",
+                publisherId: "200",
+                fullName: "testApp",
+                familyName: "testApp_Family",
+                isFramework: false
+            };
+        },
+
+        // ================================================================
+        // Windows.Storage.ApplicationData.Package members
+        // ================================================================
+
+        {
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    // =========================================================
+    //
+    // Private initializer: Windows.Storage._internalInit
+    //
+    //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.fileattributes.aspx
+    //
+    _internalInit: function () {
+
+        // Create the known folders
+        var appData = Windows.Storage.ApplicationData.current;
+
+        // TODO: Create all known folders
+        // TODO: What to do with them?  I'm creating them here so that apps that assume their existence don't break; but 
+        //       I'm not actually running filters (etc) against them.
+        this.KnownFolders.documentsLibrary = new Windows.Storage.StorageFolder(appData.localFolder, "documents");
+        this.KnownFolders.homeGroup = new Windows.Storage.StorageFolder(appData.localFolder, "homegroup");
+        this.KnownFolders.picturesLibrary = new Windows.Storage.StorageFolder(appData.localFolder, "pictures");
+
+        // Initialize the CachedFileManager for roaming files.
+        // TODO: Uncomment this when roaming is enabled
+        // Windows.Storage.CachedFileManager.init();
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.FileAttributes
+    //
+    //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.fileattributes.aspx
+    //
+    FileAttributes: {
+        normal: 0,
+        readonly: 1,
+        directory: 16,
+        archive: 32,
+        temporary: 256
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.CreationCollisionOption
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.creationcollisionoption.aspx
+    //
+    CreationCollisionOption: {
+        generateUniqueName: 0,
+        replaceExisting: 1,
+        failIfExists: 2,
+        openIfExists: 3
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.NameCollisionOption
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.namecollisionoption.aspx
+    //
+    NameCollisionOption: {
+        generateUniqueName: 0,
+        replaceExisting: 1,
+        failIfExists: 2
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.ApplicationDataLocality
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.applicationdatalocality.aspx
+    //
+    ApplicationDataLocality: {
+        local: 0,
+        roaming: 1,
+        temporary: 2
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.ApplicationDataCreateDisposition
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.applicationdatacreatedisposition.aspx
+    //
+    ApplicationDataCreateDisposition: {
+        always: 0,
+        existing: 1
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.StorageDeleteOption
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.storagedeleteoption.aspx
+    //
+    StorageDeleteOption: {
+        default: 0,
+        PermanentDelete: 1
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.StorageItemTypes
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.storageitemtypes.aspx
+    //
+    StorageItemTypes: {
+        none: 0,
+        file: 1,
+        folder: 2
+    },
+
+
+    // =========================================================
+    //
+    // Public enumeration: Windows.Storage.FileAccessMode
+    //
+    //      MSDN:  http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.fileaccessmode.aspx
+    //
+    FileAccessMode: {
+        read: 0,
+        readWrite: 1
+    },
+
+
+    // =========================================================
+    //
+    // Public class: Windows.Storage.KnownFolders
+    //
+    //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.knownfolders.aspx
+    //
+    KnownFolders: {},
+});
+
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.ApplicationData.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.ApplicationData
+//
+//		MSDN: TODO
+//
+//      Good writeup on the challenge behind local storage in browsers: http://hacks.mozilla.org/2012/03/there-is-no-simple-solution-for-local-storage/
+//      tbd: short term, using localStorage for this.  There are issues with this (see previous link; plus, unclear limitations on storage amount across subdomains) -
+//      however, it *will* run on practically every browser (see http://caniuse.com/#search=localstorage).  Mid-term, we should consider moving to a DB (mainly for
+//      asynchronicity and perf), although there's not cross-browser standard there (e.g. indexedDb not supported on IE9).  Long-term, the new HTML5 file API makes sense,
+//      but it's nowhere near cross-browser yet.  So; net net, we go with localStorage, with all its warts, for now.
+//
+WinJS.Namespace.define("Windows.Storage.ApplicationData", {
+
+    // =========================================================
+    //
+    // public member: Windows.Storage.ApplicationData.current
+    //
+    //      MSDN: TODO
+    //
+    _current: null,
+    current: {
+        get: function () {
+            if (!this._current)
+                this._current = new Windows.Storage._applicationData();
+            return this._current;
+        }
+    }
+});
+
+
+WinJS.Namespace.define("Windows.Storage", {
+
+    // =========================================================
+    //
+    // private class: Windows.Storage.ApplicationData._applicationData
+    //
+    //      Encapsulates Windows.Storage.ApplicationData members in singleton 'current' above
+    //
+    _applicationData: WinJS.Class.define(
+
+        function () {
+
+
+            // Build the top-level root folder which will hold all other folders
+            // TODO: Define correct root folder structure.  Mimic'ing Win8's for now
+            this._rootFolder = new Windows.Storage.StorageFolder(null, "/Users/UserId");
+
+            // Create the app folder
+            this._appFolder = new Windows.Storage.AppXFolder(null, "");
+
+            // TODO: I'm reusing the AppXFolder object for subfolders as well, so I can't set name/etc in the constructor
+            this._appFolder.name = "AppX";
+            this._appFolder.displayName = "AppX";
+            this._appFolder.folderRelativeId = "0/0/AppX";
+
+            var curPackage = Windows.ApplicationModel.Package.current;
+            curPackage.installedLocation = this._appFolder;
+
+            var builtInFolderRoot = "/Users/UserId/AppData/Local/Packages/" + curPackage.id.familyName + "/";
+
+            // Create the local folder
+            this.localFolder = new Windows.Storage.StorageFolder(this._rootFolder, "LocalState");
+            this.localFolder.folderRelativeId = "0/0/" + this.localFolder.name;
+            this.localFolder.path = builtInFolderRoot + "LocalState";
+            this.localFolder._initMFT();
+
+            // Create the temporary folder
+            // TODO (CLEANUP): tempfolder should move to sessionStorage instead of localStorage, or at least be tracked
+            // and periodically dumped.  Lack of ability to tell localStorage usage is... problemsome :P.
+            this.temporaryFolder = new Windows.Storage.StorageFolder(this._rootFolder, "TempState");
+            this.temporaryFolder.folderRelativeId = "0/0/" + this.temporaryFolder.name;
+            this.temporaryFolder.path = builtInFolderRoot + "TempState";
+            this.temporaryFolder._initMFT();
+
+            // Create the roaming folder used to proxy all remote files
+            this.roamingFolder = new Windows.Storage.StorageFolder(this._rootFolder, "RoamingState");
+            this.roamingFolder.folderRelativeId = "0/0/" + this.roamingFolder.name;
+            this.roamingFolder.path = builtInFolderRoot + "RoamingState";
+            this.roamingFolder.isRoaming = true;
+            this.roamingFolder._initMFT();
+
+            // Create the settings containers
+            this.roamingSettings = new Windows.Storage.ApplicationDataContainer("", Windows.Storage.ApplicationDataCreateDisposition.always);
+            this.roamingSettings.locality = Windows.Storage.ApplicationDataLocality.roaming;
+
+            this.localSettings = new Windows.Storage.ApplicationDataContainer("", Windows.Storage.ApplicationDataCreateDisposition.always);
+            this.localSettings.locality = Windows.Storage.ApplicationDataLocality.local;
+
+            // TODO (LATER): Create a page cache folder for apploader/cached apps.
+            // appData._pageCacheFolder = new Windows.Storage.StorageFolder(appData._rootFolder, "pageCache");
+
+            // mimic win8's roaming storage quota
+            this.roamingStorageQuota = 100;
+
+            // Start at version 0
+            // TODO: Read this from the store?
+            this.version = 0;
+        },
+
+        // ================================================================
+        // Windows.Storage.ApplicationData._applicationData members
+        // ================================================================
+
+        {
+            // ================================================================
+            //
+            // public function: Windows.Storage.ApplicationData.clearAsync
+            //
+            //		MSDN: TODO
+            //
+            clearAsync: function (locality) {
+                var that = this;
+                return new WinJS.Promise(function (c) {
+                    var promises = [];
+                    // clear localFolder
+                    // TODO (PERF): Instead of enumerating this way, just blow away the folder's MFT (being sure to clear from localStorage!)
+                    if (locality === undefined || locality == Windows.Storage.ApplicationDataLocality.local)
+                        promises.push(that.localFolder.getItemsAsync().then(function (items) {
+                            items.forEach(function (item) {
+                                promises.push(item.deleteAsync());
+                            });
+                        }));
+
+                    // clear temporaryFolder
+                    if (locality === undefined || locality == Windows.Storage.ApplicationDataLocality.temporary)
+                        promises.push(that.temporaryFolder.getItemsAsync().then(function (items) {
+                            items.forEach(function (item) {
+                                promises.push(item.deleteAsync());
+                            });
+                        }));
+
+                    // clear roamingFolder
+                    if (locality === undefined || locality == Windows.Storage.ApplicationDataLocality.roaming)
+                        promises.push(that.roamingFolder.getItemsAsync().then(function (items) {
+                            items.forEach(function (item) {
+                                promises.push(item.deleteAsync());
+                            });
+                        }));
+
+                    // Wait until everything's deleted
+                    WinJS.Promise.join(promises).then(function () {
+                        c();
+                    });
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.ApplicationData.setVersionAsync
+            //
+            //		MSDN: TODO
+            //
+            setVersionAsync: function (newVersion, setVersionEventHandler) {
+                return new WinJS.Promise(function (c) {
+                    setVersionEventHandler({
+                        currentVersion: Windows.Storage.ApplicationData.current.version, desiredVersion: newVersion
+                    });
+                    Windows.Storage.ApplicationData.version = newVersion;
+                    c();
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.ApplicationData.addEventListener
+            //
+            //		MSDN: TODO
+            //
+            addEventListener: function () {
+                console.warn("bluesky fyi: Windows.Storage.ApplicationData.addEventListener is NYI");
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.ApplicationData.removeEventListener
+            //
+            //		MSDN: TODO
+            //
+            removeEventListener: function () {
+                console.warn("bluesky fyi: Windows.Storage.ApplicationData.removeEventListener is NYI");
+            },
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.ApplicationDataContainer.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.ApplicationDataContainer
+//
+//		MSDN: TODO
+//
+
+WinJS.Namespace.define("Windows.Storage", {
+
+    // ================================================================
+    //
+    // public Object: Windows.Storage.ApplicationData
+    //
+    ApplicationDataContainer: WinJS.Class.define(
+
+        // =========================================================
+        //
+        // public function: Windows.Storage.ApplicationDataContainer constructor
+        //
+        //      MSDN: TODO
+        //
+        function (name, disposition) {
+
+            this.name = name;
+
+            // TODO: Support disposition
+
+            // TODO: If this container already exists, then open it instead of initializing with empty values
+            //       Need to figure out persistence model first.
+            this.containers = new Windows.Foundation.Collections.IMapView();
+            this.values = new Windows.Storage.ApplicationDataContainerSettings();
+        },
+
+	    // ================================================================
+	    // Windows.Storage.ApplicationDataContainer members
+	    // ================================================================
+
+        {
+            // =========================================================
+            //
+            // public function: Windows.Storage.ApplicationDataContainer.createContainer
+            //
+            //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.applicationdatacontainer.createcontainer.aspx
+            //
+            createContainer: function (name, disposition) {
+
+                // Create the new container
+                var newContainer = new Windows.Storage.ApplicationDataContainer(name, disposition);
+
+                // Assign it to us with our locality
+                newContainer._parentContainer = this;
+                newContainer.locality = this.locality;
+
+                // Win8 does not allow multiple subcontainers with the same name, so we can use a map (for quicker lookup later) here.
+                this.containers[name] = newContainer;
+
+                // Persist in file system
+                localStorage.setItem("adc_" + name, JSON.stringify({"parent": this.name}));
+
+                // return the newly created container
+                return newContainer;
+            },
+
+
+            // =========================================================
+            //
+            // public function: Windows.Storage.ApplicationDataContainer.deleteContainer
+            //
+            //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.applicationdatacontainer.deletecontainer.aspx
+            //
+            deleteContainer: function (name) {
+                
+                // Remove from filesystem
+                localStorage.removeItem("adc_" + name);
+
+                delete this.containers[name];
+            }
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.ApplicationDataContainerSettings.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.ApplicationDataContainerSettings
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    ApplicationDataCompositeValue: WinJS.Class.derive(Object, null,null),
+
+
+    // ================================================================
+    //
+    // public Object: Windows.Storage.ApplicationDataContainerSettings
+    //
+    ApplicationDataContainerSettings: WinJS.Class.derive(Windows.Foundation.Collections.IMapView,
+
+        // =========================================================
+        //
+        // public function: Windows.Storage.ApplicationDataContainerSettings constructor
+        //
+        function () {
+
+            // TODO: Read our values from store, once persistence model is figured out.
+            //       (NOTE: Read doesn't happen here...)
+        },
+
+	    // ================================================================
+	    // Windows.Storage.ApplicationDataContainerSettings members
+	    // ================================================================
+
+        {
+            remove: function (key) {
+                delete this[key];
+            },
+
+            insert: function (key, value) {
+                this[key] = value;
+            },
+
+            clear: function () {
+                for (var i in this)
+                    if (this.hasOwnProperty(i))
+                        delete this[i];
+            },
+
+            getView: function () {
+                var result = {};
+                for (var i in this)
+                    if (this.hasOwnProperty(i))
+                        result[i] = this[i];
+                result.size = Object.keys(result).length;
+                return result;
+            }
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.StorageItem.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage._StorageItem
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    // ================================================================
+    //
+    // private Object: Windows.Storage._StorageItem
+    //
+    _StorageItem: WinJS.Class.define(
+
+        // =========================================================
+        //
+        // public function: Windows.Storage._StorageItem constructor
+        //
+        function (parentFolder, desiredName) {
+
+            this.parentFolder = parentFolder;
+            if (parentFolder)
+                this.isRoaming = parentFolder.isRoaming;
+            this.name = desiredName;
+            this.displayName = desiredName;
+            if (parentFolder)
+                this.path = parentFolder.path + "/" + desiredName;
+            else
+                this.path = desiredName;
+
+            // TODO: Not storing dateCreated (or other date fields)
+            this.dateCreated = new Date();//(new Date()).valueOf();
+            this.dateModified = this.dateCreated;
+            this.dateAccessed = this.dateCreated;
+
+            this.properties = new Windows.Storage.StorageItemContentProperties(this);
+        },
+
+	    // ================================================================
+	    // Windows.Storage._StorageItem members
+	    // ================================================================
+
+        {
+
+            // ================================================================
+            //
+            // public function: Windows.Storage._StorageItem.isOfType
+            //
+            //      MSDN: TODO
+            //
+            isOfType: function (storageItemType) {
+
+                // TODO: Bitmask, not equality.
+                var isFolder = (this.attributes & Windows.Storage.FileAttributes.directory) == Windows.Storage.FileAttributes.directory;
+                return (storageItemType == Windows.Storage.StorageItemTypes.folder && isFolder) ||
+                     (storageItemType == Windows.Storage.StorageItemTypes.file && !isFolder);
+            },
+
+
+            // =========================================================
+            //
+            // public function: Windows.Storage._StorageItem.getBasicPropertiesAsync
+            //
+            //      MSDN: TODO
+            //
+            getBasicPropertiesAsync: function () {
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    var props = {
+                    };
+
+                    // TODO (PERF-MAJOR): Store size in MFT?  I'm only okay with this because I'm assuming that getBasicPropertiesAsync
+                    // is a relatively rare call.  Either way, this MUST be fixed in R2/R3.  Apologies to any devs who tracked piss-poor
+                    // performance down to this line :P.
+                    return Windows.Storage.PathIO.readTextAsync(that.path).then(function (contents) {
+                        if (!contents)
+                            props.size = 0;
+                        else
+                            props.size = contents.length;
+                        props.dateCreated = that.dateCreated;
+                        props.dateModified = that.dateModified;
+                        onComplete(props);
+                    });
+                });
+            },
+
+
+            // =========================================================
+            //
+            // public function: Windows.Storage._StorageItem.renameAsync
+            //
+            //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br227227.aspx
+            //
+            renameAsync: function (desiredName, collisionOption) {
+                var that = this;
+
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    var exists = that.parentFolder._mftEntryExists(desiredName);
+
+                    if (collisionOption == Windows.Storage.NameCollisionOption.failIfExists && exists) {
+                        onError({ message: "Cannot create a file when that file already exists.\r\n" });
+                        return;
+                    }
+
+                    if (collisionOption == Windows.Storage.CreationCollisionOption.generateUniqueName && exists)
+                        desiredName = Windows.Storage._StorageItem._generateUniqueName(that.parentFolder, desiredName);
+
+                    that.parentFolder._renameInMFT(that, desiredName);
+
+                    onComplete(that);
+                });
+            },
+
+
+            // =========================================================
+            //
+            // public function: Windows.Storage._StorageItem.moveAsync
+            //
+            //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br227218.aspx
+            //
+            moveAsync: function (destinationFolder) {
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+                    that.parentFolder._removeFromMFT(that);
+                    destinationFolder._addToMSFT(that);
+                    that.parentFolder = destinationFolder;
+                    onComplete();
+                });
+            }
+        },
+
+	    // ================================================================
+	    // Windows.Storage._StorageItem static members
+	    // ================================================================
+
+        {
+            _generateUniqueName: function (folder, desiredName) {
+                var index = 1;
+                var fileExt = desiredName.lastIndexOf(".");
+                if (fileExt >= 0) {
+                    var origNameWithoutExt = desiredName.substr(0, fileExt);
+                    var ext = desiredName.substr(fileExt);
+                } else {
+                    var origNameWithoutExt = desiredName;
+                    var ext = "";
+                }
+
+                while (true) {
+                    desiredName = origNameWithoutExt + " (Copy " + index + ")" + ext;
+                    if (!folder._mftEntryExists(desiredName))
+                        break;
+                    index++;
+                }
+                return desiredName;
+            }
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.StorageItemContentProperties.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.StorageItemContentProperties
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    // ================================================================
+    //
+    // private Object: Windows.Storage._allProps
+    //
+    //      List of all properties currently supported
+    _allProps: ["System.FileExtension", "System.FileName", "System.IsFolder", "System.ItemType", "System.ItemTypeText",
+                "System.FileAttributes", "System.ItemFolderNameDisplay", "System.ItemPathDisplay", "System.ItemName", "System.DateAccessed",
+                "System.DateModified", "System.DateCreated", "System.FileOwner"],
+
+    // ================================================================
+    //
+    // public Object: Windows.Storage.StorageItemContentProperties
+    //
+    StorageItemContentProperties: WinJS.Class.define(
+
+        // =========================================================
+        //
+        // public function: Windows.Storage.StorageItemContentProperties constructor
+        //
+        function (item) {
+            this._item = item;
+        },
+
+	    // ================================================================
+	    // Windows.Storage.StorageItemContentProperties members
+	    // ================================================================
+
+        {
+            // =========================================================
+            //
+            // public function: Windows.Storage.StorageItemContentProperties.retrievePropertiesAsync
+            //
+            retrievePropertiesAsync: function (propertiesToRetrieve) {
+                var item = this._item;
+                return new WinJS.Promise(function (c) {
+
+                    if (!propertiesToRetrieve || !propertiesToRetrieve.length)
+                        propertiesToRetrieve = Windows.Storage._allProps;
+
+                    // TODO: Properties should be saved to local (and roaming)
+                    // TODO: Obviously, these should be stored in a map and returned verbatim, rather than regenerating each time.
+                    // Hacking properties in for R1/R2 to work for the 90% case.
+                    var props = {};
+                    var isFolder = (item.attributes & Windows.Storage.FileAttributes.directory) == Windows.Storage.FileAttributes.directory;
+                    var fileExt = item.name.substr(item.name.lastIndexOf(".") + 1);
+                    propertiesToRetrieve.forEach(function (prop) {
+                        if (prop.indexOf("System") == 0 && !props.System)
+
+                            switch (prop) {
+                                case "System.FileExtension":
+                                    props[prop] = "." + fileExt;
+                                    break;
+                                case "System.FileName":
+                                    props[prop] = item.name;
+                                    break;
+                                case "System.DateCreated":
+                                    props[prop] = item.dateCreated;
+                                    break;
+                                case "System.DateModified":
+                                    props[prop] = item.dateModified;
+                                    break;
+                                case "System.DateAccessed":
+                                    props[prop] = item.dateAccessed;
+                                    break;
+                                case "System.FileOwner":
+                                    props[prop] = "You";
+                                    break;
+                                case "System.IsFolder":
+                                    props[prop] = isFolder;
+                                    break;
+                                case "System.ItemType":
+                                    if (isFolder)
+                                        props[prop] = "File folder";
+                                    else
+                                        props[prop] = "." + fileExt.toLowerCase();
+                                    break;
+                                case "System.ItemTypeText":
+                                    if (isFolder)
+                                        props[prop] = "File folder";
+                                    else
+                                        props[prop] = fileExt.toUpperCase() + " File";
+                                    break;
+                                case "System.FileAttributes":
+                                    props[prop] = item.attributes;
+                                    break;
+                                case "System.ItemFolderNameDisplay":
+                                    props[prop] = item.parentFolder.name;
+                                    break;
+                                case "System.ItemPathDisplay":
+                                    props[prop] = item.path;
+                                    break;
+                                case "System.ItemName":
+                                    props[prop] = item.name;
+                                    break;
+                            }
+                    });
+                    props.size = Object.keys(props).length;
+
+                    c(props);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorgeItemContentProperties.savePropertiesAsync
+            //
+            //      MSDN: TODO
+            //
+            savePropertiesAsync: function (props) {
+                return new WinJS.Promise(function (c) {
+                    console.warn("bluesky fyi: StorgeItemContentProperties.savePropertiesAsync is NYI");
+                    c({});
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorgeItemContentProperties.getDocumentPropertiesAsync
+            //
+            //      MSDN: TODO
+            //
+            getDocumentPropertiesAsync: function () {
+                return new WinJS.Promise(function (c) {
+                    console.warn("bluesky fyi: StorgeItemContentProperties.getDocumentPropertiesAsync is NYI");
+                    c({});
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorgeItemContentProperties.getImagePropertiesAsync
+            //
+            //      MSDN: TODO
+            //
+            getImagePropertiesAsync: function () {
+                return new WinJS.Promise(function (c) {
+                    console.warn("bluesky fyi: StorgeItemContentProperties.getImagePropertiesAsync is NYI");
+                    c({});
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorgeItemContentProperties.getMusicPropertiesAsync
+            //
+            //      MSDN: TODO
+            //
+            getMusicPropertiesAsync: function () {
+                return new WinJS.Promise(function (c) {
+                    console.warn("bluesky fyi: StorgeItemContentProperties.getMusicPropertiesAsync is NYI");
+                    c({});
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorgeItemContentProperties.getVideoPropertiesAsync
+            //
+            //      MSDN: TODO
+            //
+            getVideoPropertiesAsync: function () {
+                return new WinJS.Promise(function (c) {
+                    console.warn("bluesky fyi: StorgeItemContentProperties.getVideoPropertiesAsync is NYI");
+                    c({});
+                });
+            },
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.StorageFile.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.StorageFile
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    // ================================================================
+    //
+    // public Object: Windows.Storage.StorageFile
+    //
+    StorageFile: WinJS.Class.derive(Windows.Storage._StorageItem,
+
+		// ================================================================
+		//
+		// public function: Windows.Storage.StorageFile
+		//
+		//		MSDN: TODO
+		//
+        function (parentFolder, desiredName) {
+
+            // Call into our base class' constructor
+            Windows.Storage._StorageItem.call(this, parentFolder, desiredName);
+
+            // Set our attributes
+            this.attributes = Windows.Storage.FileAttributes.archive;
+
+            var ext = desiredName.split('.').pop();
+            switch (ext.toLowerCase()) {
+                case "xml":
+                    this.displayType = "XML Document";
+                    break;
+                default:
+                    this.displayType = ext.toUpperCase() + " File";
+                    break;
+            }
+            this.fileType = "." + ext;
+
+            this.contentType = Windows.Storage.StorageFile._fileTypeMap[ext]
+                                    ? Windows.Storage.StorageFile._fileTypeMap[ext]
+                                    : ext.toUpperCase() + " File";
+        },
+
+            // ================================================================
+            // Windows.Storage.StorageFile members
+            // ================================================================
+        {
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.copyAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.storagefile.copyasync.aspx
+            //
+            copyAsync: function (folder, desiredName, collisionOption) {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    var exists = folder._mftEntryExists(desiredName);
+
+                    if (collisionOption == Windows.Storage.NameCollisionOption.failIfExists && exists) {
+                        onError({ message: "Cannot create a file when that file already exists.\r\n" });
+                        return;
+                    }
+
+                    if (collisionOption == Windows.Storage.NameCollisionOption.generateUniqueName && exists)
+                        desiredName = Windows.Storage._StorageItem._generateUniqueName(folder, desiredName);
+
+                    var newFile = that.parentFolder._copyFileInMFT(that, folder, desiredName);
+
+                    onComplete(newFile);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.copyAndReplaceAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh738482.aspx
+            //
+            copyAndReplaceAsync: function (fileToReplace) {
+                var that = this;
+                return fileToReplace.deleteAsync().then(function () {
+                    return that.copyAsync(fileToReplace.parentFolder, fileToReplace.name);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.moveAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.storagefile.moveasync.aspx
+            //
+            moveAsync: function (folder, desiredName, collisionOption) {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    var exists = that.parentFolder._mftEntryExists(desiredName);
+
+                    if (collisionOption == Windows.Storage.NameCollisionOption.failIfExists && exists) {
+                        onError({ message: "File exists" });    // TODO (CLEANUP): Use correct win8 message
+                        return;
+                    }
+
+                    if (collisionOption == Windows.Storage.NameCollisionOption.generateUniqueName && exists) {
+                        var index = 1;
+                        var fileExt = desiredName.lastIndexOf(".");
+                        if (fileExt >= 0) {
+                            var origNameWithoutExt = desiredName.substr(0, fileExt);
+                            var ext = desiredName.substr(fileExt);
+                        } else {
+                            var origNameWithoutExt = desiredName;
+                            var ext = "";
+                        }
+
+                        while (true) {
+                            desiredName = origNameWithoutExt + " (Copy " + index + ")" + ext;
+                            if (!that.parentFolder._mftEntryExists(desiredName))
+                                break;
+                            index++;
+                        }
+
+                    }
+
+                    var newFile = that.parentFolder._copyFileInMFT(that, folder, desiredName);
+
+                    // now that we've copied the file, remove the original one (this)
+                    // TODO (PERF): Combine this into one action
+                    that.deleteAsync().then(function () {
+                        onComplete(newFile);
+                    });
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.moveAndReplaceAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh738483.aspx
+            //
+            moveAndReplaceAsync: function (fileToReplace) {
+                var that = this;
+                return fileToReplace.deleteAsync().then(function () {
+                    return that.moveAsync(fileToReplace.parentFolder, fileToReplace.name);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.deleteAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.storagefile.deleteasync.aspx
+            //
+            deleteAsync: function () {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    // Remove ourselves from our parent's MFT
+                    that.parentFolder._removeFromMFT(that);
+
+                    onComplete();
+                });
+            },
+        },
+
+            // ================================================================
+            // Windows.Storage.StorageFile static members
+            // ================================================================
+
+        {
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.getFileFromApplicationUriAsync
+            //
+            getFileFromApplicationUriAsync: function (uri) {
+                return Windows.Storage.StorageFile.getFileFromPathAsync(uri.uri);
+            },
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFile.getFolderFromPathAsync
+            //
+            //      TODO (CLEANUP): Combine this and StorageFile.getFileFromPathAsync - lots of shared code
+            //
+            getFileFromPathAsync: function (path) {
+
+                path = path.replace(/\\/g, "/");
+
+                // TODO (CLEANUP): Check for ms-appdata first, and then merge these two into one block.
+                if (path.indexOf("ms-appx:///") == 0) {
+
+                    // Loading from app install folder; redirect to it
+                    var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
+                    var fileFolder = path.substr(11, path.lastIndexOf("/") - 11);
+                    var fileName = path.substr(path.lastIndexOf("/") + 1);
+                    // Note: we can pass the full "foo/bar/xyz/abc" path to getFolderAsync since the appx folder handler doesn't care.  This will
+                    // have to change when we implement 'real' appx folder with manifests.
+                    return appFolder.getFolderAsync(fileFolder).then(function (folder) {
+                        return folder.getFileAsync(fileName);
+                    });
+                }
+
+                // Convert built-in folders' full path reference to ms-appdata path references
+                var appData = Windows.Storage.ApplicationData.current;
+                path = path.replace(appData.localFolder.path, "ms-appdata:///local");
+                path = path.replace(appData.temporaryFolder.path, "ms-appdata:///temp");
+                path = path.replace(appData.roamingFolder.path, "ms-appdata:///roaming");
+
+                if (path.indexOf("ms-appdata:///") != 0) {
+                    // App is referencing a file in root.  Treat that as a reference to the app install folder
+                    var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
+                    // TODO: Need to strip initial "/" if present?
+                    var fileFolder = path.substr(0, path.lastIndexOf("/"));
+                    var fileName = path.substr(path.lastIndexOf("/") + 1);
+                    // Note: we can pass the full "foo/bar/xyz/abc" path to getFolderAsync since the appx folder handler doesn't care.  This will
+                    // have to change when we implement 'real' appx folder with manifests.
+                    return appFolder.getFolderAsync(fileFolder).then(function (folder) {
+                        return folder.getFileAsync(fileName);
+                    });
+                }
+
+                // If here, then it's a reference to temp, local, or roaming folder.
+
+                var appData = Windows.Storage.ApplicationData.current;
+
+                if (path.indexOf("ms-appdata:///temp/") == 0) {
+
+                    // loading from temp folder; redirect to it
+                    var folder = appData.temporaryFolder;
+                    path = folder.path + path.substr(18);
+
+                } else if (path.indexOf("ms-appdata:///local/") == 0) {
+
+                        // loading from local folder; redirect to it
+                    var folder = appData.localFolder;
+                    path = folder.path + path.substr(19);
+
+                } else if (path.indexOf("ms-appdata:///roaming/") == 0) {
+
+                        // loading from roaming folder; redirect to it
+                    var folder = appData.roamingFolder;
+                    path = folder.path + path.substr(21);
+
+                } else {
+                    console.warn("Invalid path passed to Windows.Storage.PathIO: " + path);
+                    return WinJS.Promise.as(null);
+                }
+
+                // At this point, folder references the root folder, and path has the (deep) subfolder and file
+                var lastSlash = path.lastIndexOf("/");
+                if (lastSlash >= 0) {
+                    var fileName = path.substr(lastSlash + 1);
+                    path = path.substr(0, lastSlash);
+                    folder = folder._internalGetFolderFromPath(path);
+                } else
+                    fileName = path;
+
+                return folder.getFileAsync(fileName);
+            },
+
+            // ================================================================
+            //
+            // private property: Windows.Storage.StorageFile._fileTypeMap
+            //
+            _fileTypeMap: {
+                "jpg": "image/jpeg",
+                "png": "image/png",
+                "gif": "image/gif",
+                "txt": "text/plain",
+                "xml": "text/xml"
+            }
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.StorageFolder.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.StorageFolder
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    // ================================================================
+    //
+    // public Object: Windows.Storage.StorageFolder
+    //
+    //  NOTES:
+    //
+    //      * Items are stored in window.localStorage (and proxied to remoteStorage).
+    //      * Because localStorage is a set of flat key/value pairs, we maintain a virtual file hierarchy
+    //        in the form of a masterfiletable.  Each folder has its own masterfiletable which describes
+    //        the items in the folder.
+    //      * Items can exist in multiple states: 
+    //          - As an MFT entry, which contains metadata about the item but no functionality (e.g. path, attributes).  These are
+    //            referred to as "unrealized items".
+    //          - As a StorageItem (File/Folder), which contains functionality (e.g. deleteAsync).  These are referred to as
+    //            "realized items".  An item is faulted in from unrealized to realized state on-demand.
+    //      * We store realized items in a map (this.realizedItems[name])
+    //
+    StorageFolder: WinJS.Class.derive(Windows.Storage._StorageItem,
+
+		// ================================================================
+		//
+		// public function: Windows.Storage.StorageFolder
+		//
+		//		MSDN: TODO
+		//
+        function (parentFolder, desiredName) {
+
+            // Call into our base class' constructor
+            Windows.Storage._StorageItem.call(this, parentFolder, desiredName);
+
+            // Set our attributes
+            this.attributes = Windows.Storage.FileAttributes.directory;
+            this.displayType = "File folder";
+
+            // Our list of realized items (we've previously loaded data and created StorageFolder/Files).
+            this.realizedItems = {};
+
+            this._initMFT();
+        },
+
+		// ================================================================
+		// Windows.Storage.StorageFolder members
+		// ================================================================
+
+        {
+            _initMFT: function() {
+                
+                // Initialize our MFT; this will load the list of unrealized items as a flat string
+                var mft = localStorage.getItem("mft_" + this.path);
+
+                // If the MFT exists for this folder, then parse it into a JSON object now; otherwise initialize it with an empty MFT
+                if (mft) {
+                    this.masterFileTable = $.parseJSON(mft);
+                    for (var i in this.masterFileTable)
+                        this.masterFileTable[i].path = this.path + "/" + this.masterFileTable[i].name;
+                }
+                else
+                    this.masterFileTable = {};
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getFolderFromPathAsync
+            //
+            //		MSDN: TODO
+            //
+            getFolderFromPathAsync: function (path) {
+
+                var thisFolder = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    onComplete(thisFolder._internalGetFolderFromPath(path));
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getBasicPropertiesAsync
+            //
+            //		MSDN: TODO
+            //
+            getBasicPropertiesAsync: function () {
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    // Folders have no size
+                    // TODO: dateCreated (et al)
+                    var props = {
+                        size: 0,
+                        dateCreated: that.dateCreated,
+                        dateModified: that.dateModified,
+                        dateAccessed: that.dateAccessed,
+                    };
+                    onComplete(props);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._internalGetFolderFromPath
+            //
+            _internalGetFolderFromPath: function (path) {
+
+                // Starting at this folder, walk through child folders until we finish walking 'path'.
+
+                // Are we the requested path?
+                if (path.length == this.path.length) {
+                    return this;
+                } else {
+
+                    // Normalize path to use "/" everywhere (could be mix of \ and /)
+                    path = path.replace(/\\/g, "/");
+
+                    // Get our child path and continue the search
+                    var childPath = path.substring(this.path.length);
+                    var nextFolderName = childPath.split('/').slice(1)[0];
+                    var childFolder = this._getRealizedItem(nextFolderName);
+
+                    // Does childfolder exist?
+                    if (childFolder) {
+
+                        // Child folder exists; recurse into it
+                        return childFolder._internalGetFolderFromPath(path);
+
+                    } else if (nextFolderName) {
+
+                            // Create folders as we go (TODO: check if win8 does this)
+
+                            // Child folder does not exist; create it and then recurse into it
+                        var childFolder = new Windows.Storage.StorageFolder(this, nextFolderName);
+
+                        // Add the StorageFolder to our MFT and persist it
+                        this._addItemToMFT(childFolder);
+
+                        // now recurse into it
+                        return childFolder._internalGetFolderFromPath(path);
+
+                    } else {
+                        // child folder does not exists and there's no 'next' folder... Um, blanking on how this happens (TODO)
+                        return this;
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.createFolderAsync
+            //
+            //		MSDN: TODO
+            //
+            createFolderAsync: function (desiredName, collisionOption) {
+
+                // TODO: What's the Win8 default?
+                collisionOption = collisionOption || Windows.Storage.CreationCollisionOption.failIfExists;
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    var exists = that._mftEntryExists(desiredName);
+
+                    if (collisionOption == Windows.Storage.CreationCollisionOption.failIfExists && exists) {
+                        return onError({ message: "Cannot create a file when that file already exists.\r\n" });
+                        return;
+                    }
+
+                    if (collisionOption == Windows.Storage.CreationCollisionOption.generateUniqueName && exists)
+                        desiredName = Windows.Storage.StorageItem._generateUniqueName(that, desiredName);
+
+                    var newFile = new Windows.Storage.StorageFolder(that, desiredName);
+
+                    // TODO: If isRoaming, then trigger the roaming manager to upload when it can
+
+                    // Add the StorageFolder to our MFT and persist it
+                    that._addItemToMFT(newFile);
+
+                    onComplete(newFile);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.createFileAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br227250.aspx
+            //
+            createFileAsync: function (desiredName, collisionOption) {
+
+                // TODO: What's the Win8 default?
+                collisionOption = collisionOption || Windows.Storage.CreationCollisionOption.failIfExists;
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    var exists = that._mftEntryExists(desiredName);
+
+                    if (collisionOption == Windows.Storage.CreationCollisionOption.failIfExists && exists) {
+                        onError({ message: "Cannot create a file when that file already exists.\r\n" });
+                        return;
+                    }
+
+                    if (collisionOption == Windows.Storage.CreationCollisionOption.generateUniqueName && exists)
+                        desiredName = Windows.Storage.StorageItem._generateUniqueName(that, desiredName);
+
+                    var newFile = new Windows.Storage.StorageFile(that, desiredName);
+
+                    // TODO: If isRoaming, then trigger the roaming manager to upload when it can
+
+                    // Add the StorageFile to our MFT and persist it
+                    that._addItemToMFT(newFile);
+
+                    onComplete(newFile);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.createFolderQuery
+            //
+            //		MSDN: TODO
+            //
+            createFolderQuery: function (query) {
+
+                // Ensure we have a valid query
+                query = query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+
+                return new Windows.Storage.Search.StorageFolderQueryResult(this, query);
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getItemsAsync
+            //
+            //		MSDN: http://msdn.microsoft.com/en-US/library/windows/apps/br227287
+            //
+            getItemsAsync: function (startIndex, maxItemsToRetrieve) {
+
+                var query = Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+
+                return new Windows.Storage.Search.StorageFolderQueryResult(this, query).getItemsAsync();
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getFoldersAsync
+            //
+            //		MSDN: TODO
+            //
+            getFoldersAsync: function (query) {
+
+                // Ensure we have a valid query
+                query = query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+
+                return new Windows.Storage.Search.StorageFolderQueryResult(this, query).getFoldersAsync();
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getFilesAsync
+            //
+            //		MSDN: TODO
+            //
+            getFilesAsync: function (query) {
+
+                // Ensure we have a valid query
+                query = query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+
+                return new Windows.Storage.Search.StorageFolderQueryResult(this, query).getFilesAsync();
+            },
+
+
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getFileAsync
+            //
+            //		MSDN: TODO
+            //
+            //      TODO (R3): get[File|Folder|Item]Async() must check remote store if folder is roaming and file isn't
+            //      present.  Use the CachedFileManager's ability to check status of roaming files (NYI)
+            //
+            getFileAsync: function (name) {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    var item = that._getRealizedItem(name);
+
+                    // TODO: If not a file, then set item to null?  What does Win8 do?
+
+                    if (!item)
+                        onError({ message: "The system cannot find the file specified.\r\n" });
+                    else
+                        onComplete(item);
+                });
+            },
+
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getFolderAsync
+            //
+            //		MSDN: TODO
+            //
+            getFolderAsync: function (name) {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    var item = that._getRealizedItem(name);
+
+                    // TODO: If not a folder, then set item to null?  What does Win8 do?
+
+                    if (!item)
+                        onError({ message: "The system cannot find the file specified.\r\n" });
+                    else
+                        onComplete(item);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getItemAsync
+            //
+            //		MSDN: TODO
+            //
+            getItemAsync: function (name) {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    var item = that._getRealizedItem(name);
+                    if (!item)
+                        onError({ message: "The system cannot find the file specified.\r\n" });
+                    else
+                        onComplete(item);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getIndexedStateAsync
+            //
+            //		MSDN: TODO
+            //
+            getIndexedStateAsync: function () {
+
+                return new WinJS.Promise(function (onComplete) {
+
+                    // TODO: Indexing is not supported.  Update this should it ever be.
+                    onComplete(Windows.Storage.Search.IndexedState.notIndexed);
+                });
+            },
+
+
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.deleteAsync
+            //
+            //		MSDN: TODO
+            //
+            deleteAsync: function () {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    // Remove ourselves from our parent's MFT, and remove our (and our kids) MFTs from localStorage
+                    that.parentFolder._removeFromMFT(that);
+
+                    onComplete();
+                });
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._removeFromMFT
+            //
+            //      Removes the specified child item from this folder's MFT, and removes the child item (and its kids') MFTs from localStorage
+            //
+            _removeFromMFT: function (childItem) {
+
+                // Recursively remove the childItem and its childItems
+                this._removeChildItem(childItem);
+
+                // If this is a folder then persist our updated MFT
+                Windows.Storage.StorageFolder._persistMFT(this.path, this.masterFileTable);
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._removeChildItem
+            //
+            //      Removes the specified child item from this folder's MFT, and removes the child item (and its kids') MFTs from localStorage
+            //
+            _removeChildItem: function (childItem) {
+
+                // Remove us from the MFT
+                if (childItem.attributes == Windows.Storage.FileAttributes.directory)
+                    localStorage.removeItem("mft_" + childItem.path);
+                else
+                    localStorage.removeItem(childItem.path);
+
+                // Remove the child item from our master file table
+                delete this.masterFileTable[childItem.name.toLowerCase()];
+
+                // If item is a folder then recursively remove it and its kids from localStorage
+                if (childItem.attributes == Windows.Storage.FileAttributes.directory) {
+
+                    // Empty the child's set of realizedItems
+                    childItem.realizeItems = {};
+
+                    // Recursively remove any child items
+                    var that = this;
+                    for (var entry in childItem.masterFileTable) {
+
+                        var childItem2 = childItem.masterFileTable[entry];
+
+                        // If the item is a file then just remove it; otherwise, recurse into it
+                        if (childItem2.attributes == Windows.Storage.FileAttributes.archive)
+                            localStorage.removeItem(childItem2.path);
+                        else
+                            childItem._removeChildItem(childItem2);
+                    }
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._mftEntryExists
+            //
+            _mftEntryExists: function (name) {
+
+                return this.masterFileTable[name.toLowerCase()] ? true : false;
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._renameInMFT
+            //
+            _renameInMFT: function (childItem, newName) {
+
+                var mftEntry = this.masterFileTable[childItem.name.toLowerCase()];
+                if (!mftEntry)
+                    return;
+
+                // If childItem is a file, then load its contents so that we can save them back out with the new pathname (which is 
+                // how we reference files in localStorage)
+                if (childItem.attributes == Windows.Storage.FileAttributes.archive) {
+                    var fileContents = localStorage.getItem(childItem.path);
+                    localStorage.removeItem(childItem.path);
+                }
+
+                // Replace the old MFT entry with the new one
+                this.masterFileTable[newName.toLowerCase()] = mftEntry;
+                delete this.masterFileTable[mftEntry.name.toLowerCase()];
+
+                // Update the mft entry's name
+                mftEntry.name = newName;
+                childItem.name = newName;
+                childItem.path = this.path + "/" + newName;
+
+                // And persist our MFT back to localStorage
+                Windows.Storage.StorageFolder._persistMFT(this.path, this.masterFileTable);
+
+                // TODO: Do I need to update this.realizedItems as well?
+
+                // When renaming a folder, we need to update MFT paths for all subfolders as well
+                Windows.Storage.StorageFolder._refreshMFTPaths(this);
+
+                // If this was a file then save out its contents with the new pathname
+                if (fileContents)
+                    localStorage.setItem(mftEntry.path, fileContents);
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._copyInMFT
+            //
+            _copyFileInMFT: function (childItem, destFolder, newName) {
+
+                // Special case files which come from the appx folder since they don't have an MFT entry
+                if (childItem._isAppX) {
+
+                    // Create a new mft entry
+                    var newMFTEntry = destFolder._addItemToMFT({
+                        name: childItem.name,
+                        path: destFolder.path + "/" + childItem.name,
+                        attributes: childItem.attributes,
+                        masterFileTable: childItem.masterFileTable,
+                        dateCreated: childItem.dateCreated,
+                        dateModified: childItem.dateCreated,
+                        dateAccessed: childItem.dateCreated,
+                        size: childItem.size
+                    });
+
+                    var fileContents = childItem._appXContents;
+
+                } else {
+
+                    var sourceMFTEntry = this.masterFileTable[childItem.name.toLowerCase()];
+                    if (!sourceMFTEntry)
+                        return;
+
+                    /*DEBUG*/
+                    if (sourceMFTEntry.attributes != Windows.Storage.FileAttributes.archive)
+                        console.warn("bluesky error: folder passed to StorageFolder._copyFileInMFT");
+                    /*ENDDEBUG*/
+
+                    // Clone the existing entry
+                    var newMFTEntry = JSON.parse(JSON.stringify(sourceMFTEntry))
+
+                    // Update the mft entry's name
+                    newMFTEntry.name = newName;
+                    newMFTEntry.path = destFolder.path + "/" + newName;
+                    destFolder._addItemToMFT(newMFTEntry);
+
+                    var fileContents = localStorage.getItem(sourceMFTEntry.path);
+                }
+
+                // And persist our MFT back to localStorage
+                Windows.Storage.StorageFolder._persistMFT(destFolder.path, destFolder.masterFileTable);
+
+                // copy source file's contents as well
+                localStorage.setItem(newMFTEntry.path, fileContents);
+
+                return destFolder._realizeItem(newMFTEntry);
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._addItemToMFT
+            //
+            //      item: The StorageItem to add to the MFT
+            //
+            _addItemToMFT: function (item) {
+
+                this.masterFileTable[item.name.toLowerCase()] = {
+                    name: item.name,
+                    path: this.path + "/" + item.name,
+                    attributes: item.attributes,
+                    masterFileTable: item.masterFileTable,
+                    dateCreated: item.dateCreated,
+                    dateModified: item.dateModified,
+                    dateAccessed: item.dateAccessed,
+                    size: item.size
+                };
+
+                // And persist our MFT back to localStorage
+                Windows.Storage.StorageFolder._persistMFT(this.path, this.masterFileTable);
+
+                return this.masterFileTable[item.name.toLowerCase()];
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._realizeItem
+            //
+            //      An item can be in one of two states; unrealized, in which case we simply have an MFT entry with metadata, or
+            //      realized, in which case we have a StorageItem on which functions can be called.  Note that we still don't 
+            //      necessarily have data for the item loaded.
+            //
+            _realizeItem: function (mftEntry) {
+
+                var lowerName = mftEntry.name.toLowerCase();
+                // TODO (CLEANUP/PERF): I'm not updating realizedItems properly elsewhere yet.  Same comment below
+                // if (!this.realizedItems[lowerName])
+                {
+
+                    if (mftEntry.attributes == Windows.Storage.FileAttributes.archive) {
+
+                        // The item is a file
+                        this.realizedItems[lowerName] = new Windows.Storage.StorageFile(this, mftEntry.name);
+
+                    } else {
+
+                        // It's a folder
+                        this.realizedItems[lowerName] = new Windows.Storage.StorageFolder(this, mftEntry.name);
+                        this.realizedItems[lowerName].masterFileTable = mftEntry.masterFileTable;
+                    }
+                }
+
+                return this.realizedItems[lowerName];
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._getRealizedItem
+            //
+            _getRealizedItem: function (name) {
+
+                var lowerName = name.toLowerCase();
+
+                // If we've already realized the mftEntry into a StorageItem, then return the realized StorageItem
+                // TODO (CLEANUP/PERF): I'm not updating realizedItems properly elsewhere yet.  Same comment above
+                // if (this.realizedItems[lowerName])
+                //    return this.realizedItems[lowerName];
+
+                // If we haven't realized the mftEntry, but it is valid entry, then realize it now
+                if (this.masterFileTable && this.masterFileTable[lowerName])
+                    return this._realizeItem(this.masterFileTable[lowerName]);
+
+                // there is no item with name 'name' in this folder
+                return null;
+            },
+        },
+
+        // ================================================================
+        // Windows.Storage.StorageFolder static members
+        // ================================================================
+
+        {
+            // ================================================================
+            //
+            // public function: Windows.Storage.StorageFolder.getFolderFromPathAsync
+            //
+            //      TODO (CLEANUP): Combine this and StorageFile.getFileFromPathAsync - lots of shared code
+            //
+            getFolderFromPathAsync: function (path) {
+
+                path = path.replace(/\\/g, "/");
+
+                // TODO (CLEANUP): Check for ms-appdata first, and then merge these two into one block.
+                if (path.indexOf("ms-appx:///") == 0) {
+
+                    // Loading from app install folder; redirect to it
+                    var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
+                    var fileFolder = path.substr(11, path.lastIndexOf("/") - 11);
+                    var fileName = path.substr(path.lastIndexOf("/") + 1);
+                    // Note: we can pass the full "foo/bar/xyz/abc" path to getFolderAsync since the appx folder handler doesn't care.  This will
+                    // have to change when we implement 'real' appx folder with manifests.
+                    return appFolder.getFolderAsync(fileFolder).then(function (folder) {
+                        return folder.getFolderAsync(fileName);
+                    });
+                }
+
+                // Convert built-in folders' full path reference to ms-appdata path references
+                var appData = Windows.Storage.ApplicationData.current;
+                path = path.replace(appData.localFolder.path, "ms-appdata:///local");
+                path = path.replace(appData.temporaryFolder.path, "ms-appdata:///temp");
+                path = path.replace(appData.roamingFolder.path, "ms-appdata:///roaming");
+
+                if (path.indexOf("ms-appdata:///") != 0) {
+                    // App is referencing a file in root.  Treat that as a reference to the app install folder
+                    var appFolder = Windows.ApplicationModel.Package.current.installedLocation;
+                    // TODO: Need to strip initial "/" if present?
+                    var fileFolder = path.substr(0, path.lastIndexOf("/"));
+                    var fileName = path.substr(path.lastIndexOf("/") + 1);
+                    // Note: we can pass the full "foo/bar/xyz/abc" path to getFolderAsync since the appx folder handler doesn't care.  This will
+                    // have to change when we implement 'real' appx folder with manifests.
+                    return appFolder.getFolderAsync(fileFolder).then(function (folder) {
+                        return folder.getFolderAsync(fileName);
+                    });
+                }
+
+                // If here, then it's a reference to temp, local, or roaming folder.
+
+                var appData = Windows.Storage.ApplicationData.current;
+
+                if (path.indexOf("ms-appdata:///temp/") == 0) {
+
+                    // loading from temp folder; redirect to it
+                    var folder = appData.temporaryFolder;
+                    path = folder.path + path.substr(18);
+
+                } else if (path.indexOf("ms-appdata:///local/") == 0) {
+
+                        // loading from local folder; redirect to it
+                    var folder = appData.localFolder;
+                    path = folder.path + path.substr(19);
+
+                } else if (path.indexOf("ms-appdata:///roaming/") == 0) {
+
+                        // loading from roaming folder; redirect to it
+                    var folder = appData.roamingFolder;
+                    path = folder.path + path.substr(21);
+
+                } else {
+                    console.warn("Invalid path passed to Windows.Storage.PathIO: " + path);
+                    return WinJS.Promise.as(null);
+                }
+
+                // At this point, folder references the root folder, and path has the (deep) subfolder and file
+                var lastSlash = path.lastIndexOf("/");
+                if (lastSlash >= 0) {
+                    var fileName = path.substr(lastSlash + 1);
+                    path = path.substr(0, lastSlash);
+                    folder = folder._internalGetFolderFromPath(path);
+                } else
+                    fileName = path;
+
+                return folder.getFolderAsync(fileName);
+            },
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._refreshMFTPaths
+            //
+            //      After renaming a folder, we need to update all MFT paths in the folder and its subfolders
+            //
+            //      TODO: How to avoid this?
+            //
+            _refreshMFTPaths: function (folder) {
+
+                var dirty = false;
+                for (var i in folder.masterFileTable) {
+
+                    var mftEntry = folder.masterFileTable[i];
+
+                    // Update the mftentry's path
+                    var newPath = folder.path + "/" + mftEntry.name;
+                    if (newPath != mftEntry.path) {
+                        var key = mftEntry.attributes == 16 ? "mft_" : "";
+                        var value = localStorage[key + mftEntry.path];
+                        localStorage.removeItem(key + mftEntry.path);
+                        localStorage.setItem(key + newPath, value);
+                        mftEntry.path = newPath;
+                        dirty = true;
+                    }
+                    // If the mftEntry is a folder, then recurse into it
+                    if (mftEntry.attributes == 16)
+                        Windows.Storage.StorageFolder._refreshMFTPaths(mftEntry);
+                }
+                if (dirty)
+                    Windows.Storage.StorageFolder._persistMFT(folder.path, folder.masterFileTable);
+            },
+
+
+            // ================================================================
+            //
+            // private function: Windows.Storage.StorageFolder._persistMFT
+            //
+            //      TODO (PERF): Wrap this in msSetImmediate & _isYielding (ala how BaseControl.render works) to allow
+            //      batching of persistence in case app is changing many files at once.
+            //
+            _persistMFT: function (path, mft) {
+
+                // Serialize our masterFileTable into a string that we can store
+                //var mftString = JSON.stringify(this.masterFileTable);
+                var mftString = JSON.stringify(mft, function (key, val) {
+                    if (key == "path" || key == "masterFileTable")
+                        return undefined;
+                    return val;
+                });
+                // Store our MFT in localStorage
+                localStorage.setItem("mft_" + path, mftString);
+            }
+        })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage._AppXStorageFolder.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.StorageFolder
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    AppXFolder: WinJS.Class.derive(Windows.Storage.StorageFile,
+        function () {
+        },
+        {
+        })
+});
+
+WinJS.Namespace.define("Windows.Storage", {
+
+    AppXFolder: WinJS.Class.derive(Windows.Storage.StorageFolder,
+
+        // On Win8, the AppX folder contains the set of files that are embedded into the application.  On the 
+        // web though, we don't have "embedded" files (at least, until apploader is in place).  So for us, the
+        // Application folder is set to the root folder.  We need to override various 'get' functions accordingly
+        function (parentFolder, name) {
+
+            // Call into our base class' constructor
+            Windows.Storage.StorageFolder.call(this, parentFolder, name);
+        },
+
+        {
+            getFolderAsync: function (name) {
+
+                var that = this;
+                // in the appx folder, we assume requested folders exist
+                return new WinJS.Promise(function (onComplete) {
+                    var folder = new Windows.Storage.AppXFolder(this, name);
+                    // appx folders support passing full path in as name; ensure we don't have double-/s
+                    if (name[0] == '/')
+                        name = name.substr(1);
+                    folder.path = that.path + "/" + name;
+
+                    onComplete(folder);
+                });
+            },
+
+            getBasicPropertiesAsync: function () {
+                var that = this;
+                return new WinJS.Promise(function (onComplete) {
+
+                    var props = {
+                        size: that.size || 0,
+                    };
+                    onComplete(props);
+                });
+            },
+
+            getFileAsync: function (name) {
+
+                var that = this;
+                return new WinJS.Promise(function (onComplete, onError) {
+
+                    // Check if the file exists in the filesystem
+                    var fullFilePath = that.path + "/" + name;
+
+                    WinJS.xhr({
+                        url: fullFilePath
+                    }).then(
+                    function (result) {
+                        // Found the file.  Track that this file came from appX so that we don't
+                        // try to load it from localStorage in FileIO.readTextAsync.  Also track the
+                        // file's contents so that we don't have to reload them.
+                        var file = new Windows.Storage.StorageFile(that, name);
+                        file.path = fullFilePath;
+                        // NOTE: This will differ slightly between win8 and web.  e.g. on Windows, a file with "Hello There" registers as 14 bytes, not 11,
+                        // due to three bytes it prepends.  When we have binary buffer reads, use those instead to get 'real' file size.
+                        if (!result.responseText)
+                            file.size = 0;
+                        else
+                            file.size = result.responseText.length;
+
+                        file._isAppX = true;
+                        file._appXContents = result.responseText;
+
+                        onComplete(file);
+                    },
+                     function (error) {
+                         // no file found
+                         if (!_warned404) {
+                             console.warn("bluesky FYI: getFileAsync failed when loading a file from the app-install folder.  Note that all custom file types must " +
+                                          "have their mime type registered in order for IIS to serve them up; this can be done on the server side, or directly from " +
+                                          "your app's web.config by adding a mimeMap entry.  See the bluesky test Harness' web.config for an example, and the readTextAsync " +
+                                          "test in Tests.Windows.Storage.FileIO.js.");
+                             _warned404 = true;
+                         }
+                         onError({ message: "The system cannot find the file specified.\r\n" });
+                     });
+                });
+            },
+
+            getItemAsync: function (name) {
+
+                var that = this;
+                // in the appx folder, check if an item is a file and return it if so; otherwise assume it's a present
+                // folder and gen' it up.
+                return new WinJS.Promise(function (onComplete) {
+
+                    if (!_warnedConsoleErrors) {
+                        console.warn("bluesky FYI: StorageFolder.getItemAsync in the app install folder may output errors - these are not errors, " +
+                                     "but are reported because we do not yet support/require an 'app manifest' that tells bluesky which files are installed " +
+                                     "in the app-install folder; so bluesky cannot tell if the requested item is a file or a folder.  Thus, we first try to load it as a file " +
+                                     "and if that fails, then we load it as a folder - this results in a 403, 404, or 301 error being reported for every folder " +
+                                     "request that is made through getItemAsync.  To avoid the  error in console.log, and (more importantly) to " +
+                                     "speed up accessing files and folders from the app install folder, switch to using getFileAsync and getFolderAsync. " +
+                                     "This issue will be fixed when we support apploader and package manifests in R2/R3.");
+
+                        _warnedConsoleErrors = true;
+                    }
+
+                    // Try loading it as a file
+                    return that.getFileAsync(name).then(
+                        function (file) {
+                            // Found as a file
+                            onComplete(file);
+                        },
+                        function (error) {
+                            // File not found - return a folder instead
+                            that.getFolderAsync(name).then(function (folder) {
+                                onComplete(folder);
+                            });
+                        });
+                });
+            },
+        })
+});
+var _warnedConsoleErrors = false;
+var _warned404 = false;
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.FileIO.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.FileIO
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701440.aspx
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    FileIO: {
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.FileIO.writeTextAsync
+        //
+        //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701508.aspx
+        //
+        writeTextAsync: function (file, contents, encoding) {
+
+            return new WinJS.Promise(function (onComplete, onError) {
+                // tbd: append?
+                // tbd: manage error when overflowing maximum localstorage space; currently fails silently (but I believe it
+                //      still updates in the cloud correctly).
+
+                // TODO: This is wrong (besides which, setItem is not defined)
+                localStorage.setItem(file.path, contents);
+                if (file.isRoaming) {
+                    Windows.Storage.CachedFileManager.uploadRoamingFile(file, contents);
+                }
+
+                // Report completion regardless of roaming state
+                onComplete();
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.FileIO.writeLinesAsync
+        //
+        //      MSDN: TODO
+        //
+        writeLinesAsync: function (file, lines, encoding) {
+
+            var contents = "";
+            lines.forEach(function (line) {
+                contents += line + "\r\n";
+            });
+            return this.writeTextAsync(file, contents, encoding);
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.FileIO.appendTextAsync
+        //
+        //      MSDN: TODO
+        //
+        appendTextAsync: function (file, contents, encoding) {
+
+            return this.readTextAsync(file, encoding).then(function (oldContents) {
+                var newContents = oldContents + contents;
+                return Windows.Storage.FileIO.writeTextAsync(file, newContents, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.FileIO.appendLinesAsync
+        //
+        //      MSDN: TODO
+        //
+        appendLinesAsync: function (file, lines, encoding) {
+
+            return this.readTextAsync(file, encoding).then(function (oldContents) {
+                var newContents = oldContents;
+
+                var contents = "";
+                lines.forEach(function (line) {
+                    newContents += line + "\r\n";
+                });
+                return Windows.Storage.FileIO.writeTextAsync(file, newContents, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.FileIO.readTextAsync
+        //
+        //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.fileio.readtextasync.aspx
+        //
+        readTextAsync: function (file, encoding) {
+
+            return new WinJS.Promise(function (onComplete, onError) {
+
+                // See AppXFolder.getFileAsync for reason behind this if block
+                if (file._isAppX) {
+                    onComplete(file._appXContents);
+                    return;
+                }
+
+                // always read from local store, even if file is roaming; the roaming manager will asynchronously keep it up to date
+                // TODO: This is wrong (besides which, getItem is not defined)
+                var contents = localStorage.getItem(file.path);
+
+                // if the file isn't found locally and it's a roamable file, then fault it in from the cloud
+                if (contents == null && file.isRoaming) {
+                    Windows.Storage.CachedFileManager.readRoamingFileFromRemoteStore(file).then(function (content) {
+                        onComplete(content);
+                    });
+                }
+                else
+                    onComplete(contents);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.FileIO.readLinesAsync
+        //
+        //      MSDN: TODO
+        //
+        readLinesAsync: function (file, encoding) {
+
+            return new WinJS.Promise(function (onComplete, onError) {
+
+                Windows.Storage.FileIO.readTextAsync(file, encoding).then(function (fileContents) {
+                    // split contents on line breaks
+                    var lines = fileContents.split("\r\n");
+                    lines.size = lines.length;
+                    onComplete(lines);
+                },
+                function (error) {
+                    onError(error);
+                });
+            });
+        },
+
+    }
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.PathIO.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.PathIO
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("Windows.Storage", {
+
+    PathIO: {
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.PathIO.readTextAsync
+        //
+        //      MSDN: TODO
+        //
+        readTextAsync: function (path, encoding) {
+            return Windows.Storage.StorageFile.getFileFromPathAsync(path).then(function (file) {
+                return Windows.Storage.FileIO.readTextAsync(file, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.PathIO.writeTextAsync
+        //
+        //      MSDN: TODO
+        //
+        writeTextAsync: function (path, contents, encoding) {
+            return Windows.Storage.StorageFile.getFileFromPathAsync(path).then(function (file) {
+                return Windows.Storage.FileIO.writeTextAsync(file, contents, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.PathIO.readLinesAsync
+        //
+        //      MSDN: TODO
+        //
+        readLinesAsync: function (path, encoding) {
+            return Windows.Storage.StorageFile.getFileFromPathAsync(path).then(function (file) {
+                return Windows.Storage.FileIO.readLinesAsync(file, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.PathIO.writeLinesAsync
+        //
+        //      MSDN: TODO
+        //
+        writeLinesAsync: function (path, contents, encoding) {
+            return Windows.Storage.StorageFile.getFileFromPathAsync(path).then(function (file) {
+                return Windows.Storage.FileIO.writeLinesAsync(file, contents, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.PathIO.appendTextAsync
+        //
+        //      MSDN: TODO
+        //
+        appendTextAsync: function (path, encoding) {
+            return Windows.Storage.StorageFile.getFileFromPathAsync(path).then(function (file) {
+                return Windows.Storage.FileIO.appendTextAsync(file, encoding);
+            });
+        },
+
+
+        // =========================================================
+        //
+        // Function: Windows.Storage.PathIO.appendLinesAsync
+        //
+        //      MSDN: TODO
+        //
+        appendLinesAsync: function (path, encoding) {
+            return Windows.Storage.StorageFile.getFileFromPathAsync(path).then(function (file) {
+                return Windows.Storage.FileIO.appendLinesAsync(file, encoding);
+            });
+        }
+    }
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.Search.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.Search.StorageFolderQueryResult
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.search.storagefolderqueryresult.aspx
+//
+
+WinJS.Namespace.define("Windows.Storage.Search", {
+
+    // ================================================================
+    //
+    // Windows.Storage.Search.CommonFolderQuery enumeration
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.search.commonfolderquery.aspx
+    //
+    CommonFolderQuery: {
+        defaultQuery: 0,
+        groupByAlbum: 103,
+        groupByAlbumArtist: 104,
+        groupByArtist: 102,
+        groupByAuthor: 110,
+        groupByComposer: 105,
+        groupByGenre: 106,
+        groupByMonth: 101,
+        groupByPublishedYear: 107,
+        groupByRating: 108,
+        groupByTag: 109,
+        groupByType: 111,
+        groupByYear: 100
+    },
+
+
+    // ================================================================
+    //
+    // Windows.Storage.Search.IndexedState enumeration
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.search.indexedstate.aspx
+    //
+    IndexedState: {
+        unknown: 0,
+        notIndexed: 1,
+        partiallyIndexed: 2,
+        fullyIndexed: 3
+    },
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.Search.StorageFolderQueryResult.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// Windows.Storage.Search.StorageFolderQueryResult
+//
+//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.search.storagefolderqueryresult.aspx
+//
+
+WinJS.Namespace.define("Windows.Storage.Search", {
+
+    // ================================================================
+    //
+    // public Object: Windows.Storage.Search.StorageFolderQueryResult
+    //
+    StorageFolderQueryResult: WinJS.Class.define(
+
+        // =========================================================
+        //
+        // public function: Windows.Storage.Search.StorageFolderQueryResult constructor
+        //
+        //      MSDN: TODO
+        //
+        function (sourceFolder, query) {
+            // constructor
+            this.folder = sourceFolder;
+            this.query = query;
+        },
+
+	    // ================================================================
+	    // Windows.Storage.Search.StorageFolderQueryResult members
+	    // ================================================================
+
+        {
+
+            // =========================================================
+            //
+            // public function: Windows.Storage.Search.StorageFolderQueryResult.getFoldersAsync
+            //
+            //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br208074.aspx
+            //
+            getFoldersAsync: function (query) {
+
+                return this._getItemsOfType(query, Windows.Storage.FileAttributes.directory);
+            },
+
+
+            // =========================================================
+            //
+            // public function: Windows.Storage.Search.StorageFolderQueryResult.getFilesAsync
+            //
+            //      MSDN: TODO
+            //
+            getFilesAsync: function (query) {
+
+                // TODO: archive? normal?
+                return this._getItemsOfType(query, Windows.Storage.FileAttributes.archive);
+            },
+
+
+            // =========================================================
+            //
+            // public function: Windows.Storage.Search.StorageFolderQueryResult.getItemsAsync
+            //
+            //      MSDN: TODO
+            //
+            getItemsAsync: function (query) {
+
+                return this._getItemsOfType(query);
+            },
+
+
+            // =========================================================
+            //
+            // private function: Windows.Storage.Search.StorageFolderQueryResult._getItemsOfType
+            //
+            _getItemsOfType: function (query, filterType) {
+                // tbd: merging queries.
+                query = query || this.query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+                var that = this;
+
+                return new WinJS.Promise(function (onComplete) {
+
+                    // enumerate files in our folder's fileStore that match our query.
+                    // tbd: only supporting defaultQuery for now.
+                    if (query != Windows.Storage.Search.CommonFolderQuery.defaultQuery)
+                        throw "NYI: get[Item/Files/Folders]Async only support defaultQuery";
+
+                    var results = new Windows.Foundation.Collections.IVectorView();
+
+                    var folderItems = that.folder.masterFileTable;
+                    for (var i in folderItems) {
+                        var item = folderItems[i];
+                        if ((filterType && (item.attributes & filterType) == filterType) || (!filterType)) {
+                            // If we haven't previously realized the mft entry into a live item, then do so now
+                            results.push(that.folder._realizeItem(item));
+                        }
+                    }
+
+                    onComplete(results);
+                });
+            },
+
+            // =========================================================
+            //
+            // public member: Windows.Storage.Search.StorageFolderQueryResult.folder
+            //
+            //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.search.storagefolderqueryresult.folder.aspx
+            //
+            folder: null,
+
+            query: null
+        }),
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: Windows.Storage.CachedFileManager.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+
+WinJS.Namespace.define("Windows.Storage", {
+
+
+
+    /* TODO: Roaming is not part of R1/R2 - this implementation is not tested and in place to keep prototype'd apps
+    from breaking */
+
+
+
+
+    // CachedFileManager: Responsible for keeping roaming files up to date.  
+    // TODO: This requires a WINS-like service to be implemented.  Haven't rationalized that against client model yet.
+    CachedFileManager: {
+        init: function () {
+        /*
+            // uncomment this line to enable a clean install (for testing purposes only)
+            // $.cookie("lastRoamingCheck", null);
+
+            // If we haven't checked for roaming updates before, then start at 0.
+            if (!$.cookie("lastRoamingCheck"))
+                $.cookie("lastRoamingCheck", "0");
+
+            // tbd-mustfix: lacking a push service, for debugging purposes I'm going to pull every 60 seconds to see if any files changed.  This
+            // will DDoS our server if any reasonable number of users join the tech preview.  I think Windows has a 15 minute minimum time on Pull notifications
+            // (but roaming probably goes through a push model).
+            // tbd: when a roaming file changes remotely, and the local client is notified, does Win8 silently download the file immediately, or does it instead
+            //      mark the file as dirty and then fault it in when the user asks for it?  1st approach; pro-new local client has files immediately present; con-
+            //      big download.  2nd approach; pro- doesn't download files if user doesn't need them; con-user waits everytime they try to access a remote file.
+            //      For now, I'm going with model 1, and updating/downloading every file.
+            setInterval(this._checkForModifiedRoamingFiles, 1000 * 60);
+            this._checkForModifiedRoamingFiles();
+
+            // For debugging purposes (read: not polluting the console log), you can set Windows.Storage.CachedFileManager.enabled = false and roaming updates won't happen. Be sure to change back before shipping!
+            // tbd-mustfix: need to find a way to disable this entirely until and unless the app has roaming files.  For the majority that don't,
+            // this is just wasted battery/network pain.
+            // For now, I've defaulted this to disabled; the app will need to explicitly enable it.*/
+            this.enabled = false;
+        },
+
+        /*
+        _checkForModifiedRoamingFiles: function () {
+            // ensure we have a logged in user and valid appid
+            if (!$.cookie("appId") || !$.cookie("userId"))
+                return;
+
+            if (!this.enabled)
+                return;
+            // ping our notification server (pull) to see if any files have changed
+            $.ajax({
+                type: "GET",
+                url: "http://www.bluesky.io/_ws/webService.svc/GetModifiedRoamingFilesList",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: {
+                    "appId": $.cookie("appId"),
+                    "userId": $.cookie("userId"),
+                    "lastRoamingCheck": $.cookie("lastRoamingCheck")
+                },
+                success: function (result) {
+
+                    if (result.Success) {
+                        if (result.updatedFiles.length > 0) {
+                            console.log("Roaming files have been updated; downloading updated files:", result.updatedFiles);
+
+                            // Fire off update requests for all apps in the updated list
+                            result.updatedFiles.forEach(function (fileId) {
+                                Windows.Storage.CachedFileManager.readRoamingFileFromRemoteStore(fileId);
+                            });
+
+                            // Update our last roaming check
+                            $.cookie("lastRoamingCheck", result.lastRoamingCheck);
+                        } else
+                            console.log("CachedFileManager: no updated roaming files found");
+                    } else {
+                        // error. tbd: error handling
+                        console.log("error getting modified roaming files list.  Error = ", result);
+                    }
+                },
+                error: function (error) {
+                    // error. tbd: error handling
+                    console.log("error 2 getting modified roaming files list.  Error = ", error);
+                }
+            });
+        },
+        */
+        _warnedNYI: false,
+        uploadRoamingFile: function (file, fileContents) {
+            if (!this._warnedNYI) {
+                console.warn("bluesky: roaming files are not supported in R1/R2.")
+                this._warnedNYI = true;
+            }
+            return new WinJS.Promise(function (onComplete) {
+
+                onComplete();
+                /*
+                $.ajax({
+                    type: "GET",
+                    url: "http://www.bluesky.io/_ws/webService.svc/CanUploadAppRoamingFile",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: {
+                        "appId": $.cookie("appId"),
+                        "userId": $.cookie("userId"),
+                        "fileSize": fileContents.length
+                    },
+                    success: function (result) {
+                        if (result == true) {
+                            // file.path has filename in it - on server we want just the path
+                            var filePath = file.path.substring(0, file.path.length - file.name.length);
+
+                            // we can send the file; do so now.
+                            $.ajax({
+                                type: "POST",
+                                url: "http://www.bluesky.io/_ws/webService.svc/UploadAppRoamingFile",
+                                contentType: "application/json; charset=utf-8",
+                                // tbd-mustfix: does this approach have an upper limit on filesize?
+                                data: '{"appId": "' + $.cookie("appId") + '","userId": "' + $.cookie("userId") + '","fileName": "' + file.name + '","filePath": "' + escape(filePath) + '","fileContents": "' + escape(fileContents) + '"}',
+                                success: function (result) {
+                                    // tbd: how to avoid the need to eval?
+                                    eval('var r = ' + result);
+                                    if (r.Success) {
+                                        onComplete(r);
+                                    }
+                                    else
+                                        // tbd: what's the right win8 way to handle this?
+                                        console.log("error: insufficient cloud storage space (code " + r.ErrorCode + ")");
+                                },
+
+                                error: function (err) {
+                                    // tbd: what does win8 do if a roaming upload fails?  I'm assuming it either fails silently,
+                                    // or fires some event that apps can hook into.  For now, we just log to console
+                                    console.log("error uploading file: ", err);
+                                }
+                            });
+                        }
+                        else
+                            // tbd: same as above error
+                            console.log("error uploading file: ", result);
+                    },
+
+                    error: function (err) {
+                        // tbd: same as above error
+                        console.log("error uploading file: ", err);
+                    }
+                });*/
+            });
+        },
+        /*
+        // tbd: this function should get called by a WINS-like notification service.
+        readRoamingFileFromRemoteStore: function (fileId) {
+            // Roaming files are read from the local store; we asynchronously keep them up to date using a WINS-equivalent push notification service
+            // tbd: don't have WINS implemented yet.
+            $.ajax({
+                type: "GET",
+                url: "http://www.bluesky.io/_ws/webService.svc/GetAppRoamingFile",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: {
+                    "appId": $.cookie("appId"),
+                    "userId": $.cookie("userId"),
+                    "fileId": fileId
+                },
+
+                success: function (result) {
+                    if (result.Success) {
+                        // find the folder starting in the root; create folders as needed
+                        // tbd: does win8's getFolderAtPath create the folder hierarchy, or does it err out?  If the latter, then use an internal function to do this.
+                        Windows.Storage.ApplicationData.current.roamingFolder.getFolderFromPathAsync(unescape(result.FilePath)).then(function (folder) {
+                            // update file in local storage.
+                            folder.createFileAsync(result.FileName).then(function (file) {
+                                Windows.Storage.FileIO.writeTextAsync(file, unescape(result.FileContents));
+                            });
+                        });
+                    } else {
+                        console.log("error reading roaming file from remote store", result);
+                    }
+                },
+
+                error: function (err) {
+                    onError("error uploading file: ", err);
+                }
+            });
+        }*/
+    }
 });
 
 
@@ -3000,6 +5934,17 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			// Notify any listeners of the insertion
 			this._notifyItemInserted({ key: valueKey, index: this.length, value: value });
+		},
+
+
+	    // ================================================================
+	    //
+	    // public function: WinJS.Binding.List.dispose
+	    //
+	    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh921598.aspx
+	    //
+		dispose: function () {
+		    // TODO: Anything to do here?
 		},
 
 
@@ -5892,8 +8837,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
-        	if (options.disabled)
-        	    debugger;
 
         	this.disabled = (options.disabled || options.disabled == "true") ? true : false;
 
@@ -9993,7 +12936,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     $surfaceDiv.css("width", surfaceWidth).show();
 
                     // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._disableAnimation)
+                    if (!that._disableAnimation && !that._disableEntranceAnimation)
                         WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
                 });
             },
@@ -10540,7 +13483,6 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _positionItem: function (item, position) {
 
-                console.log(item);
                 if (!item) {
                     this.indexOfFirstVisible = 0;
                     return;
@@ -11290,8 +14232,8 @@ WinJS.Namespace.define("WinJS.Utilities", {
     //
 	requireSupportedForProcessing: function (handler) {
 
-	    if (this.strictProcessing && !handler._supportedForProcessing)
-	        throw "requireSupportedForProcessing";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
+	    if (WinJS.strictProcessing && !handler._supportedForProcessing)
+	        throw "requireSupportedForProcessing is not defined";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
 	},
 
 
@@ -12026,3 +14968,7 @@ jQuery.extend(jQuery.easing,
         return startValue + deltaValue * curTime * curTime * curTime * curTime * curTime + 1;
     }
 });
+
+// Initialize storage now so that appdata.current is initialized (apps may rely on it now).
+// TODO: Build one place where these inits happen
+Windows.Storage._internalInit();

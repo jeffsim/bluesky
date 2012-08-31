@@ -75,8 +75,8 @@ WinJS.Namespace.define("WinJS.Utilities", {
     //
 	requireSupportedForProcessing: function (handler) {
 
-	    if (this.strictProcessing && !handler._supportedForProcessing)
-	        throw "requireSupportedForProcessing";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
+	    if (WinJS.strictProcessing && !handler._supportedForProcessing)
+	        throw "requireSupportedForProcessing is not defined";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
 	},
 
 

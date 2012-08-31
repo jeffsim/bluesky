@@ -62,6 +62,7 @@ WinJS.Namespace.define("Windows.Storage", {
             // Create the local folder
             this.localFolder = new Windows.Storage.StorageFolder(this._rootFolder, "LocalState");
             this.localFolder.folderRelativeId = "0/0/" + this.localFolder.name;
+            this.localFolder.path = builtInFolderRoot + "LocalState";
             this.localFolder._initMFT();
 
             // Create the temporary folder

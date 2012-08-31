@@ -19,6 +19,17 @@
 		},
 
 
+	    // ================================================================
+	    //
+	    // public function: WinJS.Binding.List.dispose
+	    //
+	    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh921598.aspx
+	    //
+		dispose: function () {
+		    // TODO: Anything to do here?
+		},
+
+
 		// ================================================================
 		//
 		// public function: WinJS.Binding.List.splice

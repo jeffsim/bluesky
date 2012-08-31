@@ -84,9 +84,9 @@ testHarness.addTestFile("WinJS.Utilities Tests", {
         };
         var error;
         try {
-            requireSupportedForProcessing(handler2);
+            WinJS.Utilities.requireSupportedForProcessing(handler2);
         } catch (ex) {
-            error = ex;
+            error = { message: ex };
         }
         test.assert(error, "requireSupportedForProcessing did not throw an error");
         test.assert(error && error.message == "requireSupportedForProcessing is not defined", "requireSupportedForProcessing threw the wrong error (" + error.message + ")");

@@ -72,7 +72,11 @@ WinJS.Namespace.define("Windows.Storage", {
                         file.path = fullFilePath;
                         // NOTE: This will differ slightly between win8 and web.  e.g. on Windows, a file with "Hello There" registers as 14 bytes, not 11,
                         // due to three bytes it prepends.  When we have binary buffer reads, use those instead to get 'real' file size.
-                        file.size = result.responseText.length;
+                        if (!result.responseText)
+                            file.size = 0;
+                        else
+                            file.size = result.responseText.length;
+
                         file._isAppX = true;
                         file._appXContents = result.responseText;
 

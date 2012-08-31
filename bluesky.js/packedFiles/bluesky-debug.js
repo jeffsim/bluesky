@@ -1242,6 +1242,7 @@ WinJS.Namespace.define("Windows.Storage", {
             // Create the local folder
             this.localFolder = new Windows.Storage.StorageFolder(this._rootFolder, "LocalState");
             this.localFolder.folderRelativeId = "0/0/" + this.localFolder.name;
+            this.localFolder.path = builtInFolderRoot + "LocalState";
             this.localFolder._initMFT();
 
             // Create the temporary folder
@@ -3083,7 +3084,11 @@ WinJS.Namespace.define("Windows.Storage", {
                         file.path = fullFilePath;
                         // NOTE: This will differ slightly between win8 and web.  e.g. on Windows, a file with "Hello There" registers as 14 bytes, not 11,
                         // due to three bytes it prepends.  When we have binary buffer reads, use those instead to get 'real' file size.
-                        file.size = result.responseText.length;
+                        if (!result.responseText)
+                            file.size = 0;
+                        else
+                            file.size = result.responseText.length;
+
                         file._isAppX = true;
                         file._appXContents = result.responseText;
 
@@ -5929,6 +5934,17 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			// Notify any listeners of the insertion
 			this._notifyItemInserted({ key: valueKey, index: this.length, value: value });
+		},
+
+
+	    // ================================================================
+	    //
+	    // public function: WinJS.Binding.List.dispose
+	    //
+	    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh921598.aspx
+	    //
+		dispose: function () {
+		    // TODO: Anything to do here?
 		},
 
 
@@ -8821,8 +8837,6 @@ WinJS.Namespace.define("WinJS.UI", {
         	if (options.extraClass)
         		this.$rootElement.addClass(options.extraClass);
         	this.tooltip = options.tooltip || this.label;
-        	if (options.disabled)
-        	    debugger;
 
         	this.disabled = (options.disabled || options.disabled == "true") ? true : false;
 
@@ -13469,7 +13483,6 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             _positionItem: function (item, position) {
 
-                console.log(item);
                 if (!item) {
                     this.indexOfFirstVisible = 0;
                     return;
@@ -14219,8 +14232,8 @@ WinJS.Namespace.define("WinJS.Utilities", {
     //
 	requireSupportedForProcessing: function (handler) {
 
-	    if (this.strictProcessing && !handler._supportedForProcessing)
-	        throw "requireSupportedForProcessing";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
+	    if (WinJS.strictProcessing && !handler._supportedForProcessing)
+	        throw "requireSupportedForProcessing is not defined";  // TODO: real exceptions/errors (WinJS.ErrorFromName)
 	},
 
 
