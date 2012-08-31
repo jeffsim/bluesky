@@ -5,15 +5,15 @@ Check out the samples: http://sampleBrowser.bluesky.io
 ### Current test status
 <table>
 <tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
-<tr><td>Firefox (latest)</td><td><b>182 of 185</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
-<tr><td>Chrome (latest)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>IE 10</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (iPad)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (mac)</td><td><b>182 of 185</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>IE 9</td><td><b>181 of 185</b> tests passing.</td><td>Same as above, plus WinJS.xhr with binary data failing</td></tr>
+<tr><td>Firefox (latest)</td><td><b>253 of 258</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList, + CORS bug</td></tr>
+<tr><td>Chrome (latest)</td><td><b>253 of 258</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (iPad)</td><td><b>253 of 258</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (mac)</td><td><b>253 of 258</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 10</td><td><b>253 of 258</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 9</td><td><b>250 of 258</b> tests passing.</td><td>Same as above, plus a couple more WinJS.xhr failures</td></tr>
 </table>
 
-We're currently seeing some intermittent test failures as well, which only impact the first run.  If you see different results than the above, then try re-running the tests.  Investigating...
+We're currently seeing some first-run test failures as well, typically having to do with loading external content and applying styles.  Some timing issue with page render and waiting for styles to be ready before scripts run.  If you see different results than the above, then try re-running the tests.  Investigating...
 
 Run the tests here: http://tests.bluesky.io/testharness/testharness.html
 
@@ -81,7 +81,7 @@ No dates, but here’s a rough staging (everything subject to change):
 				<li>WinJS.UI.Popups.MessageDialog (<b>done</b>)</li>
 				<li>WinJS.UI.Animation (<b>done</b>)</li>
 				<li>WinJS.xhr (<b>done</b>)</li>
-				<li>Windows.Storage (local and temp)</li>
+				<li>Windows.Storage (<b>done</b>)</li>
 				<li>WinJS.Resources</li>
 				<li>WinJS.UI.AppBar (<b>done</b>)</li>
 				<li>WinJS.UI.SemanticZoom (<b>done</b>)</li>

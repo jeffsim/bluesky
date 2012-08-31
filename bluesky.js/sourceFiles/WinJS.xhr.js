@@ -54,11 +54,14 @@ WinJS.Namespace.define("WinJS", {
             // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
             return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
+                var sourceUrl = options.url.toLowerCase();
+
                 // TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
-                var isLocal = options.url.toLowerCase().indexOf("http://") != 0;
+                var isLocal = sourceUrl.indexOf("http://") != 0;
                 // If this isn't a local request, then run it through the proxy to enable cross-domain
                 // TODO: Check if it's same-domain and don't proxy if so
                 // Use JSON format to support binary objects (xml format borks on them)
+
                 if (isLocal) {
                     var dataType = undefined;
                 } else {
@@ -85,6 +88,10 @@ WinJS.Namespace.define("WinJS", {
                             var responseXML = jqXHR.responseXML ? jqXHR.responseXML.querySelector("query > results") : null;
                             if (responseXML)
                                 responseText = responseXML.innerText;
+
+                            // We may have gotten our response as XML, but WinJS.xhr doesn't return it unless it's an xml file, so clear it out
+                            if (sourceUrl.indexOf(".xml") == -1)
+                                responseXML = null;
                             /*
                             if (!data)
                                 data = $.parseJSON(jqXHR.responseText);
@@ -180,6 +187,7 @@ WinJS.Namespace.define("WinJS", {
         }
     }
 });
+
 
 // ================================================================
 //
