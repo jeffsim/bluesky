@@ -61,14 +61,13 @@ WinJS.Namespace.define("WinJS", {
                 // If this isn't a local request, then run it through the proxy to enable cross-domain
                 // TODO: Check if it's same-domain and don't proxy if so
                 // Use JSON format to support binary objects (xml format borks on them)
-
                 if (isLocal) {
                     var dataType = undefined;
                 } else {
                     options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=xml";//json&callback=?";
-                    var dataType = undefined;// "jsonp";
+								  "%22%3B&format=json&callback=?";
+                    var dataType = "jsonp";
                 }
                 //	jQuery.support.cors = true; 
                 // TODO: Progress
@@ -78,34 +77,32 @@ WinJS.Namespace.define("WinJS", {
                     dataType: dataType,
                     success: function (data, textStatus, jqXHR) {
                         // Since we're using YQL, data contains the XML Document with the result. Extract it
-                        if (isLocal) {
-                            var responseText = jqXHR.responseText;
-                            var responseXML = jqXHR.responseXML || null;
-                        } else {
+                        if (!data)
+                            data = $.parseJSON(jqXHR.responseText);
+                        if (!data)
+                            data = "";
 
-                            // TODO (CLEANUP): Clean all this up
-                            var responseText = jqXHR.responseText;
-                            var responseXML = jqXHR.responseXML ? jqXHR.responseXML.querySelector("query > results") : null;
-                            if (responseXML)
-                                responseText = responseXML.innerText;
-
-                            // We may have gotten our response as XML, but WinJS.xhr doesn't return it unless it's an xml file, so clear it out
-                            if (sourceUrl.indexOf(".xml") == -1)
-                                responseXML = null;
-                            /*
-                            if (!data)
-                                data = $.parseJSON(jqXHR.responseText);
-
+                        if (data.query) {
                             var response = data.query.results;
-
-                            var responseText = response.result;
-
+                            var responseText = response.result || null;
                             // Parse the JSON object response into an xml object
                             var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
 
+                            // Convert the xml string into an object
                             var parser = new DOMParser();
                             var responseXML = parser.parseFromString(responseXML, "application/xml");
-                            $("type", responseXML).remove();*/
+
+                            // TODO: Still need this? YQL was passing content/type pairs for some reason.
+                            $("type", responseXML).remove();
+
+                        } else if (data.firstChild) { // IE9 doesn't recognize "data instanceof XMLDocument", so use this instead
+                            responseXML = data;
+                            response = "";
+                            responseText = "";
+                        } else{
+                            var response = data;
+                            var responseText = data;
+                            responseXML = null;
                         }
 
                         onComplete({
@@ -252,10 +249,12 @@ function _JSONtoXML(json) {
             body = text + body;
             return (body !== "") ? el + attributes + ">" + body + "</" + lname + ">" : el + attributes + "/>"
         } else {
-            var escaped = child.replace(/</g, "&lt;").replace(/>/g, "&gt;");//.replace("\r", "").replace("\n", "");
-            escaped = escaped.replace(/\r/g, "").replace(/\n/g, "");
-            escaped = escaped.replace(/&/g, "&amp;");
-            return "<" + lname + ">" + escaped + "</" + lname + ">";
+            child = child || "";
+            return "<" + lname + "><![CDATA[" + child + "]]></" + lname + ">";
+
+            //var escaped = child.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");//.replace("\r", "").replace("\n", "");
+            //escaped = escaped.replace(/\r/g, "").replace(/\n/g, "");
+            //return "<" + lname + ">" + escaped + "</" + lname + ">";
         }
     };
     for (var lname in json) {

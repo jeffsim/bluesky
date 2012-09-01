@@ -82,19 +82,18 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
 //
 WinJS.Namespace.define("Windows.Foundation.Collections", {
     IVector: WinJS.Class.derive(Windows.Foundation.Collections.IVectorView, function () {
-        this._items = [];
     },
     {
         // TODO (CLEANUP): Function header comment blocks
 
         // MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br206632.aspx
         append: function (value) {
-            this._items.push(value);
+            this.push(value);
         },
 
 
         clear: function () {
-            this._items = [];
+            this.length = 0;
         },
 
 
@@ -103,23 +102,23 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
         },
 
         insertAt: function (index, item) {
-            return this._items.splice(index, 0, item);
+            return this.splice(index, 0, item);
         },
         removeAt: function (index) {
-            this._items.splice(index, 1);
+            this.splice(index, 1);
         },
         removeAtEnd: function () {
-            return this._items.pop();
+            return this.pop();
         },
         replaceAll: function (newItems) {
-            this._items.clear();
+            this.clear();
             newItems.forEach(function (item) {
-                this._items.append(item);
+                this.append(item);
             });
         },
         setAt: function (index, item) {
-            if (index < this._items.length)
-                this._items[index] = item;
+            if (index < this.length)
+                this[index] = item;
         },
     })
 });

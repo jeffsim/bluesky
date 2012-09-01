@@ -275,8 +275,7 @@ var WinJS = {
 
         // NOTE: THIS FUNCTION HAS BEEN DEPRECATED.  Remove after Win8 RTM
 	    this._strictProcessing = true;
-	},
-
+	}
 };
 
 
@@ -432,14 +431,13 @@ WinJS.Namespace.define("WinJS", {
                 // If this isn't a local request, then run it through the proxy to enable cross-domain
                 // TODO: Check if it's same-domain and don't proxy if so
                 // Use JSON format to support binary objects (xml format borks on them)
-
                 if (isLocal) {
                     var dataType = undefined;
                 } else {
                     options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=xml";//json&callback=?";
-                    var dataType = undefined;// "jsonp";
+								  "%22%3B&format=json&callback=?";
+                    var dataType = "jsonp";
                 }
                 //	jQuery.support.cors = true; 
                 // TODO: Progress
@@ -449,34 +447,32 @@ WinJS.Namespace.define("WinJS", {
                     dataType: dataType,
                     success: function (data, textStatus, jqXHR) {
                         // Since we're using YQL, data contains the XML Document with the result. Extract it
-                        if (isLocal) {
-                            var responseText = jqXHR.responseText;
-                            var responseXML = jqXHR.responseXML || null;
-                        } else {
+                        if (!data)
+                            data = $.parseJSON(jqXHR.responseText);
+                        if (!data)
+                            data = "";
 
-                            // TODO (CLEANUP): Clean all this up
-                            var responseText = jqXHR.responseText;
-                            var responseXML = jqXHR.responseXML ? jqXHR.responseXML.querySelector("query > results") : null;
-                            if (responseXML)
-                                responseText = responseXML.innerText;
-
-                            // We may have gotten our response as XML, but WinJS.xhr doesn't return it unless it's an xml file, so clear it out
-                            if (sourceUrl.indexOf(".xml") == -1)
-                                responseXML = null;
-                            /*
-                            if (!data)
-                                data = $.parseJSON(jqXHR.responseText);
-
+                        if (data.query) {
                             var response = data.query.results;
-
-                            var responseText = response.result;
-
+                            var responseText = response.result || null;
                             // Parse the JSON object response into an xml object
                             var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
 
+                            // Convert the xml string into an object
                             var parser = new DOMParser();
                             var responseXML = parser.parseFromString(responseXML, "application/xml");
-                            $("type", responseXML).remove();*/
+
+                            // TODO: Still need this? YQL was passing content/type pairs for some reason.
+                            $("type", responseXML).remove();
+
+                        } else if (data.firstChild) { // IE9 doesn't recognize "data instanceof XMLDocument", so use this instead
+                            responseXML = data;
+                            response = "";
+                            responseText = "";
+                        } else{
+                            var response = data;
+                            var responseText = data;
+                            responseXML = null;
                         }
 
                         onComplete({
@@ -623,10 +619,12 @@ function _JSONtoXML(json) {
             body = text + body;
             return (body !== "") ? el + attributes + ">" + body + "</" + lname + ">" : el + attributes + "/>"
         } else {
-            var escaped = child.replace(/</g, "&lt;").replace(/>/g, "&gt;");//.replace("\r", "").replace("\n", "");
-            escaped = escaped.replace(/\r/g, "").replace(/\n/g, "");
-            escaped = escaped.replace(/&/g, "&amp;");
-            return "<" + lname + ">" + escaped + "</" + lname + ">";
+            child = child || "";
+            return "<" + lname + "><![CDATA[" + child + "]]></" + lname + ">";
+
+            //var escaped = child.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");//.replace("\r", "").replace("\n", "");
+            //escaped = escaped.replace(/\r/g, "").replace(/\n/g, "");
+            //return "<" + lname + ">" + escaped + "</" + lname + ">";
         }
     };
     for (var lname in json) {
@@ -839,19 +837,18 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
 //
 WinJS.Namespace.define("Windows.Foundation.Collections", {
     IVector: WinJS.Class.derive(Windows.Foundation.Collections.IVectorView, function () {
-        this._items = [];
     },
     {
         // TODO (CLEANUP): Function header comment blocks
 
         // MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br206632.aspx
         append: function (value) {
-            this._items.push(value);
+            this.push(value);
         },
 
 
         clear: function () {
-            this._items = [];
+            this.length = 0;
         },
 
 
@@ -860,23 +857,23 @@ WinJS.Namespace.define("Windows.Foundation.Collections", {
         },
 
         insertAt: function (index, item) {
-            return this._items.splice(index, 0, item);
+            return this.splice(index, 0, item);
         },
         removeAt: function (index) {
-            this._items.splice(index, 1);
+            this.splice(index, 1);
         },
         removeAtEnd: function () {
-            return this._items.pop();
+            return this.pop();
         },
         replaceAll: function (newItems) {
-            this._items.clear();
+            this.clear();
             newItems.forEach(function (item) {
-                this._items.append(item);
+                this.append(item);
             });
         },
         setAt: function (index, item) {
-            if (index < this._items.length)
-                this._items[index] = item;
+            if (index < this.length)
+                this[index] = item;
         },
     })
 });
@@ -13913,13 +13910,13 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            }
 
 		            // Add commands.  If none specified then use 'Close'
-		            if (that.commands.size() == 0) {
+		            if (that.commands.size == 0) {
 		                var closeCommand = new Windows.UI.Popups.UICommand("Close");
 		                that.commands.append(closeCommand);
 		            }
 
-		            var buttonStart = 1300 - that.commands.size() * 200;
-		            for (var i = 0; i < that.commands.size() ; i++) {
+		            var buttonStart = 1300 - that.commands.size * 200;
+		            for (var i = 0; i < that.commands.size ; i++) {
 		                var command = that.commands.getAt(i);
 		                var backgroundColor = i == that.defaultCommandIndex ? "rgba(53,206,251,1)" : "#ccc";
 		                var border = i == that.defaultCommandIndex ? "solid 3px #000" : "solid 3px #ccc";

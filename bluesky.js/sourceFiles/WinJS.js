@@ -259,6 +259,5 @@ var WinJS = {
 
         // NOTE: THIS FUNCTION HAS BEEN DEPRECATED.  Remove after Win8 RTM
 	    this._strictProcessing = true;
-	},
-
+	}
 };

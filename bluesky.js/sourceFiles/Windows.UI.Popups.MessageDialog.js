@@ -97,13 +97,13 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            }
 
 		            // Add commands.  If none specified then use 'Close'
-		            if (that.commands.size() == 0) {
+		            if (that.commands.size == 0) {
 		                var closeCommand = new Windows.UI.Popups.UICommand("Close");
 		                that.commands.append(closeCommand);
 		            }
 
-		            var buttonStart = 1300 - that.commands.size() * 200;
-		            for (var i = 0; i < that.commands.size() ; i++) {
+		            var buttonStart = 1300 - that.commands.size * 200;
+		            for (var i = 0; i < that.commands.size ; i++) {
 		                var command = that.commands.getAt(i);
 		                var backgroundColor = i == that.defaultCommandIndex ? "rgba(53,206,251,1)" : "#ccc";
 		                var border = i == that.defaultCommandIndex ? "solid 3px #000" : "solid 3px #ccc";

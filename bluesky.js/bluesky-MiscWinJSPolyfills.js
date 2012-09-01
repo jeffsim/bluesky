@@ -19,9 +19,9 @@
 //      don't use -ms-grid, and this won't be necessary.
 //
 $(document).ready(function () {
-	if (!($.browser.msie && $.browser.version == "10.0")) {
-		$("body").addClass("notIE10");
-	}
+    if (!($.browser.msie && $.browser.version == "10.0")) {
+        $("body").addClass("notIE10");
+    }
 });
 
 // ================================================================
@@ -46,77 +46,77 @@ if (!window.toStaticHTML) {
 
 if (!$.browser.msie) {
 
-	// ================================================================
-	//
-	// Add srcElement to events
-	//
-	if (!Event.prototype.srcElement) {
-		var warnedSrcElement = false;
-		Event.prototype.__defineGetter__("srcElement", function () {
-			if (!warnedSrcElement) {
-				console.warn("bluesky: srcElement is not present on non-IE browsers, and has been changed to target; consider changing code for perf.  This warning will appear only once.");
-				warnedSrcElement = true;
-			}
-			return this.target;
-		});
-	}
+    // ================================================================
+    //
+    // Add srcElement to events
+    //
+    if (!Event.prototype.srcElement) {
+        var warnedSrcElement = false;
+        Event.prototype.__defineGetter__("srcElement", function () {
+            if (!warnedSrcElement) {
+                console.warn("bluesky: srcElement is not present on non-IE browsers, and has been changed to target; consider changing code for perf.  This warning will appear only once.");
+                warnedSrcElement = true;
+            }
+            return this.target;
+        });
+    }
 
-	// ================================================================
-	//
-	// Add setActive to DOM elements
-	//
-	//      TODO: Just nop'ing this for now.
-	//
-	if (!Element.setActive) {
-		var warnedSetActive = false;
-		Element.prototype.setActive = function (value) {
-			if (!warnedSetActive) {
-				console.warn("bluesky: setActive is not present on non-IE browsers, and has been NOP'ed for now.");
-				warnedSetActive = true;
-			}
+    // ================================================================
+    //
+    // Add setActive to DOM elements
+    //
+    //      TODO: Just nop'ing this for now.
+    //
+    if (!Element.setActive) {
+        var warnedSetActive = false;
+        Element.prototype.setActive = function (value) {
+            if (!warnedSetActive) {
+                console.warn("bluesky: setActive is not present on non-IE browsers, and has been NOP'ed for now.");
+                warnedSetActive = true;
+            }
 
-			// nop
-		}
-	}
+            // nop
+        }
+    }
 
-	// ================================================================
-	//
-	// Add onpropertychange handler to DOM elements
-	//
-	//      TODO: This is decidedly not the right polyfill, but it addresses the current need.
-	//
-	if (!Element.onpropertychange) {
-		var warnedPropertyChange = false;
-		Element.prototype.__defineSetter__("onpropertychange", function (value) {
-			if (!warnedPropertyChange) {
-				console.warn("bluesky: onpropertychange is not present on non-IE browsers, and has been rerouted to onclick which only helps in a few situations (e.g. using it for checkbox click handlers); consider changing code for perf.  This warning will appear only once.");
-				warnedPropertyChange = true;
-			}
-			this.onclick = value;
-		});
-	}
+    // ================================================================
+    //
+    // Add onpropertychange handler to DOM elements
+    //
+    //      TODO: This is decidedly not the right polyfill, but it addresses the current need.
+    //
+    if (!Element.onpropertychange) {
+        var warnedPropertyChange = false;
+        Element.prototype.__defineSetter__("onpropertychange", function (value) {
+            if (!warnedPropertyChange) {
+                console.warn("bluesky: onpropertychange is not present on non-IE browsers, and has been rerouted to onclick which only helps in a few situations (e.g. using it for checkbox click handlers); consider changing code for perf.  This warning will appear only once.");
+                warnedPropertyChange = true;
+            }
+            this.onclick = value;
+        });
+    }
 
-	// ================================================================
-	//
-	// Add innerText getter/setter to element
-	//
-	if (!Element.prototype.innerText) {
-		var warnedInnerText = false;
-		Element.prototype.__defineGetter__("innerText", function () {
-			if (!warnedInnerText) {
-				console.warn("bluesky: innerText is not present on non-IE browsers, and has been changed to textContent; consider changing code for perf.  This warning will appear only once.");
-				warnedInnerText = true;
-			}
-			return this.textContent;
-		});
-		Element.prototype.__defineSetter__("innerText", function (value) {
-			if (!warnedInnerText) {
-				console.warn("bluesky: innerText is not present on non-IE browsers, and has been changed to textContent; consider changing code for perf.  This warning will appear only once.");
-				warnedInnerText = true;
-			}
-			this.textContent = value;
-		});
-	}
+    // ================================================================
+    //
+    // Add innerText getter/setter to element
+    //
+    if (!Element.prototype.innerText) {
+        var warnedInnerText = false;
+        Element.prototype.__defineGetter__("innerText", function () {
+            if (!warnedInnerText) {
+                console.warn("bluesky: innerText is not present on non-IE browsers, and has been changed to textContent; consider changing code for perf.  This warning will appear only once.");
+                warnedInnerText = true;
+            }
+            return this.textContent;
+        });
+        Element.prototype.__defineSetter__("innerText", function (value) {
+            if (!warnedInnerText) {
+                console.warn("bluesky: innerText is not present on non-IE browsers, and has been changed to textContent; consider changing code for perf.  This warning will appear only once.");
+                warnedInnerText = true;
+            }
+            this.textContent = value;
+        });
+    }
 }
 
 // ================================================================
@@ -129,25 +129,25 @@ if (!$.browser.msie) {
 //      page: https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind).
 //
 if (!Function.prototype.bind) {
-	Function.prototype.bind = function (oThis) {
-		if (typeof this !== "function") {
-			// closest thing possible to the ECMAScript 5 internal IsCallable function
-			throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-		}
+    Function.prototype.bind = function (oThis) {
+        if (typeof this !== "function") {
+            // closest thing possible to the ECMAScript 5 internal IsCallable function
+            throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+        }
 
-		var aArgs = Array.prototype.slice.call(arguments, 1),
+        var aArgs = Array.prototype.slice.call(arguments, 1),
             fToBind = this,
             fNOP = function () { },
             fBound = function () {
-            	return fToBind.apply(this instanceof fNOP ? this : oThis || window,
+                return fToBind.apply(this instanceof fNOP ? this : oThis || window,
                                    aArgs.concat(Array.prototype.slice.call(arguments)));
             };
 
-		fNOP.prototype = this.prototype;
-		fBound.prototype = new fNOP();
+        fNOP.prototype = this.prototype;
+        fBound.prototype = new fNOP();
 
-		return fBound;
-	};
+        return fBound;
+    };
 }
 
 
@@ -161,55 +161,55 @@ if (!Function.prototype.bind) {
 //
 if (!Element.classList) {
 
-	var warnedPolyfill = false;
-	var polyFillClassList = function (element) {
-		return {
-			length: {
-				get: function () {
-					if (this.className == "")
-						return 0;
-					var num = this.className.split(" ");
-					return num + 1;
-				}
-			},
+    var warnedPolyfill = false;
+    var polyFillClassList = function (element) {
+        return {
+            length: {
+                get: function () {
+                    if (this.className == "")
+                        return 0;
+                    var num = this.className.split(" ");
+                    return num + 1;
+                }
+            },
 
-			add: function (className) {
-				this._checkWarned();
-				$(element).addClass(className);
-			},
+            add: function (className) {
+                this._checkWarned();
+                $(element).addClass(className);
+            },
 
-			remove: function (className) {
-				this._checkWarned();
-				$(element).removeClass(className);
-			},
+            remove: function (className) {
+                this._checkWarned();
+                $(element).removeClass(className);
+            },
 
-			contains: function (className) {
-				this._checkWarned();
-				return $(element).hasClass(className);
-			},
+            contains: function (className) {
+                this._checkWarned();
+                return $(element).hasClass(className);
+            },
 
-			toggle: function (className) {
-				this._checkWarned();
-				if (this.contains(className))
-					this.remove(className);
-				else
-					this.add(className);
-			},
+            toggle: function (className) {
+                this._checkWarned();
+                if (this.contains(className))
+                    this.remove(className);
+                else
+                    this.add(className);
+            },
 
-			_checkWarned: function () {
-				if (!warnedPolyfill) {
-					console.warn("bluesky: Element.classList is not present in this browser, and has been polyfilled; consider changing code for perf.  This warning will appear only once.");
-					warnedPolyfill = true;
-				}
-			}
-		}
-	}
+            _checkWarned: function () {
+                if (!warnedPolyfill) {
+                    console.warn("bluesky: Element.classList is not present in this browser, and has been polyfilled; consider changing code for perf.  This warning will appear only once.");
+                    warnedPolyfill = true;
+                }
+            }
+        }
+    }
 
-	Object.defineProperty(Element.prototype, "classList", {
-		get: function () {
-			return new polyFillClassList(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
+    Object.defineProperty(Element.prototype, "classList", {
+        get: function () {
+            return new polyFillClassList(this);
+        },
+        enumerable: true,
+        configurable: true
+    });
 }
