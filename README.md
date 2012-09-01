@@ -5,12 +5,12 @@ Check out the samples: http://sampleBrowser.bluesky.io
 ### Current test status
 <table>
 <tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
-<tr><td>Firefox (latest)</td><td><b>261 of 264</b> tests passing.</td><td>Two postponable bugs, + bug in FilteredList</td></tr>
-<tr><td>Chrome (latest)</td><td><b>261 of 264</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>IE 10</td><td><b>261 of 264</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>IE 9</td><td><b>261 of 264</b> tests passing.</td><td>Same as above</td></tr>
-<tr><td>Safari (iPad)</td><td><b>259 of 264</b> tests passing.</td><td>Same as above, plus Framgent loading bug</td></tr>
-<tr><td>Safari (mac)</td><td><b>259 of 264</b> tests passing.</td><td>Same as above, plus Framgent loading bug</td></tr>
+<tr><td>Firefox (latest)</td><td><b>263 of 264</b> tests passing.</td><td>Bug in parsing Win8's quasi-JSON data string format</td></tr>
+<tr><td>Chrome (latest)</td><td><b>263 of 264</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 10</td><td><b>263 of 264</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>IE 9</td><td><b>263 of 264</b> tests passing.</td><td>Same as above</td></tr>
+<tr><td>Safari (iPad)</td><td><b>261 of 264</b> tests passing.</td><td>Same as above, plus Fragment loading bug in Safari</td></tr>
+<tr><td>Safari (mac)</td><td><b>261 of 264</b> tests passing.</td><td>Same as above</td></tr>
 </table>
 
 We're currently seeing some first-run test failures as well, typically having to do with loading external content and applying styles.  Some timing issue with page render and waiting for styles to be ready before scripts run.  If you see different results than the above, then try re-running the tests.  Investigating...

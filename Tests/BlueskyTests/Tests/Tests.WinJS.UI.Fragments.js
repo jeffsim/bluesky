@@ -116,7 +116,6 @@ testHarness.addTestFile("WinJS.UI.Fragments Tests", {
     fragmentRenderWithScript: function (test) {
 
         test.start("Fragments.render with script/css");
-
         var $head = $("head");
 
         // When WinJS.UI.Fragments.render (et al) loads a page with styles and scripts, those styles and scripts are moved up into the head and

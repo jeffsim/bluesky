@@ -106,7 +106,10 @@ testHarness.addTestFile("Windows.Storage Tests", {
     //
     msappProtocol: function (test) {
         test.start("ms-appx and ms-appdata protocols tests");
-        test.timeoutLength = 10000;
+
+        // settings this to 1000 since we're skipping (and thus hanging)
+        test.timeoutLength = 1000;
+
         var appData = Windows.Storage.ApplicationData.current;
         var localFolder = appData.localFolder;
         var tempFolder = appData.temporaryFolder;

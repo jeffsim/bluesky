@@ -24,6 +24,8 @@
 			// Convert arguments to an Array (Thank you MDN! https://developer.mozilla.org/en/JavaScript/Reference/Functions_and_function_scope/arguments)
 			var args = Array.prototype.slice.call(arguments);
 
+			index = (index + this.length) % this.length;
+
 			if (index == this.length || index == -1) {
 				args[0] = this._list.length - 1;
 				return this._list.splice.apply(this._list, args);

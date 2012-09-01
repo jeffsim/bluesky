@@ -600,7 +600,7 @@ function Test() {
         cancelled: false,
 
         // Asynchronous tests can override this if they need to run longer than this
-        timeoutLength: 1000,
+        timeoutLength: 10000,
 
         // Set to true if this test was skipped
         skipped: false,
@@ -626,10 +626,10 @@ $(document).ready(function () {
     // TODO: Cookie these values.
 
     // To select a particular test file, call _setTestFile with the index of the testFile in the test files dropdown, or 'all' for all
-    testHarness._setTestFile(22);
+    testHarness._setTestFile(15);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
-    testHarness._setTest("createPeekAnimation");
+    testHarness._setTest("filteredListNotifications");
 
     // Temp: start the tests now to save me from clicking the button
     $("#startTests").click();

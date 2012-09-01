@@ -254,6 +254,7 @@ testHarness.addTestFile("WinJS.Binding.FilteredList Tests", {
 		itemRemovedInfos2 = [];
 		itemChangedInfos2 = [];
 
+
 		filteredList.setAt(2, 57);
 		filteredList.pop();
 
