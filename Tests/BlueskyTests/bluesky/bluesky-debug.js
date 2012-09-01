@@ -9207,7 +9207,7 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
     //
     hidePopup: function (elements) {
 
-        return this.fadeOut(elements);
+        return WinJS.UI.Animation.fadeOut(elements);
     },
 
 
