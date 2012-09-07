@@ -58,6 +58,8 @@ WinJS.Namespace.define("Windows.Storage", {
                 var that = this;
                 return new WinJS.Promise(function (onComplete, onError) {
 
+                    name = name.replace("\\", "/");
+
                     // Check if the file exists in the filesystem
                     var fullFilePath = that.path + "/" + name;
 

@@ -33,8 +33,25 @@ WinJS.Namespace.define("Windows", {
                 filled: 1,
                 snapped: 2,
                 fullScreenPortrait: 3
+            },
+            InputPane: {
+                getForCurrentView: function () {
+                    return {
+                        addEventListener: function () {
+                        }
+                    }
+                }
+            },
+        },
+        
+
+        StartScreen: {
+            SecondaryTile: {
+                exists: function () {
+                    return false;
+                }
             }
-        }
+        },
     },
 
 
@@ -49,6 +66,13 @@ WinJS.Namespace.define("Windows", {
     Graphics: {
         Display: {
             DisplayProperties: {
+            }
+        },
+        Printing: {
+            PrintManager: {
+                getForCurrentView: function () {
+                    return {};
+                }
             }
         }
     },

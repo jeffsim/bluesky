@@ -45,6 +45,9 @@ var blueskyUtils = {
 	//
 	convertDeclarativeDataStringToJavascriptObject: function (dataBindString) {
 
+        // TODO: Temp hack
+	    dataBindString = dataBindString.replace("select('#", "").replace(")", "");
+
 		// 1. Wrap keywords (keys and values) in single quotes
 		// TODO-I'm wrapping number values in quotes; should I?
 		// Note: the regex is trying to match a-z, a-Z, 0-9, -, ., and /      <-- Note that we need to match "." to support compounds like "style.backgroundColor"

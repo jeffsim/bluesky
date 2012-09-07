@@ -600,7 +600,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     // This event handler is called when an event that does not change our datasource count has occurred
                     var renderMe = function () {
                         // TODO: leaving this wrapper in case I need to send events; if not, then just bind to render.
-                        that.render(true);
+                        that.render(false);
                     };
 
                     // Unbind from previous list (if any)

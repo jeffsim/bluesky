@@ -56,20 +56,18 @@ WinJS.Namespace.define("WinJS", {
 
                 var sourceUrl = options.url.toLowerCase();
 
-                // TODO: what should we do if url = "www.foo.com/bar" (e.g. no http:// at the front?)
-                var isLocal = sourceUrl.indexOf("http://") != 0;
+                var isLocal = sourceUrl.indexOf("http") != 0;
+
                 // If this isn't a local request, then run it through the proxy to enable cross-domain
                 // TODO: Check if it's same-domain and don't proxy if so
                 // Use JSON format to support binary objects (xml format borks on them)
-                if (isLocal) {
-                    var dataType = undefined;
-                } else {
+                if (!isLocal) {
                     options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
 								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
 								  "%22%3B&format=json&callback=?";
                     var dataType = "jsonp";
                 }
-                //	jQuery.support.cors = true; 
+
                 // TODO: Progress
                 $.ajax({
                     url: options.url,
@@ -84,17 +82,22 @@ WinJS.Namespace.define("WinJS", {
 
                         if (data.query) {
                             var response = data.query.results;
-                            var responseText = response.result || null;
-                            // Parse the JSON object response into an xml object
-                            var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
+                            if (response) {
+                                var responseText = response.result || null;
+                                // Parse the JSON object response into an xml object
+                                var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
 
-                            // Convert the xml string into an object
-                            var parser = new DOMParser();
-                            var responseXML = parser.parseFromString(responseXML, "application/xml");
+                                // Convert the xml string into an object
+                                var parser = new DOMParser();
+                                var responseXML = parser.parseFromString(responseXML, "application/xml");
 
-                            // TODO: Still need this? YQL was passing content/type pairs for some reason.
-                            $("type", responseXML).remove();
-
+                                // TODO: Still need this? YQL was passing content/type pairs for some reason.
+                                $("type", responseXML).remove();
+                            } else {
+                                response = "";
+                                responseText = "";
+                                responseXML = null;
+                            }
                         } else if (data.firstChild) { // IE9 doesn't recognize "data instanceof XMLDocument", so use this instead
                             responseXML = data;
                             response = "";

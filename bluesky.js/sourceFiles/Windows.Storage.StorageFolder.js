@@ -301,6 +301,8 @@ WinJS.Namespace.define("Windows.Storage", {
                 var that = this;
                 return new WinJS.Promise(function (onComplete, onError) {
 
+                    name = name.replace("\\", "/");
+
                     var item = that._getRealizedItem(name);
 
                     // TODO: If not a file, then set item to null?  What does Win8 do?

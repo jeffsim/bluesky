@@ -26,6 +26,28 @@ WinJS.Namespace.define("Windows", {
                 terminated: 0
             }
         },
+        DataTransfer: {
+            DataTransferManager: {
+                getForCurrentView: function () {
+                    return {
+                        addEventListener: function () {
+                        }
+                    }
+                }
+            }
+        },
+
+        Search: {
+            SearchPane: {
+                getForCurrentView: function () {
+                    return {
+                        addEventListener: function () {
+                        }
+                    }
+                }
+            }
+        },
+
     },
 
 });
