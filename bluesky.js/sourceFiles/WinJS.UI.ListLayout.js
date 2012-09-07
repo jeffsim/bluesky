@@ -8,11 +8,11 @@
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.UI.ListLayout
-	//
-	ListLayout: WinJS.Class.define(
+    // ================================================================
+    //
+    // public Object: WinJS.UI.ListLayout
+    //
+    ListLayout: WinJS.Class.define(
 
 		// ================================================================
 		//
@@ -22,23 +22,23 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (layoutOptions) {
 
-			// eval groupInfo if it is present
-			if (layoutOptions && layoutOptions.groupInfo) {
-				this.groupInfo = eval(layoutOptions.groupInfo);
-			}
+		    // eval groupInfo if it is present
+		    if (layoutOptions && layoutOptions.groupInfo) {
+		        this.groupInfo = eval(layoutOptions.groupInfo);
+		    }
 		},
 
-	// ================================================================
-	// WinJS.UI.ListLayout Member functions
-	// ================================================================
+	    // ================================================================
+	    // WinJS.UI.ListLayout Member functions
+	    // ================================================================
 
-	{
-		// The horizontal property is always false for ListLayouts
-		horizontal: {
-			get: function () {
-				return false;
-			}
-		}
-	})
+	    {
+	        // The horizontal property is always false for ListLayouts
+	        horizontal: {
+	            get: function () {
+	                return false;
+	            }
+	        }
+	    })
 });
 

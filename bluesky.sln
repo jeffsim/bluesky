@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bluesky.js Source", "bluesk
 	ProjectSection(SolutionItems) = preProject
 		bluesky.js\sourceFiles\blueskySettings.js = bluesky.js\sourceFiles\blueskySettings.js
 		bluesky.js\sourceFiles\blueskyUtils.js = bluesky.js\sourceFiles\blueskyUtils.js
+		bluesky.js\sourceFiles\externalDependencies.js = bluesky.js\sourceFiles\externalDependencies.js
 	EndProjectSection
 EndProject
 Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "Win8Tests", "Tests\BlueskyTests\Win8Tests.jsproj", "{AB36E9BE-6E81-4385-8F28-FA6AAE0EDF5C}"

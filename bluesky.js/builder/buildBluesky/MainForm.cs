@@ -78,7 +78,8 @@ namespace buildBluesky
 			   @"\WinJS.Utilities.js",
 			   @"\WinJS.Utilities.QueryCollection.js",
                @"\blueskySettings.js",
-               @"\blueskyUtils.js"
+               @"\blueskyUtils.js",
+               @"\externalDependencies.js"
             };
 
 			// Ensure source and dest folders end with a backslash

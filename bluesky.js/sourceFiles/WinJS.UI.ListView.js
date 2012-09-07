@@ -74,10 +74,12 @@ WinJS.Namespace.define("WinJS.UI", {
             // We want to know when the browser is resized so that we can relayout our items.
             this._prevWidth = "";
             this._prevHeight = "";
-            // TODO: I've disabled resize because (1) it's too slow (since we're re-rendering everything on resize (until R3)), and (2) I'm
-            // leaking the event - when the user changes pages, the old items remain in memory so they previous page's listviews get resize
-            // events.  I'm not sure where to drop the unbinding - possibly winControl.unload? - but for now I'm just disabling it.
-            //   	window.addEventListener("resize", this._windowResized.bind(this));
+
+            //window.addEventListener("resize", this._windowResized.bind(this));
+            this.$rootElement.resize(this._windowResized.bind(this));
+
+            // When we're removed from the DOM, unload ourselves
+            this.$rootElement.bind("DOMNodeRemoved", this._unload);
         },
 
 		// ================================================================
@@ -88,25 +90,70 @@ WinJS.Namespace.define("WinJS.UI", {
 
             // ================================================================
             //
+            // private function: WinJS.ListView._unload
+            //
+            _unload: function (event) {
+
+                // This is called if the ListView OR an element in the ListView is removed; make sure it's the ListView
+                if (event.target == this) {
+
+                    // Remove our click listener from the appbar click eater
+                    window.removeEventListener("resize", this._windowResized);
+                    if (this.$rootElement)
+                        this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+                }
+            },
+
+
+            // ================================================================
+            //
             // private event: WinJS.ListView._windowResized
             //
             //		Called when the browser window is resized; resize ourselves
             //
             _windowResized: function (eventData) {
 
+                // TODO (HACK):  I'm not unbinding listviews' resize callbacks, so we get here for elements that aren't in the DOM.  Need to figure out the 
+                // right way to unbind callbacks when controls are removed.
+                if (!this.$rootElement.closest("html").length)
+                    return;
+
                 // If size hasn't changed, then nothing to do.
                 var newWidth = this.$rootElement.innerWidth();
                 var newHeight = this.$rootElement.innerHeight();
-                if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
+                if (this._prevWidth == newWidth && this._prevHeight == newHeight)
                     return;
 
-                // tbd: instead of re-rendering completely, should do a "movePosition"
-                // tbd-perf: only relayout if size has changed at the listview items' size granularity
-                //var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
-                this._disableAnimation = true;
-                this._doRender();
-                this._disableAnimation = false;
-                //anim.execute();
+                this._prevWidth = newWidth;
+                this._prevHeight = newHeight;
+
+                // TODO (PERF): only relayout if size has changed at the listview items' size granularity
+                var elements = [];
+                this.items.forEach(function (item) {
+                    elements.push(item.element.parentNode);
+                });
+
+                // Animate groupheaders too (if any)
+                if (this.$_groupHeaders) {
+                    this.$_groupHeaders.forEach(function ($header) {
+                        elements.push($header[0]);
+                    });
+                }
+
+                var that = this;
+
+                // If a resize animation is already running then cancel it and we'll animate from the current mid-animated position
+                if (that._resizeAnim) {
+                    that._resizeAnim._cancel();
+                }
+
+                that._resizeAnim = WinJS.UI.Animation.createRepositionAnimation(elements);
+                that._disableAnimation = true;
+                that._positionItems();
+                that._disableAnimation = false;
+                that._resizeAnim.execute().then(function () {
+                    that._resizeAnim = null;
+                });
             },
 
 
@@ -131,7 +178,6 @@ WinJS.Namespace.define("WinJS.UI", {
                     return;
 
                 /*DEBUG*/
-
                 if (this._itemDataSource.getCount == undefined) {
                     console.error("ListView.itemDataSource is not a databound object.", this, this._itemDataSource);
                     return;
@@ -146,20 +192,18 @@ WinJS.Namespace.define("WinJS.UI", {
                 // Create two DOM elements; a parent Viewport which is static and does not move, and a child surface which is large enough to
                 // contain all items in the list.  Show the currently scrolled-to part of the list (child surface) in the viewport.
                 var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
-                var $viewportDiv = $("<div class='win-viewport " + orientation + "' role='group'></div>");
-                var $surfaceDiv = $("<div class='win-surface'></div>");
-                this.$viewport = $viewportDiv;
-                this.$scrollSurface = $surfaceDiv;
+                this.$viewport = $("<div class='win-viewport " + orientation + "' role='group'></div>");
+                this.$scrollSurface = $("<div class='win-surface'></div>");
 
                 // The surface div has to be sized in order for the group header to obtain a valid size (see calculation of topY below).  Size the
                 // surface div to match the viewport; we'll increase its size after we render all items and know the final size
-                $surfaceDiv.css("height", this.$rootElement.innerHeight());
-                $surfaceDiv.css("width", this.$rootElement.innerWidth());
+                //             this.$scrollSurface.css("height", this.$rootElement.innerHeight());
+                //           this.$scrollSurface.css("width", this.$rootElement.innerWidth());
 
                 // Add the ListView's scrolling surface to the ListView's static (nonscrolling) viewport, and then add the 
                 // listView's static viewpoint to the DOM
-                $viewportDiv.append($surfaceDiv);
-                this.$rootElement.append($viewportDiv);
+                this.$viewport.append(this.$scrollSurface);
+                this.$rootElement.append(this.$viewport);
 
                 // Set our root element's position to relative so that list items can be absolutely positioned relative to the list
                 // Also add roles and classes to make the listbox look like a Win8 listbox
@@ -201,289 +245,350 @@ WinJS.Namespace.define("WinJS.UI", {
                     }
                 }
 
-                // Wait until all of the items have been rendered
+                // Wait until all of the items have been rendered and then position them
                 WinJS.Promise.join(renderPromises).then(function () {
 
-                    // Set current rendering position to upper left corner of the list's surface
-                    var renderCurX = 0, renderCurY = 0;
+                    // Generate the containers (DOM elements) for the items
+                    that._generateItems();
 
-                    // Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
-                    var renderMaxY = that.$rootElement.innerHeight();
+                    //         that.$scrollSurface.css("width", 0);
 
-                    // Keep track of the width of the scrolling surface
-                    var surfaceWidth = 0;
+                    // Place the list items in their correct positions
+                    that._positionItems();
 
-                    // Get groupInfo (if specified)
-                    var groupInfo = that.layout.groupInfo && that.layout.groupInfo();
+                });
+            },
 
-                    var currentGroupKey = null;
 
-                    // Get the spacing to add between groups (if grouped view)
-                    var groupSpacing;
+            // ================================================================
+            //
+            // private event: WinJS.ListView._generateItems
+            //
+            _generateItems: function () {
 
-                    var topY;
+                if (this.items.length == 0)
+                    return;
+                // This should only happen when itemDataSource or groupDataSource changes (including first set).
+                var that = this;
 
-                    // Keep track of current row for maxRows comparison
-                    var curRow = -1;
+                // Get groupInfo (if specified)
+                var groupInfo = that.layout.groupInfo && that.layout.groupInfo();
 
-                    // Get the margin sizes around items
-                    var templateMargins = that._getItemMargins();
+                var currentGroupKey = null;
+                this.$_groupHeaders = [];
 
-                    var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
-                    var groupRenderStartX;
+                // Generate containers for the list's items
+                for (var i = 0; i < that.items.length; i++) {
 
-                    var listWidth = that.$rootElement.innerWidth();
+                    var item = that.items[i];
 
-                    // Add the rendered DOM elements to the DOM at the correct positions
-                    for (var i = 0; i < that.items.length; i++) {
-                        var item = that.items[i];
+                    // Wrap so that we don't re-wrap every time we position
+                    item.$element = $(item.element);
 
-                        // TODO (PERF-MINOR): Wrap $itemElement on item creation to avoid rewrapping every time we render.
-                        var $itemElement = $(item.element);
+                    // Create the item container div for the current item, add the item's element to it, and place the
+                    // itemcontainer in the listview's scrolling surface
+                    var $thisItemContainer = $("<div class='win-container'></div>");
+                    $thisItemContainer.append(item.$element);
+                    this.$scrollSurface.append($thisItemContainer);
 
-                        // Create the item container div for the current item, add the item's element to it, and place the
-                        // itemcontainer in the listview's scrolling surface
-                        var $thisItemContainer = $("<div class='win-container'></div>");
-                        $thisItemContainer.append($itemElement);
-                        $surfaceDiv.append($thisItemContainer);
+                    // If this is a grouped list and the item is in a different group than the previous item, then output a group header
+                    // and jump to the next column
+                    if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
-                        // Get the dimensions of the item (force to width of list if not horizontal)
-                        var itemWidth = that.layout.horizontal ? $itemElement.innerWidth() : listWidth;
-                        var itemHeight = $itemElement.innerHeight();
+                        // Track the current group key so that we know when we switch to a new group
+                        currentGroupKey = item.groupKey;
 
-                        // If cellspanning/groupinfo specified, then apply it now
-                        if (groupInfo && groupInfo.enableCellSpanning) {
-
-                            // NOTE: Since we use item dimensions already, we don't need to do anything for enableCellSpanning.
-                            // TODO: Technically this breaks some edge cases - e.g. app has incorrectly (or inconsistently) sized items
-                            //		 and is relying on groupInfo to set the right granularity for them.  I'll need to see some failure
-                            //		 cases to fully understand the right solution here.
-                            // TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
-                        }
-
-                        // If this is a grouped list and the item is in a different group than the previous item, then output a group header
-                        // and jump to the next column
-                        if (that._groupDataSource && item.groupKey != currentGroupKey) {
-
-                            // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
-                            if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                                $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
-                            }
-
-                            // Track width of the current group for the above limit
-                            groupRenderStartX = surfaceWidth;
-
-                            // Track the current group key so that we know when we switch to a new group
-                            currentGroupKey = item.groupKey;
-
-                            // Output the new group's header
-                            // Clone the group header template, make it visible, and place it.
-                            var $groupHeaderTemplate = $(that.groupHeaderTemplate)
-								.clone()
-								.addClass("win-groupheader")
-								.show();
-
-                            // Give the cloned element a unique identifier
-                            // TODO (CLEANUP): can I do this in Binding.processAll?
-                            blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
-
-                            // Perform data binding on the group header template
-                            // TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
-                            //		 code to allow that to return asychronously...
-                            WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
-
-                            // Remove the data-win-control attribute after we've processed it.
-                            // TODO (CLEANUP): Am I doing this after every call to processAll?  If so, move this into there.
-                            $groupHeaderTemplate.removeAttr("data-win-control");
-
-                            // Add the fully realized HTML for the group header to the ListView's DOM element.
-                            $surfaceDiv.append($groupHeaderTemplate);
-
-                            // Create the group's header
-                            // TODO (CLEANUP): I can collapse a few lines of the following if/else...
-                            if (groupHeaderOnLeft) {
-
-                                // If we haven't gotten the width of the group header yet, then do so now.
-                                if (topY === undefined) {
-                                    topY = 0;
-
-                                    // Spacing between groups is (apparently) based on the margins of the group header.
-                                    // TODO: What about padding? border?
-                                    groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft")) +
-												   $groupHeaderTemplate.outerWidth() +
-												   parseInt($groupHeaderTemplate.css("marginRight"));
-
-                                    surfaceWidth = groupSpacing;
-                                } else
-                                    surfaceWidth += groupSpacing;
-
-                            } else {
-
-                                // If we haven't gotten the height of the group header yet, then do so now.
-                                if (topY === undefined) {
-                                    topY = $groupHeaderTemplate.outerHeight();
-
-                                    // Spacing between groups is (apparently) based on the left margin of the group header.
-                                    // TODO: What about padding? border?
-                                    groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft"));
-
-                                    surfaceWidth = groupSpacing;
-                                } else
-                                    surfaceWidth += groupSpacing;
-                            }
-
-                            // Start rendering items just below the group header
-                            renderCurY = topY;
-                            renderCurX = surfaceWidth;
-
-                            // Keep track of current row for maxRows check
-                            curRow = 0;
-
-                            // Set the header's final position
-                            $groupHeaderTemplate.css({
+                        // Output the new group's header
+                        // Clone the group header template, make it visible, and place it.
+                        var $groupHeaderTemplate = $(that.groupHeaderTemplate)
+                            .clone()
+                            .addClass("win-groupheader")
+                            .css({
                                 "position": "absolute",
-                                "top": "0px",
-                                "left": (renderCurX - groupSpacing) + "px"  // step back groupSpacing pixels to account for margin
-                            });
+                                "top": "0px"
+                            })
+                            .show();
 
-                        } else {
+                        // Give the cloned element a unique identifier
+                        // TODO (CLEANUP): can I do this in Binding.processAll?
+                        blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
 
-                            if (topY === undefined)
-                                topY = 0;
-                            if (that.layout.horizontal) {
-                                // If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
-                                // So the same if maxRows is specified and we're about to exceed it
-                                if (renderCurY + itemHeight >= renderMaxY ||
-									that.layout.maxRows && curRow == that.layout.maxRows - 1) {
-                                    renderCurY = topY;
-                                    renderCurX = surfaceWidth;
-                                    curRow = 0;
-                                } else
-                                    curRow++;
+                        // Perform data binding on the group header template
+                        // TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
+                        //		 code to allow that to return asychronously...
+                        WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
+
+                        // Remove the data-win-control attribute after we've processed it.
+                        // TODO (CLEANUP): Am I doing this after every call to processAll?  If so, move this into there.
+                        $groupHeaderTemplate.removeAttr("data-win-control");
+
+                        // Add the fully realized HTML for the group header to the ListView's DOM element.
+                        this.$scrollSurface.append($groupHeaderTemplate);
+
+                        this.$_groupHeaders.push($groupHeaderTemplate);
+                    }
+
+                    // store a reference to the item in the itemcontainer
+                    $(".win-item", $thisItemContainer).data("itemIndex", i);
+
+                    // Handle right-click selection
+                    $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
+                        event.preventDefault();
+                        if (that.selectionMode != "none") {
+
+                            event.stopPropagation();
+
+                            // Get the index of the right-clicked item
+                            var itemIndex = $(this).data("itemIndex");
+
+                            //that.selection.add(itemIndex);
+                            var $containerNode = $(this.parentNode)
+
+                            if ($containerNode.hasClass("win-selected"))
+                                that.selection.remove(itemIndex);// remove selection
+                            else
+                                if (that.selectionMode == "multi")
+                                    that.selection.add(itemIndex);
+                                else
+                                    that.selection.set(itemIndex);
+
+                            that._lastSelectedItemIndex = itemIndex;
+                        }
+                    });
+
+                    // If the user clicks on the item, call our oniteminvoked function
+                    $(".win-item", $thisItemContainer).click(function () {
+
+                        // Get the index of the clicked item container's item
+                        var itemIndex = $(this).data("itemIndex");
+
+                        // Track last tapped item for the semanticzoom _getCurrentItem helper function, since we don't have focus yet
+                        // TODO: Remove this when we have keyboard focus support
+                        that._currentItem = itemIndex;
+
+                        // Call invoke
+                        if (that.tapBehavior != "none") {
+                            // TODO: Clean this up
+                            if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
+
+                                // Create a Promise with the clicked item
+                                var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+
+                                // Call the callback
+                                that._notifyItemInvoked(this.parentNode, {
+                                    itemIndex: itemIndex,
+                                    itemPromise: promise
+                                });
                             }
                         }
 
-                        $thisItemContainer.css({
-                            "top": renderCurY,
-                            "left": renderCurX,
-                            "width": itemWidth,
-                            "height": itemHeight
-                        });
+                        // Handle selection
+                        if ((that.tapBehavior == "directSelect" || that.tapBehavior == "toggleSelect" ||
+                            blueskyUtils.shiftPressed || blueskyUtils.controlPressed) && (that.selectionMode != "none")) {
 
-                        // Keep track of the width of the scrolling surface
-                        surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
+                            var $containerNode = $(this.parentNode)
 
-                        // Go to the next place to put the next item
-                        renderCurY += itemHeight + templateMargins.vertical;
+                            // Check to see if user shift-clicked a collection of items
+                            if (that.selectionMode == "multi" && blueskyUtils.shiftPressed) {
+                                var startIndex = Math.min(itemIndex, that._lastSelectedItemIndex);
+                                var endIndex = Math.max(itemIndex, that._lastSelectedItemIndex);
+                                var itemIndicesToSelect = [];
+                                for (var i = startIndex; i <= endIndex; i++)
+                                    itemIndicesToSelect.push(i);
+                                that.selection.set(itemIndicesToSelect);
+                            } else {
+                                if (that.tapBehavior == "directSelect") {
 
-                        // If item is selected, then add border
-                        if (that.selection._containsItemByKey(item.key))
-                            that._addSelectionBorderToElement(item.element);
-
-                        // store a reference to the item in the itemcontainer
-                        $(".win-item", $thisItemContainer).data("itemIndex", i);
-
-                        // Handle right-click selection
-                        $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
-                            event.preventDefault();
-                            if (that.selectionMode != "none") {
-
-                                event.stopPropagation();
-
-                                // Get the index of the right-clicked item
-                                var itemIndex = $(this).data("itemIndex");
-
-                                //that.selection.add(itemIndex);
-                                var $containerNode = $(this.parentNode)
-
-                                if ($containerNode.hasClass("win-selected"))
-                                    that.selection.remove(itemIndex);// remove selection
-                                else
-                                    if (that.selectionMode == "multi")
+                                    // TODO: Does Win8 re-fire selection for already selected item?
+                                    if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
                                         that.selection.add(itemIndex);
                                     else
                                         that.selection.set(itemIndex);
-
-                                that._lastSelectedItemIndex = itemIndex;
-                            }
-                        });
-
-                        // If the user clicks on the item, call our oniteminvoked function
-                        $(".win-item", $thisItemContainer).click(function () {
-
-                            // Get the index of the clicked item container's item
-                            var itemIndex = $(this).data("itemIndex");
-
-                            // Track last tapped item for the semanticzoom _getCurrentItem helper function, since we don't have focus yet
-                            // TODO: Remove this when we have keyboard focus support
-                            that._currentItem = itemIndex;
-
-                            // Call invoke
-                            if (that.tapBehavior != "none") {
-                                // TODO: Clean this up
-                                if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
-
-                                    // Create a Promise with the clicked item
-                                    var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
-
-                                    // Call the callback
-                                    that._notifyItemInvoked(this.parentNode, {
-                                        itemIndex: itemIndex,
-                                        itemPromise: promise
-                                    });
-                                }
-                            }
-
-                            // Handle selection
-                            if ((that.tapBehavior == "directSelect" || that.tapBehavior == "toggleSelect" ||
-								blueskyUtils.shiftPressed || blueskyUtils.controlPressed) && (that.selectionMode != "none")) {
-
-                                var $containerNode = $(this.parentNode)
-
-                                // Check to see if user shift-clicked a collection of items
-                                if (that.selectionMode == "multi" && blueskyUtils.shiftPressed) {
-                                    var startIndex = Math.min(itemIndex, that._lastSelectedItemIndex);
-                                    var endIndex = Math.max(itemIndex, that._lastSelectedItemIndex);
-                                    var itemIndicesToSelect = [];
-                                    for (var i = startIndex; i <= endIndex; i++)
-                                        itemIndicesToSelect.push(i);
-                                    that.selection.set(itemIndicesToSelect);
                                 } else {
-                                    if (that.tapBehavior == "directSelect") {
-
-                                        // TODO: Does Win8 re-fire selection for already selected item?
-                                        if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
+                                    if ($containerNode.hasClass("win-selected"))
+                                        that.selection.remove(itemIndex);// remove selection
+                                    else
+                                        if (that.selectionMode == "multi")
                                             that.selection.add(itemIndex);
                                         else
                                             that.selection.set(itemIndex);
-                                    } else {
-                                        if ($containerNode.hasClass("win-selected"))
-                                            that.selection.remove(itemIndex);// remove selection
-                                        else
-                                            if (that.selectionMode == "multi")
-                                                that.selection.add(itemIndex);
-                                            else
-                                                that.selection.set(itemIndex);
-                                    }
                                 }
-
-                                that._lastSelectedItemIndex = itemIndex;
-                                that._notifySelectionChanged(that.element);
                             }
 
-                            // Semantic Zoom support
-                            if (that._triggerZoom && that._isZoomedOut)
-                                that._triggerZoom();
-                        });
+                            that._lastSelectedItemIndex = itemIndex;
+                            that._notifySelectionChanged(that.element);
+                        }
+
+                        // Semantic Zoom support
+                        if (that._triggerZoom && that._isZoomedOut)
+                            that._triggerZoom();
+                    });
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private event: WinJS.ListView._positionItems
+            //
+            _positionItems: function () {
+
+                if (this.items.length == 0)
+                    return;
+
+                // Set current rendering position to upper left corner of the list's surface
+                var renderCurX = 0, renderCurY = 0;
+
+                // Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
+                var renderMaxY = this.$rootElement.innerHeight();
+
+                // Keep track of the width of the scrolling surface
+                var surfaceWidth = 0;
+
+                // Get groupInfo (if specified)
+                var groupInfo = this.layout.groupInfo && this.layout.groupInfo();
+
+                var currentGroupKey = null;
+
+                // Get the spacing to add between groups (if grouped view)
+                var groupSpacing;
+
+                var topY;
+
+                // Keep track of current row for maxRows comparison
+                var curRow = -1;
+
+                // Get the margin sizes around items
+                var templateMargins = this._getItemMargins();
+
+                var groupHeaderOnLeft = this.layout && this.layout.groupHeaderPosition == "left";
+                var groupRenderStartX;
+
+                var listWidth = this.$rootElement.innerWidth();
+
+                // Add the rendered DOM elements to the DOM at the correct positions
+                var groupIndex = 0;
+                for (var i = 0; i < this.items.length; i++) {
+
+                    var item = this.items[i];
+
+                    // Get the dimensions of the item (force to width of list if not horizontal)
+                    //var itemWidth = this.layout.horizontal ? item.$element.innerWidth() : listWidth;
+                    //var itemHeight = item.$element.innerHeight();
+                    var itemWidth = this.layout.horizontal ? item.element.offsetWidth : listWidth;
+                    var itemHeight = item.element.offsetHeight;
+                    var itemContainer = item.element.parentNode;
+
+                    // If cellspanning/groupinfo specified, then apply it now
+                    if (groupInfo && groupInfo.enableCellSpanning) {
+
+                        // NOTE: Since we use item dimensions already, we don't need to do anything for enableCellSpanning.
+                        // TODO: Technically this breaks some edge cases - e.g. app has incorrectly (or inconsistently) sized items
+                        //		 and is relying on groupInfo to set the right granularity for them.  I'll need to see some failure
+                        //		 cases to fully understand the right solution here.
+                        // TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
                     }
 
-                    // Set the final width of the ListView's scrolling surface, and make it visible
-                    $surfaceDiv.css("width", surfaceWidth).show();
+                    // If this is a grouped list and the item is in a different group than the previous item, then output a group header
+                    // and jump to the next column
+                    if (this._groupDataSource && item.groupKey != currentGroupKey) {
 
-                    // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._disableAnimation && !that._disableEntranceAnimation)
-                        WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
-                });
+                        // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                        if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                            $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                        }
+
+                        // Track width of the current group for the above limit
+                        groupRenderStartX = surfaceWidth;
+
+                        // Track the current group key so that we know when we switch to a new group
+                        currentGroupKey = item.groupKey;
+
+                        var $groupHeaderTemplate = this.$_groupHeaders[groupIndex++];
+
+                        // Create the group's header
+                        // TODO (CLEANUP): I can collapse a few lines of the following if/else...
+                        if (groupHeaderOnLeft) {
+
+                            // If we haven't gotten the width of the group header yet, then do so now.
+                            if (topY === undefined) {
+                                topY = 0;
+
+                                // Spacing between groups is (apparently) based on the margins of the group header.
+                                // TODO: What about padding? border?
+                                groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft")) +
+                                               $groupHeaderTemplate.outerWidth() +
+                                               parseInt($groupHeaderTemplate.css("marginRight"));
+
+                                surfaceWidth = groupSpacing;
+                            } else
+                                surfaceWidth += groupSpacing;
+
+                        } else {
+
+                            // If we haven't gotten the height of the group header yet, then do so now.
+                            if (topY === undefined) {
+                                topY = $groupHeaderTemplate.outerHeight();
+
+                                // Spacing between groups is (apparently) based on the left margin of the group header.
+                                // TODO: What about padding? border?
+                                groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft"));
+
+                                surfaceWidth = groupSpacing;
+                            } else
+                                surfaceWidth += groupSpacing;
+                        }
+
+                        // Start rendering items just below the group header
+                        renderCurY = topY;
+                        renderCurX = surfaceWidth;
+
+                        // Keep track of current row for maxRows check
+                        curRow = 0;
+
+                        // Set the header's final position
+                        $groupHeaderTemplate.css({
+                            "left": (renderCurX - groupSpacing) + "px"  // step back groupSpacing pixels to account for margin
+                        });
+
+                    } else {
+
+                        if (topY === undefined)
+                            topY = 0;
+                        if (this.layout.horizontal) {
+                            // If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
+                            // So the same if maxRows is specified and we're about to exceed it
+                            if (renderCurY + itemHeight >= renderMaxY ||
+                                this.layout.maxRows && curRow == this.layout.maxRows - 1) {
+                                renderCurY = topY;
+                                renderCurX = surfaceWidth;
+                                curRow = 0;
+                            } else
+                                curRow++;
+                        }
+                    }
+                    itemContainer.style.left = renderCurX + "px";
+                    itemContainer.style.top = renderCurY + "px";
+                    itemContainer.style.width = itemWidth + "px";
+                    itemContainer.style.height = itemHeight + "px";
+
+                    // Keep track of the width of the scrolling surface
+                    surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
+
+                    // Go to the next place to put the next item
+                    renderCurY += itemHeight + templateMargins.vertical;
+
+                    // If item is selected, then add border
+                    if (this.selection._containsItemByKey(item.key))
+                        this._addSelectionBorderToElement(item.element);
+                }
+
+                // Set the final width of the ListView's scrolling surface, and make it visible
+                this.$scrollSurface.css("width", surfaceWidth).show();
+
+                // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
+                if (!this._disableAnimation && !this._disableEntranceAnimation)
+                    WinJS.UI.Animation.enterContent([this.$scrollSurface[0]]);
             },
 
 
@@ -595,6 +700,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 // itemDataSource.setter: Used to set a new item data source
                 set: function (newDataSource) {
 
+                    // If our itemDataSource == newDataSource, then just return
+                    if (this._itemDataSource && this._itemDataSource._id == newDataSource._id)
+                        return;
+
                     var that = this;
 
                     // This event handler is called when an event that does not change our datasource count has occurred
@@ -634,6 +743,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 // groupDataSource.setter: Used to set a new group data source
                 set: function (newDataSource) {
+
+                    // If our groupDataSource == newDataSource, then just return
+                    if (this._groupDataSource && this._groupDataSource._id == newDataSource._id)
+                        return;
 
                     var that = this;
 
@@ -678,11 +791,21 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (newTemplate) {
-                    this._itemTemplate = newTemplate;
-                    this.render();
+
+                    if (this._itemTemplate != newTemplate) {
+                        this._itemTemplate = newTemplate;
+                        this.render();
+                    }
                 }
             },
 
+
+            // ================================================================
+            //
+            // public property: WinJS.ListView.layout
+            //
+            //      MSDN: TODO
+            //
             _layout: null,
             layout: {
                 get: function () {
@@ -690,13 +813,19 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (newLayout) {
-                    if (newLayout instanceof WinJS.UI.ListLayout || newLayout instanceof WinJS.UI.GridLayout)
+
+                    if (!(newLayout instanceof WinJS.UI.ListLayout) && !(newLayout instanceof WinJS.UI.GridLayout))
+                        newLayout = new WinJS.UI.GridLayout(newLayout);
+
+                    // If the new layout is the same as the old layout, then do nothing
+                    if (!_.isEqual(this._layout, newLayout)) {
+
                         this._layout = newLayout;
-                    else
-                        this._layout = new WinJS.UI.GridLayout(newLayout);
-                    this.render();
+                        this.render();
+                    }
                 }
             },
+
 
             // ================================================================
             //
@@ -799,7 +928,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     } else if (!itemWasSelected && itemIsNowSelected) {
 
-                        // add selection border
+                            // add selection border
                         that._addSelectionBorderToElement(item.element);
                     }
                 });

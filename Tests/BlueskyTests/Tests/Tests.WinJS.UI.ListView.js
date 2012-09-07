@@ -23,6 +23,9 @@
 
                 createListView().then(function () {
 
+                    $(".testFrame").css("height", "600px");
+                    $(".testFrame > .pagecontrol").css("height", "600px");
+                    $(".testFrame > .pagecontrol > #testListView").css("height", "600px");
                     onTestComplete(test);
                 });
             });

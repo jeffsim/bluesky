@@ -8,11 +8,11 @@
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.UI.GridLayout
-	//
-	GridLayout: WinJS.Class.define(
+    // ================================================================
+    //
+    // public Object: WinJS.UI.GridLayout
+    //
+    GridLayout: WinJS.Class.define(
 
 		// ================================================================
 		//
@@ -22,26 +22,28 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (layoutOptions) {
 
-			if (layoutOptions) {
-				// eval groupInfo if it is present
-				if (layoutOptions.groupInfo)
-					this.groupInfo = eval(layoutOptions.groupInfo);
-				this.maxRows = layoutOptions.maxRows;
-				this.groupHeaderPosition = layoutOptions.groupHeaderPosition;
-			}
+		    if (layoutOptions) {
+		        // eval groupInfo if it is present
+		        if (layoutOptions.groupInfo)
+		            this.groupInfo = eval(layoutOptions.groupInfo);
+		        this.maxRows = layoutOptions.maxRows;
+		        this.groupHeaderPosition = layoutOptions.groupHeaderPosition;
+		    }
 		},
 
-	// ================================================================
-	// WinJS.UI.GridLayout Member functions
-	// ================================================================
+	    // ================================================================
+	    // WinJS.UI.GridLayout Member functions
+	    // ================================================================
 
-	{
-		// The horizontal property is always true for GridLayouts
-		horizontal: {
-			get: function () {
-				return true;
-			}
-		}
-	})
+	    {
+	        // The horizontal property is always true for GridLayouts
+	        horizontal: {
+	            get: function () {
+	                return true;
+	            }
+	        },
+
+	    })
+
 });
 

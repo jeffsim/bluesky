@@ -458,8 +458,6 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
                             left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
                             top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
-                            //                            top: newPositions[i].top,
-                            //                          left: newPositions[i].left
 
                         }, {
                             duration: 1500,
@@ -494,15 +492,142 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
                     var $el = $(element);
                     var offset = $el.offset();
                     positionsArray.push({
-                        left: offset.left,// - parseInt($el.css("marginLeft")),
-                        top: offset.top,// - parseInt($el.css("marginTop"))
+                        left: offset.left,
+                        top: offset.top,
                     });
                 });
                 return positionsArray;
             },
 
-            animateTime: 500,
-            staggerDelay: 25,
+            trackedElements: [],
+            initialPositions: []
+        }),
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.Animation.createRepositionAnimation
+    //
+    //		MSDN: TODO
+    //
+    createRepositionAnimation: function (elements) {
+
+        return new WinJS.UI.Animation._repositionAnimation(elements);
+    },
+
+
+    // ================================================================
+    //
+    // private class: WinJS.UI.Animation._repositionAnimation
+    //
+    _repositionAnimation: WinJS.Class.define(
+
+        // Constructor
+        function (elements) {
+
+            // Convert to array if only one element; do same for offset
+            if (typeof elements.length === undefined)
+                elements = [elements];
+
+            // Store the elements we're tracking.
+            this.trackedElements = elements.slice();
+
+            // Store the list of positions for the specified elements
+            this.initialPositions = this._getPositions(elements);
+        },
+
+        // ================================================================
+		// WinJS.UI.Animation._repositionAnimation members
+		// ================================================================
+
+        {
+            // ================================================================
+            //
+            // public function: WinJS.UI.Animation._repositionAnimation.execute
+            //
+            execute: function () {
+                var that = this;
+                var elements = this.trackedElements;
+                this.$animatingElements = [];
+                return new WinJS.Promise(function (onComplete) {
+                    // Get the tracked Elements' new positions and animate from initial to current.
+                    var newPositions = that._getPositions(elements);
+                    for (var i = 0; i < elements.length; i++) {
+
+                        var element = elements[i];
+
+                        var $el = $(element);
+                        that.$animatingElements.push(element);
+                        var originalPosition = $el.css("position");
+                        var initialPosition = that.initialPositions[i];
+
+                        var offsetTop = newPositions[i].top - initialPosition.top;
+                        var offsetLeft = newPositions[i].left - initialPosition.left;
+
+                        $el.offset({
+                            top: initialPosition.top,
+                            left: initialPosition.left
+                        });
+
+                        // Animate top/left back to new position
+                        $el.animate({
+                            left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
+                            top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
+
+                        }, {
+                            duration: 1000,
+
+                            easing: "easeOut"
+                        });
+                    }
+
+                    that.$animatingElements = $(elements);
+                    that.$animatingElements.promise().done(function () {
+
+                        // Restore original css position 
+                        if (!that._canceling) {
+
+                            $(this).css("position", originalPosition);
+                            this.$animatingElements = null;
+                        }
+                        onComplete();
+                    });
+
+                });
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.UI.Animation._repositionAnimation._cancel
+            //
+            _cancel: function () {
+
+                if (this.$animatingElements) {
+                    this._canceling = true;
+                    this.$animatingElements.stop(true, false);
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.UI.Animation._repositionAnimation._getPositions
+            //
+            _getPositions: function (elements) {
+
+                var positionsArray = [];
+                elements.forEach(function (element) {
+
+                    var offset = $(element).offset();
+                    positionsArray.push({
+                        left: offset.left,
+                        top: offset.top,
+                    });
+                });
+                return positionsArray;
+            },
+
             trackedElements: [],
             initialPositions: []
         }),

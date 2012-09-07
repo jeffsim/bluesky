@@ -452,17 +452,22 @@ WinJS.Namespace.define("WinJS", {
 
                         if (data.query) {
                             var response = data.query.results;
-                            var responseText = response.result || null;
-                            // Parse the JSON object response into an xml object
-                            var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
+                            if (response) {
+                                var responseText = response.result || null;
+                                // Parse the JSON object response into an xml object
+                                var responseXML = "<xml>" + _JSONtoXML(response) + "</xml>";
 
-                            // Convert the xml string into an object
-                            var parser = new DOMParser();
-                            var responseXML = parser.parseFromString(responseXML, "application/xml");
+                                // Convert the xml string into an object
+                                var parser = new DOMParser();
+                                var responseXML = parser.parseFromString(responseXML, "application/xml");
 
-                            // TODO: Still need this? YQL was passing content/type pairs for some reason.
-                            $("type", responseXML).remove();
-
+                                // TODO: Still need this? YQL was passing content/type pairs for some reason.
+                                $("type", responseXML).remove();
+                            } else {
+                                response = "";
+                                responseText = "";
+                                responseXML = null;
+                            }
                         } else if (data.firstChild) { // IE9 doesn't recognize "data instanceof XMLDocument", so use this instead
                             responseXML = data;
                             response = "";
@@ -951,7 +956,18 @@ WinJS.Namespace.define("Windows", {
                     }
                 }
             }
-        }
+        },
+
+        Search: {
+            SearchPane: {
+                getForCurrentView: function () {
+                    return {
+                        addEventListener: function () {
+                        }
+                    }
+                }
+            }
+        },
 
     },
 
@@ -2559,6 +2575,8 @@ WinJS.Namespace.define("Windows.Storage", {
                 var that = this;
                 return new WinJS.Promise(function (onComplete, onError) {
 
+                    name = name.replace("\\", "/");
+
                     var item = that._getRealizedItem(name);
 
                     // TODO: If not a file, then set item to null?  What does Win8 do?
@@ -3107,6 +3125,8 @@ WinJS.Namespace.define("Windows.Storage", {
 
                 var that = this;
                 return new WinJS.Promise(function (onComplete, onError) {
+
+                    name = name.replace("\\", "/");
 
                     // Check if the file exists in the filesystem
                     var fullFilePath = that.path + "/" + name;
@@ -5548,394 +5568,422 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 // ============================================================== //
 // ============================================================== //
 
+// ================================================================
+//
+// WinJS.Binding._ListBase
+//
+//		Implementation of the WinJS.Binding._ListBase object
+//
 WinJS.Namespace.define("WinJS.Binding", {
 
-    // shouldn't be constructed outside of bluesky.js
-    _ListBase: WinJS.Class.define(function () { }, {
+    // Unique identifier for each List
+    _uniqueListId: 1,
 
-        /*DEBUG*/
-        // The functions in this debug block are abstract, so if we get into them it means a derived class didn't implement them
-        getItem: function (index) {
-            console.error("Unexpected call into abstract function _ListBase.getItem");
-        },
+    // ================================================================
+    //
+    // private Object: WinJS.Binding._ListBase
+    //
+    _ListBase: WinJS.Class.define(
 
-        getItemFromKey: function (key) {
-            console.error("Unexpected call into abstract function _ListBase.getItemFromKey");
-        },
-        indexOfKey: function (key) {
-            console.error("Unexpected call into abstract function _ListBase.indexOfKey");
-        },
-        length: {
-            get: function () {
-                console.error("Unexpected call into abstract function _ListBase.length.getter");
-            },
-            set: function () {
-                console.error("Unexpected call into abstract function _ListBase.length.setter");
-            }
-        },
+		// ================================================================
+		//
+		// public function: WinJS.Binding._ListBase constructor
+		//
+        function () {
 
-        /*ENDDEBUG*/
+            // Give this list a unique Id to allow for quick equality comparisons
+            this._id = WinJS.Binding._uniqueListId++;
+        }, 
 
+		// ================================================================
+		// WinJS.Binding._ListBase Member functions
+		// ================================================================
 
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.getAt
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700749.aspx
-        //
-        getAt: function (index) {
-
-            // Return the value at the specified index.  Note: this multiple level of abstraction is to support
-            // Grouped and Filtered lists when they come online.
-            return this.getItem(index).data;
-        },
-
-
-        // ================================================================
-        //
-        // private function: WinJS.Binding._ListBase._getValues
-        //
-        //		Returns an array that contains the values in this._items
-        //
-        _getValues: function () {
-
-            // _items is a set (not an array) so we can't just return it but need to array'ize it.
-            var values = [];
-            for (var i = 0; i < this.length; i++) {
-                var item = this.getItem(i);
-                if (item)
-                    values[i] = this.getItem(i).data;
-            }
-
-            return values;
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.concat
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700739.aspx
-        //
-        concat: function (items) {
-
-            // NOTE: Win8 does not return a WinJS.Binding.List (as of release preview), so neither do we.
-            // This applies to numerous other functions here as well.
-            return this._getValues().concat(items);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.join
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700759.aspx
-        //
-        join: function (separator) {
-
-            return this._getValues().join(separator || ",");
-        },
-
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.forEach
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700747.aspx
-        //
-        forEach: function (callback, thisArg) {
-
-            this._getValues().forEach(callback, thisArg);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.map
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700766.aspx
-        //
-        map: function (callback, thisArg) {
-
-            return this._getValues().map(callback, thisArg);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.some
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700804.aspx
-        //
-        some: function (callback, thisArg) {
-
-            return this._getValues().some(callback, thisArg);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.every
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700744.aspx
-        //
-        every: function (callback, thisArg) {
-
-            return this._getValues().every(callback, thisArg);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.reduce
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700784.aspx
-        //
-        reduce: function (callback, initialValue) {
-
-            return this._getValues().reduce(callback, initialValue);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.reduceRight
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700782.aspx
-        //
-        reduceRight: function (callback, initialValue) {
-
-            return this._getValues().reduceRight(callback, initialValue);
-        },
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.indexOf
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700757.aspx
-        //
-        indexOf: function (searchElement, fromIndex) {
-
-            return this._getValues().indexOf(searchElement, fromIndex);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.lastIndexOf
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700760.aspx
-        //
-        lastIndexOf: function (searchElement, fromIndex) {
-
-            var list = this._getValues();
-            // Interesting; lastIndexOf doesn't like 'undefined' for fromIndex - at
-            // least on FF13.  indexOf (above) doesn't have this problem.  If fromIndex
-            // isn't specified then set it to last item in the list
-            if (fromIndex === undefined)
-                fromIndex = list.length - 1;
-            return list.lastIndexOf(searchElement, fromIndex);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.slice
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700802.aspx
-        //
-        slice: function (start, end) {
-
-            return this._getValues().slice(start, end);
-        },
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.filter
-        //
-        //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700745.aspx
-        //
-        filter: function (callback, thisArg) {
-
-            return this._getValues().filter(callback, thisArg);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.createFiltered
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700741.aspx
-        //
-        createFiltered: function (inclusionFunction) {
-
-            return new WinJS.Binding.FilteredListProjection(this, inclusionFunction);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.createGrouped
-        //
-        //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700742.aspx
-        //
-        createGrouped: function (groupKeySelector, groupDataSelector) {
-
-            return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
-        },
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.addEventListener
-        //
-        //		MSDN: TODO
-        //
-        addEventListener: function (eventName, listener) {
-
-            // TODO: Can I leverage DOMEventMixin here now?
-
-            // Create the list of event listeners for the specified event if it does not yet exist
-            // TODO: Apply this version of addEventListener to other controls.
-            if (!this._eventListeners[eventName])
-                this._eventListeners[eventName] = [];
-
-            // Add the listener to the list of listeners for the specified eventName
-            this._eventListeners[eventName].push(listener);
-
-            // Add DOM element event handlers (e.g. click).
-            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-            //this.element.addEventListener(eventName, listener);
-        },
-
-
-        // ================================================================
-        //
-        // public function: WinJS.Binding._ListBase.removeEventListener
-        //
-        //		MSDN: TODO
-        //
-        removeEventListener: function (eventName, listener) {
+        {
 
             /*DEBUG*/
-            // Parameter validation
-            if (!this._eventListeners[eventName])
-                console.warn("WinJS.Binding.List.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+            // The functions in this debug block are abstract, so if we get into them it means a derived class didn't implement them
+            getItem: function (index) {
+                console.error("Unexpected call into abstract function _ListBase.getItem");
+            },
+
+            getItemFromKey: function (key) {
+                console.error("Unexpected call into abstract function _ListBase.getItemFromKey");
+            },
+            indexOfKey: function (key) {
+                console.error("Unexpected call into abstract function _ListBase.indexOfKey");
+            },
+            length: {
+                get: function () {
+                    console.error("Unexpected call into abstract function _ListBase.length.getter");
+                },
+                set: function () {
+                    console.error("Unexpected call into abstract function _ListBase.length.setter");
+                }
+            },
+
             /*ENDDEBUG*/
 
-            // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
 
-            // Remove the listener from the list of listeners for the specified eventName
-            var listeners = this._eventListeners[eventName];
-            for (var i = 0; i < listeners.length; i++) {
-                if (listener === listeners[i]) {
-                    listeners.splice(i, 1);
-                    return;
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.getAt
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700749.aspx
+            //
+            getAt: function (index) {
+
+                // Return the value at the specified index.  Note: this multiple level of abstraction is to support
+                // Grouped and Filtered lists when they come online.
+                return this.getItem(index).data;
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.Binding._ListBase._getValues
+            //
+            //		Returns an array that contains the values in this._items
+            //
+            _getValues: function () {
+
+                // _items is a set (not an array) so we can't just return it but need to array'ize it.
+                var values = [];
+                for (var i = 0; i < this.length; i++) {
+                    var item = this.getItem(i);
+                    if (item)
+                        values[i] = this.getItem(i).data;
                 }
+
+                return values;
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.concat
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700739.aspx
+            //
+            concat: function (items) {
+
+                // NOTE: Win8 does not return a WinJS.Binding.List (as of release preview), so neither do we.
+                // This applies to numerous other functions here as well.
+                return this._getValues().concat(items);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.join
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700759.aspx
+            //
+            join: function (separator) {
+
+                return this._getValues().join(separator || ",");
+            },
+
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.forEach
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700747.aspx
+            //
+            forEach: function (callback, thisArg) {
+
+                this._getValues().forEach(callback, thisArg);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.map
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700766.aspx
+            //
+            map: function (callback, thisArg) {
+
+                return this._getValues().map(callback, thisArg);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.some
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700804.aspx
+            //
+            some: function (callback, thisArg) {
+
+                return this._getValues().some(callback, thisArg);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.every
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700744.aspx
+            //
+            every: function (callback, thisArg) {
+
+                return this._getValues().every(callback, thisArg);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.reduce
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700784.aspx
+            //
+            reduce: function (callback, initialValue) {
+
+                return this._getValues().reduce(callback, initialValue);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.reduceRight
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700782.aspx
+            //
+            reduceRight: function (callback, initialValue) {
+
+                return this._getValues().reduceRight(callback, initialValue);
+            },
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.indexOf
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700757.aspx
+            //
+            indexOf: function (searchElement, fromIndex) {
+
+                return this._getValues().indexOf(searchElement, fromIndex);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.lastIndexOf
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700760.aspx
+            //
+            lastIndexOf: function (searchElement, fromIndex) {
+
+                var list = this._getValues();
+                // Interesting; lastIndexOf doesn't like 'undefined' for fromIndex - at
+                // least on FF13.  indexOf (above) doesn't have this problem.  If fromIndex
+                // isn't specified then set it to last item in the list
+                if (fromIndex === undefined)
+                    fromIndex = list.length - 1;
+                return list.lastIndexOf(searchElement, fromIndex);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.slice
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700802.aspx
+            //
+            slice: function (start, end) {
+
+                return this._getValues().slice(start, end);
+            },
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.filter
+            //
+            //		MSDN:http://msdn.microsoft.com/en-us/library/windows/apps/hh700745.aspx
+            //
+            filter: function (callback, thisArg) {
+
+                return this._getValues().filter(callback, thisArg);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.createFiltered
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700741.aspx
+            //
+            createFiltered: function (inclusionFunction) {
+
+                return new WinJS.Binding.FilteredListProjection(this, inclusionFunction);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.createGrouped
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700742.aspx
+            //
+            createGrouped: function (groupKeySelector, groupDataSelector) {
+
+                return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
+            },
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.addEventListener
+            //
+            //		MSDN: TODO
+            //
+            addEventListener: function (eventName, listener) {
+
+                // TODO: Can I leverage DOMEventMixin here now?
+
+                // Create the list of event listeners for the specified event if it does not yet exist
+                // TODO: Apply this version of addEventListener to other controls.
+                if (!this._eventListeners[eventName])
+                    this._eventListeners[eventName] = [];
+
+                // Add the listener to the list of listeners for the specified eventName
+                this._eventListeners[eventName].push(listener);
+
+                // Add DOM element event handlers (e.g. click).
+                // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+                //this.element.addEventListener(eventName, listener);
+            },
+
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.removeEventListener
+            //
+            //		MSDN: TODO
+            //
+            removeEventListener: function (eventName, listener) {
+
+                /*DEBUG*/
+                // Parameter validation
+                if (!this._eventListeners[eventName])
+                    console.warn("WinJS.Binding.List.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+                /*ENDDEBUG*/
+
+                // TODO: Should removeEventListener work if the caller went through the on* API? If so, then this needs to change in all removeEventListener implementations
+
+                // Remove the listener from the list of listeners for the specified eventName
+                var listeners = this._eventListeners[eventName];
+                for (var i = 0; i < listeners.length; i++) {
+                    if (listener === listeners[i]) {
+                        listeners.splice(i, 1);
+                        return;
+                    }
+                }
+
+                // Remove DOM element event handlers (e.g. click).
+                // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
+                //	this.element.removeEventListener(eventName, listener);
+            },
+
+            // ================================================================
+            //
+            // private function: WinJS.Binding._ListBase._notifyItemChanged
+            //
+            //		Notify any listeners that an item in the list changed
+            //
+            _notifyItemChanged: function (eventData) {
+
+                // TODO: These event listeners are all very similar; how best to generalize?
+                var eventInfo = {
+                    target: this,
+                    type: "itemchanged",
+                    detail: eventData
+                };
+                for (var i in this._eventListeners.itemchanged)
+                    this._eventListeners.itemchanged[i](eventInfo);
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.Binding._ListBase._notifyItemRemoved
+            //
+            //		Notify any listeners that an item in the list was removed
+            //
+            _notifyItemRemoved: function (eventData) {
+
+                var eventInfo = {
+                    target: this,
+                    type: "itemremoved",
+                    detail: eventData
+                };
+                for (var i in this._eventListeners.itemremoved)
+                    this._eventListeners.itemremoved[i](eventInfo);
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.Binding._ListBase._notifyItemInserted
+            //
+            //		Notify any listeners that an item in the list was inserted
+            //
+            _notifyItemInserted: function (eventData) {
+
+                var eventInfo = {
+                    target: this,
+                    type: "iteminserted",
+                    detail: eventData
+                };
+                for (var i in this._eventListeners.iteminserted)
+                    this._eventListeners.iteminserted[i](eventInfo);
+            },
+            // Events
+            oniteminserted: {
+                get: function () { return this._eventListeners["iteminserted"]; },
+                set: function (callback) { this.addEventListener("iteminserted", callback); }	// TODO: iteminserted or oniteminserted?
+            },
+            onitemchanged: {
+                get: function () { return this._eventListeners["itemchanged"]; },
+                set: function (callback) { this.addEventListener("itemchanged", callback); }
+            },
+            onitemremoved: {
+                get: function () { return this._eventListeners["itemremoved"]; },
+                set: function (callback) { this.addEventListener("itemremoved", callback); }
+            },
+
+            onitemmoved: {
+                get: function () { return this._eventListeners["itemmoved"]; },
+                set: function (callback) { this.addEventListener("itemmoved", callback); }
+            },
+            onreload: {
+                get: function () { return this._eventListeners["reload"]; },
+                set: function (callback) { this.addEventListener("reload", callback); }
+            },
+            onitemmutated: {
+                get: function () { return this._eventListeners["itemmutated"]; },
+                set: function (callback) { this.addEventListener("itemmutated", callback); }
             }
+        }, {
 
-            // Remove DOM element event handlers (e.g. click).
-            // TODO: Rationalize this alongside this._eventListeners - I probably don't need both...
-            //	this.element.removeEventListener(eventName, listener);
-        },
+            // ================================================================
+            //
+            // private function: WinJS.Binding._ListBase.copyItem
+            //
+            //		Creates a copy of a list item
+            //
+            copyItem: function (item) {
+                return {
+                    key: item.key,
+                    data: item.data,
+                    groupKey: item.groupKey,
+                    groupSize: item.groupSize,
+                };
+            },
 
-        // ================================================================
-        //
-        // private function: WinJS.Binding._ListBase._notifyItemChanged
-        //
-        //		Notify any listeners that an item in the list changed
-        //
-        _notifyItemChanged: function (eventData) {
-
-            // TODO: These event listeners are all very similar; how best to generalize?
-            var eventInfo = {
-                target: this,
-                type: "itemchanged",
-                detail: eventData
-            };
-            for (var i in this._eventListeners.itemchanged)
-                this._eventListeners.itemchanged[i](eventInfo);
-        },
-
-
-        // ================================================================
-        //
-        // private function: WinJS.Binding._ListBase._notifyItemRemoved
-        //
-        //		Notify any listeners that an item in the list was removed
-        //
-        _notifyItemRemoved: function (eventData) {
-
-            var eventInfo = {
-                target: this,
-                type: "itemremoved",
-                detail: eventData
-            };
-            for (var i in this._eventListeners.itemremoved)
-                this._eventListeners.itemremoved[i](eventInfo);
-        },
-
-
-        // ================================================================
-        //
-        // private function: WinJS.Binding._ListBase._notifyItemInserted
-        //
-        //		Notify any listeners that an item in the list was inserted
-        //
-        _notifyItemInserted: function (eventData) {
-
-            var eventInfo = {
-                target: this,
-                type: "iteminserted",
-                detail: eventData
-            };
-            for (var i in this._eventListeners.iteminserted)
-                this._eventListeners.iteminserted[i](eventInfo);
-        },
-        // Events
-        oniteminserted: {
-            get: function () { return this._eventListeners["iteminserted"]; },
-            set: function (callback) { this.addEventListener("iteminserted", callback); }	// TODO: iteminserted or oniteminserted?
-        },
-        onitemchanged: {
-            get: function () { return this._eventListeners["itemchanged"]; },
-            set: function (callback) { this.addEventListener("itemchanged", callback); }
-        },
-        onitemremoved: {
-            get: function () { return this._eventListeners["itemremoved"]; },
-            set: function (callback) { this.addEventListener("itemremoved", callback); }
-        },
-
-        onitemmoved: {
-            get: function () { return this._eventListeners["itemmoved"]; },
-            set: function (callback) { this.addEventListener("itemmoved", callback); }
-        },
-        onreload: {
-            get: function () { return this._eventListeners["reload"]; },
-            set: function (callback) { this.addEventListener("reload", callback); }
-        },
-        onitemmutated: {
-            get: function () { return this._eventListeners["itemmutated"]; },
-            set: function (callback) { this.addEventListener("itemmutated", callback); }
-        }
-    }, {
-
-        // ================================================================
-        //
-        // private function: WinJS.Binding._ListBase.copyItem
-        //
-        //		Creates a copy of a list item
-        //
-        copyItem: function (item) {
-            return {
-                key: item.key,
-                data: item.data,
-                groupKey: item.groupKey,
-                groupSize: item.groupSize,
-            };
-        },
-
-    }),
+        }),
 });
 
 
@@ -9678,8 +9726,6 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
                             left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
                             top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
-                            //                            top: newPositions[i].top,
-                            //                          left: newPositions[i].left
 
                         }, {
                             duration: 1500,
@@ -9714,15 +9760,142 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
                     var $el = $(element);
                     var offset = $el.offset();
                     positionsArray.push({
-                        left: offset.left,// - parseInt($el.css("marginLeft")),
-                        top: offset.top,// - parseInt($el.css("marginTop"))
+                        left: offset.left,
+                        top: offset.top,
                     });
                 });
                 return positionsArray;
             },
 
-            animateTime: 500,
-            staggerDelay: 25,
+            trackedElements: [],
+            initialPositions: []
+        }),
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.Animation.createRepositionAnimation
+    //
+    //		MSDN: TODO
+    //
+    createRepositionAnimation: function (elements) {
+
+        return new WinJS.UI.Animation._repositionAnimation(elements);
+    },
+
+
+    // ================================================================
+    //
+    // private class: WinJS.UI.Animation._repositionAnimation
+    //
+    _repositionAnimation: WinJS.Class.define(
+
+        // Constructor
+        function (elements) {
+
+            // Convert to array if only one element; do same for offset
+            if (typeof elements.length === undefined)
+                elements = [elements];
+
+            // Store the elements we're tracking.
+            this.trackedElements = elements.slice();
+
+            // Store the list of positions for the specified elements
+            this.initialPositions = this._getPositions(elements);
+        },
+
+        // ================================================================
+		// WinJS.UI.Animation._repositionAnimation members
+		// ================================================================
+
+        {
+            // ================================================================
+            //
+            // public function: WinJS.UI.Animation._repositionAnimation.execute
+            //
+            execute: function () {
+                var that = this;
+                var elements = this.trackedElements;
+                this.$animatingElements = [];
+                return new WinJS.Promise(function (onComplete) {
+                    // Get the tracked Elements' new positions and animate from initial to current.
+                    var newPositions = that._getPositions(elements);
+                    for (var i = 0; i < elements.length; i++) {
+
+                        var element = elements[i];
+
+                        var $el = $(element);
+                        that.$animatingElements.push(element);
+                        var originalPosition = $el.css("position");
+                        var initialPosition = that.initialPositions[i];
+
+                        var offsetTop = newPositions[i].top - initialPosition.top;
+                        var offsetLeft = newPositions[i].left - initialPosition.left;
+
+                        $el.offset({
+                            top: initialPosition.top,
+                            left: initialPosition.left
+                        });
+
+                        // Animate top/left back to new position
+                        $el.animate({
+                            left: (offsetLeft < 0 ? "-" : "+") + "=" + Math.abs(offsetLeft),
+                            top: (offsetTop < 0 ? "-" : "+") + "=" + Math.abs(offsetTop)
+
+                        }, {
+                            duration: 1000,
+
+                            easing: "easeOut"
+                        });
+                    }
+
+                    that.$animatingElements = $(elements);
+                    that.$animatingElements.promise().done(function () {
+
+                        // Restore original css position 
+                        if (!that._canceling) {
+
+                            $(this).css("position", originalPosition);
+                            this.$animatingElements = null;
+                        }
+                        onComplete();
+                    });
+
+                });
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.UI.Animation._repositionAnimation._cancel
+            //
+            _cancel: function () {
+
+                if (this.$animatingElements) {
+                    this._canceling = true;
+                    this.$animatingElements.stop(true, false);
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private function: WinJS.UI.Animation._repositionAnimation._getPositions
+            //
+            _getPositions: function (elements) {
+
+                var positionsArray = [];
+                elements.forEach(function (element) {
+
+                    var offset = $(element).offset();
+                    positionsArray.push({
+                        left: offset.left,
+                        top: offset.top,
+                    });
+                });
+                return positionsArray;
+            },
+
             trackedElements: [],
             initialPositions: []
         }),
@@ -12157,11 +12330,11 @@ WinJS.Namespace.define("WinJS.UI", {
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.UI.ListLayout
-	//
-	ListLayout: WinJS.Class.define(
+    // ================================================================
+    //
+    // public Object: WinJS.UI.ListLayout
+    //
+    ListLayout: WinJS.Class.define(
 
 		// ================================================================
 		//
@@ -12171,24 +12344,24 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (layoutOptions) {
 
-			// eval groupInfo if it is present
-			if (layoutOptions && layoutOptions.groupInfo) {
-				this.groupInfo = eval(layoutOptions.groupInfo);
-			}
+		    // eval groupInfo if it is present
+		    if (layoutOptions && layoutOptions.groupInfo) {
+		        this.groupInfo = eval(layoutOptions.groupInfo);
+		    }
 		},
 
-	// ================================================================
-	// WinJS.UI.ListLayout Member functions
-	// ================================================================
+	    // ================================================================
+	    // WinJS.UI.ListLayout Member functions
+	    // ================================================================
 
-	{
-		// The horizontal property is always false for ListLayouts
-		horizontal: {
-			get: function () {
-				return false;
-			}
-		}
-	})
+	    {
+	        // The horizontal property is always false for ListLayouts
+	        horizontal: {
+	            get: function () {
+	                return false;
+	            }
+	        }
+	    })
 });
 
 
@@ -12217,11 +12390,11 @@ WinJS.Namespace.define("WinJS.UI", {
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.UI.GridLayout
-	//
-	GridLayout: WinJS.Class.define(
+    // ================================================================
+    //
+    // public Object: WinJS.UI.GridLayout
+    //
+    GridLayout: WinJS.Class.define(
 
 		// ================================================================
 		//
@@ -12231,27 +12404,29 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
 		function (layoutOptions) {
 
-			if (layoutOptions) {
-				// eval groupInfo if it is present
-				if (layoutOptions.groupInfo)
-					this.groupInfo = eval(layoutOptions.groupInfo);
-				this.maxRows = layoutOptions.maxRows;
-				this.groupHeaderPosition = layoutOptions.groupHeaderPosition;
-			}
+		    if (layoutOptions) {
+		        // eval groupInfo if it is present
+		        if (layoutOptions.groupInfo)
+		            this.groupInfo = eval(layoutOptions.groupInfo);
+		        this.maxRows = layoutOptions.maxRows;
+		        this.groupHeaderPosition = layoutOptions.groupHeaderPosition;
+		    }
 		},
 
-	// ================================================================
-	// WinJS.UI.GridLayout Member functions
-	// ================================================================
+	    // ================================================================
+	    // WinJS.UI.GridLayout Member functions
+	    // ================================================================
 
-	{
-		// The horizontal property is always true for GridLayouts
-		horizontal: {
-			get: function () {
-				return true;
-			}
-		}
-	})
+	    {
+	        // The horizontal property is always true for GridLayouts
+	        horizontal: {
+	            get: function () {
+	                return true;
+	            }
+	        },
+
+	    })
+
 });
 
 
@@ -12930,10 +13105,12 @@ WinJS.Namespace.define("WinJS.UI", {
             // We want to know when the browser is resized so that we can relayout our items.
             this._prevWidth = "";
             this._prevHeight = "";
-            // TODO: I've disabled resize because (1) it's too slow (since we're re-rendering everything on resize (until R3)), and (2) I'm
-            // leaking the event - when the user changes pages, the old items remain in memory so they previous page's listviews get resize
-            // events.  I'm not sure where to drop the unbinding - possibly winControl.unload? - but for now I'm just disabling it.
-            //   	window.addEventListener("resize", this._windowResized.bind(this));
+
+            //window.addEventListener("resize", this._windowResized.bind(this));
+            this.$rootElement.resize(this._windowResized.bind(this));
+
+            // When we're removed from the DOM, unload ourselves
+            this.$rootElement.bind("DOMNodeRemoved", this._unload);
         },
 
 		// ================================================================
@@ -12944,25 +13121,70 @@ WinJS.Namespace.define("WinJS.UI", {
 
             // ================================================================
             //
+            // private function: WinJS.ListView._unload
+            //
+            _unload: function (event) {
+
+                // This is called if the ListView OR an element in the ListView is removed; make sure it's the ListView
+                if (event.target == this) {
+
+                    // Remove our click listener from the appbar click eater
+                    window.removeEventListener("resize", this._windowResized);
+                    if (this.$rootElement)
+                        this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+                }
+            },
+
+
+            // ================================================================
+            //
             // private event: WinJS.ListView._windowResized
             //
             //		Called when the browser window is resized; resize ourselves
             //
             _windowResized: function (eventData) {
 
+                // TODO (HACK):  I'm not unbinding listviews' resize callbacks, so we get here for elements that aren't in the DOM.  Need to figure out the 
+                // right way to unbind callbacks when controls are removed.
+                if (!this.$rootElement.closest("html").length)
+                    return;
+
                 // If size hasn't changed, then nothing to do.
                 var newWidth = this.$rootElement.innerWidth();
                 var newHeight = this.$rootElement.innerHeight();
-                if (parseInt(this._prevWidth) == newWidth && parseInt(this._prevHeight) == newHeight)
+                if (this._prevWidth == newWidth && this._prevHeight == newHeight)
                     return;
 
-                // tbd: instead of re-rendering completely, should do a "movePosition"
-                // tbd-perf: only relayout if size has changed at the listview items' size granularity
-                //var anim = WinJS.UI.Animation.createRepositionAnimation(this._listItems);
-                this._disableAnimation = true;
-                this._doRender();
-                this._disableAnimation = false;
-                //anim.execute();
+                this._prevWidth = newWidth;
+                this._prevHeight = newHeight;
+
+                // TODO (PERF): only relayout if size has changed at the listview items' size granularity
+                var elements = [];
+                this.items.forEach(function (item) {
+                    elements.push(item.element.parentNode);
+                });
+
+                // Animate groupheaders too (if any)
+                if (this.$_groupHeaders) {
+                    this.$_groupHeaders.forEach(function ($header) {
+                        elements.push($header[0]);
+                    });
+                }
+
+                var that = this;
+
+                // If a resize animation is already running then cancel it and we'll animate from the current mid-animated position
+                if (that._resizeAnim) {
+                    that._resizeAnim._cancel();
+                }
+
+                that._resizeAnim = WinJS.UI.Animation.createRepositionAnimation(elements);
+                that._disableAnimation = true;
+                that._positionItems();
+                that._disableAnimation = false;
+                that._resizeAnim.execute().then(function () {
+                    that._resizeAnim = null;
+                });
             },
 
 
@@ -12987,7 +13209,6 @@ WinJS.Namespace.define("WinJS.UI", {
                     return;
 
                 /*DEBUG*/
-
                 if (this._itemDataSource.getCount == undefined) {
                     console.error("ListView.itemDataSource is not a databound object.", this, this._itemDataSource);
                     return;
@@ -13002,20 +13223,18 @@ WinJS.Namespace.define("WinJS.UI", {
                 // Create two DOM elements; a parent Viewport which is static and does not move, and a child surface which is large enough to
                 // contain all items in the list.  Show the currently scrolled-to part of the list (child surface) in the viewport.
                 var orientation = this.layout.horizontal ? "win-horizontal" : "win-vertical"
-                var $viewportDiv = $("<div class='win-viewport " + orientation + "' role='group'></div>");
-                var $surfaceDiv = $("<div class='win-surface'></div>");
-                this.$viewport = $viewportDiv;
-                this.$scrollSurface = $surfaceDiv;
+                this.$viewport = $("<div class='win-viewport " + orientation + "' role='group'></div>");
+                this.$scrollSurface = $("<div class='win-surface'></div>");
 
                 // The surface div has to be sized in order for the group header to obtain a valid size (see calculation of topY below).  Size the
                 // surface div to match the viewport; we'll increase its size after we render all items and know the final size
-                $surfaceDiv.css("height", this.$rootElement.innerHeight());
-                $surfaceDiv.css("width", this.$rootElement.innerWidth());
+                //             this.$scrollSurface.css("height", this.$rootElement.innerHeight());
+                //           this.$scrollSurface.css("width", this.$rootElement.innerWidth());
 
                 // Add the ListView's scrolling surface to the ListView's static (nonscrolling) viewport, and then add the 
                 // listView's static viewpoint to the DOM
-                $viewportDiv.append($surfaceDiv);
-                this.$rootElement.append($viewportDiv);
+                this.$viewport.append(this.$scrollSurface);
+                this.$rootElement.append(this.$viewport);
 
                 // Set our root element's position to relative so that list items can be absolutely positioned relative to the list
                 // Also add roles and classes to make the listbox look like a Win8 listbox
@@ -13057,289 +13276,350 @@ WinJS.Namespace.define("WinJS.UI", {
                     }
                 }
 
-                // Wait until all of the items have been rendered
+                // Wait until all of the items have been rendered and then position them
                 WinJS.Promise.join(renderPromises).then(function () {
 
-                    // Set current rendering position to upper left corner of the list's surface
-                    var renderCurX = 0, renderCurY = 0;
+                    // Generate the containers (DOM elements) for the items
+                    that._generateItems();
 
-                    // Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
-                    var renderMaxY = that.$rootElement.innerHeight();
+                    //         that.$scrollSurface.css("width", 0);
 
-                    // Keep track of the width of the scrolling surface
-                    var surfaceWidth = 0;
+                    // Place the list items in their correct positions
+                    that._positionItems();
 
-                    // Get groupInfo (if specified)
-                    var groupInfo = that.layout.groupInfo && that.layout.groupInfo();
+                });
+            },
 
-                    var currentGroupKey = null;
 
-                    // Get the spacing to add between groups (if grouped view)
-                    var groupSpacing;
+            // ================================================================
+            //
+            // private event: WinJS.ListView._generateItems
+            //
+            _generateItems: function () {
 
-                    var topY;
+                if (this.items.length == 0)
+                    return;
+                // This should only happen when itemDataSource or groupDataSource changes (including first set).
+                var that = this;
 
-                    // Keep track of current row for maxRows comparison
-                    var curRow = -1;
+                // Get groupInfo (if specified)
+                var groupInfo = that.layout.groupInfo && that.layout.groupInfo();
 
-                    // Get the margin sizes around items
-                    var templateMargins = that._getItemMargins();
+                var currentGroupKey = null;
+                this.$_groupHeaders = [];
 
-                    var groupHeaderOnLeft = that.layout && that.layout.groupHeaderPosition == "left";
-                    var groupRenderStartX;
+                // Generate containers for the list's items
+                for (var i = 0; i < that.items.length; i++) {
 
-                    var listWidth = that.$rootElement.innerWidth();
+                    var item = that.items[i];
 
-                    // Add the rendered DOM elements to the DOM at the correct positions
-                    for (var i = 0; i < that.items.length; i++) {
-                        var item = that.items[i];
+                    // Wrap so that we don't re-wrap every time we position
+                    item.$element = $(item.element);
 
-                        // TODO (PERF-MINOR): Wrap $itemElement on item creation to avoid rewrapping every time we render.
-                        var $itemElement = $(item.element);
+                    // Create the item container div for the current item, add the item's element to it, and place the
+                    // itemcontainer in the listview's scrolling surface
+                    var $thisItemContainer = $("<div class='win-container'></div>");
+                    $thisItemContainer.append(item.$element);
+                    this.$scrollSurface.append($thisItemContainer);
 
-                        // Create the item container div for the current item, add the item's element to it, and place the
-                        // itemcontainer in the listview's scrolling surface
-                        var $thisItemContainer = $("<div class='win-container'></div>");
-                        $thisItemContainer.append($itemElement);
-                        $surfaceDiv.append($thisItemContainer);
+                    // If this is a grouped list and the item is in a different group than the previous item, then output a group header
+                    // and jump to the next column
+                    if (that._groupDataSource && item.groupKey != currentGroupKey) {
 
-                        // Get the dimensions of the item (force to width of list if not horizontal)
-                        var itemWidth = that.layout.horizontal ? $itemElement.innerWidth() : listWidth;
-                        var itemHeight = $itemElement.innerHeight();
+                        // Track the current group key so that we know when we switch to a new group
+                        currentGroupKey = item.groupKey;
 
-                        // If cellspanning/groupinfo specified, then apply it now
-                        if (groupInfo && groupInfo.enableCellSpanning) {
-
-                            // NOTE: Since we use item dimensions already, we don't need to do anything for enableCellSpanning.
-                            // TODO: Technically this breaks some edge cases - e.g. app has incorrectly (or inconsistently) sized items
-                            //		 and is relying on groupInfo to set the right granularity for them.  I'll need to see some failure
-                            //		 cases to fully understand the right solution here.
-                            // TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
-                        }
-
-                        // If this is a grouped list and the item is in a different group than the previous item, then output a group header
-                        // and jump to the next column
-                        if (that._groupDataSource && item.groupKey != currentGroupKey) {
-
-                            // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
-                            if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                                $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
-                            }
-
-                            // Track width of the current group for the above limit
-                            groupRenderStartX = surfaceWidth;
-
-                            // Track the current group key so that we know when we switch to a new group
-                            currentGroupKey = item.groupKey;
-
-                            // Output the new group's header
-                            // Clone the group header template, make it visible, and place it.
-                            var $groupHeaderTemplate = $(that.groupHeaderTemplate)
-								.clone()
-								.addClass("win-groupheader")
-								.show();
-
-                            // Give the cloned element a unique identifier
-                            // TODO (CLEANUP): can I do this in Binding.processAll?
-                            blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
-
-                            // Perform data binding on the group header template
-                            // TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
-                            //		 code to allow that to return asychronously...
-                            WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
-
-                            // Remove the data-win-control attribute after we've processed it.
-                            // TODO (CLEANUP): Am I doing this after every call to processAll?  If so, move this into there.
-                            $groupHeaderTemplate.removeAttr("data-win-control");
-
-                            // Add the fully realized HTML for the group header to the ListView's DOM element.
-                            $surfaceDiv.append($groupHeaderTemplate);
-
-                            // Create the group's header
-                            // TODO (CLEANUP): I can collapse a few lines of the following if/else...
-                            if (groupHeaderOnLeft) {
-
-                                // If we haven't gotten the width of the group header yet, then do so now.
-                                if (topY === undefined) {
-                                    topY = 0;
-
-                                    // Spacing between groups is (apparently) based on the margins of the group header.
-                                    // TODO: What about padding? border?
-                                    groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft")) +
-												   $groupHeaderTemplate.outerWidth() +
-												   parseInt($groupHeaderTemplate.css("marginRight"));
-
-                                    surfaceWidth = groupSpacing;
-                                } else
-                                    surfaceWidth += groupSpacing;
-
-                            } else {
-
-                                // If we haven't gotten the height of the group header yet, then do so now.
-                                if (topY === undefined) {
-                                    topY = $groupHeaderTemplate.outerHeight();
-
-                                    // Spacing between groups is (apparently) based on the left margin of the group header.
-                                    // TODO: What about padding? border?
-                                    groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft"));
-
-                                    surfaceWidth = groupSpacing;
-                                } else
-                                    surfaceWidth += groupSpacing;
-                            }
-
-                            // Start rendering items just below the group header
-                            renderCurY = topY;
-                            renderCurX = surfaceWidth;
-
-                            // Keep track of current row for maxRows check
-                            curRow = 0;
-
-                            // Set the header's final position
-                            $groupHeaderTemplate.css({
+                        // Output the new group's header
+                        // Clone the group header template, make it visible, and place it.
+                        var $groupHeaderTemplate = $(that.groupHeaderTemplate)
+                            .clone()
+                            .addClass("win-groupheader")
+                            .css({
                                 "position": "absolute",
-                                "top": "0px",
-                                "left": (renderCurX - groupSpacing) + "px"  // step back groupSpacing pixels to account for margin
-                            });
+                                "top": "0px"
+                            })
+                            .show();
 
-                        } else {
+                        // Give the cloned element a unique identifier
+                        // TODO (CLEANUP): can I do this in Binding.processAll?
+                        blueskyUtils.setDOMElementUniqueId($groupHeaderTemplate[0]);
 
-                            if (topY === undefined)
-                                topY = 0;
-                            if (that.layout.horizontal) {
-                                // If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
-                                // So the same if maxRows is specified and we're about to exceed it
-                                if (renderCurY + itemHeight >= renderMaxY ||
-									that.layout.maxRows && curRow == that.layout.maxRows - 1) {
-                                    renderCurY = topY;
-                                    renderCurX = surfaceWidth;
-                                    curRow = 0;
-                                } else
-                                    curRow++;
+                        // Perform data binding on the group header template
+                        // TODO: Should use groupDataSource.itemFromKey - but that returns a Promise and I need to refactor this
+                        //		 code to allow that to return asychronously...
+                        WinJS.Binding.processAll($groupHeaderTemplate[0], that._groupDataSource._list.getItemFromKey(item.groupKey).data);
+
+                        // Remove the data-win-control attribute after we've processed it.
+                        // TODO (CLEANUP): Am I doing this after every call to processAll?  If so, move this into there.
+                        $groupHeaderTemplate.removeAttr("data-win-control");
+
+                        // Add the fully realized HTML for the group header to the ListView's DOM element.
+                        this.$scrollSurface.append($groupHeaderTemplate);
+
+                        this.$_groupHeaders.push($groupHeaderTemplate);
+                    }
+
+                    // store a reference to the item in the itemcontainer
+                    $(".win-item", $thisItemContainer).data("itemIndex", i);
+
+                    // Handle right-click selection
+                    $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
+                        event.preventDefault();
+                        if (that.selectionMode != "none") {
+
+                            event.stopPropagation();
+
+                            // Get the index of the right-clicked item
+                            var itemIndex = $(this).data("itemIndex");
+
+                            //that.selection.add(itemIndex);
+                            var $containerNode = $(this.parentNode)
+
+                            if ($containerNode.hasClass("win-selected"))
+                                that.selection.remove(itemIndex);// remove selection
+                            else
+                                if (that.selectionMode == "multi")
+                                    that.selection.add(itemIndex);
+                                else
+                                    that.selection.set(itemIndex);
+
+                            that._lastSelectedItemIndex = itemIndex;
+                        }
+                    });
+
+                    // If the user clicks on the item, call our oniteminvoked function
+                    $(".win-item", $thisItemContainer).click(function () {
+
+                        // Get the index of the clicked item container's item
+                        var itemIndex = $(this).data("itemIndex");
+
+                        // Track last tapped item for the semanticzoom _getCurrentItem helper function, since we don't have focus yet
+                        // TODO: Remove this when we have keyboard focus support
+                        that._currentItem = itemIndex;
+
+                        // Call invoke
+                        if (that.tapBehavior != "none") {
+                            // TODO: Clean this up
+                            if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
+
+                                // Create a Promise with the clicked item
+                                var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+
+                                // Call the callback
+                                that._notifyItemInvoked(this.parentNode, {
+                                    itemIndex: itemIndex,
+                                    itemPromise: promise
+                                });
                             }
                         }
 
-                        $thisItemContainer.css({
-                            "top": renderCurY,
-                            "left": renderCurX,
-                            "width": itemWidth,
-                            "height": itemHeight
-                        });
+                        // Handle selection
+                        if ((that.tapBehavior == "directSelect" || that.tapBehavior == "toggleSelect" ||
+                            blueskyUtils.shiftPressed || blueskyUtils.controlPressed) && (that.selectionMode != "none")) {
 
-                        // Keep track of the width of the scrolling surface
-                        surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
+                            var $containerNode = $(this.parentNode)
 
-                        // Go to the next place to put the next item
-                        renderCurY += itemHeight + templateMargins.vertical;
+                            // Check to see if user shift-clicked a collection of items
+                            if (that.selectionMode == "multi" && blueskyUtils.shiftPressed) {
+                                var startIndex = Math.min(itemIndex, that._lastSelectedItemIndex);
+                                var endIndex = Math.max(itemIndex, that._lastSelectedItemIndex);
+                                var itemIndicesToSelect = [];
+                                for (var i = startIndex; i <= endIndex; i++)
+                                    itemIndicesToSelect.push(i);
+                                that.selection.set(itemIndicesToSelect);
+                            } else {
+                                if (that.tapBehavior == "directSelect") {
 
-                        // If item is selected, then add border
-                        if (that.selection._containsItemByKey(item.key))
-                            that._addSelectionBorderToElement(item.element);
-
-                        // store a reference to the item in the itemcontainer
-                        $(".win-item", $thisItemContainer).data("itemIndex", i);
-
-                        // Handle right-click selection
-                        $(".win-item", $thisItemContainer).bind("contextmenu", function (event) {
-                            event.preventDefault();
-                            if (that.selectionMode != "none") {
-
-                                event.stopPropagation();
-
-                                // Get the index of the right-clicked item
-                                var itemIndex = $(this).data("itemIndex");
-
-                                //that.selection.add(itemIndex);
-                                var $containerNode = $(this.parentNode)
-
-                                if ($containerNode.hasClass("win-selected"))
-                                    that.selection.remove(itemIndex);// remove selection
-                                else
-                                    if (that.selectionMode == "multi")
+                                    // TODO: Does Win8 re-fire selection for already selected item?
+                                    if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
                                         that.selection.add(itemIndex);
                                     else
                                         that.selection.set(itemIndex);
-
-                                that._lastSelectedItemIndex = itemIndex;
-                            }
-                        });
-
-                        // If the user clicks on the item, call our oniteminvoked function
-                        $(".win-item", $thisItemContainer).click(function () {
-
-                            // Get the index of the clicked item container's item
-                            var itemIndex = $(this).data("itemIndex");
-
-                            // Track last tapped item for the semanticzoom _getCurrentItem helper function, since we don't have focus yet
-                            // TODO: Remove this when we have keyboard focus support
-                            that._currentItem = itemIndex;
-
-                            // Call invoke
-                            if (that.tapBehavior != "none") {
-                                // TODO: Clean this up
-                                if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
-
-                                    // Create a Promise with the clicked item
-                                    var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
-
-                                    // Call the callback
-                                    that._notifyItemInvoked(this.parentNode, {
-                                        itemIndex: itemIndex,
-                                        itemPromise: promise
-                                    });
-                                }
-                            }
-
-                            // Handle selection
-                            if ((that.tapBehavior == "directSelect" || that.tapBehavior == "toggleSelect" ||
-								blueskyUtils.shiftPressed || blueskyUtils.controlPressed) && (that.selectionMode != "none")) {
-
-                                var $containerNode = $(this.parentNode)
-
-                                // Check to see if user shift-clicked a collection of items
-                                if (that.selectionMode == "multi" && blueskyUtils.shiftPressed) {
-                                    var startIndex = Math.min(itemIndex, that._lastSelectedItemIndex);
-                                    var endIndex = Math.max(itemIndex, that._lastSelectedItemIndex);
-                                    var itemIndicesToSelect = [];
-                                    for (var i = startIndex; i <= endIndex; i++)
-                                        itemIndicesToSelect.push(i);
-                                    that.selection.set(itemIndicesToSelect);
                                 } else {
-                                    if (that.tapBehavior == "directSelect") {
-
-                                        // TODO: Does Win8 re-fire selection for already selected item?
-                                        if (that.selectionMode == "multi" && blueskyUtils.controlPressed)
+                                    if ($containerNode.hasClass("win-selected"))
+                                        that.selection.remove(itemIndex);// remove selection
+                                    else
+                                        if (that.selectionMode == "multi")
                                             that.selection.add(itemIndex);
                                         else
                                             that.selection.set(itemIndex);
-                                    } else {
-                                        if ($containerNode.hasClass("win-selected"))
-                                            that.selection.remove(itemIndex);// remove selection
-                                        else
-                                            if (that.selectionMode == "multi")
-                                                that.selection.add(itemIndex);
-                                            else
-                                                that.selection.set(itemIndex);
-                                    }
                                 }
-
-                                that._lastSelectedItemIndex = itemIndex;
-                                that._notifySelectionChanged(that.element);
                             }
 
-                            // Semantic Zoom support
-                            if (that._triggerZoom && that._isZoomedOut)
-                                that._triggerZoom();
-                        });
+                            that._lastSelectedItemIndex = itemIndex;
+                            that._notifySelectionChanged(that.element);
+                        }
+
+                        // Semantic Zoom support
+                        if (that._triggerZoom && that._isZoomedOut)
+                            that._triggerZoom();
+                    });
+                }
+            },
+
+
+            // ================================================================
+            //
+            // private event: WinJS.ListView._positionItems
+            //
+            _positionItems: function () {
+
+                if (this.items.length == 0)
+                    return;
+
+                // Set current rendering position to upper left corner of the list's surface
+                var renderCurX = 0, renderCurY = 0;
+
+                // Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
+                var renderMaxY = this.$rootElement.innerHeight();
+
+                // Keep track of the width of the scrolling surface
+                var surfaceWidth = 0;
+
+                // Get groupInfo (if specified)
+                var groupInfo = this.layout.groupInfo && this.layout.groupInfo();
+
+                var currentGroupKey = null;
+
+                // Get the spacing to add between groups (if grouped view)
+                var groupSpacing;
+
+                var topY;
+
+                // Keep track of current row for maxRows comparison
+                var curRow = -1;
+
+                // Get the margin sizes around items
+                var templateMargins = this._getItemMargins();
+
+                var groupHeaderOnLeft = this.layout && this.layout.groupHeaderPosition == "left";
+                var groupRenderStartX;
+
+                var listWidth = this.$rootElement.innerWidth();
+
+                // Add the rendered DOM elements to the DOM at the correct positions
+                var groupIndex = 0;
+                for (var i = 0; i < this.items.length; i++) {
+
+                    var item = this.items[i];
+
+                    // Get the dimensions of the item (force to width of list if not horizontal)
+                    //var itemWidth = this.layout.horizontal ? item.$element.innerWidth() : listWidth;
+                    //var itemHeight = item.$element.innerHeight();
+                    var itemWidth = this.layout.horizontal ? item.element.offsetWidth : listWidth;
+                    var itemHeight = item.element.offsetHeight;
+                    var itemContainer = item.element.parentNode;
+
+                    // If cellspanning/groupinfo specified, then apply it now
+                    if (groupInfo && groupInfo.enableCellSpanning) {
+
+                        // NOTE: Since we use item dimensions already, we don't need to do anything for enableCellSpanning.
+                        // TODO: Technically this breaks some edge cases - e.g. app has incorrectly (or inconsistently) sized items
+                        //		 and is relying on groupInfo to set the right granularity for them.  I'll need to see some failure
+                        //		 cases to fully understand the right solution here.
+                        // TODO: Create some test cases with these edge case scenarios and see how Win8 handles them.
                     }
 
-                    // Set the final width of the ListView's scrolling surface, and make it visible
-                    $surfaceDiv.css("width", surfaceWidth).show();
+                    // If this is a grouped list and the item is in a different group than the previous item, then output a group header
+                    // and jump to the next column
+                    if (this._groupDataSource && item.groupKey != currentGroupKey) {
 
-                    // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
-                    if (!that._disableAnimation && !that._disableEntranceAnimation)
-                        WinJS.UI.Animation.enterContent([$surfaceDiv[0]]);
-                });
+                        // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
+                        if ($groupHeaderTemplate && !groupHeaderOnLeft) {
+                            $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                        }
+
+                        // Track width of the current group for the above limit
+                        groupRenderStartX = surfaceWidth;
+
+                        // Track the current group key so that we know when we switch to a new group
+                        currentGroupKey = item.groupKey;
+
+                        var $groupHeaderTemplate = this.$_groupHeaders[groupIndex++];
+
+                        // Create the group's header
+                        // TODO (CLEANUP): I can collapse a few lines of the following if/else...
+                        if (groupHeaderOnLeft) {
+
+                            // If we haven't gotten the width of the group header yet, then do so now.
+                            if (topY === undefined) {
+                                topY = 0;
+
+                                // Spacing between groups is (apparently) based on the margins of the group header.
+                                // TODO: What about padding? border?
+                                groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft")) +
+                                               $groupHeaderTemplate.outerWidth() +
+                                               parseInt($groupHeaderTemplate.css("marginRight"));
+
+                                surfaceWidth = groupSpacing;
+                            } else
+                                surfaceWidth += groupSpacing;
+
+                        } else {
+
+                            // If we haven't gotten the height of the group header yet, then do so now.
+                            if (topY === undefined) {
+                                topY = $groupHeaderTemplate.outerHeight();
+
+                                // Spacing between groups is (apparently) based on the left margin of the group header.
+                                // TODO: What about padding? border?
+                                groupSpacing = parseInt($groupHeaderTemplate.css("marginLeft"));
+
+                                surfaceWidth = groupSpacing;
+                            } else
+                                surfaceWidth += groupSpacing;
+                        }
+
+                        // Start rendering items just below the group header
+                        renderCurY = topY;
+                        renderCurX = surfaceWidth;
+
+                        // Keep track of current row for maxRows check
+                        curRow = 0;
+
+                        // Set the header's final position
+                        $groupHeaderTemplate.css({
+                            "left": (renderCurX - groupSpacing) + "px"  // step back groupSpacing pixels to account for margin
+                        });
+
+                    } else {
+
+                        if (topY === undefined)
+                            topY = 0;
+                        if (this.layout.horizontal) {
+                            // If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
+                            // So the same if maxRows is specified and we're about to exceed it
+                            if (renderCurY + itemHeight >= renderMaxY ||
+                                this.layout.maxRows && curRow == this.layout.maxRows - 1) {
+                                renderCurY = topY;
+                                renderCurX = surfaceWidth;
+                                curRow = 0;
+                            } else
+                                curRow++;
+                        }
+                    }
+                    itemContainer.style.left = renderCurX + "px";
+                    itemContainer.style.top = renderCurY + "px";
+                    itemContainer.style.width = itemWidth + "px";
+                    itemContainer.style.height = itemHeight + "px";
+
+                    // Keep track of the width of the scrolling surface
+                    surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
+
+                    // Go to the next place to put the next item
+                    renderCurY += itemHeight + templateMargins.vertical;
+
+                    // If item is selected, then add border
+                    if (this.selection._containsItemByKey(item.key))
+                        this._addSelectionBorderToElement(item.element);
+                }
+
+                // Set the final width of the ListView's scrolling surface, and make it visible
+                this.$scrollSurface.css("width", surfaceWidth).show();
+
+                // use enterContent to slide the list's items into view.  This slides them as one contiguous block (as win8 does).
+                if (!this._disableAnimation && !this._disableEntranceAnimation)
+                    WinJS.UI.Animation.enterContent([this.$scrollSurface[0]]);
             },
 
 
@@ -13451,6 +13731,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 // itemDataSource.setter: Used to set a new item data source
                 set: function (newDataSource) {
 
+                    // If our itemDataSource == newDataSource, then just return
+                    if (this._itemDataSource && this._itemDataSource._id == newDataSource._id)
+                        return;
+
                     var that = this;
 
                     // This event handler is called when an event that does not change our datasource count has occurred
@@ -13490,6 +13774,10 @@ WinJS.Namespace.define("WinJS.UI", {
 
                 // groupDataSource.setter: Used to set a new group data source
                 set: function (newDataSource) {
+
+                    // If our groupDataSource == newDataSource, then just return
+                    if (this._groupDataSource && this._groupDataSource._id == newDataSource._id)
+                        return;
 
                     var that = this;
 
@@ -13534,11 +13822,21 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (newTemplate) {
-                    this._itemTemplate = newTemplate;
-                    this.render();
+
+                    if (this._itemTemplate != newTemplate) {
+                        this._itemTemplate = newTemplate;
+                        this.render();
+                    }
                 }
             },
 
+
+            // ================================================================
+            //
+            // public property: WinJS.ListView.layout
+            //
+            //      MSDN: TODO
+            //
             _layout: null,
             layout: {
                 get: function () {
@@ -13546,13 +13844,19 @@ WinJS.Namespace.define("WinJS.UI", {
                 },
 
                 set: function (newLayout) {
-                    if (newLayout instanceof WinJS.UI.ListLayout || newLayout instanceof WinJS.UI.GridLayout)
+
+                    if (!(newLayout instanceof WinJS.UI.ListLayout) && !(newLayout instanceof WinJS.UI.GridLayout))
+                        newLayout = new WinJS.UI.GridLayout(newLayout);
+
+                    // If the new layout is the same as the old layout, then do nothing
+                    if (!_.isEqual(this._layout, newLayout)) {
+
                         this._layout = newLayout;
-                    else
-                        this._layout = new WinJS.UI.GridLayout(newLayout);
-                    this.render();
+                        this.render();
+                    }
                 }
             },
+
 
             // ================================================================
             //
@@ -13655,7 +13959,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     } else if (!itemWasSelected && itemIsNowSelected) {
 
-                        // add selection border
+                            // add selection border
                         that._addSelectionBorderToElement(item.element);
                     }
                 });
@@ -15376,3 +15680,126 @@ jQuery.extend(jQuery.easing,
 // Initialize storage now so that appdata.current is initialized (apps may rely on it now).
 // TODO: Build one place where these inits happen
 Windows.Storage._internalInit();
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: externalDependencies.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// externalDependencies.js
+//
+//      This file contains all external libraries upon which bluesky depends.  License is included in all cases.
+//
+//      TODO: In general, is it better to include like this, or as separate <script>?  Pros and cons to either...  e.g.: what if
+//            app has its own <script> tag for the same library?
+//      TODO: I'm trying to follow both the law and the spirit of including external libraries - is this the 'right' way to do that?
+//
+//      Dependency          Reason
+//      ==================================================================================================
+//      underscore          Used for its deep-equality check, and will likely come in handy later anyways.
+//      jQueryResize        Used for monitoring (and batching) resize events for WinJS.UI.ListView
+
+
+
+// Underscore.js 1.3.3
+// (c) 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
+// Underscore is freely distributable under the MIT license.
+// Portions of Underscore are inspired or borrowed from Prototype,
+// Oliver Steele's Functional, and John Resig's Micro-Templating.
+// For all details and documentation:
+// http://documentcloud.github.com/underscore
+(function () {
+    function r(a, c, d) {
+        if (a === c) return 0 !== a || 1 / a == 1 / c; if (null == a || null == c) return a === c; a._chain && (a = a._wrapped); c._chain && (c = c._wrapped); if (a.isEqual && b.isFunction(a.isEqual)) return a.isEqual(c); if (c.isEqual && b.isFunction(c.isEqual)) return c.isEqual(a); var e = l.call(a); if (e != l.call(c)) return !1; switch (e) {
+            case "[object String]": return a == "" + c; case "[object Number]": return a != +a ? c != +c : 0 == a ? 1 / a == 1 / c : a == +c; case "[object Date]": case "[object Boolean]": return +a == +c; case "[object RegExp]": return a.source ==
+            c.source && a.global == c.global && a.multiline == c.multiline && a.ignoreCase == c.ignoreCase
+        } if ("object" != typeof a || "object" != typeof c) return !1; for (var f = d.length; f--;) if (d[f] == a) return !0; d.push(a); var f = 0, g = !0; if ("[object Array]" == e) { if (f = a.length, g = f == c.length) for (; f-- && (g = f in a == f in c && r(a[f], c[f], d)) ;); } else {
+            if ("constructor" in a != "constructor" in c || a.constructor != c.constructor) return !1; for (var h in a) if (b.has(a, h) && (f++, !(g = b.has(c, h) && r(a[h], c[h], d)))) break; if (g) {
+                for (h in c) if (b.has(c, h) && !f--) break;
+                g = !f
+            }
+        } d.pop(); return g
+    } var s = this, I = s._, o = {}, k = Array.prototype, p = Object.prototype, i = k.slice, J = k.unshift, l = p.toString, K = p.hasOwnProperty, y = k.forEach, z = k.map, A = k.reduce, B = k.reduceRight, C = k.filter, D = k.every, E = k.some, q = k.indexOf, F = k.lastIndexOf, p = Array.isArray, L = Object.keys, t = Function.prototype.bind, b = function (a) { return new m(a) }; "undefined" !== typeof exports ? ("undefined" !== typeof module && module.exports && (exports = module.exports = b), exports._ = b) : s._ = b; b.VERSION = "1.3.3"; var j = b.each = b.forEach = function (a,
+    c, d) { if (a != null) if (y && a.forEach === y) a.forEach(c, d); else if (a.length === +a.length) for (var e = 0, f = a.length; e < f; e++) { if (e in a && c.call(d, a[e], e, a) === o) break } else for (e in a) if (b.has(a, e) && c.call(d, a[e], e, a) === o) break }; b.map = b.collect = function (a, c, b) { var e = []; if (a == null) return e; if (z && a.map === z) return a.map(c, b); j(a, function (a, g, h) { e[e.length] = c.call(b, a, g, h) }); if (a.length === +a.length) e.length = a.length; return e }; b.reduce = b.foldl = b.inject = function (a, c, d, e) {
+        var f = arguments.length > 2; a == null && (a = []); if (A &&
+        a.reduce === A) { e && (c = b.bind(c, e)); return f ? a.reduce(c, d) : a.reduce(c) } j(a, function (a, b, i) { if (f) d = c.call(e, d, a, b, i); else { d = a; f = true } }); if (!f) throw new TypeError("Reduce of empty array with no initial value"); return d
+    }; b.reduceRight = b.foldr = function (a, c, d, e) { var f = arguments.length > 2; a == null && (a = []); if (B && a.reduceRight === B) { e && (c = b.bind(c, e)); return f ? a.reduceRight(c, d) : a.reduceRight(c) } var g = b.toArray(a).reverse(); e && !f && (c = b.bind(c, e)); return f ? b.reduce(g, c, d, e) : b.reduce(g, c) }; b.find = b.detect = function (a,
+    c, b) { var e; G(a, function (a, g, h) { if (c.call(b, a, g, h)) { e = a; return true } }); return e }; b.filter = b.select = function (a, c, b) { var e = []; if (a == null) return e; if (C && a.filter === C) return a.filter(c, b); j(a, function (a, g, h) { c.call(b, a, g, h) && (e[e.length] = a) }); return e }; b.reject = function (a, c, b) { var e = []; if (a == null) return e; j(a, function (a, g, h) { c.call(b, a, g, h) || (e[e.length] = a) }); return e }; b.every = b.all = function (a, c, b) {
+        var e = true; if (a == null) return e; if (D && a.every === D) return a.every(c, b); j(a, function (a, g, h) {
+            if (!(e = e && c.call(b,
+            a, g, h))) return o
+        }); return !!e
+    }; var G = b.some = b.any = function (a, c, d) { c || (c = b.identity); var e = false; if (a == null) return e; if (E && a.some === E) return a.some(c, d); j(a, function (a, b, h) { if (e || (e = c.call(d, a, b, h))) return o }); return !!e }; b.include = b.contains = function (a, c) { var b = false; if (a == null) return b; if (q && a.indexOf === q) return a.indexOf(c) != -1; return b = G(a, function (a) { return a === c }) }; b.invoke = function (a, c) { var d = i.call(arguments, 2); return b.map(a, function (a) { return (b.isFunction(c) ? c || a : a[c]).apply(a, d) }) }; b.pluck =
+    function (a, c) { return b.map(a, function (a) { return a[c] }) }; b.max = function (a, c, d) { if (!c && b.isArray(a) && a[0] === +a[0]) return Math.max.apply(Math, a); if (!c && b.isEmpty(a)) return -Infinity; var e = { computed: -Infinity }; j(a, function (a, b, h) { b = c ? c.call(d, a, b, h) : a; b >= e.computed && (e = { value: a, computed: b }) }); return e.value }; b.min = function (a, c, d) {
+        if (!c && b.isArray(a) && a[0] === +a[0]) return Math.min.apply(Math, a); if (!c && b.isEmpty(a)) return Infinity; var e = { computed: Infinity }; j(a, function (a, b, h) {
+            b = c ? c.call(d, a, b, h) : a; b < e.computed &&
+            (e = { value: a, computed: b })
+        }); return e.value
+    }; b.shuffle = function (a) { var b = [], d; j(a, function (a, f) { d = Math.floor(Math.random() * (f + 1)); b[f] = b[d]; b[d] = a }); return b }; b.sortBy = function (a, c, d) { var e = b.isFunction(c) ? c : function (a) { return a[c] }; return b.pluck(b.map(a, function (a, b, c) { return { value: a, criteria: e.call(d, a, b, c) } }).sort(function (a, b) { var c = a.criteria, d = b.criteria; return c === void 0 ? 1 : d === void 0 ? -1 : c < d ? -1 : c > d ? 1 : 0 }), "value") }; b.groupBy = function (a, c) {
+        var d = {}, e = b.isFunction(c) ? c : function (a) { return a[c] };
+        j(a, function (a, b) { var c = e(a, b); (d[c] || (d[c] = [])).push(a) }); return d
+    }; b.sortedIndex = function (a, c, d) { d || (d = b.identity); for (var e = 0, f = a.length; e < f;) { var g = e + f >> 1; d(a[g]) < d(c) ? e = g + 1 : f = g } return e }; b.toArray = function (a) { return !a ? [] : b.isArray(a) || b.isArguments(a) ? i.call(a) : a.toArray && b.isFunction(a.toArray) ? a.toArray() : b.values(a) }; b.size = function (a) { return b.isArray(a) ? a.length : b.keys(a).length }; b.first = b.head = b.take = function (a, b, d) { return b != null && !d ? i.call(a, 0, b) : a[0] }; b.initial = function (a, b, d) {
+        return i.call(a,
+        0, a.length - (b == null || d ? 1 : b))
+    }; b.last = function (a, b, d) { return b != null && !d ? i.call(a, Math.max(a.length - b, 0)) : a[a.length - 1] }; b.rest = b.tail = function (a, b, d) { return i.call(a, b == null || d ? 1 : b) }; b.compact = function (a) { return b.filter(a, function (a) { return !!a }) }; b.flatten = function (a, c) { return b.reduce(a, function (a, e) { if (b.isArray(e)) return a.concat(c ? e : b.flatten(e)); a[a.length] = e; return a }, []) }; b.without = function (a) { return b.difference(a, i.call(arguments, 1)) }; b.uniq = b.unique = function (a, c, d) {
+        var d = d ? b.map(a, d) : a,
+        e = []; a.length < 3 && (c = true); b.reduce(d, function (d, g, h) { if (c ? b.last(d) !== g || !d.length : !b.include(d, g)) { d.push(g); e.push(a[h]) } return d }, []); return e
+    }; b.union = function () { return b.uniq(b.flatten(arguments, true)) }; b.intersection = b.intersect = function (a) { var c = i.call(arguments, 1); return b.filter(b.uniq(a), function (a) { return b.every(c, function (c) { return b.indexOf(c, a) >= 0 }) }) }; b.difference = function (a) { var c = b.flatten(i.call(arguments, 1), true); return b.filter(a, function (a) { return !b.include(c, a) }) }; b.zip = function () {
+        for (var a =
+        i.call(arguments), c = b.max(b.pluck(a, "length")), d = Array(c), e = 0; e < c; e++) d[e] = b.pluck(a, "" + e); return d
+    }; b.indexOf = function (a, c, d) { if (a == null) return -1; var e; if (d) { d = b.sortedIndex(a, c); return a[d] === c ? d : -1 } if (q && a.indexOf === q) return a.indexOf(c); d = 0; for (e = a.length; d < e; d++) if (d in a && a[d] === c) return d; return -1 }; b.lastIndexOf = function (a, b) { if (a == null) return -1; if (F && a.lastIndexOf === F) return a.lastIndexOf(b); for (var d = a.length; d--;) if (d in a && a[d] === b) return d; return -1 }; b.range = function (a, b, d) {
+        if (arguments.length <=
+        1) { b = a || 0; a = 0 } for (var d = arguments[2] || 1, e = Math.max(Math.ceil((b - a) / d), 0), f = 0, g = Array(e) ; f < e;) { g[f++] = a; a = a + d } return g
+    }; var H = function () { }; b.bind = function (a, c) { var d, e; if (a.bind === t && t) return t.apply(a, i.call(arguments, 1)); if (!b.isFunction(a)) throw new TypeError; e = i.call(arguments, 2); return d = function () { if (!(this instanceof d)) return a.apply(c, e.concat(i.call(arguments))); H.prototype = a.prototype; var b = new H, g = a.apply(b, e.concat(i.call(arguments))); return Object(g) === g ? g : b } }; b.bindAll = function (a) {
+        var c =
+        i.call(arguments, 1); c.length == 0 && (c = b.functions(a)); j(c, function (c) { a[c] = b.bind(a[c], a) }); return a
+    }; b.memoize = function (a, c) { var d = {}; c || (c = b.identity); return function () { var e = c.apply(this, arguments); return b.has(d, e) ? d[e] : d[e] = a.apply(this, arguments) } }; b.delay = function (a, b) { var d = i.call(arguments, 2); return setTimeout(function () { return a.apply(null, d) }, b) }; b.defer = function (a) { return b.delay.apply(b, [a, 1].concat(i.call(arguments, 1))) }; b.throttle = function (a, c) {
+        var d, e, f, g, h, i, j = b.debounce(function () {
+            h =
+            g = false
+        }, c); return function () { d = this; e = arguments; f || (f = setTimeout(function () { f = null; h && a.apply(d, e); j() }, c)); g ? h = true : i = a.apply(d, e); j(); g = true; return i }
+    }; b.debounce = function (a, b, d) { var e; return function () { var f = this, g = arguments; d && !e && a.apply(f, g); clearTimeout(e); e = setTimeout(function () { e = null; d || a.apply(f, g) }, b) } }; b.once = function (a) { var b = false, d; return function () { if (b) return d; b = true; return d = a.apply(this, arguments) } }; b.wrap = function (a, b) {
+        return function () {
+            var d = [a].concat(i.call(arguments, 0));
+            return b.apply(this, d)
+        }
+    }; b.compose = function () { var a = arguments; return function () { for (var b = arguments, d = a.length - 1; d >= 0; d--) b = [a[d].apply(this, b)]; return b[0] } }; b.after = function (a, b) { return a <= 0 ? b() : function () { if (--a < 1) return b.apply(this, arguments) } }; b.keys = L || function (a) { if (a !== Object(a)) throw new TypeError("Invalid object"); var c = [], d; for (d in a) b.has(a, d) && (c[c.length] = d); return c }; b.values = function (a) { return b.map(a, b.identity) }; b.functions = b.methods = function (a) {
+        var c = [], d; for (d in a) b.isFunction(a[d]) &&
+        c.push(d); return c.sort()
+    }; b.extend = function (a) { j(i.call(arguments, 1), function (b) { for (var d in b) a[d] = b[d] }); return a }; b.pick = function (a) { var c = {}; j(b.flatten(i.call(arguments, 1)), function (b) { b in a && (c[b] = a[b]) }); return c }; b.defaults = function (a) { j(i.call(arguments, 1), function (b) { for (var d in b) a[d] == null && (a[d] = b[d]) }); return a }; b.clone = function (a) { return !b.isObject(a) ? a : b.isArray(a) ? a.slice() : b.extend({}, a) }; b.tap = function (a, b) { b(a); return a }; b.isEqual = function (a, b) { return r(a, b, []) }; b.isEmpty =
+    function (a) { if (a == null) return true; if (b.isArray(a) || b.isString(a)) return a.length === 0; for (var c in a) if (b.has(a, c)) return false; return true }; b.isElement = function (a) { return !!(a && a.nodeType == 1) }; b.isArray = p || function (a) { return l.call(a) == "[object Array]" }; b.isObject = function (a) { return a === Object(a) }; b.isArguments = function (a) { return l.call(a) == "[object Arguments]" }; b.isArguments(arguments) || (b.isArguments = function (a) { return !(!a || !b.has(a, "callee")) }); b.isFunction = function (a) { return l.call(a) == "[object Function]" };
+    b.isString = function (a) { return l.call(a) == "[object String]" }; b.isNumber = function (a) { return l.call(a) == "[object Number]" }; b.isFinite = function (a) { return b.isNumber(a) && isFinite(a) }; b.isNaN = function (a) { return a !== a }; b.isBoolean = function (a) { return a === true || a === false || l.call(a) == "[object Boolean]" }; b.isDate = function (a) { return l.call(a) == "[object Date]" }; b.isRegExp = function (a) { return l.call(a) == "[object RegExp]" }; b.isNull = function (a) { return a === null }; b.isUndefined = function (a) { return a === void 0 }; b.has = function (a,
+    b) { return K.call(a, b) }; b.noConflict = function () { s._ = I; return this }; b.identity = function (a) { return a }; b.times = function (a, b, d) { for (var e = 0; e < a; e++) b.call(d, e) }; b.escape = function (a) { return ("" + a).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/\//g, "&#x2F;") }; b.result = function (a, c) { if (a == null) return null; var d = a[c]; return b.isFunction(d) ? d.call(a) : d }; b.mixin = function (a) { j(b.functions(a), function (c) { M(c, b[c] = a[c]) }) }; var N = 0; b.uniqueId =
+    function (a) { var b = N++; return a ? a + b : b }; b.templateSettings = { evaluate: /<%([\s\S]+?)%>/g, interpolate: /<%=([\s\S]+?)%>/g, escape: /<%-([\s\S]+?)%>/g }; var u = /.^/, n = { "\\": "\\", "'": "'", r: "\r", n: "\n", t: "\t", u2028: "\u2028", u2029: "\u2029" }, v; for (v in n) n[n[v]] = v; var O = /\\|'|\r|\n|\t|\u2028|\u2029/g, P = /\\(\\|'|r|n|t|u2028|u2029)/g, w = function (a) { return a.replace(P, function (a, b) { return n[b] }) }; b.template = function (a, c, d) {
+        d = b.defaults(d || {}, b.templateSettings); a = "__p+='" + a.replace(O, function (a) { return "\\" + n[a] }).replace(d.escape ||
+        u, function (a, b) { return "'+\n_.escape(" + w(b) + ")+\n'" }).replace(d.interpolate || u, function (a, b) { return "'+\n(" + w(b) + ")+\n'" }).replace(d.evaluate || u, function (a, b) { return "';\n" + w(b) + "\n;__p+='" }) + "';\n"; d.variable || (a = "with(obj||{}){\n" + a + "}\n"); var a = "var __p='';var print=function(){__p+=Array.prototype.join.call(arguments, '')};\n" + a + "return __p;\n", e = new Function(d.variable || "obj", "_", a); if (c) return e(c, b); c = function (a) { return e.call(this, a, b) }; c.source = "function(" + (d.variable || "obj") + "){\n" + a + "}"; return c
+    };
+    b.chain = function (a) { return b(a).chain() }; var m = function (a) { this._wrapped = a }; b.prototype = m.prototype; var x = function (a, c) { return c ? b(a).chain() : a }, M = function (a, c) { m.prototype[a] = function () { var a = i.call(arguments); J.call(a, this._wrapped); return x(c.apply(b, a), this._chain) } }; b.mixin(b); j("pop,push,reverse,shift,sort,splice,unshift".split(","), function (a) {
+        var b = k[a]; m.prototype[a] = function () {
+            var d = this._wrapped; b.apply(d, arguments); var e = d.length; (a == "shift" || a == "splice") && e === 0 && delete d[0]; return x(d,
+            this._chain)
+        }
+    }); j(["concat", "join", "slice"], function (a) { var b = k[a]; m.prototype[a] = function () { return x(b.apply(this._wrapped, arguments), this._chain) } }); m.prototype.chain = function () { this._chain = true; return this }; m.prototype.value = function () { return this._wrapped }
+}).call(this);
+
+/*
+ * jQuery resize event - v1.1 - 3/14/2010
+ * http://benalman.com/projects/jquery-resize-plugin/
+ * 
+ * Copyright (c) 2010 "Cowboy" Ben Alman
+ * Dual licensed under the MIT and GPL licenses.
+ * http://benalman.com/about/license/
+ */
+(function ($, h, c) { var a = $([]), e = $.resize = $.extend($.resize, {}), i, k = "setTimeout", j = "resize", d = j + "-special-event", b = "delay", f = "throttleWindow"; e[b] = 250; e[f] = true; $.event.special[j] = { setup: function () { if (!e[f] && this[k]) { return false } var l = $(this); a = a.add(l); $.data(this, d, { w: l.width(), h: l.height() }); if (a.length === 1) { g() } }, teardown: function () { if (!e[f] && this[k]) { return false } var l = $(this); a = a.not(l); l.removeData(d); if (!a.length) { clearTimeout(i) } }, add: function (l) { if (!e[f] && this[k]) { return false } var n; function m(s, o, p) { var q = $(this), r = $.data(this, d); r.w = o !== c ? o : q.width(); r.h = p !== c ? p : q.height(); n.apply(this, arguments) } if ($.isFunction(l)) { n = l; return m } else { n = l.handler; l.handler = m } } }; function g() { i = h[k](function () { a.each(function () { var n = $(this), m = n.width(), l = n.height(), o = $.data(this, d); if (m !== o.w || l !== o.h) { n.trigger(j, [o.w = m, o.h = l]) } }); g() }, e[b]) } })(jQuery, this);
