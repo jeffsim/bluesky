@@ -168,9 +168,14 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
                 elements = [elements];
 
             // TODO: animate the transform
-            // TODO: make work on other browsers
+            // TODO (CLEANUP): at startup, determine which browser this is, and set blueskyUtils._browserCss["transform"] to the appropriate
+            //                 vendor prefix, and then just do one call here.
             // TODO: will break pre-existing transforms?
             $(elements).css("transform", "matrix(0.975, 0, 0, 0.975, 0, 0)");
+            $(elements).css("-ms-transform", "matrix(0.975, 0, 0, 0.975, 0, 0)");
+            $(elements).css("-moz-transform", "matrix(0.975, 0, 0, 0.975, 0, 0)");
+            $(elements).css("-webkit-transform", "matrix(0.975, 0, 0, 0.975, 0, 0)");
+            $(elements).css("-o-transform", "matrix(0.975, 0, 0, 0.975, 0, 0)");
             onComplete();
         });
     },
@@ -194,10 +199,14 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
                 elements = [elements];
 
             // TODO: animate the transform
-            // TODO: make work on other browsers
+            // TODO (CLEANUP): at startup, determine which browser this is, and set blueskyUtils._browserCss["transform"] to the appropriate
+            //                 vendor prefix, and then just do one call here.
             // TODO: will break pre-existing transforms?
-
             $(elements).css("transform", "none");
+            $(elements).css("-ms-transform", "none");
+            $(elements).css("-moz-transform", "none");
+            $(elements).css("-webkit-transform", "none");
+            $(elements).css("-o-transform", "none");
             onComplete();
         });
     },
@@ -563,6 +572,9 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 
                         var offsetTop = newPositions[i].top - initialPosition.top;
                         var offsetLeft = newPositions[i].left - initialPosition.left;
+
+                        // TODO: Replace jQuery animation with CSS3 transitions
+                        // ala: http://css3.bradshawenterprises.com/slide1/
 
                         $el.offset({
                             top: initialPosition.top,

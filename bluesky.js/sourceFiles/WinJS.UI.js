@@ -339,6 +339,8 @@ WinJS.Namespace.define("WinJS.UI", {
         none: "none"
     },
 
+    // Unique identifier for each IListDataSource
+    _uniqueListId: 1,
 
     // ================================================================
     //
@@ -350,7 +352,11 @@ WinJS.Namespace.define("WinJS.UI", {
 
         this._list = sourceList;
         //this._items = WinJS.Binding.as(listItems);
+
+        // Give this IListDataSource a unique Id to allow for quick equality comparisons
+        this._id = WinJS.UI._uniqueListId++;
     },
+
 
 		// ================================================================
 		// WinJS.UI.IListDataSource members

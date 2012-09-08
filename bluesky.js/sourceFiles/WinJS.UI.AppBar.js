@@ -32,8 +32,8 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // Set default options
 		    this._hidden = (!!options.hidden || options.hidden == "false") ? false : true;
-		    this._disabled = (options.disabled || options.disabled == "true") ? true : false;
-		    this._sticky = (options.sticky || options.sticky == "true") ? true : false;
+		    this._disabled = (options.disabled == true || options.disabled == "true") ? true : false;
+		    this._sticky = (options.sticky == true || options.sticky == "true") ? true : false; // TODO: CLEANUP
 		    this._layout = options.layout || "commands";
 
 		    // Call into our base class' constructor
@@ -92,7 +92,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		        if (!that._sticky) {
 		            that._hiddenDueToFocusOut = Date.now();
 		            that.hide();
-		        }
+		        } else
+		            that._hiddenDueToFocusOut = null;
+
 		    });
 
 		    // Capture right-click
@@ -119,10 +121,21 @@ WinJS.Namespace.define("WinJS.UI", {
 		        event.preventDefault();
 
 		        var appBar = event.data.appBar;
+
+		        // If we were hidden externally (e.g. our css 'display' property was directly set) instead of through this.hide(), then
+		        // change our state to hidden so that we show below)
+		        // TODO (CLEANUP): All of the AppBar click-handling makes my skin crawl.
+		        if (appBar.$rootElement.css("display") == "none") {
+		            appBar._hidden = true;
+		            appBar._hiddenDueToFocusOut = null;
+		        }
+
 		        // If the user right-clicked while the appbar is visible, then we get a focusout (above) to hide it, and we come here and re-show it, but we shouldn't!
 		        // So, if this is happening very soon after a focusout, then don't show
-		        if (appBar._hiddenDueToFocusOut && Date.now() - appBar._hiddenDueToFocusOut < 200)
+		        if (appBar._hiddenDueToFocusOut && Date.now() - appBar._hiddenDueToFocusOut < 200) {
+		            appBar._hiddenDueToFocusOut = null;
 		            return;
+		        }
 
 		        if (appBar._hidden)
 		            appBar.show();
@@ -151,7 +164,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        // This is called if the appbar OR an element on the appbar (e.g. an appbarcommand) is removed; make sure it's the appbar
 		        if (event.target == this) {
-
 		            var appBar = this.winControl;
 
 		            // Remove our click listener from the appbar click eater
@@ -164,7 +176,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		            event.initCustomEvent("beforehide", true, true, {});
 		            appBar.dispatchEvent(event);
 
-                    // Unbind commands' appbarhiding listeners
+		            // Unbind commands' appbarhiding listeners
 		            for (var i = 0; i < appBar._commands.length; i++) {
 		                appBar.removeEventListener("beforehide", appBar._commands[i]._appBarHiding);
 		            }
@@ -172,9 +184,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		            // Remove our right-click listener from body
 		            $("body").unbind("contextmenu", appBar._rightClickHandler);
 
-                    // And remove our listener for when we're removed from the DOM
+		            // And remove our listener for when we're removed from the DOM
 		            appBar.$rootElement.unbind("DOMNodeRemoved", appBar._unload);
-                }
+		        }
 		    },
 
 
@@ -236,7 +248,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		            if (this._layout == "custom")
 		                return;
 
-                    // Unbind previous commands' appbarhiding listeners
+		            // Unbind previous commands' appbarhiding listeners
 		            for (var i = 0; i < commands.length; i++) {
 		                this.removeEventListener("beforehide", commands[i]._appBarHiding);
 		            }
@@ -444,6 +456,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
 		        //if (event.preventDefault)
 		        //	return;
+		        WinJS.UI._$appBarClickEater.show();
 
 		        // Give the appbar focus
 		        this.element.focus();
@@ -468,10 +481,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229668.aspx
 		    //
 		    hide: function () {
-		        // TODO: Animate
 
+		        // TODO: Animate
 		        if (this._disabled)
 		            return;
+
 		        // TODO: Generalize this oft-repeated pattern.
 		        var event = document.createEvent("CustomEvent");
 		        event.initCustomEvent("beforehide", true, true, {});

@@ -146,7 +146,6 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (that._resizeAnim) {
                     that._resizeAnim._cancel();
                 }
-
                 that._resizeAnim = WinJS.UI.Animation.createRepositionAnimation(elements);
                 that._disableAnimation = true;
                 that._positionItems();
@@ -355,6 +354,25 @@ WinJS.Namespace.define("WinJS.UI", {
                             that._lastSelectedItemIndex = itemIndex;
                         }
                     });
+
+                    // show pointerUp/pointerDown animation - but only if item is templated (if a function, then
+                    // caller is responsible for handling)
+                    // TODO (R3): mousedown on item and then move away from the item; item should return to full size while
+                    //            button remains pressed.  setCapture() proved to be a bit of a challenge to get working on
+                    //            FF, so ignoring for R1/R2.
+                    if (typeof this.itemTemplate !== "function") {
+
+                        var that = this;
+                        $(".win-item", $thisItemContainer).mousedown(function (event) {
+                            WinJS.UI.Animation.pointerDown(this);
+                            this.setCapture(false);
+                        });
+
+                        $(".win-item", $thisItemContainer).mouseup(function (event) {
+                            WinJS.UI.Animation.pointerUp(this);
+                            document.releaseCapture();
+                        });
+                    }
 
                     // If the user clicks on the item, call our oniteminvoked function
                     $(".win-item", $thisItemContainer).click(function () {
