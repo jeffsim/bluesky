@@ -443,7 +443,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		                items = [items];
 		            else {
 		                // Arrays must contain an object that implements ISelectionRange, which is NYI
-		                console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+		                for (var i = 0; i < items.length; i++) {
+		                    if (typeof items[i] != "number") {
+		                        console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+		                        break;
+		                    }
+		                }
 		            }
 
 		            // We want to get values from our listview's actual databound list.
@@ -580,7 +585,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._selectedItems.forEach(function (item) {
 		            // Our items' indices may have changed (e.g. due to list changing), so get updated index here.
 		            // TODO: Should Iselection listen to changes on _list._itemDataSource?
-		            var itemIndex = that._list._itemDataSource._list.indexOf(item);
+		            var itemIndex = that._list._itemDataSource._list.indexOf(item.data);
 		            indices.push(itemIndex);
 		        });
 		        return indices;

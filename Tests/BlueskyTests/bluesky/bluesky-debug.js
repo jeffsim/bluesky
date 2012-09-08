@@ -6532,15 +6532,6 @@ WinJS.Namespace.define("WinJS.Binding", {
 		{
 		    // ================================================================
 		    //
-		    // public override function: WinJS.Binding.FilteredList.indexOf
-		    //
-		    indexOf: function (item) {
-		        return this._filteredKeys.indexOf(item.key);
-		    },
-
-
-		    // ================================================================
-		    //
 		    // public override function: WinJS.Binding.FilteredList.length
 		    //
 		    length: {
@@ -7918,9 +7909,13 @@ WinJS.Namespace.define("WinJS.UI", {
 		            // If items is not an array, then convert it into one for simplicity
 		            if (items.length === undefined)
 		                items = [items];
-		            else {
-		                // Arrays must contain an object that implements ISelectionRange, which is NYI
-		                console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+		            else {		                // Arrays must contain an object that implements ISelectionRange, which is NYI
+		                for (var i = 0; i < items.length; i++) {
+		                    if (typeof items[i] != "number") {
+		                        console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+		                        break;
+		                    }
+		                }
 		            }
 
 		            // We want to get values from our listview's actual databound list.

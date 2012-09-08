@@ -60,15 +60,6 @@ WinJS.Namespace.define("WinJS.Binding", {
 		{
 		    // ================================================================
 		    //
-		    // public override function: WinJS.Binding.FilteredList.indexOf
-		    //
-		    indexOf: function (item) {
-		        return this._filteredKeys.indexOf(item.key);
-		    },
-
-
-		    // ================================================================
-		    //
 		    // public override function: WinJS.Binding.FilteredList.length
 		    //
 		    length: {
