@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Vsix xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010" Version="1.0.0">
+  <Identifier ID="webify.aaprio">
+    <Name>Webify</Name>
+    <Author>bluesky.io</Author>
+    <Version>1.0</Version>
+    <Description>Webify me!</Description>
+    <Locale>1033</Locale>
+    <SupportedProducts version="10.0">
+      <VisualStudio Version="10.0">
+        <Edition>Pro</Edition>
+        <Edition>Premium</Edition>
+        <Edition>Ultimate</Edition>
+        <Edition>VCSExpress</Edition>
+        <Edition>Express_All</Edition>
+      </VisualStudio>
+    </SupportedProducts>
+    <SupportedProducts version="11.0">
+      <VisualStudio Version="11.0">
+        <Edition>Pro</Edition>
+        <Edition>Premium</Edition>
+        <Edition>Ultimate</Edition>
+        <Edition>VCSExpress</Edition>
+        <Edition>Express_All</Edition>
+      </VisualStudio>
+    </SupportedProducts>
+    <SupportedFrameworkRuntimeEdition minversion="4.0" />
+  </Identifier>
+  <References />
+  <Content>
+    <Assembly AssemblyName="blueskyAddin">blueskyAddin.dll</Assembly>
+  </Content>
+</Vsix>
