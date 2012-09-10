@@ -257,7 +257,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             script.type = "text/javascript";
                             if (element.src) {
                                 toLoad++;
-                                script.src = element.src;
+                                var src = element.src;
+                                // Forcibly ignore cache
+                                // TODO: Should I?  Conversely; should I do the same for styles?
+                                var char = script.src.indexOf("?") > -1 ? "&" : "?";
+                                script.src = src;// + char + (new Date()).valueOf();
                                 script.onload = function () {
                                     if (--toLoad == 0)
                                         scriptsLoaded();
@@ -344,51 +348,51 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // TODO: How to do this to root page?  Probably just warn user? 
 
                         // Create the temporary DOM element ourselves and assign its HTML to the subpage's html.  Do this instead of appendChild to keep the scripts.
-                        // BTW: I *heart* John Resig: http://ejohn.org/blog/dom-documentfragments/
-                        // TODO (PERF): Doing this with jQuery to get the 'contents' function. Need to refactor using document.createElement("div")
-                        var tempDiv = $("<div></div>");
-                        tempDiv[0].innerHTML = pageInfo.response;
-
-                        // Create the temporary DOM fragment and copy the page's contents into it
-                        var tempDocument = document.createDocumentFragment();
-                        tempDiv.contents().get().forEach(function (child) {
-                            tempDocument.appendChild(child);
-                        });
+                        // see: http://stackoverflow.com/questions/7738046/what-for-to-use-document-implementation-createhtmldocument
+                        var tempDocument = document.implementation.createHTMLDocument("newPage").body;
+                        tempDocument.innerHTML = pageInfo.response;
 
                         // AT THIS POINT: 
                         //	1. tempDocument contains all of the contents of the loaded page as valid DOM element
                         //	2. None of the scripts or styles (local or referenced) have been loaded or executed yet
 
                         // NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage before
-                        //we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
-                        //
-                        // Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
-                        var $newPage = $(tempDiv);//.css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
-
-                        // Add the contents from the temporary document to our new div
-                        // NOTE: This will NOT execute any scripts in $newPage.
-                        $newPage.append(tempDocument);
+                        // we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
+                        var $newPage = $(tempDocument);
 
                         // Change local script paths to absolute
                         $("script", $newPage).each(function (i, script) {
                             if (script.src) {
                                 var scriptSrc = script.attributes.src.value;
-                                if (scriptSrc[0] != "/" && scriptSrc[0] != "\"" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
+                                if (scriptSrc[0] != "/" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
                                     var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
                                     script.src = thisPagePath + scriptSrc;
                                 }
                             }
+                            // Tag a timestamp to it as well to help IE's caching along
+                            var char = script.src.indexOf("?") > -1 ? "&" : "?";
+                            script.src += char + (new Date()).valueOf();
                         });
+
+                        // Keep track of all styles; we'll wait until they've loaded
+                        var stylesToWaitFor = [];
 
                         // Change local style paths to absolute
                         $("link", $newPage).each(function (i, style) {
                             if (style.href) {
                                 var styleHref = style.attributes.href.value;
-                                if (styleHref[0] != "/" && styleHref[0] != "\"" && styleHref.toLowerCase().indexOf("http:") != 0) {
+                                if (styleHref[0] != "/" && styleHref.toLowerCase().indexOf("http:") != 0) {
                                     var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
                                     style.href = thisPagePath + styleHref;
                                 }
                             }
+
+                            // Create a promise that we'll wait until the style has been loaded
+                            stylesToWaitFor.push(new WinJS.Promise(function (c) {
+                                style.onload = function () {
+                                    c();
+                                };
+                            }));
                         });
 
                         // For each script in the main document, remove any duplicates in the new page.
@@ -446,10 +450,13 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         //	$newPageScripts.appendTo($head);
 
-                        // We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
-                        // wait for the parentedPromise to be fulfilled...
+                        // Wait until all of the styles have been loaded...
+                        WinJS.Promise.join(stylesToWaitFor).then(function () {
 
-                        pageProcessCompletedCallback(pageInfo);
+                            // We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
+                            // wait for the parentedPromise to be fulfilled...
+                            pageProcessCompletedCallback(pageInfo);
+                        });
                     });
                 },
 

@@ -24,6 +24,26 @@ $(document).ready(function () {
     }
 });
 
+// ================================================================
+//
+// Add toStaticHTML
+//
+if (!window.toStaticHTML) {
+    var warnedStaticHTML = false;
+    window.toStaticHTML = function (html) {
+
+        if (!warnedStaticHTML) {
+            console.warn("bluesky: toStaticHTML is not present on non-IE browsers, and has been polyfilled to just return the source HTML; consider changing code for perf.  This warning will appear only once.");
+            warnedStaticHTML = true;
+        }
+
+        // this doesn't work: var sanitized = $(html).find("script,noscript,style,p").remove().end().html();
+        //return sanitized;
+        // TODO: Stub
+        return html;
+    }
+}
+
 if (!$.browser.msie) {
 
     // ================================================================
@@ -128,4 +148,102 @@ if (!Function.prototype.bind) {
 
         return fBound;
     };
+}
+
+
+// ================================================================
+//
+// Element.classList polyfill
+//
+//		This is present on all modern browsers except for IE9.
+//
+//		==> NOTE: THIS POLYFILL IS COMPLETELY UNTESTED.  IT'S FOR TESTING PURPOSES. <==
+//
+if (!Element.classList) {
+
+    var warnedPolyfill = false;
+    var polyFillClassList = function (element) {
+        return {
+            length: {
+                get: function () {
+                    if (this.className == "")
+                        return 0;
+                    var num = this.className.split(" ");
+                    return num + 1;
+                }
+            },
+
+            add: function (className) {
+                this._checkWarned();
+                $(element).addClass(className);
+            },
+
+            remove: function (className) {
+                this._checkWarned();
+                $(element).removeClass(className);
+            },
+
+            contains: function (className) {
+                this._checkWarned();
+                return $(element).hasClass(className);
+            },
+
+            toggle: function (className) {
+                this._checkWarned();
+                if (this.contains(className))
+                    this.remove(className);
+                else
+                    this.add(className);
+            },
+
+            _checkWarned: function () {
+                if (!warnedPolyfill) {
+                    console.warn("bluesky: Element.classList is not present in this browser, and has been polyfilled; consider changing code for perf.  This warning will appear only once.");
+                    warnedPolyfill = true;
+                }
+            }
+        }
+    }
+
+    Object.defineProperty(Element.prototype, "classList", {
+        get: function () {
+            return new polyFillClassList(this);
+        },
+        enumerable: true,
+        configurable: true
+    });
+}
+
+
+if (window.Node && !window.Node.removeNode) {
+    Node.prototype.removeNode = function (removeChildren) {
+        var self = this;
+        if (Boolean(removeChildren)) {
+            return this.parentNode.removeChild(self);
+        }
+        else {
+            var range = document.createRange();
+            range.selectNodeContents(self);
+            return this.parentNode.replaceChild(range.extractContents(), self);
+        }
+    }
+}
+
+
+// ================================================================
+//
+// Normalize indexedDB
+//
+if (!window.msIndexedDB) {
+    var warnedIndexedDB = false;
+    var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
+    window.msIndexedDB = function (html) {
+
+        // Warn the dev even if the current browser has it, since they may not realize they're going to have issues on IE9.
+        if (!warnedIndexedDB) {
+            console.warn("bluesky warning: this app uses indexedDB, but IE9 does not support it; this app may not run on IE9 as a result.");
+            warnedIndexedDB = true;
+        }
+        return indexedDB;
+    }
 }

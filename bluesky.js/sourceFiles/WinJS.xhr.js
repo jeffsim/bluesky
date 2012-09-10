@@ -50,33 +50,48 @@ WinJS.Namespace.define("WinJS", {
         var request;
         var requestType = options && options.type || "GET";
 
-        if (Bluesky.Settings.ProxyCrossDomainXhrCalls) {
-            // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
-            return new WinJS.Promise(function (onComplete, onError, onProgress) {
+        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-                var sourceUrl = options.url.toLowerCase();
+            var sourceUrl = options.url.toLowerCase();
 
-                var isLocal = sourceUrl.indexOf("http:") != 0;
+            // Determine if the url is local or not
+            // TODO: Check if it's same-domain and don't proxy if so
+            var isLocal = sourceUrl.indexOf("http:") != 0;
 
-                // convert appdata references to filepath
-                options.url = options.url.replace("ms-appx:///", "/");
+            // test for bypass 
+            var isBypass = Bluesky.Settings.ProxyBypassUrls.Contains(options.url);
 
-                // If this isn't a local request, then run it through the proxy to enable cross-domain
-                // TODO: Check if it's same-domain and don't proxy if so
-                // Use JSON format to support binary objects (xml format borks on them)
-                if (!isLocal) {
-                    options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
-								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=json&callback=?";
-                    var dataType = "jsonp";
-                }
+            // convert appdata references to filepath
+            options.url = options.url.replace("ms-appx:///", "/");
 
-                // TODO: Progress
-                $.ajax({
-                    url: options.url,
-                    data: options.data,
-                    dataType: dataType,
-                    success: function (data, textStatus, jqXHR) {
+            // If this isn't a local request, then run it through the proxy to enable cross-domain
+            if (isBypass) {
+
+                // if format and callback aren't set add each individually
+                if (sourceUrl.indexOf("format=") == -1)
+                    options.url.append("format=json");
+                if (sourceUrl.indexOf("callback=") == -1)
+                    options.url.append("callback=?");
+                var dataType = "jsonp";
+            }
+
+            // Determine if we should go through the YQL proxy
+            var isYql = !isLocal && !isBypass && Bluesky.Setting.ProxyCrossDomainXhrCalls;
+            if (isYql) {
+                options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
+                              "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
+                              "%22%3B&format=json&callback=?";
+                var dataType = "jsonp";
+            }
+
+            // TODO: Progress
+            $.ajax({
+                url: options.url,
+                data: options.data,
+                dataType: dataType,
+                success: function (data, textStatus, jqXHR) {
+                    if (isYql) {
                         // Since we're using YQL, data contains the XML Document with the result. Extract it
                         if (!data)
                             data = $.parseJSON(jqXHR.responseText);
@@ -105,89 +120,39 @@ WinJS.Namespace.define("WinJS", {
                             responseXML = data;
                             response = "";
                             responseText = "";
-                        } else{
+                        } else {
                             var response = data;
                             var responseText = data;
                             responseXML = null;
                         }
-
-                        onComplete({
-                            responseType: "",
-                            responseText: responseText,
-                            response: responseText,
-                            responseXML: responseXML,
-                            readyState: 4,
-                            DONE: 4,
-                            statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
-                            status: jqXHR.status
-                        });
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        // TODO: all return flags.
-                        // TODO: Support other errors
-                        if (jqXHR.status == 404)
-                            onError({ number: -2146697211 });	// Win8's 404 error code
-                        else
-                            onError({ number: 1 });	// TODO: What to do here?
-                    },
-                    type: requestType
-                });
-            });
-
-        } else {
-            // The following code is the first approach described above - use XMLHttpRequest which does not support cross-domain
-
-            return new WinJS.Promise(function (onComplete, onError, onProgress) {
-
-                // track if we've completed the request already
-                var requestCompleted = false;
-
-                // Create the request
-                request = new XMLHttpRequest();
-
-                // Listen for changes
-                request.onreadystatechange = function () {
-
-                    // If the request was cancelled, then just break out
-                    if (request.cancelled || requestCompleted)
-                        return;
-
-                    // Request completed?
-                    if (request.readyState == 4) {
-                        // Successful completion or failure?
-                        if (request.status >= 200 && request.status < 300) {
-                            onComplete(request);
-                        }
-                        else
-                            onError(request);
-
-                        // Ignore subsequent changes
-                        requestCompleted = true;
-                    } else {
-                        // Report progress (TODO: Promise doesn't support progress yet)
-                        // onProgress(request);
                     }
-                };
+                    else {
+                        // do.. stuff.. with the results.
+                        debugger;
+                    }
 
-                // Open the request
-                request.open(requestType, options.url, true);
-
-                // Add request headers
-                if (options.headers)
-                    options.headers.forEach(function (header) {
-                        request.setRequestHeader(key, header);
+                    onComplete({
+                        responseType: "",
+                        responseText: responseText,
+                        response: responseText,
+                        responseXML: responseXML,
+                        readyState: 4,
+                        DONE: 4,
+                        statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
+                        status: jqXHR.status
                     });
-
-                // Finally, send the request
-                request.send(options.data);
-            },
-
-			// Error handler
-			function () {
-			    request.cancelled = true;
-			    request.abort();
-			});
-        }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // TODO: all return flags.
+                    // TODO: Support other errors
+                    if (jqXHR.status == 404)
+                        onError({ number: -2146697211 });	// Win8's 404 error code
+                    else
+                        onError({ number: 1 });	// TODO: What to do here?
+                },
+                type: requestType
+            });
+        });
     }
 });
 

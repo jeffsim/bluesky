@@ -123,7 +123,8 @@ namespace buildBluesky
 			string output = "/* This Source Code Form is subject to the terms of the Mozilla Public\r\n";
 			output += "* License, v. 2.0. If a copy of the MPL was not distributed with this\r\n";
 			output += "* file, You can obtain one at http://mozilla.org/MPL/2.0/. */\r\n\r\n";
-			output += "// Copyright 2012, Jeff Simon (www.bluesky.io).  Date: 7/23/2012\r\n\r\n";
+            output += "// Copyright 2012, Jeff Simon (www.bluesky.io).  Date: 9/8/2012\r\n";
+            output += "// Please contact me at jeffsim@bluesky.io with any questions, ideas, or feedback about bluesky.\r\n\r\n";
 			return output;
 		}
 

@@ -263,6 +263,21 @@ WinJS.Namespace.define("WinJS.Binding", {
                 return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
             },
 
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.createSorted
+            //
+            //		MSDN: TODO
+            //
+            //      NYI NYI NYI: Stub function that does not actually sort
+            //
+            createSorted: function (sorterFunction) {
+
+                return new WinJS.Binding.FilteredListProjection(this, function (i) { return true; });
+            },
+
+
             // ================================================================
             //
             // public function: WinJS.Binding._ListBase.addEventListener

@@ -36,11 +36,10 @@ if (!window.toStaticHTML) {
             console.warn("bluesky: toStaticHTML is not present on non-IE browsers, and has been polyfilled to just return the source HTML; consider changing code for perf.  This warning will appear only once.");
             warnedStaticHTML = true;
         }
-
-        // this doesn't work: var sanitized = $(html).find("script,noscript,style,p").remove().end().html();
-        //return sanitized;
-        // TODO: Stub
-        return html;
+        var temp = document.implementation.createHTMLDocument().body;
+        temp.innerHTML = html;
+        $(root).find("script, style").remove();
+        return root.innerHTML;
     }
 }
 
@@ -234,20 +233,16 @@ if (window.Node && !window.Node.removeNode) {
 //
 // Normalize indexedDB
 //
-//      TODO: Warn on reference if not supported
-//
 if (!window.msIndexedDB) {
     var warnedIndexedDB = false;
     var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
     window.msIndexedDB = function (html) {
 
-        if (indexedDB)
-            return indexedDB;
-        // No indexedDb in this browser; have we warned yet?
+        // Warn the dev even if the current browser has it, since they may not realize they're going to have issues on IE9.
         if (!warnedIndexedDB) {
-            console.error("bluesky warning: this browser does not support indexedDB, but the app uses it.");
+            console.warn("bluesky warning: this app uses indexedDB, but IE9 does not support it; this app may not run on IE9 as a result.");
             warnedIndexedDB = true;
         }
-        return null;
+        return indexedDB;
     }
 }

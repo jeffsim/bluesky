@@ -2,7 +2,8 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Copyright 2012, Jeff Simon (www.bluesky.io).  Date: 7/23/2012
+// Copyright 2012, Jeff Simon (www.bluesky.io).  Date: 9/8/2012
+// Please contact me at jeffsim@bluesky.io with any questions, ideas, or feedback about bluesky.
 
 "use strict";
 
@@ -420,33 +421,48 @@ WinJS.Namespace.define("WinJS", {
         var request;
         var requestType = options && options.type || "GET";
 
-        if (Bluesky.Settings.ProxyCrossDomainXhrCalls) {
-            // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
-            return new WinJS.Promise(function (onComplete, onError, onProgress) {
+        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-                var sourceUrl = options.url.toLowerCase();
+            var sourceUrl = options.url.toLowerCase();
 
-                var isLocal = sourceUrl.indexOf("http:") != 0;
+            // Determine if the url is local or not
+            // TODO: Check if it's same-domain and don't proxy if so
+            var isLocal = sourceUrl.indexOf("http:") != 0;
 
-                // convert appdata references to filepath
-                options.url = options.url.replace("ms-appx:///", "/");
+            // test for bypass 
+            var isBypass = Bluesky.Settings.ProxyBypassUrls.Contains(options.url);
 
-                // If this isn't a local request, then run it through the proxy to enable cross-domain
-                // TODO: Check if it's same-domain and don't proxy if so
-                // Use JSON format to support binary objects (xml format borks on them)
-                if (!isLocal) {
-                    options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
-								  "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
-								  "%22%3B&format=json&callback=?";
-                    var dataType = "jsonp";
-                }
+            // convert appdata references to filepath
+            options.url = options.url.replace("ms-appx:///", "/");
 
-                // TODO: Progress
-                $.ajax({
-                    url: options.url,
-                    data: options.data,
-                    dataType: dataType,
-                    success: function (data, textStatus, jqXHR) {
+            // If this isn't a local request, then run it through the proxy to enable cross-domain
+            if (isBypass) {
+
+                // if format and callback aren't set add each individually
+                if (sourceUrl.indexOf("format=") == -1)
+                    options.url.append("format=json");
+                if (sourceUrl.indexOf("callback=") == -1)
+                    options.url.append("callback=?");
+                var dataType = "jsonp";
+            }
+
+            // Determine if we should go through the YQL proxy
+            var isYql = !isLocal && !isBypass && Bluesky.Setting.ProxyCrossDomainXhrCalls;
+            if (isYql) {
+                options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
+                              "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
+                              "%22%3B&format=json&callback=?";
+                var dataType = "jsonp";
+            }
+
+            // TODO: Progress
+            $.ajax({
+                url: options.url,
+                data: options.data,
+                dataType: dataType,
+                success: function (data, textStatus, jqXHR) {
+                    if (isYql) {
                         // Since we're using YQL, data contains the XML Document with the result. Extract it
                         if (!data)
                             data = $.parseJSON(jqXHR.responseText);
@@ -475,89 +491,39 @@ WinJS.Namespace.define("WinJS", {
                             responseXML = data;
                             response = "";
                             responseText = "";
-                        } else{
+                        } else {
                             var response = data;
                             var responseText = data;
                             responseXML = null;
                         }
-
-                        onComplete({
-                            responseType: "",
-                            responseText: responseText,
-                            response: responseText,
-                            responseXML: responseXML,
-                            readyState: 4,
-                            DONE: 4,
-                            statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
-                            status: jqXHR.status
-                        });
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        // TODO: all return flags.
-                        // TODO: Support other errors
-                        if (jqXHR.status == 404)
-                            onError({ number: -2146697211 });	// Win8's 404 error code
-                        else
-                            onError({ number: 1 });	// TODO: What to do here?
-                    },
-                    type: requestType
-                });
-            });
-
-        } else {
-            // The following code is the first approach described above - use XMLHttpRequest which does not support cross-domain
-
-            return new WinJS.Promise(function (onComplete, onError, onProgress) {
-
-                // track if we've completed the request already
-                var requestCompleted = false;
-
-                // Create the request
-                request = new XMLHttpRequest();
-
-                // Listen for changes
-                request.onreadystatechange = function () {
-
-                    // If the request was cancelled, then just break out
-                    if (request.cancelled || requestCompleted)
-                        return;
-
-                    // Request completed?
-                    if (request.readyState == 4) {
-                        // Successful completion or failure?
-                        if (request.status >= 200 && request.status < 300) {
-                            onComplete(request);
-                        }
-                        else
-                            onError(request);
-
-                        // Ignore subsequent changes
-                        requestCompleted = true;
-                    } else {
-                        // Report progress (TODO: Promise doesn't support progress yet)
-                        // onProgress(request);
                     }
-                };
+                    else {
+                        // do.. stuff.. with the results.
+                        debugger;
+                    }
 
-                // Open the request
-                request.open(requestType, options.url, true);
-
-                // Add request headers
-                if (options.headers)
-                    options.headers.forEach(function (header) {
-                        request.setRequestHeader(key, header);
+                    onComplete({
+                        responseType: "",
+                        responseText: responseText,
+                        response: responseText,
+                        responseXML: responseXML,
+                        readyState: 4,
+                        DONE: 4,
+                        statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
+                        status: jqXHR.status
                     });
-
-                // Finally, send the request
-                request.send(options.data);
-            },
-
-			// Error handler
-			function () {
-			    request.cancelled = true;
-			    request.abort();
-			});
-        }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // TODO: all return flags.
+                    // TODO: Support other errors
+                    if (jqXHR.status == 404)
+                        onError({ number: -2146697211 });	// Win8's 404 error code
+                    else
+                        onError({ number: 1 });	// TODO: What to do here?
+                },
+                type: requestType
+            });
+        });
     }
 });
 
@@ -5847,6 +5813,21 @@ WinJS.Namespace.define("WinJS.Binding", {
                 return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
             },
 
+
+            // ================================================================
+            //
+            // public function: WinJS.Binding._ListBase.createSorted
+            //
+            //		MSDN: TODO
+            //
+            //      NYI NYI NYI: Stub function that does not actually sort
+            //
+            createSorted: function (sorterFunction) {
+
+                return new WinJS.Binding.FilteredListProjection(this, function (i) { return true; });
+            },
+
+
             // ================================================================
             //
             // public function: WinJS.Binding._ListBase.addEventListener
@@ -10621,7 +10602,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             script.type = "text/javascript";
                             if (element.src) {
                                 toLoad++;
-                                script.src = element.src;
+                                var src = element.src;
+                                // Forcibly ignore cache
+                                // TODO: Should I?  Conversely; should I do the same for styles?
+                                var char = script.src.indexOf("?") > -1 ? "&" : "?";
+                                script.src = src;// + char + (new Date()).valueOf();
                                 script.onload = function () {
                                     if (--toLoad == 0)
                                         scriptsLoaded();
@@ -10708,51 +10693,51 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // TODO: How to do this to root page?  Probably just warn user? 
 
                         // Create the temporary DOM element ourselves and assign its HTML to the subpage's html.  Do this instead of appendChild to keep the scripts.
-                        // BTW: I *heart* John Resig: http://ejohn.org/blog/dom-documentfragments/
-                        // TODO (PERF): Doing this with jQuery to get the 'contents' function. Need to refactor using document.createElement("div")
-                        var tempDiv = $("<div></div>");
-                        tempDiv[0].innerHTML = pageInfo.response;
-
-                        // Create the temporary DOM fragment and copy the page's contents into it
-                        var tempDocument = document.createDocumentFragment();
-                        tempDiv.contents().get().forEach(function (child) {
-                            tempDocument.appendChild(child);
-                        });
+                        // see: http://stackoverflow.com/questions/7738046/what-for-to-use-document-implementation-createhtmldocument
+                        var tempDocument = document.implementation.createHTMLDocument("newPage").body;
+                        tempDocument.innerHTML = pageInfo.response;
 
                         // AT THIS POINT: 
                         //	1. tempDocument contains all of the contents of the loaded page as valid DOM element
                         //	2. None of the scripts or styles (local or referenced) have been loaded or executed yet
 
                         // NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage before
-                        //we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
-                        //
-                        // Note: Need to use visiblity:hidden/display:block so that any child element's dimensions are realized (e.g. listitems in a listview).
-                        var $newPage = $(tempDiv);//.css({ 'position': 'absolute', 'visibility': 'hidden', 'display': 'block' });
-
-                        // Add the contents from the temporary document to our new div
-                        // NOTE: This will NOT execute any scripts in $newPage.
-                        $newPage.append(tempDocument);
+                        // we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
+                        var $newPage = $(tempDocument);
 
                         // Change local script paths to absolute
                         $("script", $newPage).each(function (i, script) {
                             if (script.src) {
                                 var scriptSrc = script.attributes.src.value;
-                                if (scriptSrc[0] != "/" && scriptSrc[0] != "\"" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
+                                if (scriptSrc[0] != "/" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
                                     var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
                                     script.src = thisPagePath + scriptSrc;
                                 }
                             }
+                            // Tag a timestamp to it as well to help IE's caching along
+                            var char = script.src.indexOf("?") > -1 ? "&" : "?";
+                            script.src += char + (new Date()).valueOf();
                         });
+
+                        // Keep track of all styles; we'll wait until they've loaded
+                        var stylesToWaitFor = [];
 
                         // Change local style paths to absolute
                         $("link", $newPage).each(function (i, style) {
                             if (style.href) {
                                 var styleHref = style.attributes.href.value;
-                                if (styleHref[0] != "/" && styleHref[0] != "\"" && styleHref.toLowerCase().indexOf("http:") != 0) {
+                                if (styleHref[0] != "/" && styleHref.toLowerCase().indexOf("http:") != 0) {
                                     var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
                                     style.href = thisPagePath + styleHref;
                                 }
                             }
+
+                            // Create a promise that we'll wait until the style has been loaded
+                            stylesToWaitFor.push(new WinJS.Promise(function (c) {
+                                style.onload = function () {
+                                    c();
+                                };
+                            }));
                         });
 
                         // For each script in the main document, remove any duplicates in the new page.
@@ -10810,10 +10795,13 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         //	$newPageScripts.appendTo($head);
 
-                        // We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
-                        // wait for the parentedPromise to be fulfilled...
+                        // Wait until all of the styles have been loaded...
+                        WinJS.Promise.join(stylesToWaitFor).then(function () {
 
-                        pageProcessCompletedCallback(pageInfo);
+                            // We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
+                            // wait for the parentedPromise to be fulfilled...
+                            pageProcessCompletedCallback(pageInfo);
+                        });
                     });
                 },
 
@@ -15600,7 +15588,68 @@ var Bluesky = {
 		//
 		//		We default to true (do proxy through YQL) to enable fast bring-up of Win8 apps in bluesky.
 		//
-		ProxyCrossDomainXhrCalls: true
+	    ProxyCrossDomainXhrCalls: true,
+
+
+	    // ================================================================
+	    //
+	    // Setting object: ProxyBypassUrls
+	    //
+	    //      Used to specify specific Urls that should not go through the YQL proxy.
+	    //
+	    //      TODO: I believe Win8 has a parallel object.  Move to that one.
+        //
+	    ProxyBypassUrls: {
+
+	        // ================================================================
+	        //
+	        // public function: Bluesky.Settings.ProxyBypassUrls.add
+	        //
+	        add: function(urls) {
+	            if (!urls)
+	                return;
+	            if (typeof urls.length === undefined)
+	                urls = [urls];
+	            urls.forEach(function(url) {
+	                Bluesky.Settings.ProxyBypassUrls.urls.push(url.toLowerCase);
+	            });
+	        },
+
+
+	        // ================================================================
+	        //
+	        // public function: Bluesky.Settings.ProxyBypassUrls.clear
+	        //
+	        clear: function () {
+	            this.urls = [];
+	        },
+
+
+	        // ================================================================
+	        //
+	        // public function: Bluesky.Settings.ProxyBypassUrls.contains
+	        //
+	        contains: function (url) {
+
+	            var result = false;
+	            var sourceUrl = url.toLowerCase();
+	            var urls = Bluesky.Settings.ProxyBypassUrls.urls;
+	            for (var i = 0; i < urls.length; i++) {
+
+	                if (sourceUrl.match(urls[i]))
+	                    return true;
+	            }
+
+	            return false;
+	        },
+
+
+	        // ================================================================
+	        //
+	        // public member: Bluesky.Settings.ProxyBypassUrls.urls
+	        //
+	        urls: []
+	    }
 	}
 };
 
