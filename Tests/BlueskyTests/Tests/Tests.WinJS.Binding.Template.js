@@ -53,7 +53,7 @@ testHarness.addTestFile("WinJS.Binding.Template Tests", {
                 // The Template has been processed - we can now use it to bind data into and render that templatized/bound data into the test frame
                 var renderPromises = [];
                 people.forEach(function (person) {
-                    renderPromises.push(templateControl.render(person, renderTargetDiv).renderComplete);
+                    renderPromises.push(templateControl.render(person, renderTargetDiv));
                 });
 
                 // Wait until all templates have been rendered
@@ -127,7 +127,7 @@ testHarness.addTestFile("WinJS.Binding.Template Tests", {
             // The Template has been processed - we can now use it to bind data into and render that templatized/bound data into the test frame
             var renderPromises = [];
             people.forEach(function (person) {
-                renderPromises.push(templateControl.render(person, renderTargetDiv).renderComplete);
+                renderPromises.push(templateControl.render(person, renderTargetDiv));
             });
 
             // Wait until all templates have been rendered
@@ -199,7 +199,7 @@ testHarness.addTestFile("WinJS.Binding.Template Tests", {
             // The Template has been processed - we can now use it to bind data into and render that templatized/bound data into the test frame
             var renderPromises = [];
             people.forEach(function (person) {
-                renderPromises.push(templateControl.render(person, renderTargetDiv).renderComplete);
+                renderPromises.push(templateControl.render(person, renderTargetDiv));
             });
 
             // Wait until all templates have been rendered
@@ -274,7 +274,7 @@ testHarness.addTestFile("WinJS.Binding.Template Tests", {
                 });
             });
 
-            var renderPromise = templateControl.renderItem(itemPromise).renderComplete.then(function (renderedTemplate) {
+            var renderPromise = templateControl.renderItem(itemPromise).then(function (renderedTemplate) {
                 // At this point, renderedTemplate should have the rendered and bound data, although it isn't in the DOM anywhere.
 
                 // verify template was rendered

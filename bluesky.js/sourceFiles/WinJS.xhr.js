@@ -56,7 +56,10 @@ WinJS.Namespace.define("WinJS", {
 
                 var sourceUrl = options.url.toLowerCase();
 
-                var isLocal = sourceUrl.indexOf("http") != 0;
+                var isLocal = sourceUrl.indexOf("http:") != 0;
+
+                // convert appdata references to filepath
+                options.url = options.url.replace("ms-appx:///", "/");
 
                 // If this isn't a local request, then run it through the proxy to enable cross-domain
                 // TODO: Check if it's same-domain and don't proxy if so

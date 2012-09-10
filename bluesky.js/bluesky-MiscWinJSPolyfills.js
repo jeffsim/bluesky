@@ -228,3 +228,26 @@ if (window.Node && !window.Node.removeNode) {
         }
     }
 }
+
+
+// ================================================================
+//
+// Normalize indexedDB
+//
+//      TODO: Warn on reference if not supported
+//
+if (!window.msIndexedDB) {
+    var warnedIndexedDB = false;
+    var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
+    window.msIndexedDB = function (html) {
+
+        if (indexedDB)
+            return indexedDB;
+        // No indexedDb in this browser; have we warned yet?
+        if (!warnedIndexedDB) {
+            console.error("bluesky warning: this browser does not support indexedDB, but the app uses it.");
+            warnedIndexedDB = true;
+        }
+        return null;
+    }
+}

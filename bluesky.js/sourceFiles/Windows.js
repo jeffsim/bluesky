@@ -78,3 +78,14 @@ WinJS.Namespace.define("Windows", {
     },
 
 });
+
+
+// ================================================================
+//
+// Add MSApp.execUnsafeLocalFunction
+//
+//      TODO (Cleanup): Move this to dedicated file
+//
+WinJS.Namespace.define("MSApp", {
+    execUnsafeLocalFunction: function (c) { return c(); }
+});

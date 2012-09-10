@@ -426,7 +426,10 @@ WinJS.Namespace.define("WinJS", {
 
                 var sourceUrl = options.url.toLowerCase();
 
-                var isLocal = sourceUrl.indexOf("http") != 0;
+                var isLocal = sourceUrl.indexOf("http:") != 0;
+
+                // convert appdata references to filepath
+                options.url = options.url.replace("ms-appx:///", "/");
 
                 // If this isn't a local request, then run it through the proxy to enable cross-domain
                 // TODO: Check if it's same-domain and don't proxy if so
@@ -731,6 +734,17 @@ WinJS.Namespace.define("Windows", {
         }
     },
 
+});
+
+
+// ================================================================
+//
+// Add MSApp.execUnsafeLocalFunction
+//
+//      TODO (Cleanup): Move this to dedicated file
+//
+WinJS.Namespace.define("MSApp", {
+    execUnsafeLocalFunction: function (c) { return c(); }
 });
 
 
@@ -7296,11 +7310,11 @@ WinJS.Namespace.define("WinJS.Binding", {
 //
 WinJS.Namespace.define("WinJS.Binding", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.Binding.Template
-	//
-	Template: WinJS.Class.define(
+    // ================================================================
+    //
+    // public Object: WinJS.Binding.Template
+    //
+    Template: WinJS.Class.define(
 
 		// ================================================================
 		//
@@ -7310,144 +7324,132 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		function (element, options) {
 
-			// If no element was specified then create an empty div
-			if (!element)
-				element = $("<div></div>")[0];	// TODO: Perf - remove all of these extraneous jQuery wrappings wherever possible
+		    // If no element was specified then create an empty div
+		    if (!element)
+		        element = $("<div></div>")[0];	// TODO: Perf - remove all of these extraneous jQuery wrappings wherever possible
 
-			// Remember our element
-			this.element = element;
+		    // Remember our element
+		    this.element = element;
 
-			// Hide the template
-			$(this.element).hide();
+		    // Hide the template
+		    $(this.element).hide();
 
-			// Set options if specified
-			if (options)
-				WinJS.UI.setOptions(this, options);
+		    // Set options if specified
+		    if (options)
+		        WinJS.UI.setOptions(this, options);
 
-			// TODO: Implement enableRecycling option; seems like a performance tweak, so I've deferred working on it.
-			// TODO: What's up with "Template.render.value" in the Win8 docs?  I don't understand it.  Seems almost like doc error,
-			//		 so I'm holding off trying to understand it until the next rev of the win8 sdk docs.
+		    // TODO: Implement enableRecycling option; seems like a performance tweak, so I've deferred working on it.
+		    // TODO: What's up with "Template.render.value" in the Win8 docs?  I don't understand it.  Seems almost like doc error,
+		    //		 so I'm holding off trying to understand it until the next rev of the win8 sdk docs.
 		},
 
 		// WinJS.Binding.Template members
 		{
-			// ================================================================
-			//
-			// public function: WinJS.Binding.Template.render
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229724.aspx
-			//
-			render: function (dataContext, container) {
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.Template.render
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229724.aspx
+		    //
+		    render: function (dataContext, container) {
 
-				/*DEBUG*/
-				// Parameter validation
-				if (!dataContext)
-					console.error("WinJS.Binding.Template.render: Undefined or null element dataContext");
-				/*ENDDEBUG*/
+		        /*DEBUG*/
+		        // Parameter validation
+		        if (!dataContext)
+		            console.error("WinJS.Binding.Template.render: Undefined or null element dataContext");
+		        /*ENDDEBUG*/
 
-				// Return a promise that we'll do the binding.
+		        // Return a promise that we'll do the binding.
 
-				// TODO: I'm doing "that = this" all over the place because I don't know the js pattern to get "this" to
-				// be "this Template" in the Promise below.  I suspect there's some bind (js bind, not winjs bind)-related 
-				// solution.  Once known, scour the code and remove the "that = this"'s where possible.
-				var that = this;
+		        // TODO: I'm doing "that = this" all over the place because I don't know the js pattern to get "this" to
+		        // be "this Template" in the Promise below.  I suspect there's some bind (js bind, not winjs bind)-related 
+		        // solution.  Once known, scour the code and remove the "that = this"'s where possible.
+		        var that = this;
 
-				var bindElementToData = function (templateElement, data) {
+		        var bindElementToData = function (templateElement, data) {
 
-					// If the container doesn't exist then create a new div.  Wrap it in jQuery for simplicity as well
-					var $container = $(container || "<div></div>");
+		            // If the container doesn't exist then create a new div.  Wrap it in jQuery for simplicity as well
+		            var $container = $(container || "<div></div>");
 
-					// Add the win-template class to the target
-					$container.addClass("win-template");
+		            // Add the win-template class to the target
+		            $container.addClass("win-template");
 
-					// Clone this template prior to populating it
-					var $template = $(templateElement).clone();
+		            // Clone this template prior to populating it
+		            var $template = $(templateElement).clone();
 
-				    // Give the cloned element a unique identifier
-					blueskyUtils.setDOMElementUniqueId($template[0]);
+		            // Give the cloned element a unique identifier
+		            blueskyUtils.setDOMElementUniqueId($template[0]);
 
-					// Populate the data into the cloned template
-					return WinJS.Binding.processAll($template, data).then(function () {
+		            // Populate the data into the cloned template
+		            return WinJS.Binding.processAll($template, data).then(function () {
 
-						// Add the now-populated cloned template to the target container
-						$container.append($template.children());
-						return ($container[0]);
-					});
-				}
+		                // Add the now-populated cloned template to the target container
+		                $container.append($template.children());
+		                return ($container[0]);
+		            });
+		        }
 
-				// Create the promise that will be fulfilled once the element is ready (incl. possibly loading from remote href)
-				var elementReady = new WinJS.Promise(function (onComplete) {
+		        // Create the promise that will be fulfilled once the element is ready (incl. possibly loading from remote href)
+		        var elementReady = new WinJS.Promise(function (onComplete) {
 
-					// If href is specified then we need to load it
-					if (that.href) {
+		            // If href is specified then we need to load it
+		            if (that.href) {
 
-						// Use Ajax to get the page's contents
-						// TODO: Use WinJS.xhr when that's implemented
-						$.get(that.href, function (response) {
-							onComplete('<div data-win-control="WinJS.Binding.Template">' + response + '</div>');
-						});
-					} else {
-						// No href specified; render using our element
-						onComplete(that.element);
-					}
-				});
+		                // Use Ajax to get the page's contents
+		                // TODO: Use WinJS.xhr when that's implemented
+		                $.get(that.href, function (response) {
+		                    onComplete('<div data-win-control="WinJS.Binding.Template">' + response + '</div>');
+		                });
+		            } else {
+		                // No href specified; render using our element
+		                onComplete(that.element);
+		            }
+		        });
 
-				// Before processing, check if the caller specified a timeout.  Per the win8 docs, a value of 0 =
-				// no delay, a negative value is an msSetImmediate, and positive is a timeout.  I'm assuming that
-				// msSetImmediate just does a yield, in which case it's synonymous with timeout=0.  *technically* they're 
-				// different in that timeout=0 doesn't require the yield; but I don't see harm in the extraneous yield.
-				var timeoutAmount = Math.max(0, that.processTimeout || 0);
-				var renderComplete = WinJS.Promise.timeout(timeoutAmount)
+		        var renderComplete = WinJS.Promise.as(dataContext).then(function (data) {
+		            return elementReady.then(function (element) {
+		                return bindElementToData(element, data);
+		            });
+		        });
 
-					// let the itemPromise fulfill before continuing
-					.then(function () {
-						return dataContext;
-					})
-					.then(function (data) {
+		        // Before processing, check if the caller specified a timeout.  Per the win8 docs, a value of 0 =
+		        // no delay, a negative value is an msSetImmediate, and positive is a timeout.
+		        if (!that.processTimeout) {
+		            return renderComplete;
+		        } else {
 
-						// Data is ready; wait until the element is ready
-						// TODO: These nested then's and Promises are ugly as all get-out.  Refactor.
-						return elementReady
-							.then(function (element) {
+		            // Because bluesky's msSetImmediate is just a timeout(0), we can do this
+		            return WinJS.Promise.timeout(Math.max(0, that.processTimeout)).then(function () {
 
-								// Finally, do the render
-								return bindElementToData(element, data).then(function (result) {
-									return result;
-								});
-							})
-					});
-
-				// Return an object with the element and the renderComplete promise
-				return {
-					element: this.element,
-					renderComplete: renderComplete
-				};
-			},
+		                return renderComplete;
+		            });
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.Template.renderItem
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701308.aspx
-			//
-			//		Note: apparently the only usage of renderItem on the internet: http://blogs.msdn.com/b/eternalcoding/archive/2012/04/23/how-to-cook-a-complete-windows-8-application-with-html5-css3-and-javascript-in-a-week-day-2.aspx
-			//
-			renderItem: function (item, container) {
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.Template.renderItem
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701308.aspx
+		    //
+		    //		Note: apparently the only usage of renderItem on the internet: http://blogs.msdn.com/b/eternalcoding/archive/2012/04/23/how-to-cook-a-complete-windows-8-application-with-html5-css3-and-javascript-in-a-week-day-2.aspx
+		    //
+		    renderItem: function (item, container) {
 
-				/*DEBUG*/
-				// Parameter validation
-				if (!item)
-					console.error("WinJS.Binding.Template.renderItem: Undefined or null element item");
-				/*ENDDEBUG*/
+		        /*DEBUG*/
+		        // Parameter validation
+		        if (!item)
+		            console.error("WinJS.Binding.Template.renderItem: Undefined or null element item");
+		        /*ENDDEBUG*/
 
-				// Win8 expects item to be a Promise that returns {data} - A promise to return that data is passed to render.
-				var data = item.then(function (i) {
-					return i.data;
-				});
+		        // Win8 expects item to be a Promise that returns {data} - A promise to return that data is passed to render.
+		        var data = item.then(function (i) {
+		            return i.data;
+		        });
 
-				return this.render(data, container);
-			}
+		        return this.render(data, container);
+		    }
 		})
 });
 
@@ -7911,7 +7913,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		                items = [items];
 		            else {
 		                // Arrays must contain an object that implements ISelectionRange, which is NYI
-		                console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+		                for (var i = 0; i < items.length; i++) {
+		                    if (typeof items[i] != "number") {
+		                        console.error("Passing an array of objects to WinJS.UI.ISelection.add, but ISelectionRange is NYI");
+		                        break;
+		                    }
+		                }
 		            }
 
 		            // We want to get values from our listview's actual databound list.
@@ -8048,7 +8055,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._selectedItems.forEach(function (item) {
 		            // Our items' indices may have changed (e.g. due to list changing), so get updated index here.
 		            // TODO: Should Iselection listen to changes on _list._itemDataSource?
-		            var itemIndex = that._list._itemDataSource._list.indexOf(item);
+		            var itemIndex = that._list._itemDataSource._list.indexOf(item.data);
 		            indices.push(itemIndex);
 		        });
 		        return indices;
@@ -10062,279 +10069,282 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
 //
 WinJS.Namespace.define("WinJS.UI.Fragments", {
 
-	// ================================================================
-	//
-	// public function: WinJS.UI.Fragments.render
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701605.aspx
-	//
-	render: function (href, element) {
+    // ================================================================
+    //
+    // public function: WinJS.UI.Fragments.render
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701605.aspx
+    //
+    render: function (href, element) {
 
-		return WinJS.UI.Fragments._render(href, element, false);
-	},
+        return WinJS.UI.Fragments._render(href, element, false);
+    },
 
 
-	// ================================================================
-	//
-	// public function: WinJS.UI.Fragments.renderCopy
-	//
-	//		MSDN: TODO
-	//
-	renderCopy: function (href, element) {
+    // ================================================================
+    //
+    // public function: WinJS.UI.Fragments.renderCopy
+    //
+    //		MSDN: TODO
+    //
+    renderCopy: function (href, element) {
 
-		return WinJS.UI.Fragments._render(href, element, true);
-	},
+        return WinJS.UI.Fragments._render(href, element, true);
+    },
 
 
-	// ================================================================
-	//
-	// private function: WinJS.UI.Fragments._render
-	//
-	_render: function (href, element, addToCache) {
+    // ================================================================
+    //
+    // private function: WinJS.UI.Fragments._render
+    //
+    _render: function (href, element, addToCache) {
 
-		// If already in the cache then just return the current page.  
-		if (this._cacheStore[href])
-			return this._getDocumentFragmentFromCache(href, element);
+        // If already in the cache then just return a clone of the cached page.  
+        if (this._cacheStore[href])
+            return this._getDocumentFragmentFromCache(href, element);
 
-		// Load (and process) the fragment into the specified DOM element
-		return this._loadAndProcessHrefIntoDocumentFragment(href).then(function (docFrag) {
+        // Load (and process) the fragment into the specified DOM element
+        return this._loadAndProcessHrefIntoDocumentFragment(href).then(function (docFrag) {
 
-			// At this point, docFrag contains the contents of the page at "href" (and scripts/styles have been moved up into the head).
-			// If caller specifed an element, then move the document fragment into it and return the element; otherwise just return the fragment
+            // At this point, docFrag contains the contents of the page at "href" (and scripts/styles have been moved up into the head).
+            // If caller specifed an element, then move the document fragment into it and return the element; otherwise just return the fragment
 
-			if (addToCache)
-				WinJS.UI.Fragments._cacheStore[href] = docFrag.cloneNode(true);
+            if (addToCache)
+                WinJS.UI.Fragments._cacheStore[href] = docFrag.cloneNode(true);
 
-			if (!element)
-				return docFrag;
+            if (!element)
+                return docFrag;
 
-			element.appendChild(docFrag);
+            element.appendChild(docFrag);
 
-			return element;
-		});
-	},
+            return element;
+        });
+    },
 
 
-	// ================================================================
-	//
-	// private function: WinJS.UI.Fragments._loadAndProcessHrefIntoDocumentFragment
-	//
-	_loadAndProcessHrefIntoDocumentFragment: function (href) {
+    // ================================================================
+    //
+    // private function: WinJS.UI.Fragments._loadAndProcessHrefIntoDocumentFragment
+    //
+    _loadAndProcessHrefIntoDocumentFragment: function (href) {
 
-		var that = this;
-		return new WinJS.Promise(function (fragmentLoadedCallback) {
+        var that = this;
+        return new WinJS.Promise(function (fragmentLoadedCallback) {
 
-			// TODO: Use WinJS.xhr when that's implemented
-			// TODO: Error handling
+            // TODO: Use WinJS.xhr when that's implemented
+            // TODO: Error handling
 
-			// First, load the fragment's text
-			$.get(href, function (response) {
+            // First, load the fragment's text
+            $.get(href, function (response) {
 
-				// Second, Process the loaded page into a document fragment
-				that._processFragment(response).then(function (docFrag) {
+                // Second, Process the loaded page into a document fragment
+                that._processFragment(response).then(function (docFrag) {
 
-					// Third, Notify listeners that the fragment has been loaded (and processed) into a document fragment
-					fragmentLoadedCallback(docFrag);
-				});
-			});
-		});
-	},
+                    // Third, Notify listeners that the fragment has been loaded (and processed) into a document fragment
+                    fragmentLoadedCallback(docFrag);
+                });
+            });
+        });
+    },
 
 
-	// TODO: Make Page.render use Fragment.render.
+    // TODO: Make Page.render use Fragment.render.
 
 
-	// ================================================================
-	//
-	// private function: WinJS.UI.Fragments._processFragment
-	//
-	_processFragment: function (fragmentText) {
+    // ================================================================
+    //
+    // private function: WinJS.UI.Fragments._processFragment
+    //
+    _processFragment: function (fragmentText) {
 
-		return new WinJS.Promise(function (fragmentProcessedCallback) {
+        return new WinJS.Promise(function (fragmentProcessedCallback) {
 
-			// Create a temporary DOM element ourselves and assign its HTML to the subpage's html.  Do this instead of appendChild to keep the scripts.
-			// TODO (PERF): Doing this with jQuery to get the 'contents' function. Need to refactor using document.createElement("div") et al
-			var tempDiv = $("<div></div>");
-			tempDiv[0].innerHTML = fragmentText;
+            // Create a temporary DOM element ourselves and assign its HTML to the subpage's html.  Do this instead of appendChild to keep the scripts.
+            // TODO (PERF): Doing this with jQuery to get the 'contents' function. Need to refactor using document.createElement("div") et al
+            var tempDiv = $("<div></div>");
+            tempDiv[0].innerHTML = fragmentText;
 
-			// Create the document fragment and copy the page's contents into it
-			var docFrag = document.createDocumentFragment();
-			tempDiv.contents().get().forEach(function (child) {
-				docFrag.appendChild(child);
-			});
+            // Create the document fragment and copy the page's contents into it
+            var docFrag = document.createDocumentFragment();
+            tempDiv.contents().get().forEach(function (child) {
+                docFrag.appendChild(child);
+            });
 
-			// AT THIS POINT: 
-			//	1. docFrag contains the contents of the loaded fragment as DOM elements
-			//	2. None of the scripts or styles (local or referenced) have been loaded or executed yet, nor moved out of the fragment
-
-			// Move styles out of the document fragment and into the page's head.  Don't add duplicates. Move styles first so that
-			// they're there when we move scripts.  Also; prepend the styles so they appear first
-			var styleNodesToMove = [];
-			var $head = $("head");
-
-			for (var i in docFrag.childNodes) {
-				var childNode = docFrag.childNodes[i];
-				if (childNode.nodeName == "STYLE" || (childNode.nodeName == "LINK" && childNode.attributes.getNamedItem("rel").nodeValue == "stylesheet")) {
-
-					styleNodesToMove.push(childNode);
-				}
-			}
-
-			styleNodesToMove.forEach(function (styleNodeToMove) {
-
-				// Remove the style node from the document fragment in preparation for adding it to the document's head.
-				docFrag.removeChild(styleNodeToMove);
-
-				// Only add the style to the document's head if it's not a duplicate
-				var href = styleNodeToMove.attributes.getNamedItem("href");
-				var isDuplicateStyle = href && ($("link[href='" + href.nodeValue + "']", $head).length > 0);
-
-				// Remove WinJS styles from the loaded fragment.  Technically not necessary, but good for combination win8/web projects.
-				// TODO (PERF): Possibly worth pulling this out for perf.
-				var isMicrosoftStyle = href && href.nodeValue.toLowerCase().indexOf("//microsoft") == 0;
-
-				if (!isDuplicateStyle && !isMicrosoftStyle) {
-					// Add the style node to the head
-					$head.prepend(styleNodeToMove);
-
-					// Track moved nodes for test purposes (allowing us to subsequently remove them from $head)
-					WinJS.UI.Fragments._testSupportMovedScriptsAndStyles.push(styleNodeToMove);
-				}
-			});
-
-			// AT THIS POINT: 
-			//	1. The loaded fragment's styles have been moved up to the head and are ready to be parsed.  They may not actually be parsed
-			//	yet due to how HTML5 handles styles.  
-			//	2. We have removed any duplicate styles from the loaded fragment
-			//	3. None of the loaded fragment's scripts have been moved out of the fragment nor have they been executed
-
-			// Move scripts from the document fragment up to document head, but don't execute them.
-			var scriptNodesToMove = [];
-			for (var i in docFrag.childNodes) {
-				var childNode = docFrag.childNodes[i];
-				if (childNode.nodeName == "SCRIPT") {
-
-					scriptNodesToMove.push(childNode);
-				}
-			}
-
-			scriptNodesToMove.forEach(function (scriptNodeToMove) {
-
-				// Remove the script node from the document fragment in preparation for adding it to the document's head.
-				docFrag.removeChild(scriptNodeToMove);
-
-				// Only add the script to the document's head if it's not a duplicate
-				var src = scriptNodeToMove.attributes.getNamedItem("src");
-				var isDuplicateScript = src && ($("script[src='" + src.nodeValue + "']", $head).length > 0);
-
-				// Remove WinJS scripts and styles from the loaded fragment.  Technically not necessary, but good for combination win8/web projects.
-				// TODO (PERF): Possibly worth pulling this out for perf.
-				var isMicrosoftScript = src && src.nodeValue.toLowerCase().indexOf("//microsoft") == 0;
-
-				if (!isDuplicateScript && !isMicrosoftScript) {
-
-					// Add the script node to the head and execute it
-					// TODO (CLEANUP):	Hmm, this is a bit tricky here.  Based on how Win8 appears to work,
-					//					I believe that we want to execute the scripts we're appending to head.
-					//					However, jQuery's '$head.append(scriptNodeToMove)' executes the script
-					//					but doesn't actually put it into the head element.  On the other hand,
-					//					document.head.appendChild(scriptNodeToMove); puts it in head, but 
-					//					doesn't execute it (d'oh!).  There may be another option that gives us
-					//					both, but for now jQuery's appears to work right, although the script
-					//					isn't actually visible in the DOM. hm...
-					$head.append(scriptNodeToMove);
-
-					// Track moved nodes for test purposes (allowing us to subsequently remove them)
-					WinJS.UI.Fragments._testSupportMovedScriptsAndStyles.push(scriptNodeToMove);
-				}
-			});
-
-			// Notify listeners  that the fragment has been processed.
-			fragmentProcessedCallback(docFrag);
-		});
-	},
-
-
-	// ================================================================
-	//
-	// private function: WinJS.UI.Fragments._getDocumentFragmentFromCache
-	//
-	//		Return a promise that we'll return the docfrag that corresponds to the specified href
-	//		Caller is responsible for ensuring presence in the cache.
-	//
-	_getDocumentFragmentFromCache: function (href, element) {
-
-		var docFrag = this._cacheStore[href].cloneNode(true);
-		return new WinJS.Promise(function (c) {
-			if (!element) {
-				c(docFrag);
-			} else {
-				element.appendChild(docFrag);
-				c(element);
-			}
-		});
-	},
-
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Fragments.cache
-	//
-	//		MSDN: TODO
-	//
-	cache: function (href) {
-		var that = this;
-
-		// If already in the cache then just return the current page.  
-		if (this._cacheStore[href])
-			return this._getDocumentFragmentFromCache(href);
-
-		return this._loadAndProcessHrefIntoDocumentFragment(href).then(function (docFrag) {
-
-			return new WinJS.Promise(function (fragmentCachedPromise) {
-
-				// Add the loaded item to the page cache
-				that._cacheStore[href] = docFrag;
-
-				// Notify that we've fulfilled our Promise to load the page.
-				fragmentCachedPromise(docFrag);
-			});
-		});
-	},
-
-
-	// ================================================================
-	//
-	// public function: WinJS.UI.Fragments.clearCache
-	//
-	//		MSDN: TODO
-	//
-	clearCache: function (href) {
-		if (this._cacheStore[href])
-			this._cacheStore[href] = null;
-	},
-
-
-	// ================================================================
-	//
-	// private function: WinJS.UI.Fragments._testSupportRemoveScriptsAndStyles
-	//
-	_testSupportMovedScriptsAndStyles: [],
-	_testSupportRemoveScriptsAndStyles: function () {
-		WinJS.UI.Fragments._testSupportMovedScriptsAndStyles.forEach(function (node) {
-			$(node).remove();
-		});
-		WinJS.UI.Fragments._testSupportMovedScriptsAndStyles = [];
-	},
-
-
-	// ================================================================
-	//
-	// private property: WinJS.UI.Fragments._cacheStore
-	//
-	//		Set of previously cached pages.  _cacheStore[href] = documentFragment
-	//
-	_cacheStore: []
+            // AT THIS POINT: 
+            //	1. docFrag contains the contents of the loaded fragment as DOM elements
+            //	2. None of the scripts or styles (local or referenced) have been loaded or executed yet, nor moved out of the fragment
+
+            // Move styles out of the document fragment and into the page's head.  Don't add duplicates. Move styles first so that
+            // they're there when we move scripts.  Also; prepend the styles so they appear first
+            var styleNodesToMove = [];
+            var $head = $("head");
+
+            for (var i in docFrag.childNodes) {
+                var childNode = docFrag.childNodes[i];
+                if (childNode.nodeName == "STYLE" || (childNode.nodeName == "LINK" && childNode.attributes.getNamedItem("rel").nodeValue == "stylesheet")) {
+
+                    styleNodesToMove.push(childNode);
+                }
+            }
+
+            styleNodesToMove.forEach(function (styleNodeToMove) {
+
+                // Remove the style node from the document fragment in preparation for adding it to the document's head.
+                docFrag.removeChild(styleNodeToMove);
+
+                // Only add the style to the document's head if it's not a duplicate
+                var href = styleNodeToMove.attributes.getNamedItem("href");
+                var isDuplicateStyle = href && ($("link[href='" + href.nodeValue + "']", $head).length > 0);
+
+                // Remove WinJS styles from the loaded fragment.  Technically not necessary, but good for combination win8/web projects.
+                // TODO (PERF): Possibly worth pulling this out for perf.
+                var isMicrosoftStyle = href && href.nodeValue.toLowerCase().indexOf("//microsoft") == 0;
+
+                if (!isDuplicateStyle && !isMicrosoftStyle) {
+                    // Add the style node to the head
+                    $head.prepend(styleNodeToMove);
+
+                    // Track moved nodes for test purposes (allowing us to subsequently remove them from $head)
+                    WinJS.UI.Fragments._testSupportMovedScriptsAndStyles.push(styleNodeToMove);
+                }
+            });
+
+            // AT THIS POINT: 
+            //	1. The loaded fragment's styles have been moved up to the head and are ready to be parsed.  They may not actually be parsed
+            //	yet due to how HTML5 handles styles.  
+            //	2. We have removed any duplicate styles from the loaded fragment
+            //	3. None of the loaded fragment's scripts have been moved out of the fragment nor have they been executed
+
+            // Move scripts from the document fragment up to document head, but don't execute them.
+            var scriptNodesToMove = [];
+            for (var i in docFrag.childNodes) {
+                var childNode = docFrag.childNodes[i];
+                if (childNode.nodeName == "SCRIPT") {
+
+                    scriptNodesToMove.push(childNode);
+                }
+            }
+
+            scriptNodesToMove.forEach(function (scriptNodeToMove) {
+
+                // Remove the script node from the document fragment in preparation for adding it to the document's head.
+                docFrag.removeChild(scriptNodeToMove);
+
+                // Only add the script to the document's head if it's not a duplicate
+                var src = scriptNodeToMove.attributes.getNamedItem("src");
+                var isDuplicateScript = src && ($("script[src='" + src.nodeValue + "']", $head).length > 0);
+
+                // Remove WinJS scripts and styles from the loaded fragment.  Technically not necessary, but good for combination win8/web projects.
+                // TODO (PERF): Possibly worth pulling this out for perf.
+                var isMicrosoftScript = src && src.nodeValue.toLowerCase().indexOf("//microsoft") == 0;
+
+                if (!isDuplicateScript && !isMicrosoftScript) {
+
+                    // Add the script node to the head and execute it
+                    // TODO (CLEANUP):	Hmm, this is a bit tricky here.  Based on how Win8 appears to work,
+                    //					I believe that we want to execute the scripts we're appending to head.
+                    //					However, jQuery's '$head.append(scriptNodeToMove)' executes the script
+                    //					but doesn't actually put it into the head element.  On the other hand,
+                    //					document.head.appendChild(scriptNodeToMove); puts it in head, but 
+                    //					doesn't execute it (d'oh!).  There may be another option that gives us
+                    //					both, but for now jQuery's appears to work right, although the script
+                    //					isn't actually visible in the DOM. hm...
+                    $head.append(scriptNodeToMove);
+
+                    // Track moved nodes for test purposes (allowing us to subsequently remove them)
+                    WinJS.UI.Fragments._testSupportMovedScriptsAndStyles.push(scriptNodeToMove);
+                }
+            });
+
+            // Notify listeners  that the fragment has been processed.
+            fragmentProcessedCallback(docFrag);
+        });
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.UI.Fragments._getDocumentFragmentFromCache
+    //
+    //		Return a promise that we'll return the docfrag that corresponds to the specified href
+    //		Caller is responsible for ensuring presence in the cache.
+    //
+    _getDocumentFragmentFromCache: function (href, element) {
+
+        var docFrag = this._cacheStore[href].cloneNode(true);
+        return new WinJS.Promise(function (c) {
+            if (!element) {
+                c(docFrag);
+            } else {
+                element.appendChild(docFrag);
+                c(element);
+            }
+        });
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.Fragments.cache
+    //
+    //		MSDN: TODO
+    //
+    cache: function (href) {
+        var that = this;
+
+        // If already in the cache then just return the current page.  
+        if (this._cacheStore[href])
+            return this._getDocumentFragmentFromCache(href);
+
+        return this._loadAndProcessHrefIntoDocumentFragment(href).then(function (docFrag) {
+
+            return new WinJS.Promise(function (fragmentCachedPromise) {
+
+                // Add the loaded item to the page cache
+                that._cacheStore[href] = docFrag;
+
+                // Notify that we've fulfilled our Promise to load the page.
+                fragmentCachedPromise(docFrag);
+            });
+        });
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.UI.Fragments.clearCache
+    //
+    //		MSDN: TODO
+    //
+    clearCache: function (href) {
+        if (this._cacheStore[href])
+            this._cacheStore[href] = null;
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.UI.Fragments._testSupportRemoveScriptsAndStyles
+    //
+    _testSupportMovedScriptsAndStyles: [],
+    _testSupportRemoveScriptsAndStyles: function () {
+
+        WinJS.UI.Fragments._testSupportMovedScriptsAndStyles.forEach(function (node) {
+            $(node).remove();
+        });
+
+        WinJS.UI.Fragments._testSupportMovedScriptsAndStyles = [];
+    },
+
+
+    // ================================================================
+    //
+    // private property: WinJS.UI.Fragments._cacheStore
+    //
+    //		Set of previously cached pages. 
+    //      _cacheStore[href] = documentFragment
+    //
+    _cacheStore: []
 });
 
 
@@ -10607,16 +10617,25 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // TODO: Will this never fulfill if script fails to load (e.g. 404)?
                         var toLoad = 0;
                         that.$newPageScripts.each(function (index, element) {
-                            toLoad++;
                             var script = document.createElement("script");
                             script.type = "text/javascript";
-                            script.src = element.src;
-                            script.onload = function () {
-                                if (--toLoad == 0)
-                                    scriptsLoaded();
+                            if (element.src) {
+                                toLoad++;
+                                script.src = element.src;
+                                script.onload = function () {
+                                    if (--toLoad == 0)
+                                        scriptsLoaded();
+                                }
                             }
+                            else
+                                script.innerText = element.innerText;
+
                             document.head.appendChild(script);
                         });
+
+                        // If no scripts to load, then fulfill the Promise now
+                        if (toLoad == 0)
+                            scriptsLoaded();
                     });
                 },
 
@@ -10714,10 +10733,35 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // NOTE: This will NOT execute any scripts in $newPage.
                         $newPage.append(tempDocument);
 
+                        // Change local script paths to absolute
+                        $("script", $newPage).each(function (i, script) {
+                            if (script.src) {
+                                var scriptSrc = script.attributes.src.value;
+                                if (scriptSrc[0] != "/" && scriptSrc[0] != "\"" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                    script.src = thisPagePath + scriptSrc;
+                                }
+                            }
+                        });
+
+                        // Change local style paths to absolute
+                        $("link", $newPage).each(function (i, style) {
+                            if (style.href) {
+                                var styleHref = style.attributes.href.value;
+                                if (styleHref[0] != "/" && styleHref[0] != "\"" && styleHref.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                    style.href = thisPagePath + styleHref;
+                                }
+                            }
+                        });
+
                         // For each script in the main document, remove any duplicates in the new page.
                         // TODO: this approach is case sensitive, so "test.js" and "Test.js" will not match.  What's the jQuery way to say "case insensitive"?
                         $("script", document).each(function (index, element) {
-                            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
+
+                            // TODO: What about inline scripts (e.g. have no source)?  Could compare innerText?  Rare case, so not worrying about.
+                            if (element.attributes["src"])
+                                $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
                         });
 
                         // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.

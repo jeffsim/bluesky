@@ -253,16 +253,25 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // TODO: Will this never fulfill if script fails to load (e.g. 404)?
                         var toLoad = 0;
                         that.$newPageScripts.each(function (index, element) {
-                            toLoad++;
                             var script = document.createElement("script");
                             script.type = "text/javascript";
-                            script.src = element.src;
-                            script.onload = function () {
-                                if (--toLoad == 0)
-                                    scriptsLoaded();
+                            if (element.src) {
+                                toLoad++;
+                                script.src = element.src;
+                                script.onload = function () {
+                                    if (--toLoad == 0)
+                                        scriptsLoaded();
+                                }
                             }
+                            else
+                                script.innerText = element.innerText;
+
                             document.head.appendChild(script);
                         });
+
+                        // If no scripts to load, then fulfill the Promise now
+                        if (toLoad == 0)
+                            scriptsLoaded();
                     });
                 },
 
@@ -360,10 +369,35 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // NOTE: This will NOT execute any scripts in $newPage.
                         $newPage.append(tempDocument);
 
+                        // Change local script paths to absolute
+                        $("script", $newPage).each(function (i, script) {
+                            if (script.src) {
+                                var scriptSrc = script.attributes.src.value;
+                                if (scriptSrc[0] != "/" && scriptSrc[0] != "\"" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                    script.src = thisPagePath + scriptSrc;
+                                }
+                            }
+                        });
+
+                        // Change local style paths to absolute
+                        $("link", $newPage).each(function (i, style) {
+                            if (style.href) {
+                                var styleHref = style.attributes.href.value;
+                                if (styleHref[0] != "/" && styleHref[0] != "\"" && styleHref.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                    style.href = thisPagePath + styleHref;
+                                }
+                            }
+                        });
+
                         // For each script in the main document, remove any duplicates in the new page.
                         // TODO: this approach is case sensitive, so "test.js" and "Test.js" will not match.  What's the jQuery way to say "case insensitive"?
                         $("script", document).each(function (index, element) {
-                            $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
+
+                            // TODO: What about inline scripts (e.g. have no source)?  Could compare innerText?  Rare case, so not worrying about.
+                            if (element.attributes["src"])
+                                $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
                         });
 
                         // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.

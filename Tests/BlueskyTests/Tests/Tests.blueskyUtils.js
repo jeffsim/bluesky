@@ -77,5 +77,26 @@ testHarness.addTestFile("BlueskyUtils Tests", {
 		test.assert(testVar.value == true && testVar.value2 == false, "Failed to convert boolean values");
 
 		// TODO: Test special chars (e.g. double quotes in strings, semicolons, etc)
-	}
+	},
+
+
+    // ==========================================================================
+    // 
+    // Test MSApp.execUnsafeLocalFunction functionality
+    //
+    //      TODO (CLEANUP): Move this to dedicated test file for MSApp
+    //
+	execUnsafeLocalFunction: function (test) {
+
+	    test.start("MSApp.execUnsafeLocalFunction tests");
+	    var c = 0;
+	    var f = function (a, b) {
+	        c = a * b;
+	        return a + b;
+	    }
+
+	    var res = MSApp.execUnsafeLocalFunction(f(5, 8));
+	    test.assert(c == 40, "function was not called");
+	    test.assert(res == 13, "function did not return expected result");
+	},
 });
