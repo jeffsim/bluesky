@@ -24,6 +24,18 @@ var blueskyUtils = {
     //
     // public function: blueskyUtils.setDOMElementUniqueId
     //
+    //      Appends a parameter to a querystring, using ? or & appropriately.
+    //
+    appendQueryStringParam: function (url, param) {
+        var char = url.indexOf("?") > -1 ? "&" : "?";
+        return url + char + param;
+    },
+
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.setDOMElementUniqueId
+    //
     //      Assigns a unique (to the current DOM) id to the specified element
     //
     _uniqueControlId: 1,

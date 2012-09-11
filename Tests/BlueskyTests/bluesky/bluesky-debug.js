@@ -424,41 +424,40 @@ WinJS.Namespace.define("WinJS", {
         // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-            var sourceUrl = options.url.toLowerCase();
+            var url = options.url.toLowerCase();
 
             // Determine if the url is local or not
             // TODO: Check if it's same-domain and don't proxy if so
-            var isLocal = sourceUrl.indexOf("http:") != 0;
-
+            var isLocal = url.indexOf("http:") != 0;
             // test for bypass 
-            var isBypass = Bluesky.Settings.ProxyBypassUrls.Contains(options.url);
+            var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
             // convert appdata references to filepath
-            options.url = options.url.replace("ms-appx:///", "/");
+            url = url.replace("ms-appx:///", "/");
+            url = url.toLowerCase().replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
 
                 // if format and callback aren't set add each individually
-                if (sourceUrl.indexOf("format=") == -1)
-                    options.url.append("format=json");
-                if (sourceUrl.indexOf("callback=") == -1)
-                    options.url.append("callback=?");
+                if (url.indexOf("format=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "format=json");
+                if (url.indexOf("callback=") == -1 && url.indexOf("jsonp=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "callback=?");
                 var dataType = "jsonp";
             }
 
             // Determine if we should go through the YQL proxy
-            var isYql = !isLocal && !isBypass && Bluesky.Setting.ProxyCrossDomainXhrCalls;
+            var isYql = !isLocal && !isBypass && Bluesky.Settings.ProxyCrossDomainXhrCalls;
             if (isYql) {
-                options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
-                              "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
+                url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
+                              "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(url) +
                               "%22%3B&format=json&callback=?";
                 var dataType = "jsonp";
             }
-
             // TODO: Progress
             $.ajax({
-                url: options.url,
+                url: url,
                 data: options.data,
                 dataType: dataType,
                 success: function (data, textStatus, jqXHR) {
@@ -498,8 +497,9 @@ WinJS.Namespace.define("WinJS", {
                         }
                     }
                     else {
-                        // do.. stuff.. with the results.
-                        debugger;
+                        response = data;
+                        responseText = data;
+                        responseXML = data;
                     }
 
                     onComplete({
@@ -710,7 +710,7 @@ WinJS.Namespace.define("Windows", {
 //      TODO (Cleanup): Move this to dedicated file
 //
 WinJS.Namespace.define("MSApp", {
-    execUnsafeLocalFunction: function (c) { return c(); }
+    execUnsafeLocalFunction: function (c) { return c; }
 });
 
 
@@ -7067,13 +7067,13 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 WinJS.Namespace.define("WinJS.Binding", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.Binding.GroupsListProjection
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh920302.aspx
-	//
-	GroupsListProjection: WinJS.Class.derive(WinJS.Binding._ListProjection,
+    // ================================================================
+    //
+    // public Object: WinJS.Binding.GroupsListProjection
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh920302.aspx
+    //
+    GroupsListProjection: WinJS.Class.derive(WinJS.Binding._ListProjection,
 
 		// ================================================================
 		//
@@ -7083,51 +7083,52 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		function (sourceList) {
 
-			// Keep track of the list (which is a groupedprojection) that we are projecting
-			this._list = sourceList;
+		    // Keep track of the list (which is a groupedprojection) that we are projecting
+		    this._list = sourceList;
 
-			// The list of group items which we are projecting over the source list
-			this._groupItems = [];
-			this._groupKeys = [];
+		    // The list of group items which we are projecting over the source list
+		    this._groupItems = [];
+		    this._groupKeys = [];
 
-			// Initialize the set of event listeners
-			this._eventListeners = [];
+		    // Initialize the set of event listeners
+		    this._eventListeners = [];
 
-			// Listen for changes on our source list.  Note that we don't have to listen for changes to items in the base list,
-			// as our source groupprojection list will automatically convert changes to insertions/removals.
-			this._list.addEventListener("iteminserted", this._itemInserted.bind(this));
-			this._list.addEventListener("itemremoved", this._itemRemoved.bind(this));
+		    // Listen for changes on our source list.  Note that we don't have to listen for changes to items in the base list,
+		    // as our source groupprojection list will automatically convert changes to insertions/removals.
+		    this._list.addEventListener("iteminserted", this._itemInserted.bind(this));
+		    this._list.addEventListener("itemremoved", this._itemRemoved.bind(this));
 
-			// Initialize groupitems
-			for (var i = 0; i < sourceList.length ; i++) {
-				var item = sourceList.getItem(i);
+		    // Initialize groupitems
+		    for (var i = 0; i < sourceList.length ; i++) {
+		        var item = sourceList.getItem(i);
 
-				var groupKey = item.groupKey;
-				// If the group doesn't exist yet, then add it now
-				// TODO: build map instead of iterating?
-				var found = false;
-				for (var j in this._groupItems)
-					if (this._groupItems[j].key == groupKey) {
-						this._groupItems[j].groupSize++;
-						found = true;
-						break;
-					}
+		        var groupKey = item.groupKey;
+		        // If the group doesn't exist yet, then add it now
+		        // TODO: build map instead of iterating?
+		        var found = false;
+		        for (var j in this._groupItems)
+		            if (this._groupItems[j].key == groupKey) {
+		                this._groupItems[j].groupSize++;
+		                found = true;
+		                break;
+		            }
 
-				if (!found) {
-					this._groupItems[groupKey] = {
-						key: groupKey,
-						groupSize: 1,
-						data: sourceList._groupDataSelector(item.data) };
-					this._groupKeys.push(groupKey);
-				}
-			}
+		        if (!found) {
+		            this._groupItems[groupKey] = {
+		                key: groupKey,
+		                groupSize: 1,
+		                data: sourceList._groupDataSelector(item.data)
+		            };
+		            this._groupKeys.push(groupKey);
+		        }
+		    }
 
-			// initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
-			// can subscribe to this dataSource as their item list, and will get notified of updates to the list
-			// TODO: Not sure what to bind to here.
-			this.dataSource = new WinJS.UI.IListDataSource(this, this._groupItems);
-			//this.dataSource = WinJS.Binding.as(this._groupItems);
-			//this.dataSource._list = this;
+		    // initialize our dataSource by creating a binding Source object around our items.  Other components (e.g. ListView)
+		    // can subscribe to this dataSource as their item list, and will get notified of updates to the list
+		    // TODO: Not sure what to bind to here.
+		    this.dataSource = new WinJS.UI.IListDataSource(this, this._groupItems);
+		    //this.dataSource = WinJS.Binding.as(this._groupItems);
+		    //this.dataSource._list = this;
 		},
 
 		// ================================================================
@@ -7135,134 +7136,134 @@ WinJS.Namespace.define("WinJS.Binding", {
 		// ================================================================
 
 		{
-			// ================================================================
-			//
-			// private function: WinJS.Binding.GroupsListProjection._itemInserted
-			//
-			_itemInserted: function (eventData) {
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupsListProjection._itemInserted
+		    //
+		    _itemInserted: function (eventData) {
 
-				var groupKey = this._list.getItemFromKey(eventData.detail.key).groupKey;
-				var groupItem = this._groupItems[groupKey];
-				if (!groupItem) {
+		        var groupKey = this._list.getItemFromKey(eventData.detail.key).groupKey;
+		        var groupItem = this._groupItems[groupKey];
+		        if (!groupItem) {
 
-					// Add the new group
-					this._groupKeys.push(groupKey);
-					this._sortKeys();
+		            // Add the new group
+		            this._groupKeys.push(groupKey);
+		            this._sortKeys();
 
-					var newGroupItem = {
-						key: groupKey,
-						groupSize: 1,
-						// TODO: Index etc
-						data: this._list._groupDataSelector(eventData.detail.value)
-					};
+		            var newGroupItem = {
+		                key: groupKey,
+		                groupSize: 1,
+		                // TODO: Index etc
+		                data: this._list._groupDataSelector(eventData.detail.value)
+		            };
 
-					this._groupItems[groupKey] = newGroupItem;
+		            this._groupItems[groupKey] = newGroupItem;
 
-					// Propagate the event.
-					// TODO: Need to pass index of the group too
-					this._notifyItemInserted({ key: newGroupItem.key, value: newGroupItem.data });
+		            // Propagate the event.
+		            // TODO: Need to pass index of the group too
+		            this._notifyItemInserted({ key: newGroupItem.key, value: newGroupItem.data });
 
-				} else {
-					// Nothing to do here since the item insertion did not require a new group to be created.
-					// TODO: Technically the group has changed, but I don't think it's in a way that caller can
-					// see; that said, they may want to do something regardless, so I should fire a changed event
-					// here...
-					groupItem.groupSize++;
-				}
-			},
-
-
-			// ================================================================
-			//
-			// private function: WinJS.Binding.GroupsListProjection._itemRemoved
-			//
-			_itemRemoved: function (event) {
-
-				var groupKey = event.detail.item.groupKey;
-				var groupItem = this._groupItems[groupKey];
-				var groupIndex = this._groupKeys.indexOf(groupKey);
-
-				// Is this the last item in the group?  If so, delete the group
-				if (groupItem.groupSize == 1) {
-
-					// Remove the group from the list of group keys and delete it
-					this._groupKeys.splice(groupIndex, 1);
-					delete this._groupItems[groupKey];
-
-					// Notify any listeners that this group has been removed
-					this._notifyItemRemoved(groupKey, groupIndex, groupItem.data, groupItem);
-
-				} else {
-
-					// One less item in the group.
-					groupItem.groupSize--;
-
-					// There are still more items in this group; notify any listeners that this group has changed but not been removed
-					this._notifyItemChanged(groupKey, groupIndex, groupItem.data, groupItem.data, groupItem, groupItem);
-				}
-			},
+		        } else {
+		            // Nothing to do here since the item insertion did not require a new group to be created.
+		            // TODO: Technically the group has changed, but I don't think it's in a way that caller can
+		            // see; that said, they may want to do something regardless, so I should fire a changed event
+		            // here...
+		            groupItem.groupSize++;
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// private function: WinJS.Binding.GroupsListProjection._sortKeys
-			//
-			_sortKeys: function () {
-				var that = this;
-				this._groupKeys.sort(function (left, right) {
-					if (left < right) return -1;
-					if (left == right) return 0;
-					return 1;
-				});
-			},
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupsListProjection._itemRemoved
+		    //
+		    _itemRemoved: function (event) {
+
+		        var groupKey = event.detail.item.groupKey;
+		        var groupItem = this._groupItems[groupKey];
+		        var groupIndex = this._groupKeys.indexOf(groupKey);
+
+		        // Is this the last item in the group?  If so, delete the group
+		        if (groupItem.groupSize == 1) {
+
+		            // Remove the group from the list of group keys and delete it
+		            this._groupKeys.splice(groupIndex, 1);
+		            delete this._groupItems[groupKey];
+
+		            // Notify any listeners that this group has been removed
+		            this._notifyItemRemoved(groupKey, groupIndex, groupItem.data, groupItem);
+
+		        } else {
+
+		            // One less item in the group.
+		            groupItem.groupSize--;
+
+		            // There are still more items in this group; notify any listeners that this group has changed but not been removed
+		            this._notifyItemChanged(groupKey, groupIndex, groupItem.data, groupItem.data, groupItem, groupItem);
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public override function: WinJS.Binding.GroupsListProjection.length
-			//
-			length: {
-				get: function () {
-					return this._groupKeys.length;
-				}
-			},
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupsListProjection._sortKeys
+		    //
+		    _sortKeys: function () {
+		        var that = this;
+		        this._groupKeys.sort(function (left, right) {
+		            if (left < right) return -1;
+		            if (left == right) return 0;
+		            return 1;
+		        });
+		    },
 
 
-			// ================================================================
-			//
-			// public override function: WinJS.Binding.GroupsListProjection.getItem
-			//
-			getItem: function (index) {
-				var key = this._groupKeys[index];
-				return this.getItemFromKey(key);
-			},
+		    // ================================================================
+		    //
+		    // public override function: WinJS.Binding.GroupsListProjection.length
+		    //
+		    length: {
+		        get: function () {
+		            return this._groupKeys.length;
+		        }
+		    },
 
 
-			// ================================================================
-			//
-			// public override function: WinJS.Binding.GroupsListProjection.getItemFromKey
-			//
-			getItemFromKey: function (key) {
-				// TODO: wuff.  Need to store index or something instead.
-				for (var i in this._groupItems)
-					if (this._groupItems[i].key == key)
-						return this._groupItems[i];
-
-				// Key not found
-				return null;
-			},
+		    // ================================================================
+		    //
+		    // public override function: WinJS.Binding.GroupsListProjection.getItem
+		    //
+		    getItem: function (index) {
+		        var key = this._groupKeys[index];
+		        return this.getItemFromKey(key);
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.List.GroupsListProjection.indexOfKey
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh920305.aspx
-			//
-			indexOfKey: function (key) {
+		    // ================================================================
+		    //
+		    // public override function: WinJS.Binding.GroupsListProjection.getItemFromKey
+		    //
+		    getItemFromKey: function (key) {
+		        // TODO: wuff.  Need to store index or something instead.
+		        for (var i in this._groupItems)
+		            if (this._groupItems[i].key == key)
+		                return this._groupItems[i];
 
-				return this._groupKeys.indexOf(key);
-			}
+		        // Key not found
+		        return null;
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.List.GroupsListProjection.indexOfKey
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh920305.aspx
+		    //
+		    indexOfKey: function (key) {
+
+		        return this._groupKeys.indexOf(key);
+		    }
 		})
 });
 
@@ -10456,7 +10457,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     parentedPromise.then(function () {
 
                         // Now that we're parented, append all scripts
-                        return that._appendScripts().then(function () {
+                        return that._appendScripts(pageUri).then(function () {
                             // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
                             return WinJS.UI.processAll(targetElement);
                         });
@@ -10523,7 +10524,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     this.renderPromise = this.renderPromise.then(function (result) {
 
                         // Now that we're parented, append all scripts
-                        return that._appendScripts().then(function () {
+                        return that._appendScripts(pageUri).then(function () {
                             // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
                             return WinJS.UI.processAll(targetElement);
                         });
@@ -10589,7 +10590,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 //      have been loaded and processed.  NOTE: The approach below is adopted (rather than just appending them
                 //      via $.append) because it allows complete debugging in Firebug.  Trust me, this is a good thing.
                 //
-                _appendScripts: function () {
+                _appendScripts: function (pageUri) {
                     var that = this;
                     return new WinJS.Promise(function (scriptsLoaded) {
 
@@ -10597,12 +10598,18 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // the scriptsLoaded promise.  
                         // TODO: Will this never fulfill if script fails to load (e.g. 404)?
                         var toLoad = 0;
-                        that.$newPageScripts.each(function (index, element) {
+                        that.newPageScripts.forEach(function (element) {
                             var script = document.createElement("script");
                             script.type = "text/javascript";
-                            if (element.src) {
+                            if (element.attributes.src) {
+                                var src = element.attributes.src.value;
                                 toLoad++;
-                                var src = element.src;
+
+                                // Change local script paths to absolute
+                                if (src[0] != "/" && src.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
+                                    src = thisPagePath + src;
+                                }
                                 // Forcibly ignore cache
                                 // TODO: Should I?  Conversely; should I do the same for styles?
                                 var char = script.src.indexOf("?") > -1 ? "&" : "?";
@@ -10701,61 +10708,93 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //	1. tempDocument contains all of the contents of the loaded page as valid DOM element
                         //	2. None of the scripts or styles (local or referenced) have been loaded or executed yet
 
+                        // Keep track of all styles; we'll wait until they've loaded
+                        var stylesToWaitFor = [];
+
+                        // get the list of scripts and link that are already in the document; we'll use that list to remove any duplicates from the new page
+                        var $existingScripts = $("script", document);
+                        var $existingLinks = $("links", document);
+
+                        that.newPageScripts = [];
+
+                        // Process elements
+                        var nodesToRemove = [];
+                        for (var i = 0; i < tempDocument.childNodes.length; i++) {
+
+                            var element = tempDocument.childNodes[i];
+
+                            if (element.nodeName == "SCRIPT" && element.src) {
+                                var scriptSrc = element.attributes.src.value.toLowerCase();
+
+                                // remove any scripts which are already in the document
+                                $existingScripts.each(function (i, script) {
+                                    if (scriptSrc == script.attributes.src.value.toLowerCase())
+                                        nodesToRemove.push(element);
+                                });
+
+                                // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
+                                if (scriptSrc.indexOf("//microsoft.winjs") > -1)
+                                    nodesToRemove.push(element);
+                            }
+                            if (element.nodeName == "LINK" && element.href) {
+                                var linkSrc = element.attributes.href.value;
+
+                                // remove any links which are already in the document
+                                $existingLinks.each(function (i, existingLink) {
+                                    if (linkSrc == existingLink.attributes.src.value.toLowerCase())
+                                        nodesToRemove.push(element);
+                                });
+
+                                // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
+                                if (linkSrc.indexOf("//microsoft.winjs") > -1)
+                                    nodesToRemove.push(element);
+                            }
+                        }
+
+                        // Remove nodes that were identified as duplicates or otherwise unwanted
+                        nodesToRemove.forEach(function (element) {
+                            tempDocument.removeChild(element);
+                        });
+
+                        // Pull out all scripts; we'll add them in separately
+                        var scripts = [];
+                        for (var i = 0; i < tempDocument.childNodes.length; i++) {
+                            var element = tempDocument.childNodes[i];
+                            if (element.nodeName == "SCRIPT") {
+
+                                scripts.push(element);
+                                that.newPageScripts.push(element);
+                            }
+                        }
+                        scripts.forEach(function (script) {
+                            tempDocument.removeChild(script);
+                        });
+
                         // NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage before
                         // we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
                         var $newPage = $(tempDocument);
 
-                        // Change local script paths to absolute
-                        $("script", $newPage).each(function (i, script) {
-                            if (script.src) {
-                                var scriptSrc = script.attributes.src.value;
-                                if (scriptSrc[0] != "/" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
-                                    script.src = thisPagePath + scriptSrc;
-                                }
-                            }
-                            // Tag a timestamp to it as well to help IE's caching along
-                            var char = script.src.indexOf("?") > -1 ? "&" : "?";
-                            script.src += char + (new Date()).valueOf();
-                        });
-
-                        // Keep track of all styles; we'll wait until they've loaded
-                        var stylesToWaitFor = [];
-
-                        // Change local style paths to absolute
-                        $("link", $newPage).each(function (i, style) {
-                            if (style.href) {
-                                var styleHref = style.attributes.href.value;
-                                if (styleHref[0] != "/" && styleHref.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
-                                    style.href = thisPagePath + styleHref;
-                                }
-                            }
-
-                            // Create a promise that we'll wait until the style has been loaded
-                            stylesToWaitFor.push(new WinJS.Promise(function (c) {
-                                style.onload = function () {
-                                    c();
-                                };
-                            }));
-                        });
-
-                        // For each script in the main document, remove any duplicates in the new page.
-                        // TODO: this approach is case sensitive, so "test.js" and "Test.js" will not match.  What's the jQuery way to say "case insensitive"?
-                        $("script", document).each(function (index, element) {
-
-                            // TODO: What about inline scripts (e.g. have no source)?  Could compare innerText?  Rare case, so not worrying about.
-                            if (element.attributes["src"])
-                                $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
-                        });
-
-                        // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
-                        $("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
-                        $("script[src^='http://Microsoft'], script[src^='http://microsoft'], script[src^='//Microsoft'], script[src^='//microsoft']", $newPage).remove();
-
                         // AT THIS POINT: 
                         //	1. The loaded page is ready to be appended to the target element
                         //	2. None of the loaded page's scripts have been executed, nor have its externally referenced scripts or styles been loaded.  
+
+                        // Keep track of all link'ed styles; we'll wait until they've loaded
+                        $("link", $newPage).each(function (i, style) {
+
+                            $(style).prependTo($("head"));
+                            if (style.readyState != 'complete' && style.readyState != 'loaded') {
+
+                                // Change local paths to absolute path
+                                var linkSrc = style.attributes.href.value;
+                                if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                    style.href = thisPagePath + linkSrc;
+                                }
+
+                                // Create a promise that we'll wait until the style has been loaded
+                                stylesToWaitFor.push(getStyleLoadedPromise(style));
+                            }
+                        });
 
                         // Prep the target element to insert the new page.
                         var $target = $(pageInfo.element);
@@ -10767,17 +10806,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         var $head = $("head", document);
 
                         // Move styles first so that they're there when we move scripts.  Also; prepend the styles so they appear first
-                        $("meta, title, link, style", $newPage).prependTo($head);
+                        $("meta, title, style", $newPage).prependTo($head);
 
                         // B. Remove duplicate styles and meta/charset tags
-                        blueskyUtils.removeDuplicateElements("style", "src", $head);
                         blueskyUtils.removeDuplicateElements("meta", "charset", $head);
 
                         // C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
                         $("title:not(:first)", $head).remove();
 
                         // move any scripts out of $newPage and into a temporary list so that we can process them independently
-                        that.$newPageScripts = $("script", $newPage).remove();
+                        //    that.$newPageScripts = $("script", $newPage).remove();
 
                         // Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
                         $target.append($newPage.contents());
@@ -10789,7 +10827,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
                         // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
-                        $("[id]", $target).each(function (index, element) {
+                        $("[id]").each(function (index, element) {
                             window[element.id] = element;
                         });
 
@@ -10807,7 +10845,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                 // renderPromise: A Promise that is fulfilled when we have completed rendering
                 renderPromise: null,
-                $newPageScripts: null
+                newPageScripts: null
             });
         }
 
@@ -15574,6 +15612,30 @@ WinJS.Namespace.define("WinJS.Utilities", {
 //
 var Bluesky = {
 
+    // ================================================================
+    //
+    // public object: Bluesky.Application
+    //
+    Application: {
+
+        // ================================================================
+        //
+        // public funtion: Bluesky.Application.setAppInfo
+        //
+        //  bluesky Applications can use this to specify app information.  This will
+        //  eventually be obtained from the manifest.
+        //
+        setAppInfo: function (appId, publisherId, version) {
+            appId = appId.toUpperCase();
+            // TODO: Not sure what this one is actually.  Unlikely to impact web
+            var proc = "neutral_";
+
+            Windows.ApplicationModel.Package.current.id.name = appId;
+            Windows.ApplicationModel.Package.current.id.fullName = appId + "_" + publisherId;
+            Windows.ApplicationModel.Package.current.id.familyName = appId + "_" + version + "_" + proc + "_" + publisherId;
+        }
+    },
+
 	Settings: {
 
 		// ================================================================
@@ -15611,7 +15673,7 @@ var Bluesky = {
 	            if (typeof urls.length === undefined)
 	                urls = [urls];
 	            urls.forEach(function(url) {
-	                Bluesky.Settings.ProxyBypassUrls.urls.push(url.toLowerCase);
+	                Bluesky.Settings.ProxyBypassUrls.urls.push(url.toLowerCase());
 	            });
 	        },
 
@@ -15687,6 +15749,18 @@ var blueskyUtils = {
             highestIndex = Math.max(highestIndex, $(this).attr("z-index"));
         });
         return highestIndex;
+    },
+
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.setDOMElementUniqueId
+    //
+    //      Appends a parameter to a querystring, using ? or & appropriately.
+    //
+    appendQueryStringParam: function (url, param) {
+        var char = url.indexOf("?") > -1 ? "&" : "?";
+        return url + char + param;
     },
 
 
@@ -15975,3 +16049,39 @@ Windows.Storage._internalInit();
  * http://benalman.com/about/license/
  */
 (function ($, h, c) { var a = $([]), e = $.resize = $.extend($.resize, {}), i, k = "setTimeout", j = "resize", d = j + "-special-event", b = "delay", f = "throttleWindow"; e[b] = 250; e[f] = true; $.event.special[j] = { setup: function () { if (!e[f] && this[k]) { return false } var l = $(this); a = a.add(l); $.data(this, d, { w: l.width(), h: l.height() }); if (a.length === 1) { g() } }, teardown: function () { if (!e[f] && this[k]) { return false } var l = $(this); a = a.not(l); l.removeData(d); if (!a.length) { clearTimeout(i) } }, add: function (l) { if (!e[f] && this[k]) { return false } var n; function m(s, o, p) { var q = $(this), r = $.data(this, d); r.w = o !== c ? o : q.width(); r.h = p !== c ? p : q.height(); n.apply(this, arguments) } if ($.isFunction(l)) { n = l; return m } else { n = l.handler; l.handler = m } } }; function g() { i = h[k](function () { a.each(function () { var n = $(this), m = n.width(), l = n.height(), o = $.data(this, d); if (m !== o.w || l !== o.h) { n.trigger(j, [o.w = m, o.h = l]) } }); g() }, e[b]) } })(jQuery, this);
+
+
+
+
+
+// ================================================================
+//
+//      The following code is new, but sufficiently based on someone else's work to justify attribution
+//
+
+
+// Adapted from: http://www.zachleat.com/web/load-css-dynamically/
+function getStyleLoadedPromise(style) {
+
+    return new WinJS.Promise(function (c) {
+
+        var id = 'dynamicCss' + (new Date()).valueOf();
+        $('<style/>')
+            .attr({ id: id, type: 'text/css' })
+            .html('@import url(' + style.href + ')')
+            .appendTo(document.getElementsByTagName('head')[0]);
+
+        var sheets = document.styleSheets;
+        var timer = setInterval(function () {
+            try {
+                for (var i = 0; i < sheets.length; i++)
+                    if (sheets[i].ownerNode.id == id)
+                        sheets[i].cssRules;
+
+                // If we got this far, then we successfully 'touched' (good touch) the loaded styles.
+                clearInterval(timer);
+                c();
+            } catch (e) { }
+        }, 10);
+    });
+}

@@ -53,41 +53,40 @@ WinJS.Namespace.define("WinJS", {
         // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-            var sourceUrl = options.url.toLowerCase();
+            var url = options.url.toLowerCase();
 
             // Determine if the url is local or not
             // TODO: Check if it's same-domain and don't proxy if so
-            var isLocal = sourceUrl.indexOf("http:") != 0;
-
+            var isLocal = url.indexOf("http:") != 0;
             // test for bypass 
-            var isBypass = Bluesky.Settings.ProxyBypassUrls.Contains(options.url);
+            var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
             // convert appdata references to filepath
-            options.url = options.url.replace("ms-appx:///", "/");
+            url = url.replace("ms-appx:///", "/");
+            url = url.toLowerCase().replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
 
                 // if format and callback aren't set add each individually
-                if (sourceUrl.indexOf("format=") == -1)
-                    options.url.append("format=json");
-                if (sourceUrl.indexOf("callback=") == -1)
-                    options.url.append("callback=?");
+                if (url.indexOf("format=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "format=json");
+                if (url.indexOf("callback=") == -1 && url.indexOf("jsonp=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "callback=?");
                 var dataType = "jsonp";
             }
 
             // Determine if we should go through the YQL proxy
-            var isYql = !isLocal && !isBypass && Bluesky.Setting.ProxyCrossDomainXhrCalls;
+            var isYql = !isLocal && !isBypass && Bluesky.Settings.ProxyCrossDomainXhrCalls;
             if (isYql) {
-                options.url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
-                              "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(options.url) +
+                url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
+                              "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(url) +
                               "%22%3B&format=json&callback=?";
                 var dataType = "jsonp";
             }
-
             // TODO: Progress
             $.ajax({
-                url: options.url,
+                url: url,
                 data: options.data,
                 dataType: dataType,
                 success: function (data, textStatus, jqXHR) {
@@ -127,8 +126,9 @@ WinJS.Namespace.define("WinJS", {
                         }
                     }
                     else {
-                        // do.. stuff.. with the results.
-                        debugger;
+                        response = data;
+                        responseText = data;
+                        responseXML = data;
                     }
 
                     onComplete({

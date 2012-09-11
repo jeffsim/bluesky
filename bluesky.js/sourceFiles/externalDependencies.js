@@ -105,3 +105,39 @@
  * http://benalman.com/about/license/
  */
 (function ($, h, c) { var a = $([]), e = $.resize = $.extend($.resize, {}), i, k = "setTimeout", j = "resize", d = j + "-special-event", b = "delay", f = "throttleWindow"; e[b] = 250; e[f] = true; $.event.special[j] = { setup: function () { if (!e[f] && this[k]) { return false } var l = $(this); a = a.add(l); $.data(this, d, { w: l.width(), h: l.height() }); if (a.length === 1) { g() } }, teardown: function () { if (!e[f] && this[k]) { return false } var l = $(this); a = a.not(l); l.removeData(d); if (!a.length) { clearTimeout(i) } }, add: function (l) { if (!e[f] && this[k]) { return false } var n; function m(s, o, p) { var q = $(this), r = $.data(this, d); r.w = o !== c ? o : q.width(); r.h = p !== c ? p : q.height(); n.apply(this, arguments) } if ($.isFunction(l)) { n = l; return m } else { n = l.handler; l.handler = m } } }; function g() { i = h[k](function () { a.each(function () { var n = $(this), m = n.width(), l = n.height(), o = $.data(this, d); if (m !== o.w || l !== o.h) { n.trigger(j, [o.w = m, o.h = l]) } }); g() }, e[b]) } })(jQuery, this);
+
+
+
+
+
+// ================================================================
+//
+//      The following code is new, but sufficiently based on someone else's work to justify attribution
+//
+
+
+// Adapted from: http://www.zachleat.com/web/load-css-dynamically/
+function getStyleLoadedPromise(style) {
+
+    return new WinJS.Promise(function (c) {
+
+        var id = 'dynamicCss' + (new Date()).valueOf();
+        $('<style/>')
+            .attr({ id: id, type: 'text/css' })
+            .html('@import url(' + style.href + ')')
+            .appendTo(document.getElementsByTagName('head')[0]);
+
+        var sheets = document.styleSheets;
+        var timer = setInterval(function () {
+            try {
+                for (var i = 0; i < sheets.length; i++)
+                    if (sheets[i].ownerNode.id == id)
+                        sheets[i].cssRules;
+
+                // If we got this far, then we successfully 'touched' (good touch) the loaded styles.
+                clearInterval(timer);
+                c();
+            } catch (e) { }
+        }, 10);
+    });
+}

@@ -4,6 +4,30 @@
 //
 var Bluesky = {
 
+    // ================================================================
+    //
+    // public object: Bluesky.Application
+    //
+    Application: {
+
+        // ================================================================
+        //
+        // public funtion: Bluesky.Application.setAppInfo
+        //
+        //  bluesky Applications can use this to specify app information.  This will
+        //  eventually be obtained from the manifest.
+        //
+        setAppInfo: function (appId, publisherId, version) {
+            appId = appId.toUpperCase();
+            // TODO: Not sure what this one is actually.  Unlikely to impact web
+            var proc = "neutral_";
+
+            Windows.ApplicationModel.Package.current.id.name = appId;
+            Windows.ApplicationModel.Package.current.id.fullName = appId + "_" + publisherId;
+            Windows.ApplicationModel.Package.current.id.familyName = appId + "_" + version + "_" + proc + "_" + publisherId;
+        }
+    },
+
 	Settings: {
 
 		// ================================================================
@@ -41,7 +65,7 @@ var Bluesky = {
 	            if (typeof urls.length === undefined)
 	                urls = [urls];
 	            urls.forEach(function(url) {
-	                Bluesky.Settings.ProxyBypassUrls.urls.push(url.toLowerCase);
+	                Bluesky.Settings.ProxyBypassUrls.urls.push(url.toLowerCase());
 	            });
 	        },
 

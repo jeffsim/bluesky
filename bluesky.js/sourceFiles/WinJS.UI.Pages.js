@@ -111,7 +111,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     parentedPromise.then(function () {
 
                         // Now that we're parented, append all scripts
-                        return that._appendScripts().then(function () {
+                        return that._appendScripts(pageUri).then(function () {
                             // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
                             return WinJS.UI.processAll(targetElement);
                         });
@@ -178,7 +178,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     this.renderPromise = this.renderPromise.then(function (result) {
 
                         // Now that we're parented, append all scripts
-                        return that._appendScripts().then(function () {
+                        return that._appendScripts(pageUri).then(function () {
                             // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
                             return WinJS.UI.processAll(targetElement);
                         });
@@ -244,7 +244,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 //      have been loaded and processed.  NOTE: The approach below is adopted (rather than just appending them
                 //      via $.append) because it allows complete debugging in Firebug.  Trust me, this is a good thing.
                 //
-                _appendScripts: function () {
+                _appendScripts: function (pageUri) {
                     var that = this;
                     return new WinJS.Promise(function (scriptsLoaded) {
 
@@ -252,12 +252,18 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // the scriptsLoaded promise.  
                         // TODO: Will this never fulfill if script fails to load (e.g. 404)?
                         var toLoad = 0;
-                        that.$newPageScripts.each(function (index, element) {
+                        that.newPageScripts.forEach(function (element) {
                             var script = document.createElement("script");
                             script.type = "text/javascript";
-                            if (element.src) {
+                            if (element.attributes.src) {
+                                var src = element.attributes.src.value;
                                 toLoad++;
-                                var src = element.src;
+
+                                // Change local script paths to absolute
+                                if (src[0] != "/" && src.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
+                                    src = thisPagePath + src;
+                                }
                                 // Forcibly ignore cache
                                 // TODO: Should I?  Conversely; should I do the same for styles?
                                 var char = script.src.indexOf("?") > -1 ? "&" : "?";
@@ -356,61 +362,93 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //	1. tempDocument contains all of the contents of the loaded page as valid DOM element
                         //	2. None of the scripts or styles (local or referenced) have been loaded or executed yet
 
+                        // Keep track of all styles; we'll wait until they've loaded
+                        var stylesToWaitFor = [];
+
+                        // get the list of scripts and link that are already in the document; we'll use that list to remove any duplicates from the new page
+                        var $existingScripts = $("script", document);
+                        var $existingLinks = $("links", document);
+
+                        that.newPageScripts = [];
+
+                        // Process elements
+                        var nodesToRemove = [];
+                        for (var i = 0; i < tempDocument.childNodes.length; i++) {
+
+                            var element = tempDocument.childNodes[i];
+
+                            if (element.nodeName == "SCRIPT" && element.src) {
+                                var scriptSrc = element.attributes.src.value.toLowerCase();
+
+                                // remove any scripts which are already in the document
+                                $existingScripts.each(function (i, script) {
+                                    if (scriptSrc == script.attributes.src.value.toLowerCase())
+                                        nodesToRemove.push(element);
+                                });
+
+                                // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
+                                if (scriptSrc.indexOf("//microsoft.winjs") > -1)
+                                    nodesToRemove.push(element);
+                            }
+                            if (element.nodeName == "LINK" && element.href) {
+                                var linkSrc = element.attributes.href.value;
+
+                                // remove any links which are already in the document
+                                $existingLinks.each(function (i, existingLink) {
+                                    if (linkSrc == existingLink.attributes.src.value.toLowerCase())
+                                        nodesToRemove.push(element);
+                                });
+
+                                // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
+                                if (linkSrc.indexOf("//microsoft.winjs") > -1)
+                                    nodesToRemove.push(element);
+                            }
+                        }
+
+                        // Remove nodes that were identified as duplicates or otherwise unwanted
+                        nodesToRemove.forEach(function (element) {
+                            tempDocument.removeChild(element);
+                        });
+
+                        // Pull out all scripts; we'll add them in separately
+                        var scripts = [];
+                        for (var i = 0; i < tempDocument.childNodes.length; i++) {
+                            var element = tempDocument.childNodes[i];
+                            if (element.nodeName == "SCRIPT") {
+
+                                scripts.push(element);
+                                that.newPageScripts.push(element);
+                            }
+                        }
+                        scripts.forEach(function (script) {
+                            tempDocument.removeChild(script);
+                        });
+
                         // NOW we can wrap the subpage's HTML in jQuery and then step over all scripts in the main page; remove any duplicates from the subpage before
                         // we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
                         var $newPage = $(tempDocument);
 
-                        // Change local script paths to absolute
-                        $("script", $newPage).each(function (i, script) {
-                            if (script.src) {
-                                var scriptSrc = script.attributes.src.value;
-                                if (scriptSrc[0] != "/" && scriptSrc.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
-                                    script.src = thisPagePath + scriptSrc;
-                                }
-                            }
-                            // Tag a timestamp to it as well to help IE's caching along
-                            var char = script.src.indexOf("?") > -1 ? "&" : "?";
-                            script.src += char + (new Date()).valueOf();
-                        });
-
-                        // Keep track of all styles; we'll wait until they've loaded
-                        var stylesToWaitFor = [];
-
-                        // Change local style paths to absolute
-                        $("link", $newPage).each(function (i, style) {
-                            if (style.href) {
-                                var styleHref = style.attributes.href.value;
-                                if (styleHref[0] != "/" && styleHref.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
-                                    style.href = thisPagePath + styleHref;
-                                }
-                            }
-
-                            // Create a promise that we'll wait until the style has been loaded
-                            stylesToWaitFor.push(new WinJS.Promise(function (c) {
-                                style.onload = function () {
-                                    c();
-                                };
-                            }));
-                        });
-
-                        // For each script in the main document, remove any duplicates in the new page.
-                        // TODO: this approach is case sensitive, so "test.js" and "Test.js" will not match.  What's the jQuery way to say "case insensitive"?
-                        $("script", document).each(function (index, element) {
-
-                            // TODO: What about inline scripts (e.g. have no source)?  Could compare innerText?  Rare case, so not worrying about.
-                            if (element.attributes["src"])
-                                $("script[src='" + element.attributes["src"].value + "']", $newPage).remove();
-                        });
-
-                        // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
-                        $("link[href^='//Microsoft'], link[href^='//microsoft']", $newPage).remove();
-                        $("script[src^='http://Microsoft'], script[src^='http://microsoft'], script[src^='//Microsoft'], script[src^='//microsoft']", $newPage).remove();
-
                         // AT THIS POINT: 
                         //	1. The loaded page is ready to be appended to the target element
                         //	2. None of the loaded page's scripts have been executed, nor have its externally referenced scripts or styles been loaded.  
+
+                        // Keep track of all link'ed styles; we'll wait until they've loaded
+                        $("link", $newPage).each(function (i, style) {
+
+                            $(style).prependTo($("head"));
+                            if (style.readyState != 'complete' && style.readyState != 'loaded') {
+
+                                // Change local paths to absolute path
+                                var linkSrc = style.attributes.href.value;
+                                if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
+                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                    style.href = thisPagePath + linkSrc;
+                                }
+
+                                // Create a promise that we'll wait until the style has been loaded
+                                stylesToWaitFor.push(getStyleLoadedPromise(style));
+                            }
+                        });
 
                         // Prep the target element to insert the new page.
                         var $target = $(pageInfo.element);
@@ -422,17 +460,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         var $head = $("head", document);
 
                         // Move styles first so that they're there when we move scripts.  Also; prepend the styles so they appear first
-                        $("meta, title, link, style", $newPage).prependTo($head);
+                        $("meta, title, style", $newPage).prependTo($head);
 
                         // B. Remove duplicate styles and meta/charset tags
-                        blueskyUtils.removeDuplicateElements("style", "src", $head);
                         blueskyUtils.removeDuplicateElements("meta", "charset", $head);
 
                         // C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
                         $("title:not(:first)", $head).remove();
 
                         // move any scripts out of $newPage and into a temporary list so that we can process them independently
-                        that.$newPageScripts = $("script", $newPage).remove();
+                        //    that.$newPageScripts = $("script", $newPage).remove();
 
                         // Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
                         $target.append($newPage.contents());
@@ -444,7 +481,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
                         // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
-                        $("[id]", $target).each(function (index, element) {
+                        $("[id]").each(function (index, element) {
                             window[element.id] = element;
                         });
 
@@ -462,7 +499,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                 // renderPromise: A Promise that is fulfilled when we have completed rendering
                 renderPromise: null,
-                $newPageScripts: null
+                newPageScripts: null
             });
         }
 
