@@ -43,7 +43,7 @@ WinJS.Namespace.define("Windows", {
                 }
             },
         },
-        
+
 
         StartScreen: {
             SecondaryTile: {
@@ -82,7 +82,7 @@ WinJS.Namespace.define("Windows", {
 
 // ================================================================
 //
-// Add MSApp.execUnsafeLocalFunction
+// MSApp.execUnsafeLocalFunction
 //
 //      TODO (Cleanup): Move this to dedicated file
 //

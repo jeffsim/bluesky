@@ -10,6 +10,15 @@ if ($().jquery != "1.7.2") {
 }
 /*ENDDEBUG*/
 
+// Freakin' IE, man...
+if (!console) {
+    var console = {
+        log: function () { },
+        warn: function () { },
+        error: function () { }
+    };
+};
+
 // ================================================================
 //
 // WinJS

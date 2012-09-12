@@ -45,6 +45,9 @@ WinJS.Namespace.define("WinJS", {
     //   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
     //   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
     //
+    //   NOTE: YQL has a 1000 requests per app per hour limit.  If that's too limiting for you, then you'll need to enable JSONP on your server and
+    //   bypass the YQL proxy.  In time, we'll replace YQL with our own proxy with more dev-friendly rate limiting.
+    //
     xhr: function (options) {
 
         var request;
