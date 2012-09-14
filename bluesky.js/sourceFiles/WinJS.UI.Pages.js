@@ -435,7 +435,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // Keep track of all link'ed styles; we'll wait until they've loaded
                         $("link", $newPage).each(function (i, style) {
 
-                            $(style).prependTo($("head"));
                             if (style.readyState != 'complete' && style.readyState != 'loaded') {
 
                                 // Change local paths to absolute path
@@ -464,6 +463,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // B. Remove duplicate styles and meta/charset tags
                         blueskyUtils.removeDuplicateElements("meta", "charset", $head);
+                        blueskyUtils.removeDuplicateElements("style", "href", $head);
+                        blueskyUtils.removeDuplicateElements("link", "href", $head);
 
                         // C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
                         $("title:not(:first)", $head).remove();

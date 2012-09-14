@@ -89,13 +89,12 @@ testHarness.addTestFile("BlueskyUtils Tests", {
 	execUnsafeLocalFunction: function (test) {
 
 	    test.start("MSApp.execUnsafeLocalFunction tests");
-	    var c = 0;
-	    var f = function (a, b) {
-	        c = a * b;
-	        return a + b;
+	    var f = function () {
+	        c = 40;
+	        return 41;
 	    }
-	    var res = MSApp.execUnsafeLocalFunction(f(5, 8));
+	    var res = MSApp.execUnsafeLocalFunction(f());
 	    test.assert(c == 40, "function was not called");
-	    test.assert(res == 13, "function did not return expected result");
+	    test.assert(res == 41, "function did not return value");
 	},
 });

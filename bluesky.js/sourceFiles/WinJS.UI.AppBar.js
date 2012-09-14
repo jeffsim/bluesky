@@ -36,6 +36,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		    this._sticky = (options.sticky == true || options.sticky == "true") ? true : false; // TODO: CLEANUP
 		    this._layout = options.layout || "commands";
 
+		    // Track that this is an appbar
+		    this._isBlueskyAppBar = true;
+
 		    // Call into our base class' constructor
 		    WinJS.UI.BaseControl.call(this, element, options);
 
@@ -109,6 +112,18 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
 		{
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.AppBar.scopedSelect
+		    //
+		    //      Called when the app is navigating to a new page; hide appbar
+		    //
+		    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+		    //
+		    _hideClickEaters: function () {
+		        $(".win-appbarclickeater").hide();
+		    },
 
 		    // ================================================================
 		    //
@@ -622,5 +637,48 @@ WinJS.Namespace.define("WinJS.UI", {
 		            this.addEventListener("beforeshow", callback);
 		        }
 		    }
-		})
+		},
+
+		// ================================================================
+		// WinJS.UI.AppBar static Member functions
+		// ================================================================
+
+        {
+            // ================================================================
+            //
+            // private function: WinJS.UI.AppBar._hideClickEater
+            //
+            //      Called when the app is navigating to a new page; hide appbar
+            //
+            //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+            //
+            _hideClickEater: function () {
+                $(".win-appbar").each(function (i, e) {
+                    e.winControl.hide();
+                });
+            },
+        })
 });
+
+// ================================================================
+//
+// Not my finest moment.
+//
+// So:  On IE, when you $.hide() something, it triggers a focusout.  This allows us to hook and hide
+//      the appbar if the app calls $appbar.hide().  On *firefox* though (and possibly other browsers,
+//      $.hide() does not trigger focusout.  The *only* way I can see around this is to hook into $.hide()
+//      and, if the element in question is an appbar, then tell the actual appbar wincontrol to hide.
+//
+// TODO: What about other ways to hide, e.g. $appbar.css("display", "none")?  Can hook the same way, but
+//       am worried about perf...
+//
+(function () {
+    var orig = $.fn.hide;
+    $.fn.hide = function () {
+        var result = orig.apply(this, arguments);
+        if (this[0] && this[0].winControl && (this[0].winControl._isBlueskyAppBar || this[0].winControl._isFlyout)) {
+            this[0].winControl.hide();
+        }
+        return result;
+    }
+})();

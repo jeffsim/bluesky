@@ -124,7 +124,7 @@ WinJS.Namespace.define("WinJS.UI", {
         					"backgroundPosition": ""
         				});
         			else if (iconIndex >= 0) {
-        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5)) + 3) + "px";
+        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
         			    
         				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
         				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.

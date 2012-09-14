@@ -34,6 +34,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // Hide the flyout until shown
             $(element).hide();
 
+            // Track that this is a flyout
+            this._isFlyout = true;
+
             // Initialize values
             this._hidden = true;
             this._placement = null;
@@ -48,7 +51,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		{
 		    // ================================================================
 		    //
-		    // public function: WinJS.Flyout.show
+		    // public function: WinJS.UI.Flyout.show
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211727.aspx
 		    //
@@ -150,7 +153,20 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._clickEaterFunction
+		    // private function: WinJS.UI.Flyout.scopedSelect
+		    //
+		    //      Called when the app is navigating to a new page; hide appbar
+		    //
+		    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+		    //
+		    _hideClickEaters: function () {
+		        $(".win-flyoutmenuclickeater").hide();
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.Flyout._clickEaterFunction
 		    //
 		    _clickEaterFunction: function () {
 		        this.hide();
@@ -159,7 +175,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._unload
+		    // private function: WinJS.UI.Flyout._unload
 		    //
 		    _unload: function (event) {
 
@@ -179,7 +195,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public function: WinJS.Flyout.hide
+		    // public function: WinJS.UI.Flyout.hide
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211727.aspx
 		    //
@@ -217,7 +233,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		    /*
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._lightDismissHandler
+		    // private function: WinJS.UI.Flyout._lightDismissHandler
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
@@ -238,7 +254,7 @@ WinJS.Namespace.define("WinJS.UI", {
             */
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getLeftPosition
+		    // private function: WinJS.UI.Flyout._getLeftPosition
 		    //
 		    _getLeftPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutWidth - info.flyoutLeftMargin - info.flyoutRightMargin;
@@ -256,7 +272,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getRightPosition
+		    // private function: WinJS.UI.Flyout._getRightPosition
 		    //
 		    _getRightPosition: function (info, failIfNoRoom) {
 		        var top = info.anchorTop - info.flyoutTopMargin + (info.anchorHeight - info.flyoutHeight) / 2;
@@ -274,7 +290,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getTopPosition
+		    // private function: WinJS.UI.Flyout._getTopPosition
 		    //
 		    _getTopPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutLeftMargin + (info.anchorWidth - info.flyoutWidth) / 2;
@@ -292,7 +308,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getBottomPosition
+		    // private function: WinJS.UI.Flyout._getBottomPosition
 		    //
 		    _getBottomPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutLeftMargin + (info.anchorWidth - info.flyoutWidth) / 2;
@@ -310,7 +326,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onafterhide
+		    // public event: WinJS.UI.Flyout.onafterhide
 		    //
 		    //		MSDN: TODO
 		    //
@@ -334,7 +350,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onaftershow
+		    // public event: WinJS.UI.Flyout.onaftershow
 		    //
 		    //		MSDN: TODO
 		    //
@@ -359,7 +375,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onbeforehide
+		    // public event: WinJS.UI.Flyout.onbeforehide
 		    //
 		    //		MSDN: TODO
 		    //
@@ -384,7 +400,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onbeforeshow
+		    // public event: WinJS.UI.Flyout.onbeforeshow
 		    //
 		    //		MSDN: TODO
 		    //
@@ -409,7 +425,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.hidden
+		    // public property: WinJS.UI.Flyout.hidden
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212535.aspx
 		    //
@@ -423,7 +439,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.alignment
+		    // public property: WinJS.UI.Flyout.alignment
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770559.aspx
 		    //
@@ -440,7 +456,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.placement
+		    // public property: WinJS.UI.Flyout.placement
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770561.aspx
 		    //
@@ -454,7 +470,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.anchor
+		    // public property: WinJS.UI.Flyout.anchor
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770560.aspx
 		    //
@@ -464,5 +480,25 @@ WinJS.Namespace.define("WinJS.UI", {
 		            return this._anchor;
 		        }
 		    }
-		})
+		},
+
+		// ================================================================
+		// WinJS.UI.Flyout static Member functions
+		// ================================================================
+
+        {
+            // ================================================================
+            //
+            // private function: WinJS.UI.Flyout._hideClickEater
+            //
+            //      Called when the app is navigating to a new page; hide appbar
+            //
+            //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+            //
+            _hideClickEater: function () {
+                $(".win-flyout").each(function (i, e) {
+                    e.winControl.hide();
+                });
+            },
+        })
 });

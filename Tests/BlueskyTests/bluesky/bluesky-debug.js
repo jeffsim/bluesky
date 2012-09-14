@@ -730,6 +730,8 @@ WinJS.Namespace.define("MSApp", {
 
 
 
+
+
 // ============================================================== //
 // ============================================================== //
 // ==                                                          == //
@@ -4386,7 +4388,10 @@ WinJS.Namespace.define("WinJS.Navigation", {
 					return false;
 				}
 
-				// User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
+			    // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
+
+			    // First; hide any clickeaters
+				WinJS.UI._hideClickEaters();
 				newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
 				that._notifyNavigating(newPageInfo);
 
@@ -7767,6 +7772,20 @@ WinJS.Namespace.define("WinJS.UI", {
 
     // ================================================================
     //
+    // private function: WinJS.UI.scopedSelect
+    //
+    //      Called when the app is navigating to a new page; hide appbar
+    //
+    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+    //
+    _hideClickEaters: function () {
+        WinJS.UI.AppBar._hideClickEater();
+        WinJS.UI.Flyout._hideClickEater();
+    },
+
+
+    // ================================================================
+    //
     // public Function: WinJS.UI.isAnimationEnabled
     //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779793.aspx
@@ -8333,6 +8352,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		    this._sticky = (options.sticky == true || options.sticky == "true") ? true : false; // TODO: CLEANUP
 		    this._layout = options.layout || "commands";
 
+		    // Track that this is an appbar
+		    this._isBlueskyAppBar = true;
+
 		    // Call into our base class' constructor
 		    WinJS.UI.BaseControl.call(this, element, options);
 
@@ -8406,6 +8428,18 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
 		{
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.AppBar.scopedSelect
+		    //
+		    //      Called when the app is navigating to a new page; hide appbar
+		    //
+		    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+		    //
+		    _hideClickEaters: function () {
+		        $(".win-appbarclickeater").hide();
+		    },
 
 		    // ================================================================
 		    //
@@ -8919,8 +8953,51 @@ WinJS.Namespace.define("WinJS.UI", {
 		            this.addEventListener("beforeshow", callback);
 		        }
 		    }
-		})
+		},
+
+		// ================================================================
+		// WinJS.UI.AppBar static Member functions
+		// ================================================================
+
+        {
+            // ================================================================
+            //
+            // private function: WinJS.UI.AppBar._hideClickEater
+            //
+            //      Called when the app is navigating to a new page; hide appbar
+            //
+            //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+            //
+            _hideClickEater: function () {
+                $(".win-appbar").each(function (i, e) {
+                    e.winControl.hide();
+                });
+            },
+        })
 });
+
+// ================================================================
+//
+// Not my finest moment.
+//
+// So:  On IE, when you $.hide() something, it triggers a focusout.  This allows us to hook and hide
+//      the appbar if the app calls $appbar.hide().  On *firefox* though (and possibly other browsers,
+//      $.hide() does not trigger focusout.  The *only* way I can see around this is to hook into $.hide()
+//      and, if the element in question is an appbar, then tell the actual appbar wincontrol to hide.
+//
+// TODO: What about other ways to hide, e.g. $appbar.css("display", "none")?  Can hook the same way, but
+//       am worried about perf...
+//
+(function () {
+    var orig = $.fn.hide;
+    $.fn.hide = function () {
+        var result = orig.apply(this, arguments);
+        if (this[0] && this[0].winControl && (this[0].winControl._isBlueskyAppBar || this[0].winControl._isFlyout)) {
+            this[0].winControl.hide();
+        }
+        return result;
+    }
+})();
 
 
 
@@ -10834,6 +10911,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // B. Remove duplicate styles and meta/charset tags
                         blueskyUtils.removeDuplicateElements("meta", "charset", $head);
+                        blueskyUtils.removeDuplicateElements("style", "href", $head);
+                        blueskyUtils.removeDuplicateElements("link", "href", $head);
 
                         // C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
                         $("title:not(:first)", $head).remove();
@@ -10984,6 +11063,9 @@ WinJS.Namespace.define("WinJS.UI", {
             // Hide the flyout until shown
             $(element).hide();
 
+            // Track that this is a flyout
+            this._isFlyout = true;
+
             // Initialize values
             this._hidden = true;
             this._placement = null;
@@ -10998,7 +11080,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		{
 		    // ================================================================
 		    //
-		    // public function: WinJS.Flyout.show
+		    // public function: WinJS.UI.Flyout.show
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211727.aspx
 		    //
@@ -11100,7 +11182,20 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._clickEaterFunction
+		    // private function: WinJS.UI.Flyout.scopedSelect
+		    //
+		    //      Called when the app is navigating to a new page; hide appbar
+		    //
+		    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+		    //
+		    _hideClickEaters: function () {
+		        $(".win-flyoutmenuclickeater").hide();
+		    },
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.UI.Flyout._clickEaterFunction
 		    //
 		    _clickEaterFunction: function () {
 		        this.hide();
@@ -11109,7 +11204,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._unload
+		    // private function: WinJS.UI.Flyout._unload
 		    //
 		    _unload: function (event) {
 
@@ -11129,7 +11224,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public function: WinJS.Flyout.hide
+		    // public function: WinJS.UI.Flyout.hide
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211727.aspx
 		    //
@@ -11167,7 +11262,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		    /*
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._lightDismissHandler
+		    // private function: WinJS.UI.Flyout._lightDismissHandler
 		    //
 		    //		this is called when the user clicks outside the Flyout while visible.
 		    //
@@ -11188,7 +11283,7 @@ WinJS.Namespace.define("WinJS.UI", {
             */
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getLeftPosition
+		    // private function: WinJS.UI.Flyout._getLeftPosition
 		    //
 		    _getLeftPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutWidth - info.flyoutLeftMargin - info.flyoutRightMargin;
@@ -11206,7 +11301,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getRightPosition
+		    // private function: WinJS.UI.Flyout._getRightPosition
 		    //
 		    _getRightPosition: function (info, failIfNoRoom) {
 		        var top = info.anchorTop - info.flyoutTopMargin + (info.anchorHeight - info.flyoutHeight) / 2;
@@ -11224,7 +11319,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getTopPosition
+		    // private function: WinJS.UI.Flyout._getTopPosition
 		    //
 		    _getTopPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutLeftMargin + (info.anchorWidth - info.flyoutWidth) / 2;
@@ -11242,7 +11337,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.Flyout._getBottomPosition
+		    // private function: WinJS.UI.Flyout._getBottomPosition
 		    //
 		    _getBottomPosition: function (info, failIfNoRoom) {
 		        var left = info.anchorLeft - info.flyoutLeftMargin + (info.anchorWidth - info.flyoutWidth) / 2;
@@ -11260,7 +11355,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onafterhide
+		    // public event: WinJS.UI.Flyout.onafterhide
 		    //
 		    //		MSDN: TODO
 		    //
@@ -11284,7 +11379,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onaftershow
+		    // public event: WinJS.UI.Flyout.onaftershow
 		    //
 		    //		MSDN: TODO
 		    //
@@ -11309,7 +11404,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onbeforehide
+		    // public event: WinJS.UI.Flyout.onbeforehide
 		    //
 		    //		MSDN: TODO
 		    //
@@ -11334,7 +11429,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public event: WinJS.Flyout.onbeforeshow
+		    // public event: WinJS.UI.Flyout.onbeforeshow
 		    //
 		    //		MSDN: TODO
 		    //
@@ -11359,7 +11454,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.hidden
+		    // public property: WinJS.UI.Flyout.hidden
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br212535.aspx
 		    //
@@ -11373,7 +11468,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.alignment
+		    // public property: WinJS.UI.Flyout.alignment
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770559.aspx
 		    //
@@ -11390,7 +11485,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.placement
+		    // public property: WinJS.UI.Flyout.placement
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770561.aspx
 		    //
@@ -11404,7 +11499,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // public property: WinJS.Flyout.anchor
+		    // public property: WinJS.UI.Flyout.anchor
 		    //
 		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh770560.aspx
 		    //
@@ -11414,7 +11509,27 @@ WinJS.Namespace.define("WinJS.UI", {
 		            return this._anchor;
 		        }
 		    }
-		})
+		},
+
+		// ================================================================
+		// WinJS.UI.Flyout static Member functions
+		// ================================================================
+
+        {
+            // ================================================================
+            //
+            // private function: WinJS.UI.Flyout._hideClickEater
+            //
+            //      Called when the app is navigating to a new page; hide appbar
+            //
+            //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+            //
+            _hideClickEater: function () {
+                $(".win-flyout").each(function (i, e) {
+                    e.winControl.hide();
+                });
+            },
+        })
 });
 
 
@@ -13699,7 +13814,8 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
                         if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                            $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+                            $groupHeaderTemplate.css("width", Math.min($groupHeaderTemplate.css("width"),
+                                                                       (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px"));
                         }
 
                         // Track width of the current group for the above limit

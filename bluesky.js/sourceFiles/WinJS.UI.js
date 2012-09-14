@@ -291,6 +291,20 @@ WinJS.Namespace.define("WinJS.UI", {
 
     // ================================================================
     //
+    // private function: WinJS.UI.scopedSelect
+    //
+    //      Called when the app is navigating to a new page; hide appbar
+    //
+    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
+    //
+    _hideClickEaters: function () {
+        WinJS.UI.AppBar._hideClickEater();
+        WinJS.UI.Flyout._hideClickEater();
+    },
+
+
+    // ================================================================
+    //
     // public Function: WinJS.UI.isAnimationEnabled
     //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh779793.aspx

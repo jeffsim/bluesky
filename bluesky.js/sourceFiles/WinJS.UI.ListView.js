@@ -76,7 +76,7 @@ WinJS.Namespace.define("WinJS.UI", {
             this._prevHeight = "";
 
             //window.addEventListener("resize", this._windowResized.bind(this));
-            this.$rootElement.resize(this._windowResized.bind(this));
+            this.$rootElement.bind("resize", this._windowResized.bind(this));
 
             // When we're removed from the DOM, unload ourselves
             this.$rootElement.bind("DOMNodeRemoved", this._unload);
@@ -98,7 +98,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (event.target == this) {
 
                     // Remove our click listener from the appbar click eater
-                    window.removeEventListener("resize", this._windowResized);
+                    this.$rootElement.unbind("resize", this._windowResized);
                     if (this.$rootElement)
                         this.$rootElement.unbind("DOMNodeRemoved", this._unload);
                 }
@@ -148,7 +148,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
                 that._resizeAnim = WinJS.UI.Animation.createRepositionAnimation(elements);
                 that._disableAnimation = true;
-                that._positionItems();
+                that._positionItems(true);
                 that._disableAnimation = false;
                 that._resizeAnim.execute().then(function () {
                     that._resizeAnim = null;
@@ -250,11 +250,15 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Generate the containers (DOM elements) for the items
                     that._generateItems();
 
-                    //         that.$scrollSurface.css("width", 0);
-
                     // Place the list items in their correct positions
                     that._positionItems();
 
+                    // TODO (CLEANUP): Resize events come in in unexpected ways.  I'm setting width/height here because currently we get a resize
+                    // event on first render *after* we render, which causes us to reposition items twice.  That's on FF; I believe IE9 comes in with
+                    // a different order for firing resize events...  This is marked as a TODO because I'm not 100% sure this won't break apps that
+                    // rely on a resize event getting fired; also, I should look into forcibly firing a resize event on FF to normalize across browsers...
+                    that._prevWidth = that.$rootElement.innerWidth();
+                    that._prevHeight = that.$rootElement.innerHeight();
                 });
             },
 
@@ -513,7 +517,12 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
                         if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                            $groupHeaderTemplate.css("width", (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px");
+
+                            // TODO (CLEANUP): FF is ellipsizing a pixel or two too soon... Not sure why since there's no border...
+                            // TODO (BUG): One resize, need to recalc groupHeader size from original, since group could be wider now.
+                            var pad = 2;
+                            $groupHeaderTemplate.css("width", Math.min(parseInt($groupHeaderTemplate.css("width")) + pad,
+                                                                       (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft")) + pad)) + "px");
                         }
 
                         // Track width of the current group for the above limit

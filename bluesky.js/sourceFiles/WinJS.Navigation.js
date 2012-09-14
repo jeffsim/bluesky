@@ -59,7 +59,10 @@ WinJS.Namespace.define("WinJS.Navigation", {
 					return false;
 				}
 
-				// User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
+			    // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
+
+			    // First; hide any clickeaters
+				WinJS.UI._hideClickEaters();
 				newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
 				that._notifyNavigating(newPageInfo);
 

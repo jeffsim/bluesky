@@ -1,3 +1,12 @@
+
+if (!console) {
+    var console = {
+        log: function () { },
+        warn: function () { },
+        error: function () { }
+    };
+};
+
 /*DEBUG*/
 // verify app included jQuery
 if (!jQuery) {
@@ -9,15 +18,6 @@ if ($().jquery != "1.7.2") {
     console.warn("this version of Bluesky.js was tested against jQuery v1.7.2; this app uses v" + $().jquery + ".  Consider changing to 1.7.2 if you encounter unexpected issues.");
 }
 /*ENDDEBUG*/
-
-// Freakin' IE, man...
-if (!console) {
-    var console = {
-        log: function () { },
-        warn: function () { },
-        error: function () { }
-    };
-};
 
 // ================================================================
 //
