@@ -15,6 +15,15 @@
 // ============================================================== //
 // ============================================================== //
 
+
+if (!console) {
+    var console = {
+        log: function () { },
+        warn: function () { },
+        error: function () { }
+    };
+};
+
 /*DEBUG*/
 // verify app included jQuery
 if (!jQuery) {
@@ -26,15 +35,6 @@ if ($().jquery != "1.7.2") {
     console.warn("this version of Bluesky.js was tested against jQuery v1.7.2; this app uses v" + $().jquery + ".  Consider changing to 1.7.2 if you encounter unexpected issues.");
 }
 /*ENDDEBUG*/
-
-// Freakin' IE, man...
-if (!console) {
-    var console = {
-        log: function () { },
-        warn: function () { },
-        error: function () { }
-    };
-};
 
 // ================================================================
 //
@@ -722,7 +722,7 @@ WinJS.Namespace.define("Windows", {
 //      TODO (Cleanup): Move this to dedicated file
 //
 WinJS.Namespace.define("MSApp", {
-    execUnsafeLocalFunction: function (c) { return c; }
+    execUnsafeLocalFunction: function (c) { return c(); }
 });
 
 
@@ -5837,9 +5837,9 @@ WinJS.Namespace.define("WinJS.Binding", {
             //
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700742.aspx
             //
-            createGrouped: function (groupKeySelector, groupDataSelector) {
+            createGrouped: function (groupKeySelector, groupDataSelector, groupSorter) {
 
-                return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
+                return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector, groupSorter);
             },
 
 
@@ -6800,7 +6800,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		//		NOTE: Not called directly, but rather as a part of list.createGrouped
 		//
-		function (sourceList, groupKeySelector, groupDataSelector) {
+		function (sourceList, groupKeySelector, groupDataSelector, groupSorter) {
 			
 			this._groupedItems = [];
 
@@ -6809,6 +6809,8 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			// The list of keys (from the source list) sorted 
 			this._sortedKeys = [];  // TODO: move into separate SortedListProjection base class
+
+			this._groupSorter = groupSorter || this._sortFunction;
 
 			// Keep track of the list which we are projecting
 			this._list = sourceList;
@@ -6862,20 +6864,30 @@ WinJS.Namespace.define("WinJS.Binding", {
 			},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.Binding.GroupedSortedListProjection._sortKeys
-			//
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupedSortedListProjection._sortKeys
+		    //
 			_sortKeys: function () {
 
-				var that = this;
-				this._sortedKeys.sort(function (left, right) {
-					left = that._groupKeySelector(that._list.getItemFromKey(left).data);
-					right = that._groupKeySelector(that._list.getItemFromKey(right).data);
-					if (left < right) return -1;
-					if (left == right) return 0;
-					return 1;
-				});
+			    var that = this;
+			    this._sortedKeys.sort(function (left, right) {
+			        left = that._groupKeySelector(that._list.getItemFromKey(left).data);
+			        right = that._groupKeySelector(that._list.getItemFromKey(right).data);
+			        return that._groupSorter(left, right);
+			    });
+			},
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupedSortedListProjection._sortFunction
+		    //
+			_sortFunction: function (left, right) {
+
+			    if (left < right) return -1;
+			    if (left == right) return 0;
+			    return 1;
 			},
 
 
@@ -7576,11 +7588,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     WinJS.UI._processElement(this);
             });
 
-            // Yield so that any controls we generated during the process call get a chance to finalize rendering themselves
-            // before we indicate that we're done
-            msSetImmediate(function () {
-                onComplete(element.winControl);
-            });
+            onComplete(element.winControl);
         });
     },
 
@@ -7619,8 +7627,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 WinJS.UI._processElement(this);
             });
 
-            // Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
-            setTimeout(function () { onComplete(); }, 0);
+            onComplete();
         });
     },
 
@@ -9140,7 +9147,7 @@ WinJS.Namespace.define("WinJS.UI", {
         					"backgroundPosition": ""
         				});
         			else if (iconIndex >= 0) {
-        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5)) + 3) + "px";
+        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
         			    
         				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
         				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
@@ -10557,11 +10564,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     // is responsible for triggering the parented promise that it passed in.
                     parentedPromise.then(function () {
 
-                        // Now that we're parented, append all scripts
-                        return that._appendScripts(pageUri).then(function () {
-                            // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
-                            return WinJS.UI.processAll(targetElement);
-                        });
+                        return WinJS.UI.processAll(targetElement);
 
                     }).then(function () {
                         // If this is the top level "rendering page", then wait until all subpage renderPromises have been fulfilled before we tell anyone that we're done.
@@ -10608,7 +10611,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 // After the page is loaded is init'ed, process it.  Return a promise that this will happen.  Caller then chains on that promise.
                 // TODO: Diff between this and elementReady?
                 this.renderPromise = loadedAndInited.then(function (result) {
-                    return result;
+
+                    return that._appendScripts(pageUri).then(function () {
+                        return result;
+                    });
                 });
 
                 if (WinJS.UI.Pages._renderingPage) {
@@ -10624,11 +10630,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 if (!parentedPromise) {
                     this.renderPromise = this.renderPromise.then(function (result) {
 
-                        // Now that we're parented, append all scripts
-                        return that._appendScripts(pageUri).then(function () {
-                            // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
-                            return WinJS.UI.processAll(targetElement);
-                        });
+                        return WinJS.UI.processAll(targetElement);
 
                     }).then(function () {
                         // If this is the top level "rendering page", then wait until all subpage renderPromises have been fulfilled before we tell anyone that we're done.
@@ -10711,10 +10713,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
                                     src = thisPagePath + src;
                                 }
-                                // Forcibly ignore cache
-                                // TODO: Should I?  Conversely; should I do the same for styles?
-                                var char = script.src.indexOf("?") > -1 ? "&" : "?";
-                                script.src = src;// + char + (new Date()).valueOf();
+                                script.src = src;
                                 script.onload = function () {
                                     if (--toLoad == 0)
                                         scriptsLoaded();
@@ -10727,8 +10726,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         });
 
                         // If no scripts to load, then fulfill the Promise now
-                        if (toLoad == 0)
+                        if (toLoad == 0) {
                             scriptsLoaded();
+                        }
                     });
                 },
 
@@ -10882,7 +10882,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // Keep track of all link'ed styles; we'll wait until they've loaded
                         $("link", $newPage).each(function (i, style) {
 
-                            $(style).prependTo($("head"));
                             if (style.readyState != 'complete' && style.readyState != 'loaded') {
 
                                 // Change local paths to absolute path
@@ -13399,9 +13398,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (event.target == this) {
 
                     // Remove our click listener from the appbar click eater
-                    window.removeEventListener("resize", this._windowResized);
-                    if (this.$rootElement)
+                    if (this.$rootElement) {
+                        this.$rootElement.unbind("resize", this._windowResized);
                         this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+                    }
                 }
             },
 
@@ -13449,7 +13449,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
                 that._resizeAnim = WinJS.UI.Animation.createRepositionAnimation(elements);
                 that._disableAnimation = true;
-                that._positionItems();
+                that._positionItems(true);
                 that._disableAnimation = false;
                 that._resizeAnim.execute().then(function () {
                     that._resizeAnim = null;
@@ -13551,11 +13551,15 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Generate the containers (DOM elements) for the items
                     that._generateItems();
 
-                    //         that.$scrollSurface.css("width", 0);
-
                     // Place the list items in their correct positions
                     that._positionItems();
 
+                    // TODO (CLEANUP): Resize events come in in unexpected ways.  I'm setting width/height here because currently we get a resize
+                    // event on first render *after* we render, which causes us to reposition items twice.  That's on FF; I believe IE9 comes in with
+                    // a different order for firing resize events...  This is marked as a TODO because I'm not 100% sure this won't break apps that
+                    // rely on a resize event getting fired; also, I should look into forcibly firing a resize event on FF to normalize across browsers...
+                    that._prevWidth = that.$rootElement.innerWidth();
+                    that._prevHeight = that.$rootElement.innerHeight();
                 });
             },
 
@@ -13750,10 +13754,15 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private event: WinJS.ListView._positionItems
             //
-            _positionItems: function () {
+            _positionItems: function (repositionDueToResize) {
 
                 if (this.items.length == 0)
                     return;
+
+                if (repositionDueToResize) {
+                    // TODO (PERF): Do nothing if the current listview size is sufficiently equal to the previous size such that
+                    // no repositioning occurs.  I'm assuming there's some check (@ item granularity size)...
+                }
 
                 // Set current rendering position to upper left corner of the list's surface
                 var renderCurX = 0, renderCurY = 0;
@@ -13814,8 +13823,12 @@ WinJS.Namespace.define("WinJS.UI", {
 
                         // If there's a previous group header, then limit its width to the total width of the group of items that we just rendered
                         if ($groupHeaderTemplate && !groupHeaderOnLeft) {
-                            $groupHeaderTemplate.css("width", Math.min($groupHeaderTemplate.css("width"),
-                                                                       (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft"))) + "px"));
+
+                            // TODO (CLEANUP): FF is ellipsizing a pixel or two too soon... Not sure why since there's no border...
+                            // TODO (BUG): One resize, need to recalc groupHeader size from original, since group could be wider now.
+                            var pad = 2;
+                            $groupHeaderTemplate.css("width", Math.min(parseInt($groupHeaderTemplate.css("width")) + pad,
+                                                                       (surfaceWidth - groupRenderStartX - parseInt($groupHeaderTemplate.css("marginLeft")) + pad)) + "px");
                         }
 
                         // Track width of the current group for the above limit
@@ -16225,3 +16238,7 @@ function getStyleLoadedPromise(style) {
         }, 10);
     });
 }
+
+// https://github.com/louisremi/jquery.transition.js
+// MIT license
+(function (a) { function t() { setTimeout(x, 0); return m = a.now() } function x() { m = void 0 } var r = {}, k, q, y = /^(?:toggle|show|hide)$/, z = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i, u, m, v = document.createElement("div").style, w; a.support.transition = "MozTransition" in v ? "MozTransition" : "WebkitTransition" in v ? "WebkitTransition" : !1; a.cssNumber.color = a.cssNumber.backgroundColor = !0; w = { linear: "linear", swing: "ease-out", bounce: "cubic-bezier(0,.35,.5,1.3)", easeInQuad: "cubic-bezier(.55,.085,.68,.53)", easeInCubic: "cubic-bezier(.55,.055,.675,.19)", easeInQuart: "cubic-bezier(.895,.03,.685,.22)", easeInQuint: "cubic-bezier(.755,.05,.855,.06)", easeInSine: "cubic-bezier(.47,0,.745,.715)", easeInExpo: "cubic-bezier(.95,.05,.795,.035)", easeInCirc: "cubic-bezier(.6,.04,.98,.335)", easeOutQuad: "cubic-bezier(.25,.46,.45,.94)", easeOutCubic: "cubic-bezier(.215,.61,.355,1)", easeOutQuart: "cubic-bezier(.165,.84,.44,1)", easeOutQuint: "cubic-bezier(.23,1,.32,1)", easeOutSine: "cubic-bezier(.39,.575,.565,1)", easeOutExpo: "cubic-bezier(.19,1,.22,1)", easeOutCirc: "cubic-bezier(.075,.82,.165,1)", easeInOutQuad: "cubic-bezier(.455,.03,.515,.955)", easeInOutCubic: "cubic-bezier(.645,.045,.355,1)", easeInOutQuart: "cubic-bezier(.77,0,.175,1)", easeInOutQuint: "cubic-bezier(.86,0,.07,1)", easeInOutSine: "cubic-bezier(.445,.05,.55,.95)", easeInOutExpo: "cubic-bezier(1,0,0,1)", easeInOutCirc: "cubic-bezier(.785,.135,.15,.86)" }; a.fn.extend({ animate: function (d, e, g, b) { function f() { !1 === i.queue && a._mark(this); var c = a.extend({}, i), f = 1 === this.nodeType, e = f && a(this).is(":hidden"), b, h, g, j, n; n = a.cssProps; var m = !c.step && a.support.transition, s = [], o, p; c.animatedProperties = {}; c.transition = {}; for (g in d) if (b = a.camelCase(g), g !== b && (d[b] = d[g], delete d[g]), (h = a.cssHooks[b]) && "expand" in h) for (g in j = h.expand(d[b]), delete d[b], j) g in d || (d[g] = j[g]); for (b in d) { h = d[b]; a.isArray(h) ? (j = c.animatedProperties[b] = h[1], h = d[b] = h[0]) : j = c.animatedProperties[b] = c.specialEasing && c.specialEasing[b] || c.easing || "swing"; if (j = m && f && 0 < c.duration && b.indexOf("scroll") && w[j]) o = n[b] || b, p = o.replace(/([A-Z])/g, "-$1").toLowerCase(), j = p + " " + c.duration + "ms " + j, c.transition[b] = { lower: p, real: o }, s.push(j); if ("hide" === h && e || "show" === h && !e) return c.complete.call(this); if (f && ("height" === b || "width" === b)) if (c.overflow = [this.style.overflow, this.style.overflowX, this.style.overflowY], "inline" === a.css(this, "display") && "none" === a.css(this, "float")) { if (!(h = !a.support.inlineBlockNeedsLayout)) { h = this.nodeName; if (!r[h]) { j = document.body; o = a("<" + h + ">").appendTo(j); p = o.css("display"); o.remove(); if ("none" === p || "" === p) { k || (k = document.createElement("iframe"), k.frameBorder = k.width = k.height = 0); j.appendChild(k); if (!q || !k.createElement) q = (k.contentWindow || k.contentDocument).document, q.write((a.support.boxModel ? "<!doctype html>" : "") + "<html><body>"), q.close(); o = q.createElement(h); q.body.appendChild(o); p = a.css(o, "display"); j.removeChild(k) } r[h] = p } h = "inline" === r[h] } h ? this.style.display = "inline-block" : this.style.zoom = 1 } } null != c.overflow && (this.style.overflow = "hidden"); for (g in d) if (f = new a.fx(this, c, g), h = d[g], y.test(h)) if (b = a._data(this, "toggle" + g) || ("toggle" === h ? e ? "show" : "hide" : 0)) a._data(this, "toggle" + g, "show" === b ? "hide" : "show"), f[b](); else f[h](); else b = z.exec(h), n = f.cur(), b ? (h = parseFloat(b[2]), j = b[3] || (a.cssNumber[g] ? "" : "px"), "px" !== j && (a.style(this, g, (h || 1) + j), n *= (h || 1) / f.cur(), a.style(this, g, n + j)), b[1] && (h = ("-=" === b[1] ? -1 : 1) * h + n), f.custom(n, h, j)) : f.custom(n, h, ""); if (m && s.length) for (g in j = this.style[m], e = window.getComputedStyle(this), this.style[m] = s.join() + (j && j.indexOf("none") ? "," + j : ""), c.transition) e[g], a.style.apply(null, c.transition[g].styleToSet); return !0 } var i = a.speed(e, g, b); if (a.isEmptyObject(d)) return this.each(i.complete, [!1]); d = a.extend({}, d); return !1 === i.queue ? this.each(f) : this.queue(i.queue, f) }, stop: function (d, e, g) { "string" !== typeof d && (g = e, e = d, d = void 0); e && !1 !== d && this.queue(d || "fx", []); return this.each(function () { var b, f = false, e = a.timers, c = a._data(this), l = a.support.transition; g || a._unmark(true, this); if (d == null) for (b in c) { if (c[b] && c[b].stop && b.indexOf(".run") === b.length - 4) { var k = c[b]; a.removeData(this, b, true); k.stop(g) } } else if (c[b = d + ".run"] && c[b].stop) { c = c[b]; a.removeData(this, b, true); c.stop(g) } for (b = e.length; b--;) if (e[b].elem === this && (d == null || e[b].queue === d)) { if (g || l) e[b](g); g || e[b].saveState(); f = true; e.splice(b, 1) } (!g || !f) && a.dequeue(this, d) }) } }); a.extend(a.fx.prototype, { cur: function () { if (null != this.elem[this.prop] && (!this.elem.style || null == this.elem.style[this.prop])) return this.elem[this.prop]; var d, e = a.css(this.elem, this.prop); return isNaN(d = parseFloat(e)) ? !e || "auto" === e ? 0 : e : d }, custom: function (d, e, g) { function b(a) { return f.step(a) } var f = this, i = a.fx, c = f.options.transition, l = this.prop; this.startTime = m || t(); this.end = e; this.now = this.start = d; this.pos = this.state = 0; this.unit = g || this.unit || (a.cssNumber[l] ? "" : "px"); b.queue = this.options.queue; b.elem = this.elem; b.saveState = function () { void 0 === a._data(f.elem, "fxshow" + f.prop) && (f.options.hide ? a._data(f.elem, "fxshow" + f.prop, f.start) : f.options.show && a._data(f.elem, "fxshow" + f.prop, f.end)) }; (b.transition = c[l]) ? (a.timers.push(b), "transform" != l && (f.elem.style[c[l].real] = d + f.unit), a.fx.step[l] && (e = Math.max(0, e)), c[l].styleToSet = [f.elem, l, e + f.unit], c[l].timeout = setTimeout(function () { a.timers.splice(a.timers.indexOf(b), 1); f.step(!0) }, f.options.duration + 30)) : b() && a.timers.push(b) && !u && (u = setInterval(i.tick, i.interval)) }, step: function (d) { var e, g = m || t(), b = !0, f = this.elem, i = this.options, c = i.transition[this.prop], l = g >= i.duration + this.startTime, k = a.support.transition; if (c || d || l) { c ? (clearTimeout(c.timeout), !d && !l && (this.elem.style[c.real] = a.css(this.elem, c.real))) : (this.now = this.end, this.pos = this.state = 1, this.update()); i.animatedProperties[this.prop] = !0; for (e in i.animatedProperties) !0 !== i.animatedProperties[e] && (b = !1); if (b) { null != i.overflow && !a.support.shrinkWrapBlocks && a.each(["", "X", "Y"], function (a, b) { f.style["overflow" + b] = i.overflow[a] }); i.hide && a(f).hide(); if (c) { c = "," + f.style[k]; for (e in i.transition) c = c.split(i.transition[e].lower).join("_"); c = c.replace(/, ?_[^,]*/g, "").substr(1); f.style[k] = c || "none"; !c && (f.style[k] = c) } if (i.hide || i.show) for (e in i.animatedProperties) (d || l) && a.style(f, e, i.orig[e]), a.removeData(f, "fxshow" + e, !0), a.removeData(f, "toggle" + e, !0); if ((e = i.complete) && (d || l)) i.complete = !1, e.call(f) } return !1 } Infinity == i.duration ? this.now = g : (d = g - this.startTime, this.state = d / i.duration, this.pos = a.easing[i.animatedProperties[this.prop]](this.state, d, 0, 1, i.duration), this.now = this.start + (this.end - this.start) * this.pos); this.update(); return !0 } }); a.extend(a.fx, { tick: function () { for (var d, e = a.timers, g = 0; g < e.length; g++) d = e[g], !d.transition && !d() && e[g] === d && e.splice(g--, 1); e.length || a.fx.stop() } }) })(jQuery);

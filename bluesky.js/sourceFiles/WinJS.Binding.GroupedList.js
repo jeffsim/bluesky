@@ -14,7 +14,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		//
 		//		NOTE: Not called directly, but rather as a part of list.createGrouped
 		//
-		function (sourceList, groupKeySelector, groupDataSelector) {
+		function (sourceList, groupKeySelector, groupDataSelector, groupSorter) {
 			
 			this._groupedItems = [];
 
@@ -23,6 +23,8 @@ WinJS.Namespace.define("WinJS.Binding", {
 
 			// The list of keys (from the source list) sorted 
 			this._sortedKeys = [];  // TODO: move into separate SortedListProjection base class
+
+			this._groupSorter = groupSorter || this._sortFunction;
 
 			// Keep track of the list which we are projecting
 			this._list = sourceList;
@@ -76,20 +78,30 @@ WinJS.Namespace.define("WinJS.Binding", {
 			},
 
 
-			// ================================================================
-			//
-			// private function: WinJS.Binding.GroupedSortedListProjection._sortKeys
-			//
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupedSortedListProjection._sortKeys
+		    //
 			_sortKeys: function () {
 
-				var that = this;
-				this._sortedKeys.sort(function (left, right) {
-					left = that._groupKeySelector(that._list.getItemFromKey(left).data);
-					right = that._groupKeySelector(that._list.getItemFromKey(right).data);
-					if (left < right) return -1;
-					if (left == right) return 0;
-					return 1;
-				});
+			    var that = this;
+			    this._sortedKeys.sort(function (left, right) {
+			        left = that._groupKeySelector(that._list.getItemFromKey(left).data);
+			        right = that._groupKeySelector(that._list.getItemFromKey(right).data);
+			        return that._groupSorter(left, right);
+			    });
+			},
+
+
+		    // ================================================================
+		    //
+		    // private function: WinJS.Binding.GroupedSortedListProjection._sortFunction
+		    //
+			_sortFunction: function (left, right) {
+
+			    if (left < right) return -1;
+			    if (left == right) return 0;
+			    return 1;
 			},
 
 

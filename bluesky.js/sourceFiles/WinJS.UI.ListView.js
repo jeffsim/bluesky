@@ -76,7 +76,7 @@ WinJS.Namespace.define("WinJS.UI", {
             this._prevHeight = "";
 
             //window.addEventListener("resize", this._windowResized.bind(this));
-            this.$rootElement.bind("resize", this._windowResized.bind(this));
+            this.$rootElement.resize(this._windowResized.bind(this));
 
             // When we're removed from the DOM, unload ourselves
             this.$rootElement.bind("DOMNodeRemoved", this._unload);
@@ -98,9 +98,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (event.target == this) {
 
                     // Remove our click listener from the appbar click eater
-                    this.$rootElement.unbind("resize", this._windowResized);
-                    if (this.$rootElement)
+                    if (this.$rootElement) {
+                        this.$rootElement.unbind("resize", this._windowResized);
                         this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+                    }
                 }
             },
 
@@ -453,10 +454,15 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private event: WinJS.ListView._positionItems
             //
-            _positionItems: function () {
+            _positionItems: function (repositionDueToResize) {
 
                 if (this.items.length == 0)
                     return;
+
+                if (repositionDueToResize) {
+                    // TODO (PERF): Do nothing if the current listview size is sufficiently equal to the previous size such that
+                    // no repositioning occurs.  I'm assuming there's some check (@ item granularity size)...
+                }
 
                 // Set current rendering position to upper left corner of the list's surface
                 var renderCurX = 0, renderCurY = 0;

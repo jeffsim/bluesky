@@ -110,11 +110,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     // is responsible for triggering the parented promise that it passed in.
                     parentedPromise.then(function () {
 
-                        // Now that we're parented, append all scripts
-                        return that._appendScripts(pageUri).then(function () {
-                            // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
-                            return WinJS.UI.processAll(targetElement);
-                        });
+                        return WinJS.UI.processAll(targetElement);
 
                     }).then(function () {
                         // If this is the top level "rendering page", then wait until all subpage renderPromises have been fulfilled before we tell anyone that we're done.
@@ -161,7 +157,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 // After the page is loaded is init'ed, process it.  Return a promise that this will happen.  Caller then chains on that promise.
                 // TODO: Diff between this and elementReady?
                 this.renderPromise = loadedAndInited.then(function (result) {
-                    return result;
+
+                    return that._appendScripts(pageUri).then(function () {
+                        return result;
+                    });
                 });
 
                 if (WinJS.UI.Pages._renderingPage) {
@@ -177,11 +176,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 if (!parentedPromise) {
                     this.renderPromise = this.renderPromise.then(function (result) {
 
-                        // Now that we're parented, append all scripts
-                        return that._appendScripts(pageUri).then(function () {
-                            // We can't call processAll on the loaded page until it's been parented (so that styles can 'find' it in the DOM).
-                            return WinJS.UI.processAll(targetElement);
-                        });
+                        return WinJS.UI.processAll(targetElement);
 
                     }).then(function () {
                         // If this is the top level "rendering page", then wait until all subpage renderPromises have been fulfilled before we tell anyone that we're done.
@@ -264,10 +259,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
                                     src = thisPagePath + src;
                                 }
-                                // Forcibly ignore cache
-                                // TODO: Should I?  Conversely; should I do the same for styles?
-                                var char = script.src.indexOf("?") > -1 ? "&" : "?";
-                                script.src = src;// + char + (new Date()).valueOf();
+                                script.src = src;
                                 script.onload = function () {
                                     if (--toLoad == 0)
                                         scriptsLoaded();
@@ -280,8 +272,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         });
 
                         // If no scripts to load, then fulfill the Promise now
-                        if (toLoad == 0)
+                        if (toLoad == 0) {
                             scriptsLoaded();
+                        }
                     });
                 },
 

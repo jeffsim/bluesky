@@ -258,9 +258,9 @@ WinJS.Namespace.define("WinJS.Binding", {
             //
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700742.aspx
             //
-            createGrouped: function (groupKeySelector, groupDataSelector) {
+            createGrouped: function (groupKeySelector, groupDataSelector, groupSorter) {
 
-                return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector);
+                return new WinJS.Binding.GroupedSortedListProjection(this, groupKeySelector, groupDataSelector, groupSorter);
             },
 
 

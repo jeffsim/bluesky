@@ -95,11 +95,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     WinJS.UI._processElement(this);
             });
 
-            // Yield so that any controls we generated during the process call get a chance to finalize rendering themselves
-            // before we indicate that we're done
-            msSetImmediate(function () {
-                onComplete(element.winControl);
-            });
+            onComplete(element.winControl);
         });
     },
 
@@ -138,8 +134,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 WinJS.UI._processElement(this);
             });
 
-            // Yield so that any controls we generated during the process call get a chance to finalize rendering themselves before we indicate that we're done
-            setTimeout(function () { onComplete(); }, 0);
+            onComplete();
         });
     },
 
