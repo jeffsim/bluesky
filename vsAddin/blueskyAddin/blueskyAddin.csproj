@@ -147,7 +147,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="WebProjectFilesToCopy\web.config" />
+    <EmbeddedResource Include="WebProjectFilesToCopy\web.config">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

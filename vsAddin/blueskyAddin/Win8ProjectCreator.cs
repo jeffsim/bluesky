@@ -237,7 +237,7 @@ namespace blueskyAddin
                                     "    <link href='http://bluesky.io/css/webOverrides-light-R1.css' rel='stylesheet'>\r\n" +
                                     "\r\n" +
                                     "    <!-- bluesky scripts -->\r\n" +
-                                    "    <script type='text/javascript' src='/js/jquery-1.7.2.min.js'></script>\r\n" +
+                                    "    <script src='http://bluesky.io/js/ext/jquery-1.8.0.js' type='text/javascript'></script>\r\n" +
                                     "    <script src='http://bluesky.io/js/bluesky-debug-R1.js' type='text/javascript'></script>\r\n" +
                                     "    <script src='http://bluesky.io/js/bluesky-MiscWinJSPolyfills-R1.js' type='text/javascript'></script>\r\n" +
                                     "\r\n";
