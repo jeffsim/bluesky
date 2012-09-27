@@ -186,7 +186,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		            // TODO: What if there are other appbars visible?
 		            WinJS.UI._$appBarClickEater.hide();
-
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("beforehide", true, true, {});
 		            appBar.dispatchEvent(event);
@@ -259,9 +258,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		    _commands: [],
 		    commands: {
 		        set: function (commands) {
-
-		            if (this._layout == "custom")
-		                return;
 
 		            // Unbind previous commands' appbarhiding listeners
 		            for (var i = 0; i < commands.length; i++) {
@@ -425,6 +421,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		                // Don't call this.hide() since win8 doesn't fire events when hiding due to disabled = true
 		                // TODO: Animate
 		                this.$rootElement.css("visibility", "hidden");
+		                WinJS.UI._$appBarClickEater.hide();
 		                this._hidden = true;
 		            }
 		        }
@@ -500,7 +497,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // TODO: Animate
 		        if (this._disabled)
 		            return;
-
+		        
 		        // TODO: Generalize this oft-repeated pattern.
 		        var event = document.createEvent("CustomEvent");
 		        event.initCustomEvent("beforehide", true, true, {});
@@ -512,9 +509,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        //	return;
 
 		        var that = this;
+		        this._hiding = true;
 		        this.$rootElement.fadeOut("fast", function () {
 		            that.$rootElement.css("visibility", "hidden").css("display", "none")
-
+		            that._hiding = false;
 		            that._hidden = true;
 		            WinJS.UI._$appBarClickEater.hide();
 
@@ -676,7 +674,7 @@ WinJS.Namespace.define("WinJS.UI", {
     var orig = $.fn.hide;
     $.fn.hide = function () {
         var result = orig.apply(this, arguments);
-        if (this[0] && this[0].winControl && (this[0].winControl._isBlueskyAppBar || this[0].winControl._isFlyout)) {
+        if (this[0] && this[0].winControl && ((this[0].winControl._isBlueskyAppBar && ! this[0].winControl._hiding)|| this[0].winControl._isFlyout)) {
             this[0].winControl.hide();
         }
         return result;

@@ -53,6 +53,7 @@ WinJS.Namespace.define("Windows.ApplicationModel", {
                 resourceId: "100",
                 publisher: "bluesky",
                 publisherId: "200",
+                name: "testApp",
                 fullName: "testApp",
                 familyName: "testApp_Family",
                 isFramework: false

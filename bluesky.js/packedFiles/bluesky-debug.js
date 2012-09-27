@@ -509,9 +509,9 @@ WinJS.Namespace.define("WinJS", {
                         }
                     }
                     else {
-                        response = data;
-                        responseText = data;
                         responseXML = data;
+                        response = new XMLSerializer().serializeToString(responseXML);
+                        responseText = response;
                     }
 
                     onComplete({
@@ -654,7 +654,8 @@ WinJS.Namespace.define("Windows", {
         ViewManagement: {
 
             ApplicationView: {
-                value: null,
+                // TODO (CLEANUP): Move this into separate namespace define so I can use the full enum
+                value: 0//Windows.UI.ViewManagement.ApplicationViewState.fullScreenLandscape,
             },
 
             ApplicationViewState: {
@@ -712,6 +713,34 @@ WinJS.Namespace.define("Windows", {
         }
     },
 
+    // ================================================================
+    //
+    // Windows.Data
+    //
+    //		TODO: Stubbed out for test purposes
+    //
+    //		NYI NYI NYI
+    //
+    Data: {
+        Xml: {
+            Dom: {
+                XmlDocument: function () {
+                    var p = new DOMParser();
+
+                    // TODO (CLEANUP): XMLDocument has a loadXml which is equivalent to parseFromString... but this is ugly. I
+                    // imagine I should be created a document here, not a parser...
+                    p.loadXml = function (str) {
+                        this._str = str;
+                        return this.parseFromString(str, "text/xml");
+                    }
+                    p.getXml = function () {
+                        return this._str;
+                    }
+                    return p;//.parseFromString("", "text/xml");
+                }
+            }
+        }
+    }
 });
 
 
@@ -1034,6 +1063,7 @@ WinJS.Namespace.define("Windows.ApplicationModel", {
                 resourceId: "100",
                 publisher: "bluesky",
                 publisherId: "200",
+                name: "testApp",
                 fullName: "testApp",
                 familyName: "testApp_Family",
                 isFramework: false
@@ -8509,7 +8539,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		            // TODO: What if there are other appbars visible?
 		            WinJS.UI._$appBarClickEater.hide();
-
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("beforehide", true, true, {});
 		            appBar.dispatchEvent(event);
@@ -8582,9 +8611,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		    _commands: [],
 		    commands: {
 		        set: function (commands) {
-
-		            if (this._layout == "custom")
-		                return;
 
 		            // Unbind previous commands' appbarhiding listeners
 		            for (var i = 0; i < commands.length; i++) {
@@ -8748,6 +8774,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		                // Don't call this.hide() since win8 doesn't fire events when hiding due to disabled = true
 		                // TODO: Animate
 		                this.$rootElement.css("visibility", "hidden");
+		                WinJS.UI._$appBarClickEater.hide();
 		                this._hidden = true;
 		            }
 		        }
@@ -8823,7 +8850,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // TODO: Animate
 		        if (this._disabled)
 		            return;
-
+		        
 		        // TODO: Generalize this oft-repeated pattern.
 		        var event = document.createEvent("CustomEvent");
 		        event.initCustomEvent("beforehide", true, true, {});
@@ -8835,9 +8862,10 @@ WinJS.Namespace.define("WinJS.UI", {
 		        //	return;
 
 		        var that = this;
+		        this._hiding = true;
 		        this.$rootElement.fadeOut("fast", function () {
 		            that.$rootElement.css("visibility", "hidden").css("display", "none")
-
+		            that._hiding = false;
 		            that._hidden = true;
 		            WinJS.UI._$appBarClickEater.hide();
 
@@ -8999,7 +9027,7 @@ WinJS.Namespace.define("WinJS.UI", {
     var orig = $.fn.hide;
     $.fn.hide = function () {
         var result = orig.apply(this, arguments);
-        if (this[0] && this[0].winControl && (this[0].winControl._isBlueskyAppBar || this[0].winControl._isFlyout)) {
+        if (this[0] && this[0].winControl && ((this[0].winControl._isBlueskyAppBar && ! this[0].winControl._hiding)|| this[0].winControl._isFlyout)) {
             this[0].winControl.hide();
         }
         return result;
@@ -9031,11 +9059,11 @@ WinJS.Namespace.define("WinJS.UI", {
 //
 WinJS.Namespace.define("WinJS.UI", {
 
-	// ================================================================
-	//
-	// public Object: WinJS.UI.AppBarCommand
-	//
-	AppBarCommand: WinJS.Class.derive(WinJS.UI.BaseControl,
+    // ================================================================
+    //
+    // public Object: WinJS.UI.AppBarCommand
+    //
+    AppBarCommand: WinJS.Class.derive(WinJS.UI.BaseControl,
 
 		// ================================================================
 		//
@@ -9045,81 +9073,91 @@ WinJS.Namespace.define("WinJS.UI", {
 		//
         function (element, options) {
 
-        	options = options || {};
+            options = options || {};
 
             // Set default options
             // TODO (CLEANUP): Clean up how options are defined across all wincontrols
             // TODO (CLEANUP): Sanity check: can boolean options come in as strings ("true" instead of true)?  If not, then clean up the below
-        	this._type = options.type || "button";
-        	this._section = options.section || "global";
-        	this._hidden = (options.hidden || options.hidden == "true") ? true : false;
-        	this._label = options.label || "";
-        	this.onclick = options.onclick || null;
-        	this._selected = (options.selected || options.selected == "true") ? true : false;
+            this._type = options.type || "button";
+            this._section = options.section || "global";
+            this._hidden = (options.hidden || options.hidden == "true") ? true : false;
+            this._label = options.label || "";
+            this._selected = (options.selected || options.selected == "true") ? true : false;
 
-        	// Create a base element if one was not provided
-        	if (!element) {
-        		// create button or hr based on options.type
-        		if (options.type == "separator")
-        			element = $("<hr/>")[0];
-        		else
-        			element = $("<button data-win-control='WinJS.UI.AppBarCommand'></button>")[0];
-        		// Give the element a unique id
-        		blueskyUtils.setDOMElementUniqueId(element);
-        	}
+            // Create a base element if one was not provided
+            if (!element) {
+                // create button or hr based on options.type
+                if (options.type == "separator")
+                    element = $("<hr/>")[0];
+                else
+                    element = $("<button data-win-control='WinJS.UI.AppBarCommand'></button>")[0];
+                // Give the element a unique id
+                blueskyUtils.setDOMElementUniqueId(element);
+            }
 
-        	// Call into our base class' constructor
-        	WinJS.UI.BaseControl.call(this, element, options);
+            // Call into our base class' constructor
+            WinJS.UI.BaseControl.call(this, element, options);
 
-        	// Set id after we've created the element
-        	this.id = options.id;
-        	if (this.id)
-        		this.$rootElement.attr("id", this.id);
-        	if (options.extraClass)
-        		this.$rootElement.addClass(options.extraClass);
-        	this.tooltip = options.tooltip || this.label;
+            // Set id after we've created the element
+            this.id = options.id;
+            if (this.id)
+                this.$rootElement.attr("id", this.id);
+            if (options.extraClass)
+                this.$rootElement.addClass(options.extraClass);
+            this.tooltip = options.tooltip || this.label;
 
-        	this.disabled = (options.disabled || options.disabled == "true") ? true : false;
+            this.disabled = (options.disabled || options.disabled == "true") ? true : false;
 
-        	// Create our DOM hierarchy
-        	var $root = this.$rootElement;
-        	$root.addClass("win-command");
+            this.onclick = options.onclick || null;
 
-        	if (this.section == "global")
-        		$root.addClass("win-global");
-        	else
-        		$root.addClass("win-selection");
-        	if (this.type == "toggle")
-        		$root.attr("role", "menuitemcheckbox");
-        	else
-        		$root.attr("role", "menuitem");
+            // Create our DOM hierarchy
+            var $root = this.$rootElement;
+            $root.addClass("win-command");
 
-        	// Create the flyout to show when this button is clicked if type == flyout
-        	this.flyout = (this.type == "flyout" && options.flyout) || null;
+            if (this.section == "global")
+                $root.addClass("win-global");
+            else
+                $root.addClass("win-selection");
+            if (this.type == "toggle")
+                $root.attr("role", "menuitemcheckbox");
+            else
+                $root.attr("role", "menuitem");
 
-        	if (this.type != "separator") {
-        		this.$commandImage = $("<span class='win-commandicon win-commandring'><span class='win-commandimage'></span></span>");
-        		$root.append(this.$commandImage);
-        		this.$label = $("<span class='win-label'>" + this.label + "</span>");
-        		$root.append(this.$label);
-        	}
-        	this.icon = options.icon || "";
+            // Create the flyout to show when this button is clicked if type == flyout
+            this.flyout = (this.type == "flyout" && options.flyout) || null;
 
-        	// Bind click for flyout
-        	var that = this;
-        	$root.bind("click", function (event) {
-        	    if (that._flyout) {
-        	        event.stopPropagation();
-        	        event.preventDefault();
-        	        that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
-        	    } else {
-        	        // TODO: See comment in appbar constructor on the purpose behind appBarCommandClickedTime
-        	        var appBarNode = that.element.parentNode;
-        	        if (appBarNode && appBarNode.winControl) {
-        	            appBarNode.winControl._appBarCommandClickedTime = Date.now();
-        	        }
-        	    }
-        	});
+            if (this.type != "separator") {
+
+                if (this.element.children.length == 0) {
+
+                    this.$commandImage = $("<span class='win-commandicon win-commandring'><span class='win-commandimage'></span></span>");
+                    $root.append(this.$commandImage);
+                    this.$label = $("<span class='win-label'>" + this.label + "</span>");
+                    $root.append(this.$label);
+                }
+            }
+
+            // Fix temporary bug in blueskyUtils.parseJson...
+            if (options.icon.indexOf("(") != -1 && options.icon.indexOf(")") == -1)
+                options.icon = options.icon + ")";
+
+            this.icon = options.icon || "";
+
+            // Bind click for flyout
+            var that = this;
+            $root.bind("click", function (event) {
+                if (that._flyout) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    that._flyout.show(that.element, that.placement == "top" ? "bottom" : "top");
+                } else {
+                    // TODO: See comment in appbar constructor on the purpose behind appBarCommandClickedTime
+                    var appBarNode = that.element.parentNode;
+                    if (appBarNode && appBarNode.winControl) {
+                        appBarNode.winControl._appBarCommandClickedTime = Date.now();
+                    }
+                }
+            });
         },
 
 		// ================================================================
@@ -9127,205 +9165,236 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
         {
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.icon
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700483.aspx
-        	//
-        	_icon: true,
-        	icon: {
-        		get: function () {
-        			return this._icon;
-        		},
-        		set: function (value) {
-        			this._icon = value;
-        			var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
-        			if (this.icon.indexOf("url(") == 0)
-        				$(".win-commandimage", this.$rootElement).css({
-        				    "backgroundImage": this._icon,
-        					"backgroundPosition": ""
-        				});
-        			else if (iconIndex >= 0) {
-        			    var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
-        			    
-        				// TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
-        				// on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
-        				var iconImage = "http://bluesky.io/images/icons-dark.png";
-        				for (var i = 0; i < document.styleSheets.length; i++) {
-        					if (document.styleSheets[i].href && document.styleSheets[i].href.toLowerCase().indexOf("ui-dark.css") >= 0) {
-        						iconImage = "http://bluesky.io/images/icons.png";
-        						break;
-        					}
-        				}
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.onclick
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700502.aspx
+            //
+            onclick: {
+                get: function () {
+                    return ths._prevOnClick;
+                },
 
-        				$(".win-commandimage", this.$rootElement).css({
-        					"backgroundImage": "url('" + iconImage + "')",
-        					"backgroundPosition": iconStr,
-        				});
-        			} else
-        				$(".win-commandimage", this.$rootElement).css({
-        					"backgroundImage": "",
-        					"backgroundPosition": ""
-        				});
+                set: function (func) {
 
-        		}
-        	},
+                    if (!func) {
+                        if (this._prevOnClick)
+                            this.$rootElement.unbind("click", this._prevOnClick);
+                    } else {
+                        this.$rootElement.click(func);
+                        this._prevOnClick = func;
+                    }
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.label
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700492.aspx
-        	//
-        	_label: true,
-        	label: {
-        		get: function () {
-        			return this._label;
-        		},
-        		set: function (value) {
-        			this._label = value;
-        			this.$label.text(value);
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.icon
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700483.aspx
+            //
+            _icon: true,
+            icon: {
+                get: function () {
+                    return this._icon;
+                },
+                set: function (value) {
+                    this._icon = value;
+                    var iconIndex = WinJS.UI.AppBarCommand._iconMap.indexOf(this._icon);
+                    if (this.icon.indexOf("url(") == 0)
+                        $(".win-commandimage", this.$rootElement).css({
+                            "backgroundImage": this._icon,
+                            "backgroundPosition": ""
+                        });
+                    else if (iconIndex >= 0) {
+                        var iconStr = (-40 * (iconIndex % 5)) + "px " + (-40 * (Math.floor(iconIndex / 5))) + "px";
+
+                        // TODO (PERF): The app could be using either ui-dark or ui-light, and we want to use different icon png based
+                        // on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
+                        var iconImage = "http://bluesky.io/images/icons-dark.png";
+                        for (var i = 0; i < document.styleSheets.length; i++) {
+                            if (document.styleSheets[i].href && document.styleSheets[i].href.toLowerCase().indexOf("ui-dark.css") >= 0) {
+                                iconImage = "http://bluesky.io/images/icons.png";
+                                break;
+                            }
+                        }
+
+                        $(".win-commandimage", this.$rootElement).css({
+                            "backgroundImage": "url('" + iconImage + "')",
+                            "backgroundPosition": iconStr,
+                        });
+                    } else
+                        $(".win-commandimage", this.$rootElement).css({
+                            "backgroundImage": "",
+                            "backgroundPosition": ""
+                        });
+
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.disabled
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700457.aspx
-        	//
-        	_disabled: true,
-        	disabled: {
-        		get: function () {
-        			return this._disabled;
-        		},
-        		set: function (value) {
-        			this._disabled = value;
-        			if (this._disabled)
-        				this.$rootElement.attr("disabled", "disabled");
-        			else
-        				this.$rootElement.removeAttr("disabled");
-        		}
-        	},
-
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.flyout
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700472.aspx
-        	//
-        	_flyout: true,
-        	flyout: {
-        		get: function () {
-        			return this._flyout;
-        		},
-        		set: function (value) {
-        			// string vs. object
-        			if (typeof value === "string")
-        				value = new WinJS.UI.Flyout($("#" + value)[0]);
-        			this._flyout = value;
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.label
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700492.aspx
+            //
+            _label: true,
+            label: {
+                get: function () {
+                    return this._label;
+                },
+                set: function (value) {
+                    this._label = value;
+                    this.$label.text(value);
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.hidden
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700477.aspx
-        	//
-        	_hidden: true,
-        	hidden: {
-        		get: function () {
-        			return this._hidden;
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.disabled
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700457.aspx
+            //
+            _disabled: true,
+            disabled: {
+                get: function () {
+                    return this._disabled;
+                },
+                set: function (value) {
+                    this._disabled = value;
+                    if (this._disabled)
+                        this.$rootElement.attr("disabled", "disabled");
+                    else
+                        this.$rootElement.removeAttr("disabled");
+                }
+            },
+
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.flyout
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700472.aspx
+            //
+            _flyout: true,
+            flyout: {
+                get: function () {
+                    return this._flyout;
+                },
+                set: function (value) {
+                    // string vs. object
+                    if (typeof value === "string")
+                        value = new WinJS.UI.Flyout($("#" + value)[0]);
+                    this._flyout = value;
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.section
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700511.aspx
-        	//
-        	_section: true,
-        	section: {
-        		get: function () {
-        			return this._section;
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.hidden
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700477.aspx
+            //
+            _hidden: true,
+            hidden: {
+                get: function () {
+                    return this._hidden;
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.type
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700529.aspx
-        	//
-        	_type: "button",
-        	type: {
-        		get: function () {
-        			return this._type;
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.section
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700511.aspx
+            //
+            _section: true,
+            section: {
+                get: function () {
+                    return this._section;
+                },
+                set: function (value) {
+                    this._section = value;
+                    if (this._section == "global")
+                        this.$rootElement.removeClass("win-selection").addClass("win-global");
+                    else
+                        this.$rootElement.removeClass("win-global").addClass("win-selection");
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.tooltip
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700522.aspx
-        	//
-        	_tooltip: "",
-        	tooltip: {
-        		get: function () {
-        			return this._tooltip;
-        		},
-        		set: function (value) {
-        			this._tooltip = value;
-
-        			// TODO: Use WinJS.UI.Tooltip when that is implemented
-        			this.$rootElement.attr("title", value);
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.type
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700529.aspx
+            //
+            _type: "button",
+            type: {
+                get: function () {
+                    return this._type;
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// public property: WinJS.UI.AppBarCommand.selected
-        	//
-        	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700513.aspx
-        	//
-        	_selected: "",
-        	selected: {
-        		get: function () {
-        			return this._selected;
-        		},
-        		set: function (value) {
-        			this._selected = value;
-        			// Win8's styles use the aria-checked attribute to apply selected styling
-        			this.$rootElement.attr("aria-checked", value ? "true" : "");
-        		}
-        	},
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.tooltip
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700522.aspx
+            //
+            _tooltip: "",
+            tooltip: {
+                get: function () {
+                    return this._tooltip;
+                },
+                set: function (value) {
+                    this._tooltip = value;
+
+                    // TODO: Use WinJS.UI.Tooltip when that is implemented
+                    this.$rootElement.attr("title", value);
+                }
+            },
 
 
-        	// ================================================================
-        	//
-        	// private function: WinJS.UI.AppBarCommand._appBarHiding
-        	//
-        	//		Called by the appbar when it's hiding; this allows us to hide our flyout if we have one and it's showing
-        	//
-        	_appBarHiding: function () {
+            // ================================================================
+            //
+            // public property: WinJS.UI.AppBarCommand.selected
+            //
+            //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700513.aspx
+            //
+            _selected: "",
+            selected: {
+                get: function () {
+                    return this._selected;
+                },
+                set: function (value) {
+                    this._selected = value;
+                    // Win8's styles use the aria-checked attribute to apply selected styling
+                    this.$rootElement.attr("aria-checked", value ? "true" : "");
+                }
+            },
 
-        		// If we have a flyout, then hide it
-        		if (this._flyout)
-        			this._flyout.hide();
-        	}
+
+            // ================================================================
+            //
+            // private function: WinJS.UI.AppBarCommand._appBarHiding
+            //
+            //		Called by the appbar when it's hiding; this allows us to hide our flyout if we have one and it's showing
+            //
+            _appBarHiding: function () {
+
+                // If we have a flyout, then hide it
+                if (this._flyout)
+                    this._flyout.hide();
+            }
         }, {
-        	_iconMap: ['accept', 'back', 'caption', 'contactpresence', 'document',
+            _iconMap: ['accept', 'back', 'caption', 'contactpresence', 'document',
 					  'accounts', 'bold', 'cc', 'copy', 'download',
 					  'add', 'bookmarks', 'characters', 'crop', 'edit',
 					  'admin', 'browsephotos', 'clear', 'cut', 'emoji',
@@ -9355,9 +9424,44 @@ WinJS.Namespace.define("WinJS.UI", {
 					  'remote', 'send', 'stop', 'up', 'zoom',
 					  'remove', 'setlockscreen', 'stopslideshow', 'upload', 'zoomin',
 					  'rename', 'settile', 'switch', 'uploadskydrive', 'zoomout'
-        	]
+            ]
         })
 });
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.AppBarIcon.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+3// ================================================================
+//
+// WinJS.UI.AppBarIcon
+//
+//		Implementation of the WinJS.UI.AppBarIcon object
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+    AppBarIcon: {}
+});
+
+// Populate WinJS.UI.AppBarIcon
+// TODO (CLEANUP): Don't do this in global context.
+var _bsTempIconMap = WinJS.UI.AppBarCommand._iconMap;
+for (var i in _bsTempIconMap)
+    WinJS.UI.AppBarIcon[_bsTempIconMap[i]] = _bsTempIconMap[i];
+
 
 
 
@@ -10223,6 +10327,7 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
 
             // TODO: Use WinJS.xhr when that's implemented
             // TODO: Error handling
+            // TODO: Should we automatically cache bust like we do in WinJS.UI.Pages._getRemotePage?  Same Q for scripts
 
             // First, load the fragment's text
             $.get(href, function (response) {
@@ -10276,6 +10381,8 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
                     styleNodesToMove.push(childNode);
                 }
             }
+
+            // TODO: Do I need to handle moving id'ed elements to the global namespace?  See Pages._processPage...
 
             styleNodesToMove.forEach(function (styleNodeToMove) {
 
@@ -10346,7 +10453,7 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
                 }
             });
 
-            // Notify listeners  that the fragment has been processed.
+            // Notify listeners that the fragment has been processed.
             fragmentProcessedCallback(docFrag);
         });
     },
@@ -10511,14 +10618,36 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.get: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
+        pageUri = this._normalizeUrl(pageUri);
+
         // Get the page constructor for the specified Url
-        var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
+        var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri];
 
         // If the page constructor doesn't exist, then define it now
         pageConstructor = pageConstructor || WinJS.UI.Pages.define(pageUri);
 
         // Return the page constructor for the specified url.
         return pageConstructor;
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.UI.Pages._normalizeUrl
+    //
+    //		Normalizes the URL to be lowercase and always include host.
+    //
+    _normalizeUrl: function (pageUri) {
+
+        pageUri = pageUri.toLowerCase();
+
+        // Always include host
+        if (pageUri.indexOf("http:") != 0) {
+            var slash = pageUri[0] == "/" ? "" : "/";
+            pageUri = "http://" + document.location.host + slash + pageUri
+        }
+
+        return pageUri;
     },
 
 
@@ -10540,8 +10669,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.define: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
+        pageUri = this._normalizeUrl(pageUri);
+
         // Check to see if an existing definition (keyed on the pageUrI) already exists, and use it if so.
-        var existingDefn = this.registeredPages[pageUri.toLowerCase()];
+        var existingDefn = this.registeredPages[pageUri];
         if (existingDefn) {
             var pageControl = existingDefn;
         }
@@ -10555,7 +10686,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 /*ENDDEBUG*/
 
                 // this is called when the page should be instantiated and its html realized.  Do so now.
-                var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
+                var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];   // TODO (CLEANUP): Remove this
                 var that = this;
                 targetElement.winControl = this;
 
@@ -10701,6 +10832,14 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // the scriptsLoaded promise.  
                         // TODO: Will this never fulfill if script fails to load (e.g. 404)?
                         var toLoad = 0;
+
+                        // unload previous pages' scripts (if any)
+                        // TODO (CLEANUP): Move this elsewhere
+                        WinJS.UI.Pages._curPageScripts.forEach(function (src) {
+                            $("script[src='" + src + "']").remove();
+                        });
+                        WinJS.UI.Pages._curPageScripts = [];
+
                         that.newPageScripts.forEach(function (element) {
                             var script = document.createElement("script");
                             script.type = "text/javascript";
@@ -10713,6 +10852,15 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
                                     src = thisPagePath + src;
                                 }
+
+                                // Add a timestamp to force a clean load
+                                var char = src.indexOf("?") == -1 ? "?" : "&";
+                                src += char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
+                                // console.log("loading script:", src);
+
+                                // track all loaded scripts so that we can unload them on next page navigation
+                                WinJS.UI.Pages._curPageScripts.push(src);
+
                                 script.src = src;
                                 script.onload = function () {
                                     if (--toLoad == 0)
@@ -10749,9 +10897,14 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageLoadCompletedCallback specified");
                     /*ENDDEBUG*/
 
+                    // Add a timestamp to force a clean load
+                    var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
+                    var uniquePage = pageInfo.Uri + char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
+                    console.log("loading page:", uniquePage);
+
                     // Use Ajax to get the page's contents
                     // TODO: Use WinJS.xhr when that's implemented
-                    $.get(pageInfo.Uri, function (response) {
+                    $.get(uniquePage, function (response) {
 
                         // We loaded the page
                         // TODO: error handling
@@ -10928,12 +11081,14 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //  3. All styles from the loaded page have been moved up to the page's head, but possibly not yet parsed into document.styleSheets
                         //	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
-                        // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
+                        // Modern browsers like to add all DOM elements with Ids to the global namespace.  See this link for back-story: http://stackoverflow.com/questions/3434278/ie-chrome-are-dom-tree-elements-global-variables-here
+                        // The *problem* is that Firefox (as of v15) does it at a later point than IE (after the page is fully loaded).  SO: We need
+                        // to go ahead and forcibly inject all id'ed elements into the DOM now so that scripts on the same page don't break due to unexpectedly missing global
+                        // id'ed elements.  Thanks again, IE, for making this necessary! *grimace*
+                        // TODO (CLEANUP): I can constrain to $target since default.html is handled elsewhere
                         $("[id]").each(function (index, element) {
                             window[element.id] = element;
                         });
-
-                        //	$newPageScripts.appendTo($head);
 
                         // Wait until all of the styles have been loaded...
                         WinJS.Promise.join(stylesToWaitFor).then(function () {
@@ -10963,7 +11118,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
     },
 
     // registeredPages: A map that associates pageUris with page constructor functions
-    registeredPages: []
+    registeredPages: [],
+
+    // _curPageScripts: The set of scripts on the currently loaded page.
+    // TODO: Rationalize this with WinJS.UI.Fragments (Which can also load scripts)
+    _curPageScripts: []
 });
 
 
@@ -12982,6 +13141,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
             // We want to know when the browser is resized so that we can relayout our items.
             window.addEventListener("resize", this._windowResized.bind(this));
+            this.$rootElement.resize(this._windowResized.bind(this));
 
             // TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I can't quite get it to work.
             //window.removeEventListener("resize", this._zoomedInView._windowResized);
@@ -14694,6 +14854,135 @@ WinJS.Namespace.define("WinJS.UI", {
                 }
             }
         })
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.ToggleSwitch.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.ToggleSwitch
+//
+//		Implementation of the WinJS.UI.ToggleSwitch object
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+    // ================================================================
+    //
+    // public Object: WinJS.UI.ToggleSwitch
+    //
+    //      NYI NYI NYI: Stub
+    // 
+    ToggleSwitch: WinJS.Class.derive(WinJS.UI.BaseControl,
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.ToggleSwitch constructor
+		//
+		//		MSDN: TODO
+		//	
+        function (element, options) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!element)
+                console.error("WinJS.UI.ToggleSwitch constructor: Undefined or null element specified");
+            /*ENDDEBUG*/
+
+            // Call into our base class' constructor
+            WinJS.UI.BaseControl.call(this, element, options);
+        },
+
+		// ================================================================
+		// WinJS.UI.ToggleSwitch Member functions
+		// ================================================================
+
+		{
+		    labelOn: "On",
+		    labelOff: "Off",
+		    title: "title"
+		})
+});
+
+
+
+
+
+
+
+
+// ============================================================== //
+// ============================================================== //
+// ==                                                          == //
+//                    File: WinJS.UI.SettingsFlyout.js
+// ==                                                          == //
+// ============================================================== //
+// ============================================================== //
+
+// ================================================================
+//
+// WinJS.UI.SettingsFlyout
+//
+//		Implementation of the WinJS.UI.SettingsFlyout object
+//
+//		MSDN: TODO
+//
+WinJS.Namespace.define("WinJS.UI", {
+
+    // ================================================================
+    //
+    // public Object: WinJS.UI.SettingsFlyout
+    //
+    //      NYI NYI NYI: Stub
+    // 
+    SettingsFlyout: WinJS.Class.derive(WinJS.UI.BaseControl,
+
+		// ================================================================
+		//
+		// public function: WinJS.UI.SettingsFlyout constructor
+		//
+		//		MSDN: TODO
+		//	
+        function (element, options) {
+
+            /*DEBUG*/
+            // Parameter validation
+            if (!element)
+                console.error("WinJS.UI.SettingsFlyout constructor: Undefined or null element specified");
+            /*ENDDEBUG*/
+
+            // Call into our base class' constructor
+            WinJS.UI.BaseControl.call(this, element, options);
+
+            // Start out hidden
+            this.$rootElement.hide();
+        },
+
+		// ================================================================
+		// WinJS.UI.SettingsFlyout Member functions
+		// ================================================================
+
+		{
+		    show: function () {
+		    },
+
+		    hide: function () {
+		    }
+		})
 });
 
 

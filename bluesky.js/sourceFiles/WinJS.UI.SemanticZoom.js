@@ -100,6 +100,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
             // We want to know when the browser is resized so that we can relayout our items.
             window.addEventListener("resize", this._windowResized.bind(this));
+            this.$rootElement.resize(this._windowResized.bind(this));
 
             // TODO: We want to disconnect our listviews' resize events so that we can fire them *after* we resize things - but I can't quite get it to work.
             //window.removeEventListener("resize", this._zoomedInView._windowResized);

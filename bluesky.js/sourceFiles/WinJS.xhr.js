@@ -129,9 +129,9 @@ WinJS.Namespace.define("WinJS", {
                         }
                     }
                     else {
-                        response = data;
-                        responseText = data;
                         responseXML = data;
+                        response = new XMLSerializer().serializeToString(responseXML);
+                        responseText = response;
                     }
 
                     onComplete({

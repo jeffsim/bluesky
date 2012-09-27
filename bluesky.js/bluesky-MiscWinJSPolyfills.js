@@ -246,3 +246,110 @@ if (!window.msIndexedDB) {
         return indexedDB;
     }
 }
+
+// ================================================================
+//
+// IE supports a variety of funcitons and members on HTMLElement.style which other browsers do not support.  Add them here..
+//
+if (!CSSStyleDeclaration.posLeft) {
+
+    Object.defineProperty(CSSStyleDeclaration.prototype, "posLeft", {
+        get: function () {
+            return parseInt(this.left);
+        },
+        set: function (value) {
+            this.left = parseInt(value) + "px";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(CSSStyleDeclaration.prototype, "posTop", {
+        get: function () {
+            return parseInt(this.top);
+        },
+        set: function (value) {
+            this.top = parseInt(value) + "px";
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    Object.defineProperty(CSSStyleDeclaration.prototype, "posWidth", {
+        get: function () {
+            return parseInt(this.width);
+        },
+        set: function (value) {
+            this.width = parseInt(value) + "px";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(CSSStyleDeclaration.prototype, "posHeight", {
+        get: function () {
+            return parseInt(this.height);
+        },
+        set: function (value) {
+            this.height = parseInt(value) + "px";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(CSSStyleDeclaration.prototype, "float", {
+        get: function () {
+            return this.cssFloat;
+        },
+        set: function (value) {
+            this.cssFloat = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    // polyfill for HTMLElement.style.setAttribute(key,value) here
+    CSSStyleDeclaration.prototype.setAttribute = function (key, value) {
+        this[key] = value;
+    };
+
+    // polyfill for HTMLElement.style.removeAttribute(key,value) here
+    CSSStyleDeclaration.prototype.removeAttribute = function (key) {
+        this[key] = null;
+    };
+}
+
+// Only IE10 supports MSPointerDown (et al), so we need to hook into addEventListener (et al) on other browsers
+// TODO: I don't want to do a ua-check here, but am not sure how to test for existence of MSPointerUp...
+if (!($.browser.msie && $.browser.version == "10.0")) {
+
+    var evtMap = {
+        MSPointerDown: "mousedown",
+        MSPointerUp: "mouseup",
+        MSPointerMove: "mousemove",
+        MSPointerCancel: ""    // TODO: hm.
+    };
+
+    var originalAddEL = HTMLCanvasElement.prototype.addEventListener;
+    HTMLCanvasElement.prototype.addEventListener = function (evt, func, cap) {
+
+        // if the event is one of the IE10 ones, then map to a known one
+        if (evtMap[evt]) {
+            // TODO: Warn dev
+            evt = evtMap[evt];
+        }
+
+        // Call the original addEventListener function
+        // TODO (CLEANUP): Can I call 'base' or something here?
+        originalAddEL.call(this, evt, func, cap);
+    };
+
+    var originalRemoveEL = HTMLCanvasElement.prototype.removeEventListener;
+    HTMLCanvasElement.prototype.removeEventListener = function (evt, func, cap) {
+
+        // if the event is one of the IE10 ones, then map to a known one
+        if (evtMap[evt])
+            evt = evtMap[evt];
+
+        // Call the original removeEventListener function
+        // TODO (CLEANUP): Can I call 'base' or something here?
+        originalRemoveEL.call(this, evt, func, cap);
+    };
+}

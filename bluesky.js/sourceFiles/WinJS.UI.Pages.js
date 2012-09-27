@@ -57,14 +57,36 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.get: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
+        pageUri = this._normalizeUrl(pageUri);
+
         // Get the page constructor for the specified Url
-        var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
+        var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri];
 
         // If the page constructor doesn't exist, then define it now
         pageConstructor = pageConstructor || WinJS.UI.Pages.define(pageUri);
 
         // Return the page constructor for the specified url.
         return pageConstructor;
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.UI.Pages._normalizeUrl
+    //
+    //		Normalizes the URL to be lowercase and always include host.
+    //
+    _normalizeUrl: function (pageUri) {
+
+        pageUri = pageUri.toLowerCase();
+
+        // Always include host
+        if (pageUri.indexOf("http:") != 0) {
+            var slash = pageUri[0] == "/" ? "" : "/";
+            pageUri = "http://" + document.location.host + slash + pageUri
+        }
+
+        return pageUri;
     },
 
 
@@ -86,8 +108,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.define: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
+        pageUri = this._normalizeUrl(pageUri);
+
         // Check to see if an existing definition (keyed on the pageUrI) already exists, and use it if so.
-        var existingDefn = this.registeredPages[pageUri.toLowerCase()];
+        var existingDefn = this.registeredPages[pageUri];
         if (existingDefn) {
             var pageControl = existingDefn;
         }
@@ -101,7 +125,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 /*ENDDEBUG*/
 
                 // this is called when the page should be instantiated and its html realized.  Do so now.
-                var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];
+                var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];   // TODO (CLEANUP): Remove this
                 var that = this;
                 targetElement.winControl = this;
 
@@ -247,6 +271,14 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // the scriptsLoaded promise.  
                         // TODO: Will this never fulfill if script fails to load (e.g. 404)?
                         var toLoad = 0;
+
+                        // unload previous pages' scripts (if any)
+                        // TODO (CLEANUP): Move this elsewhere
+                        WinJS.UI.Pages._curPageScripts.forEach(function (src) {
+                            $("script[src='" + src + "']").remove();
+                        });
+                        WinJS.UI.Pages._curPageScripts = [];
+
                         that.newPageScripts.forEach(function (element) {
                             var script = document.createElement("script");
                             script.type = "text/javascript";
@@ -259,6 +291,15 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
                                     src = thisPagePath + src;
                                 }
+
+                                // Add a timestamp to force a clean load
+                                var char = src.indexOf("?") == -1 ? "?" : "&";
+                                src += char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
+                                // console.log("loading script:", src);
+
+                                // track all loaded scripts so that we can unload them on next page navigation
+                                WinJS.UI.Pages._curPageScripts.push(src);
+
                                 script.src = src;
                                 script.onload = function () {
                                     if (--toLoad == 0)
@@ -295,9 +336,14 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         console.error("WinJS.UI.PageControl._loadPage: Undefined or null pageLoadCompletedCallback specified");
                     /*ENDDEBUG*/
 
+                    // Add a timestamp to force a clean load
+                    var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
+                    var uniquePage = pageInfo.Uri + char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
+                    console.log("loading page:", uniquePage);
+
                     // Use Ajax to get the page's contents
                     // TODO: Use WinJS.xhr when that's implemented
-                    $.get(pageInfo.Uri, function (response) {
+                    $.get(uniquePage, function (response) {
 
                         // We loaded the page
                         // TODO: error handling
@@ -338,6 +384,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
                         // sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
                         // $("<div></div>").html(pageInfo.response) won't work for the above reason.
+
+                        // replace ms-appx:/// with root /
+                        pageInfo.response = pageInfo.response.replace(/ms-appx:\/\/\//gi, "/")
 
                         // Also note: Per http://molily.de/weblog/domcontentloaded, HTML5 requires browsers to defer execution of scripts until
                         // all previous stylesheets are loaded.  So, we need to rearrange scripts and styles from the loaded page so that styles come before scripts.
@@ -474,12 +523,14 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //  3. All styles from the loaded page have been moved up to the page's head, but possibly not yet parsed into document.styleSheets
                         //	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
-                        // Win8 likes to add all DOM elements with Ids to the global namespace.  Add all of the loaded Page's id'ed DOM elements now.
+                        // Modern browsers like to add all DOM elements with Ids to the global namespace.  See this link for back-story: http://stackoverflow.com/questions/3434278/ie-chrome-are-dom-tree-elements-global-variables-here
+                        // The *problem* is that Firefox (as of v15) does it at a later point than IE (after the page is fully loaded).  SO: We need
+                        // to go ahead and forcibly inject all id'ed elements into the DOM now so that scripts on the same page don't break due to unexpectedly missing global
+                        // id'ed elements.  Thanks again, IE, for making this necessary! *grimace*
+                        // TODO (CLEANUP): I can constrain to $target since default.html is handled elsewhere
                         $("[id]").each(function (index, element) {
                             window[element.id] = element;
                         });
-
-                        //	$newPageScripts.appendTo($head);
 
                         // Wait until all of the styles have been loaded...
                         WinJS.Promise.join(stylesToWaitFor).then(function () {
@@ -509,5 +560,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
     },
 
     // registeredPages: A map that associates pageUris with page constructor functions
-    registeredPages: []
+    registeredPages: [],
+
+    // _curPageScripts: The set of scripts on the currently loaded page.
+    // TODO: Rationalize this with WinJS.UI.Fragments (Which can also load scripts)
+    _curPageScripts: []
 });

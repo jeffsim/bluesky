@@ -700,6 +700,10 @@ WinJS.Namespace.define("WinJS.UI", {
                         if (element.element)
                             element = element.element;
 
+                        // help the app along with win8 references
+                        // TODO: Generalize this (it gets called in multiple places), and extend to support the other ms-appdata locations (e.g. localStorage).
+                        element.innerHTML = element.innerHTML.replace(/ms-appx:\/\/\//g, "/");
+
                         // Append the rendered item to our container (which was added to the DOM earlier)
                         item.element = element;
 

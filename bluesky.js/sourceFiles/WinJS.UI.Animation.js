@@ -535,7 +535,7 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
         function (elements) {
 
             // Convert to array if only one element; do same for offset
-            if (typeof elements.length === undefined)
+            if (typeof elements.length === "undefined")
                 elements = [elements];
 
             // Store the elements we're tracking.

@@ -72,6 +72,7 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
 
             // TODO: Use WinJS.xhr when that's implemented
             // TODO: Error handling
+            // TODO: Should we automatically cache bust like we do in WinJS.UI.Pages._getRemotePage?  Same Q for scripts
 
             // First, load the fragment's text
             $.get(href, function (response) {
@@ -125,6 +126,8 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
                     styleNodesToMove.push(childNode);
                 }
             }
+
+            // TODO: Do I need to handle moving id'ed elements to the global namespace?  See Pages._processPage...
 
             styleNodesToMove.forEach(function (styleNodeToMove) {
 
@@ -195,7 +198,7 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
                 }
             });
 
-            // Notify listeners  that the fragment has been processed.
+            // Notify listeners that the fragment has been processed.
             fragmentProcessedCallback(docFrag);
         });
     },
