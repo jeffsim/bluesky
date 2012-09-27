@@ -120,8 +120,8 @@ WinJS.Namespace.define("WinJS", {
                             }
                         } else if (data.firstChild) { // IE9 doesn't recognize "data instanceof XMLDocument", so use this instead
                             responseXML = data;
-                            response = "";
-                            responseText = "";
+                            response = new XMLSerializer().serializeToString(responseXML);
+                            responseText = response;
                         } else {
                             var response = data;
                             var responseText = data;
@@ -129,9 +129,15 @@ WinJS.Namespace.define("WinJS", {
                         }
                     }
                     else {
-                        responseXML = data;
-                        response = new XMLSerializer().serializeToString(responseXML);
-                        responseText = response;
+                        if (data.firstChild) {
+                            responseXML = data;
+                            response = new XMLSerializer().serializeToString(responseXML);
+                            responseText = response;
+                        } else {
+                            response = data;
+                            responseText = data;
+                            responseXML = null;
+                        }
                     }
 
                     onComplete({
