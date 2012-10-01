@@ -8,8 +8,6 @@
     "use strict";
 
     var app = WinJS.Application;
-	// BLUESKY-TODO
-    Windows.Storage = { ApplicationData: { current: { roamingSettings: { values: {} } } } };
 
     app.onactivated = function (eventObject) {
         var argument = null;
@@ -39,11 +37,9 @@
         WinJS.Utilities.empty(contentHost);
         WinJS.UI.Pages.render(url, contentHost, eventObject.detail.state);
     });
-	/* BLUESKY-TODO
     Windows.UI.WebUI.WebUIApplication.addEventListener("resuming", function (e) {
         dashboard.onLayoutChanged();
     }, false);
-    */
     app.start();
 
 })();

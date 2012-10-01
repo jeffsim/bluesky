@@ -504,14 +504,20 @@ WinJS.Namespace.define("WinJS", {
                             responseText = "";
                         } else {
                             var response = data;
-                            var responseText = data;
+                            responseText = data;
                             responseXML = null;
                         }
                     }
                     else {
-                        responseXML = data;
-                        response = new XMLSerializer().serializeToString(responseXML);
-                        responseText = response;
+                        if (data && data.firstChild) {
+                            responseXML = data;
+                            response = "";
+                            responseText = "";
+                        } else {
+                            response = data;
+                            responseText = data;
+                            responseXML = null;
+                        }
                     }
 
                     onComplete({
@@ -677,17 +683,90 @@ WinJS.Namespace.define("Windows", {
                         }
                     }
                 }
-            },
+            }
         },
 
 
+        // ================================================================
+        //
+        // Windows.UI.StartScreen
+        //
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        //
         StartScreen: {
+
             SecondaryTile: {
                 exists: function () {
                     return false;
+                },
+
+                smallLogo: null,
+
+                requestCreateForSelectionAsync: function (rect) {
+                    return new WinJS.Promise(function (c) { c(false); });
                 }
+            },
+
+            TileOptions: {
+                none: 0,
+                showNameOnLogo: 1,
+                showNameOnWideLogo: 2,
+                copyOnDeployment: 4
             }
         },
+
+
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        Input: {
+            Inking: {
+                InkManager: WinJS.Class.define(function () {
+                }, {
+                    mode: 0,
+                    processPointerDown: function (c) {
+                    },
+                    getStrokes: function () {
+                        return [];
+                    },
+                    deleteSelected: function () {
+                    },
+                    updateRecognitionResults: function () {
+                    },
+                    selectWithLine: function () {
+                    },
+                    copySelectedToClipboard: function () {
+                    },
+                    pasteFromClipboard: function () {
+                    },
+                    recognizeAsync: function () {
+                        return new WinJS.Promise(function (c) { c(); });
+                    },
+                    getRecognizers: function () {
+                        return [];
+                    }
+                }, {
+
+                    InkManipulationMode: {
+                        selecting: 0,
+                        erasing: 1,
+                        inking: 2
+                    }
+                })
+            }
+        },
+
+
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        ColorHelper: {
+            fromArgb: function (a, r, g, b) {
+                return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
+            }
+        }
     },
 
 
@@ -5268,328 +5347,367 @@ WinJS.Namespace.define("WinJS", {
 //
 WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 
-	// ================================================================
-	//
-	// public function: WinJS.Binding.as
-	//
-	//		Given an object, returns an observable object to which the caller can subsequently bind via this.bind().
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229801.aspx
-	//
-	as: function (data) {
+    // ================================================================
+    //
+    // public function: WinJS.Binding.as
+    //
+    //		Given an object, returns an observable object to which the caller can subsequently bind via this.bind().
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229801.aspx
+    //
+    as: function (data) {
 
-		// If data is an object then wrap it; otherwise just return it as-is
-		if (typeof data === "object") {
+        // If data is an object then wrap it; otherwise just return it as-is
+        if (typeof data === "object") {
 
-			// Create a bindable wrapper around the data.
-			var BoundClass = WinJS.Binding.define(data);
+            // Create a bindable wrapper around the data.
+            var BoundClass = WinJS.Binding.define(data);
 
-			// Return the observable object.  Caller can bind to data via the wrapper's .bind() function.
-			return new BoundClass(data);
-		} else {
-			return data;
-		}
-	},
+            // Return the observable object.  Caller can bind to data via the wrapper's .bind() function.
+            return new BoundClass(data);
+        } else {
+            return data;
+        }
+    },
 
 
-	define: function (data) {
+    // ================================================================
+    //
+    // public Function: WinJS.Binding.define
+    //
+    //      MSDN: TODO
+    //
+    define: function (data) {
 
-		// Return a function that generates an observable class with the properties in the specified data object
-		var newClass = WinJS.Class.define(function (initialState) {
+        // Return a function that generates an observable class with the properties in the specified data object
+        var newClass = WinJS.Class.define(function (initialState) {
 
-			// Set initial data
-			this.sourceData = initialState || {};
-			for (var key in initialState) {
+            // Set initial data
+            this.sourceData = initialState || {};
+            for (var key in initialState) {
 
-				try {
-					// TODO: If the target is a function that only has a getter, then this borks.  What should we do in
-					// that case - or for functions in general?  try/catching for now.
-					this.sourceData[key] = initialState[key];
+                try {
+                    // TODO: If the target is a function that only has a getter, then this borks.  What should we do in
+                    // that case - or for functions in general?  try/catching for now.
+                    this.sourceData[key] = initialState[key];
 
-				} catch (e) {
-				}
-			}
-		},
+                } catch (e) {
+                }
+            }
+        },
 
 		// ================================================================
 		// WinJS.Binding.BoundClass members
 		// ================================================================
 
 		{
-			// ================================================================
-			//
-			// public function: WinJS.Binding.bind
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211857.aspx
-			//
-			bind: function (name, action) {
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.bind
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211857.aspx
+		    //
+		    bind: function (name, action) {
 
-				// Create the list of listeners for 'name' if not yet created
-				this.listeners[name] = this.listeners[name] || [];
+		        // Create the list of listeners for 'name' if not yet created
+		        this.listeners[name] = this.listeners[name] || [];
 
-				// If name has already been bound to action then there's nothing more to do
-				if (this.listeners[name].indexOf(action) >= 0)
-					return this;
+		        // If name has already been bound to action then there's nothing more to do
+		        if (this.listeners[name].indexOf(action) >= 0)
+		            return this;
 
-				this.listeners[name].push(action);
+		        this.listeners[name].push(action);
 
-				return this;
-			},
-
-
-			// ================================================================
-			//
-			// public function: WinJS.Binding.getProperty
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701588.aspx
-			//
-			getProperty: function (name) {
-
-				return WinJS.Binding.as(this.sourceData[name]);
-			},
+		        return this;
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.setProperty
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701610.aspx
-			//
-			setProperty: function (name, value) {
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.getProperty
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701588.aspx
+		    //
+		    getProperty: function (name) {
 
-				this.updateProperty(name, value);
-
-				// return this object
-				return this;
-			},
+		        return WinJS.Binding.as(this.sourceData[name]);
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.updateProperty
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701633.aspx
-			//
-			updateProperty: function (name, value) {
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.setProperty
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701610.aspx
+		    //
+		    setProperty: function (name, value) {
 
-				var oldValue = this.sourceData[name];
-				var newValue = WinJS.Binding.unwrap(value);
+		        this.updateProperty(name, value);
 
-				// If the value didn't change then we don't fire notifications, but we still need to return a promise
-				if (newValue == oldValue)
-					return WinJS.Promise.as();
-
-				// The value changed; update it in the source data
-				this.sourceData[name] = newValue;
-
-				// Notify any listeners of the change
-				return this.notify(name, newValue, oldValue);
-			},
+		        // return this object
+		        return this;
+		    },
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.notify
-			//
-			//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701592.aspx
-			//
-			notify: function (name, newValue, oldValue) {
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.updateProperty
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701633.aspx
+		    //
+		    updateProperty: function (name, value) {
 
-				// If nothing's listening to changes on the property 'name' then just return
-				if (!this.listeners[name])
-					return WinJS.Promise.as();
+		        var oldValue = this.sourceData[name];
+		        var newValue = WinJS.Binding.unwrap(value);
 
-				// Notifications must be asynchronous, so wrap them in a timeout
-				// TODO: What if a notification is already in the wings (e.g. value changes again before this promise completes)?
-				//		 Keep a list of pending notifications by name and remove pending ones.
-				var that = this;
-				return WinJS.Promise.timeout()
+		        // If the value didn't change then we don't fire notifications, but we still need to return a promise
+		        if (newValue == oldValue)
+		            return WinJS.Promise.as();
+
+		        // The value changed; update it in the source data
+		        this.sourceData[name] = newValue;
+
+		        // Notify any listeners of the change
+		        return this.notify(name, newValue, oldValue);
+		    },
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.notify
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701592.aspx
+		    //
+		    notify: function (name, newValue, oldValue) {
+
+		        // If nothing's listening to changes on the property 'name' then just return
+		        if (!this.listeners[name])
+		            return WinJS.Promise.as();
+
+		        // Notifications must be asynchronous, so wrap them in a timeout
+		        // TODO: What if a notification is already in the wings (e.g. value changes again before this promise completes)?
+		        //		 Keep a list of pending notifications by name and remove pending ones.
+		        var that = this;
+		        return WinJS.Promise.timeout()
 					.then(function () {
 
-						that.listeners[name].forEach(function (listener) {
-							listener(newValue, oldValue)
-						});
+					    that.listeners[name].forEach(function (listener) {
+					        listener(newValue, oldValue)
+					    });
 					})
 					.then(function () {
-						return newValue;
+					    return newValue;
 					});
-			},
+		    },
 
 
-			// Reference to the original source data
-			sourceData: {},
+		    // Reference to the original source data
+		    sourceData: {},
 
-			// Listeners
-			listeners: {},
+		    // Listeners
+		    listeners: {},
 		});
 
-		// Combine the list of properties from 'data' into the class prototype we created above.
-		WinJS.Class.mix(newClass, WinJS.Binding.expandProperties(data));
+        // Combine the list of properties from 'data' into the class prototype we created above.
+        WinJS.Class.mix(newClass, WinJS.Binding.expandProperties(data));
 
-		// return the class prototype that we created
-		return newClass;
-	},
-
-
-	// ================================================================
-	//
-	// public function: WinJS.Binding.unwrap
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211870.aspx
-	//
-	unwrap: function (data) {
-
-		if (data && data.sourceData)
-			return data.sourceData;
-
-		return data;
-	},
+        // return the class prototype that we created
+        return newClass;
+    },
 
 
-	// ================================================================
-	//
-	// public function: WinJS.Binding.expandProperties
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229817.aspx
-	//
-	expandProperties: function (shape) {
+    // ================================================================
+    //
+    // public function: WinJS.Binding.unwrap
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br211870.aspx
+    //
+    unwrap: function (data) {
 
-		var properties = {};
+        if (data && data.sourceData)
+            return data.sourceData;
 
-		while (shape) {
-			Object.keys(shape).forEach(function (propertyName) {
-
-				properties[propertyName] = {
-
-					get: function () {
-						return this.getProperty(propertyName);
-					},
-
-					set: function (propertyValue) {
-						return this.setProperty(propertyName, propertyValue);
-					},
-
-					// allow the property to show up in for..in loops
-					enumerable: true,
-
-					// Allow the property's attributes to be modified
-					configurable: true
-				}
-			});
-			shape = Object.getPrototypeOf(shape);
-		}
-		return properties;
-	},
+        return data;
+    },
 
 
-	// ================================================================
-	//
-	// public Function: WinJS.Binding.processAll
-	//
-	//		Looks for the data-win-bind attribute at the specified element (and all descendants of that element).  Performs
-	//		an in-place replacement of field/value.
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229846.aspx
-	//
-	//		TODO: Add support for parameter 'skipRoot'
-	//		TODO: Add support for parameter 'bindingCache'
-	//		TODO: Add support for data-win-bindsource
-	//
-	processAll: function (rootElement, dataContext, skipRoot, bindingCache) {
+    // ================================================================
+    //
+    // public function: WinJS.Binding.expandProperties
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229817.aspx
+    //
+    expandProperties: function (shape) {
 
-		/*DEBUG*/
-		// Check for NYI parameters or functionality
-		if (skipRoot)
-			console.warn("WinJS.Binding.processAll - support for skipRoot is not yet implemented");
-		if (bindingCache)
-			console.warn("WinJS.Binding.processAll - support for bindingCache is not yet implemented");
-		if ($("[data-win-bindsource]", rootElement).length > 0)
-			console.warn("WinJS.Binding.processAll - support for data-win-bindsource is not yet implemented");
-		/*ENDDEBUG*/
+        var properties = {};
 
-		return new WinJS.Promise(function (onComplete) {
-			// Iterate (recursively) over all elements within rootElement that have "data-win-bind" set
-			$("[data-win-bind]", rootElement).each(function () {
+        while (shape) {
+            Object.keys(shape).forEach(function (propertyName) {
 
-				// IE9 doesn't automagically populate dataset for us; fault it in if necessary
-				blueskyUtils.ensureDatasetReady(this);
+                properties[propertyName] = {
 
-				// Convert Win8 data-win-bind string (which is quasi-valid js format) into a js object.
-				var winBinds = blueskyUtils.convertDeclarativeDataStringToJavascriptObject(this.dataset.winBind);
+                    get: function () {
+                        return this.getProperty(propertyName);
+                    },
 
-				// Iterate over all specified win-binds.
-				for (var targetField in winBinds)
-					WinJS.Binding._bindField(this, targetField, winBinds[targetField], dataContext);
-			});
+                    set: function (propertyValue) {
+                        return this.setProperty(propertyName, propertyValue);
+                    },
 
-		    // Remove the data-win-control attribute after we've processed it.
-			// $(rootElement).removeAttr("data-win-control");
+                    // allow the property to show up in for..in loops
+                    enumerable: true,
 
-			// Notify that we've fulfilled our promise to processAll
-			onComplete();
-		});
-	},
+                    // Allow the property's attributes to be modified
+                    configurable: true
+                }
+            });
+            shape = Object.getPrototypeOf(shape);
+        }
+        return properties;
+    },
 
 
-	// ================================================================
-	//
-	// private Function: WinJS.Binding._bindField
-	//
-	//  listens for changes on the specified data field and updates the specified DOM element when the field changes
-	//
-	_bindField: function (rootElement, targetField, sourceField, dataContext) {
+    // ================================================================
+    //
+    // public Function: WinJS.Binding.processAll
+    //
+    //		Looks for the data-win-bind attribute at the specified element (and all descendants of that element).  Performs
+    //		an in-place replacement of field/value.
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229846.aspx
+    //
+    //		TODO: Add support for parameter 'skipRoot'
+    //		TODO: Add support for parameter 'bindingCache'
+    //		TODO: Add support for data-win-bindsource
+    //
+    processAll: function (rootElement, dataContext, skipRoot, bindingCache) {
 
-		// If the dataContext is observable (e.g. was generated by calling WinJS.Binding.as()), then establish a bind contract so that
-		// we can update the UI when the bound object's values change.
-		if (dataContext.bind != undefined) {
-			var thisElement = rootElement;
+        /*DEBUG*/
+        // Check for NYI parameters or functionality
+        if (skipRoot)
+            console.warn("WinJS.Binding.processAll - support for skipRoot is not yet implemented");
+        if (bindingCache)
+            console.warn("WinJS.Binding.processAll - support for bindingCache is not yet implemented");
+        if ($("[data-win-bindsource]", rootElement).length > 0)
+            console.warn("WinJS.Binding.processAll - support for data-win-bindsource is not yet implemented");
+        /*ENDDEBUG*/
 
-			dataContext.bind(sourceField, function (newValue, oldValue) {
-				// At this point, the source data to which this element's field is bound has changed; update our UI to reflect the new value
-				WinJS.Binding._updateBoundValue(thisElement, targetField, dataContext[sourceField]);
-			});
-		}
+        return new WinJS.Promise(function (onComplete) {
+            // Iterate (recursively) over all elements within rootElement that have "data-win-bind" set
+            $("[data-win-bind]", rootElement).each(function () {
 
-		// Update bound value immediately (whether the dataContext is observable or not)
-		WinJS.Binding._updateBoundValue(rootElement, targetField, dataContext[sourceField]);
-	},
+                // IE9 doesn't automagically populate dataset for us; fault it in if necessary
+                blueskyUtils.ensureDatasetReady(this);
+
+                // Convert Win8 data-win-bind string (which is quasi-valid js format) into a js object.
+                var winBinds = blueskyUtils.convertDeclarativeDataStringToJavascriptObject(this.dataset.winBind);
+
+                // Iterate over all specified win-binds.
+                for (var targetField in winBinds) {
+                    var winBind = winBinds[targetField];
+
+                    // If a converter was specified, then include it in the binding process.
+                    var convIndex = winBind.indexOf(" ");
+                    var converter = null;
+                    if (convIndex > -1) {
+                        // A converter was specified; grab the name of the converter (after the space) and set the name
+                        // of the field to the contents before the space
+                        var parts = winBind.split(" ");
+                        converter = eval(parts[1]);
+                        winBind = parts[0];
+                    }
+
+                    WinJS.Binding._bindField(this, targetField, winBind, dataContext, converter);
+                }
+            });
+
+            // Notify that we've fulfilled our promise to processAll
+            onComplete();
+        });
+    },
 
 
-	// ================================================================
-	//
-	// private Function: WinJS.Binding._updateBoundValue
-	//
-	//  Immediately updates the specified bound element/field to the new value
-	//
-	_updateBoundValue: function (targetElement, targetField, newValue) {
+    // ================================================================
+    //
+    // public Function: WinJS.Binding.converter
+    //
+    //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229809.aspx
+    //
+    //      TODO: This is only partially implemented, but suffices for common cases.
+    //
+    converter: function (doConvert) {
 
-		/*DEBUG*/
-		// Check for NYI functionality
-		if (targetField.split('.').length > 2)
-			console.warn("WinJS.Binding._updateBoundValue: field '" + targetField + "' is binding too deeply; only up to 2 levels of depth (e.g. 'style' (1 level) or 'style.backgroundColor' (2 levels)) are currently supported in bound field names.");
-		/*ENDDEBUG*/
+        // Create and return an object that can do conversion on values using the specified function
+        return {
+            convert: function (val) {
+                return doConvert(val);
+            }
+        }
+    },
 
-		// TODO: I fully expect there's a good JS'y way to deref from object["style.backgroundColor"] to object.style.backgroundColor, but I don't 
-		// know what it is yet (and am hoping it doesn't involve a for loop).  Once I figure that out, I can just use that.  For now though, I'm
-		// hard-coding support for 1 and 2 '.'s
-		if (targetField.indexOf(".") >= 0) {
 
-			// Handle binding to "style.backgroundColor" and similar fields.  Per above, I'm hoping to collapse this into the 'else' code, and also
-			// generically extend to support "foo.bar.xyz.abc"
-			var fields = targetField.split('.');
-			targetElement[fields[0]][fields[1]] = newValue;
-		} else {
+    // ================================================================
+    //
+    // private Function: WinJS.Binding._bindField
+    //
+    //  listens for changes on the specified data field and updates the specified DOM element when the field changes
+    //
+    _bindField: function (rootElement, targetField, sourceField, dataContext, converter) {
 
-			// "innerText" isn't supported on FireFox, so convert it to the W3C-compliant textContent property.  I suspect there will be 
-			// more of these one-offs as we support more browsers.  Good reference: http://www.quirksmode.org/dom/w3c_html.html#t07See
-			// TODO: Move this to a DOMElement extension?  Or find other way to not add this cost to non-IE browsers...  is there an existing polyfill for it?
-			if (targetField == "innerText")
-				targetField = "textContent";
+        // If the dataContext is observable (e.g. was generated by calling WinJS.Binding.as()), then establish a bind contract so that
+        // we can update the UI when the bound object's values change.
+        if (dataContext.bind != undefined) {
+            var thisElement = rootElement;
 
-			// Set the target element's target field to the source data's corresponding field.  Oh, the joy of javascript...
-			targetElement[targetField] = newValue;
-		}
-	}
+            dataContext.bind(sourceField, function (newValue, oldValue) {
+                // At this point, the source data to which this element's field is bound has changed; update our UI to reflect the new value
+                WinJS.Binding._updateBoundValue(thisElement, targetField, dataContext[sourceField], converter);
+            });
+        }
+
+        // Update bound value immediately (whether the dataContext is observable or not)
+        WinJS.Binding._updateBoundValue(rootElement, targetField, dataContext[sourceField], converter);
+    },
+
+
+    // ================================================================
+    //
+    // private Function: WinJS.Binding._updateBoundValue
+    //
+    //  Immediately updates the specified bound element/field to the new value
+    //
+    _updateBoundValue: function (targetElement, targetField, newValue, converter) {
+
+        if (converter)
+            newValue = converter.convert(newValue);
+
+        /*DEBUG*/
+        // Check for NYI functionality
+        if (targetField.split('.').length > 2)
+            console.warn("WinJS.Binding._updateBoundValue: field '" + targetField + "' is binding too deeply; only up to 2 levels of depth (e.g. 'style' (1 level) or 'style.backgroundColor' (2 levels)) are currently supported in bound field names.");
+        /*ENDDEBUG*/
+
+        // TODO: I fully expect there's a good JS'y way to deref from object["style.backgroundColor"] to object.style.backgroundColor, but I don't 
+        // know what it is yet (and am hoping it doesn't involve a for loop).  Once I figure that out, I can just use that.  For now though, I'm
+        // hard-coding support for 1 and 2 '.'s
+        if (targetField.indexOf(".") >= 0) {
+
+            // Handle binding to "style.backgroundColor" and similar fields.  Per above, I'm hoping to collapse this into the 'else' code, and also
+            // generically extend to support "foo.bar.xyz.abc"
+            var fields = targetField.split('.');
+            targetElement[fields[0]][fields[1]] = newValue;
+        } else {
+
+            // "innerText" isn't supported on FireFox, so convert it to the W3C-compliant textContent property.  I suspect there will be 
+            // more of these one-offs as we support more browsers.  Good reference: http://www.quirksmode.org/dom/w3c_html.html#t07See
+            // TODO: Move this to a DOMElement extension?  Or find other way to not add this cost to non-IE browsers...  is there an existing polyfill for it?
+            if (targetField == "innerText")
+                targetField = "textContent";
+
+            // Set the target element's target field to the source data's corresponding field.  Oh, the joy of javascript...
+            targetElement[targetField] = newValue;
+        }
+    }
 });
 
 
@@ -9138,7 +9256,7 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
             // Fix temporary bug in blueskyUtils.parseJson...
-            if (options.icon.indexOf("(") != -1 && options.icon.indexOf(")") == -1)
+            if (options.icon && options.icon.indexOf("(") != -1 && options.icon.indexOf(")") == -1)
                 options.icon = options.icon + ")";
 
             this.icon = options.icon || "";
@@ -9173,7 +9291,7 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             onclick: {
                 get: function () {
-                    return ths._prevOnClick;
+                    return this._prevOnClick;
                 },
 
                 set: function (func) {
@@ -10015,7 +10133,7 @@ WinJS.Namespace.define("WinJS.UI.Animation", {
         function (elements) {
 
             // Convert to array if only one element; do same for offset
-            if (typeof elements.length === undefined)
+            if (typeof elements.length === "undefined")
                 elements = [elements];
 
             // Store the elements we're tracking.
@@ -10856,12 +10974,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                 // Add a timestamp to force a clean load
                                 var char = src.indexOf("?") == -1 ? "?" : "&";
                                 src += char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
-                                // console.log("loading script:", src);
 
                                 // track all loaded scripts so that we can unload them on next page navigation
                                 WinJS.UI.Pages._curPageScripts.push(src);
 
                                 script.src = src;
+                                // TODO (CLEANUP): Change to use lazyload
                                 script.onload = function () {
                                     if (--toLoad == 0)
                                         scriptsLoaded();
@@ -10900,7 +11018,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     // Add a timestamp to force a clean load
                     var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
                     var uniquePage = pageInfo.Uri + char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
-                    console.log("loading page:", uniquePage);
 
                     // Use Ajax to get the page's contents
                     // TODO: Use WinJS.xhr when that's implemented
@@ -10935,6 +11052,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
                     /*ENDDEBUG*/
 
+                    // TODO (PERF): Grab $("head") once and make it available in blueskyUtils._$head (or somesuch) for internal use only.
+                    var $head = $("head", document);
+
                     // At this point, pageInfo.element == targetElement and pageInfo.response contains the 
                     // text HTML response obtained from pageUri.
                     var that = this;
@@ -10945,6 +11065,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // because jQuery automatically evals the scripts, but we need to remove them before they get eval'ed.  *However*, we can
                         // sidestep that by (1) creating the DOM element ourselves, and then (2) wrapping that temp element in jQuery.  Note that
                         // $("<div></div>").html(pageInfo.response) won't work for the above reason.
+
+                        // replace ms-appx:/// with root /
+                        pageInfo.response = pageInfo.response.replace(/ms-appx:\/\/\//gi, "/")
 
                         // Also note: Per http://molily.de/weblog/domcontentloaded, HTML5 requires browsers to defer execution of scripts until
                         // all previous stylesheets are loaded.  So, we need to rearrange scripts and styles from the loaded page so that styles come before scripts.
@@ -10976,21 +11099,21 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         for (var i = 0; i < tempDocument.childNodes.length; i++) {
 
                             var element = tempDocument.childNodes[i];
-
-                            if (element.nodeName == "SCRIPT" && element.src) {
+                            if (element.nodeName == "SCRIPT" && element.attributes && element.attributes.src) {
                                 var scriptSrc = element.attributes.src.value.toLowerCase();
 
                                 // remove any scripts which are already in the document
                                 $existingScripts.each(function (i, script) {
-                                    if (scriptSrc == script.attributes.src.value.toLowerCase())
-                                        nodesToRemove.push(element);
+                                    if (script.attributes.src)
+                                        if (scriptSrc == script.attributes.src.value.toLowerCase())
+                                            nodesToRemove.push(element);
                                 });
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
                                 if (scriptSrc.indexOf("//microsoft.winjs") > -1)
                                     nodesToRemove.push(element);
                             }
-                            if (element.nodeName == "LINK" && element.href) {
+                            if (element.nodeName == "LINK" && element.attributes && element.attributes.href) {
                                 var linkSrc = element.attributes.href.value;
 
                                 // remove any links which are already in the document
@@ -10998,6 +11121,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     if (linkSrc == existingLink.attributes.src.value.toLowerCase())
                                         nodesToRemove.push(element);
                                 });
+
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
                                 if (linkSrc.indexOf("//microsoft.winjs") > -1)
@@ -11034,7 +11158,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // Keep track of all link'ed styles; we'll wait until they've loaded
                         $("link", $newPage).each(function (i, style) {
-
                             if (style.readyState != 'complete' && style.readyState != 'loaded') {
 
                                 // Change local paths to absolute path
@@ -11049,21 +11172,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             }
                         });
 
-                        // Prep the target element to insert the new page.
-                        var $target = $(pageInfo.element);
-                        $target.addClass("pagecontrol");
-
-                        // Do some parsing on the subpage...
-                        // A. Move various tags up to the page's <head> element.  Also move styles
-                        // TODO (PERF): Grab $("head") once and make it available in blueskyUtils._$head (or somesuch) for internal use only.
-                        var $head = $("head", document);
-
-                        // Move styles first so that they're there when we move scripts.  Also; prepend the styles so they appear first
-                        $("meta, title, style", $newPage).prependTo($head);
+                        // move styles, links, and meta/title from the new page into the target element
+                        var $stylePrependPoint = $head;
+                        $("meta, title, link, style", $head).each(function (i, tag) {
+                            $stylePrependPoint = $(tag);
+                        });
+                        $stylePrependPoint.after($("link, style", $newPage));
+                        $("meta, title", $newPage).prependTo($head);
 
                         // B. Remove duplicate styles and meta/charset tags
                         blueskyUtils.removeDuplicateElements("meta", "charset", $head);
-                        blueskyUtils.removeDuplicateElements("style", "href", $head);
                         blueskyUtils.removeDuplicateElements("link", "href", $head);
 
                         // C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
@@ -11071,8 +11189,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // move any scripts out of $newPage and into a temporary list so that we can process them independently
                         //    that.$newPageScripts = $("script", $newPage).remove();
-
                         // Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
+                        var $target = $("<div class='pagecontrol'></div>");//$(pageInfo.element);
                         $target.append($newPage.contents());
 
                         // AT THIS POINT: 
@@ -11081,17 +11199,24 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //  3. All styles from the loaded page have been moved up to the page's head, but possibly not yet parsed into document.styleSheets
                         //	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
-                        // Modern browsers like to add all DOM elements with Ids to the global namespace.  See this link for back-story: http://stackoverflow.com/questions/3434278/ie-chrome-are-dom-tree-elements-global-variables-here
-                        // The *problem* is that Firefox (as of v15) does it at a later point than IE (after the page is fully loaded).  SO: We need
-                        // to go ahead and forcibly inject all id'ed elements into the DOM now so that scripts on the same page don't break due to unexpectedly missing global
-                        // id'ed elements.  Thanks again, IE, for making this necessary! *grimace*
-                        // TODO (CLEANUP): I can constrain to $target since default.html is handled elsewhere
-                        $("[id]").each(function (index, element) {
-                            window[element.id] = element;
-                        });
-
                         // Wait until all of the styles have been loaded...
                         WinJS.Promise.join(stylesToWaitFor).then(function () {
+
+                            // Now that the new pages styles, which we previously moved into the document head, are loaded, append the rest
+                            // of the new page to the document.
+                            $target.appendTo($(pageInfo.element));
+
+                            // Modern browsers like to add all DOM elements with Ids to the global namespace.  See this link for back-story: http://stackoverflow.com/questions/3434278/ie-chrome-are-dom-tree-elements-global-variables-here
+                            // The *problem* is that Firefox (as of v15) does it at a later point than IE (after the page is fully loaded).  SO: We need
+                            // to go ahead and forcibly inject all id'ed elements into the DOM now so that scripts on the same page don't break due to unexpectedly missing global
+                            // id'ed elements.  Thanks again, IE, for making this necessary! *grimace*
+                            // TODO (CLEANUP): I can constrain to $target since default.html is handled elsewhere
+                            $("[id]").each(function (index, element) {
+                                try {
+                                    window[element.id] = element;
+                                } catch (e) {
+                                }
+                            });
 
                             // We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
                             // wait for the parentedPromise to be fulfilled...
@@ -13855,7 +13980,11 @@ WinJS.Namespace.define("WinJS.UI", {
                             if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
 
                                 // Create a Promise with the clicked item
-                                var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+                                var promise = new WinJS.Promise(function (c) {
+                                    var data = WinJS.Binding._ListBase.copyItem(that.items[itemIndex]);
+                                    data.index = itemIndex;
+                                    c(data);
+                                });
 
                                 // Call the callback
                                 that._notifyItemInvoked(this.parentNode, {
@@ -13947,7 +14076,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 var curRow = -1;
 
                 // Get the margin sizes around items
-                var templateMargins = this._getItemMargins();
+                var templateMargins = this._getItemMargins($(this.items[0].element));
 
                 var groupHeaderOnLeft = this.layout && this.layout.groupHeaderPosition == "left";
                 var groupRenderStartX;
@@ -14089,17 +14218,18 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private Function: WinJS.UI.ListView._getItemMargins
             //
-            _getItemMargins: function () {
+            _getItemMargins: function ($item) {
 
                 var $container = $("<div id='_cont1' class='win-container'></div>")
 					.appendTo(this.$scrollSurface);
 
                 // Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
+                // TODO: not 100% sure what the right solution is here; build a test in win8 and see what it does
                 var itemMargins = {
-                    vertical: parseInt($container.css("marginTop")) +
-							  parseInt($container.css("marginBottom")),
-                    horizontal: parseInt($container.css("marginLeft")) +
-							  parseInt($container.css("marginRight"))
+                    vertical: Math.max(parseInt($container.css("marginTop")) + parseInt($container.css("marginBottom")),
+                                       parseInt($item.css("marginTop")) + parseInt($item.css("marginBottom"))),
+                    horizontal: Math.max(parseInt($container.css("marginLeft")) + parseInt($container.css("marginRight")),
+                                         parseInt($item.css("marginLeft")) + parseInt($item.css("marginRight")))
                 };
 
                 // Clean up after ourselves and remove the element from the DOM.
@@ -14159,6 +14289,10 @@ WinJS.Namespace.define("WinJS.UI", {
                         // TODO: Wait on renderPromise (if specified)
                         if (element.element)
                             element = element.element;
+
+                        // help the app along with win8 references
+                        // TODO: Generalize this (it gets called in multiple places), and extend to support the other ms-appdata locations (e.g. localStorage).
+                        element.innerHTML = element.innerHTML.replace(/ms-appx:\/\/\//g, "/");
 
                         // Append the rendered item to our container (which was added to the DOM earlier)
                         item.element = element;
@@ -15400,40 +15534,46 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 //
 WinJS.Namespace.define("Windows.UI.WebUI", {
 
-	// ================================================================
-	//
-	// Windows.UI.WebUI.ActivatedOperation
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.webui.activatedoperation.aspx
-	//
-	ActivatedOperation: WinJS.Class.define(null, {
-		getDeferral: function () {
-			var deferral = new Windows.UI.WebUI.ActivatedDeferral();
-			Windows.UI.WebUI._activationDeferrals.push(deferral._promise);
-			return deferral;
-		}
-	}),
+    // ================================================================
+    //
+    // Windows.UI.WebUI.ActivatedOperation
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.webui.activatedoperation.aspx
+    //
+    ActivatedOperation: WinJS.Class.define(null, {
+        getDeferral: function () {
+            var deferral = new Windows.UI.WebUI.ActivatedDeferral();
+            Windows.UI.WebUI._activationDeferrals.push(deferral._promise);
+            return deferral;
+        }
+    }),
 
-	// ================================================================
-	//
-	// Windows.UI.WebUI.ActivatedDeferral
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.webui.activateddeferral.aspx
-	//
-	ActivatedDeferral: WinJS.Class.define(function () {
+    // ================================================================
+    //
+    // Windows.UI.WebUI.ActivatedDeferral
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.ui.webui.activateddeferral.aspx
+    //
+    ActivatedDeferral: WinJS.Class.define(function () {
 
-		var that = this;
+        var that = this;
 
-		this._promise = new WinJS.Promise(function (c) {
-			// Pass this Promise's complete function back as the deferral's "complete" function, so that
-			// when the app calls deferral.complete, they're actually completing this promise...
-			that.complete = c;
-		});
-	}, {}),
+        this._promise = new WinJS.Promise(function (c) {
+            // Pass this Promise's complete function back as the deferral's "complete" function, so that
+            // when the app calls deferral.complete, they're actually completing this promise...
+            that.complete = c;
+        });
+    }, {}),
 
+    WebUIApplication: {
+        addEventListener: function () {
+        },
+        removeEventListener: function () {
+        }
+    },
 
-	// The list of all requested Activation deferrals.
-	_activationDeferrals: []
+    // The list of all requested Activation deferrals.
+    _activationDeferrals: []
 });
 
 
@@ -16496,10 +16636,46 @@ Windows.Storage._internalInit();
 
 
 
-// ================================================================
+
+
+// ================================================
 //
-//      The following code is new, but sufficiently based on someone else's work to justify attribution
+// https://github.com/rgrove/lazyload
 //
+// Copyright (c) 2011 Ryan Grove <ryan@wonko.com>
+// All rights reserved.
+//  
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the 'Software'), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+var LazyLoad = function (k) {
+    function p(b, a) { var g = k.createElement(b), c; for (c in a) a.hasOwnProperty(c) && g.setAttribute(c, a[c]); return g } function l(b) { var a = m[b], c, f; if (a) c = a.callback, f = a.urls, f.shift(), h = 0, f.length || (c && c.call(a.context, a.obj), m[b] = null, n[b].length && j(b)) } function w() { var b = navigator.userAgent; c = { async: k.createElement("script").async === !0 }; (c.webkit = /AppleWebKit\//.test(b)) || (c.ie = /MSIE/.test(b)) || (c.opera = /Opera/.test(b)) || (c.gecko = /Gecko\//.test(b)) || (c.unknown = !0) } function j(b, a, g, f, h) {
+        var j =
+        function () { l(b) }, o = b === "css", q = [], d, i, e, r; c || w(); if (a) if (a = typeof a === "string" ? [a] : a.concat(), o || c.async || c.gecko || c.opera) n[b].push({ urls: a, callback: g, obj: f, context: h }); else { d = 0; for (i = a.length; d < i; ++d) n[b].push({ urls: [a[d]], callback: d === i - 1 ? g : null, obj: f, context: h }) } if (!m[b] && (r = m[b] = n[b].shift())) {
+            s || (s = k.head || k.getElementsByTagName("head")[0]); a = r.urls; d = 0; for (i = a.length; d < i; ++d) g = a[d], o ? e = c.gecko ? p("style") : p("link", { href: g, rel: "stylesheet" }) : (e = p("script", { src: g }), e.async = !1), e.className = "lazyload",
+            e.setAttribute("charset", "utf-8"), c.ie && !o ? e.onreadystatechange = function () { if (/loaded|complete/.test(e.readyState)) e.onreadystatechange = null, j() } : o && (c.gecko || c.webkit) ? c.webkit ? (r.urls[d] = e.href, t()) : (e.innerHTML = '@import "' + g + '";', u(e)) : e.onload = e.onerror = j, q.push(e); d = 0; for (i = q.length; d < i; ++d) s.appendChild(q[d])
+        }
+    } function u(b) { var a; try { a = !!b.sheet.cssRules } catch (c) { h += 1; h < 200 ? setTimeout(function () { u(b) }, 50) : a && l("css"); return } l("css") } function t() {
+        var b = m.css, a; if (b) {
+            for (a = v.length; --a >= 0;) if (v[a].href ===
+            b.urls[0]) { l("css"); break } h += 1; b && (h < 200 ? setTimeout(t, 50) : l("css"))
+        }
+    } var c, s, m = {}, h = 0, n = { css: [], js: [] }, v = k.styleSheets; return { css: function (b, a, c, f) { j("css", b, a, c, f) }, js: function (b, a, c, f) { j("js", b, a, c, f) } }
+}(this.document);
 
 
 // Adapted from: http://www.zachleat.com/web/load-css-dynamically/
@@ -16507,23 +16683,31 @@ function getStyleLoadedPromise(style) {
 
     return new WinJS.Promise(function (c) {
 
-        var id = 'dynamicCss' + (new Date()).valueOf();
-        $('<style/>')
-            .attr({ id: id, type: 'text/css' })
-            .html('@import url(' + style.href + ')')
-            .appendTo(document.getElementsByTagName('head')[0]);
-
-        var sheets = document.styleSheets;
-        var timer = setInterval(function () {
-            try {
-                for (var i = 0; i < sheets.length; i++)
-                    if (sheets[i].ownerNode.id == id)
-                        sheets[i].cssRules;
-
-                // If we got this far, then we successfully 'touched' (good touch) the loaded styles.
-                clearInterval(timer);
+        if ($.browser.webkit) {
+            LazyLoad.css(style.attributes.href.value, function () {
                 c();
-            } catch (e) { }
-        }, 10);
+                //WinJS.Promise.timeout(1).then(function () { c(); });
+            });
+
+        } else {
+            var id = 'dynamicCss' + (new Date()).valueOf();
+            $('<style/>')
+                .attr({ id: id, type: 'text/css' })
+                .html('@import url(' + style.attributes.href.value + ')')
+                .appendTo(document.getElementsByTagName('head')[0]);
+
+            var sheets = document.styleSheets;
+            var timer = setInterval(function () {
+                try {
+                    for (var i = 0; i < sheets.length; i++)
+                        if (sheets[i].ownerNode.id == id)
+                            sheets[i].cssRules;
+
+                    // If we got this far, then we successfully 'touched' (good touch) the loaded styles.
+                    clearInterval(timer);
+                    c();
+                } catch (e) { }
+            }, 10);
+        }
     });
 }

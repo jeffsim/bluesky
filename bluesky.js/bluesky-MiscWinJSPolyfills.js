@@ -36,8 +36,8 @@ if (!window.toStaticHTML) {
             console.warn("bluesky: toStaticHTML is not present on non-IE browsers, and has been polyfilled to just return the source HTML; consider changing code for perf.  This warning will appear only once.");
             warnedStaticHTML = true;
         }
-        var temp = document.implementation.createHTMLDocument().body;
-        temp.innerHTML = html;
+        var root = document.implementation.createHTMLDocument("page").body;
+        root.innerHTML = html;
         $(root).find("script, style").remove();
         return root.innerHTML;
     }

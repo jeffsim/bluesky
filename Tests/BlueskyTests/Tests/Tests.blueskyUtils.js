@@ -58,7 +58,12 @@ testHarness.addTestFile("BlueskyUtils Tests", {
 		testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("  innerText:  firstName		;  marginLeft:  left");
 		test.assert(testVar.innerText == "firstName" &&
 					testVar.marginLeft == "left", "Failed to handle excess spaces");
-		
+
+
+	    // Test converter assignment
+		testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("innerText: firstName converter1; marginLeft: left  converter2 ");
+		test.assert(testVar.innerText == "firstName" &&
+					testVar.marginLeft == "left", "Failed to handle converters");
 
 		// The following tests test direct assignment (vs the above, which are binding-focused)
 
@@ -89,11 +94,12 @@ testHarness.addTestFile("BlueskyUtils Tests", {
 	execUnsafeLocalFunction: function (test) {
 
 	    test.start("MSApp.execUnsafeLocalFunction tests");
+	    var c;
 	    var f = function () {
 	        c = 40;
 	        return 41;
 	    }
-	    var res = MSApp.execUnsafeLocalFunction(f());
+	    var res = MSApp.execUnsafeLocalFunction(f);
 	    test.assert(c == 40, "function was not called");
 	    test.assert(res == 41, "function did not return value");
 	},

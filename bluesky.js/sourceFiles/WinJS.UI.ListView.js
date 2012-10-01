@@ -395,7 +395,11 @@ WinJS.Namespace.define("WinJS.UI", {
                             if (!(that.tapBehavior == "invokeOnly" && blueskyUtils.shiftPressed || blueskyUtils.controlPressed)) {
 
                                 // Create a Promise with the clicked item
-                                var promise = new WinJS.Promise(function (c) { c(that.items[itemIndex]); });
+                                var promise = new WinJS.Promise(function (c) {
+                                    var data = WinJS.Binding._ListBase.copyItem(that.items[itemIndex]);
+                                    data.index = itemIndex;
+                                    c(data);
+                                });
 
                                 // Call the callback
                                 that._notifyItemInvoked(this.parentNode, {
@@ -487,7 +491,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 var curRow = -1;
 
                 // Get the margin sizes around items
-                var templateMargins = this._getItemMargins();
+                var templateMargins = this._getItemMargins($(this.items[0].element));
 
                 var groupHeaderOnLeft = this.layout && this.layout.groupHeaderPosition == "left";
                 var groupRenderStartX;
@@ -629,17 +633,18 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             // private Function: WinJS.UI.ListView._getItemMargins
             //
-            _getItemMargins: function () {
+            _getItemMargins: function ($item) {
 
                 var $container = $("<div id='_cont1' class='win-container'></div>")
 					.appendTo(this.$scrollSurface);
 
                 // Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
+                // TODO: not 100% sure what the right solution is here; build a test in win8 and see what it does
                 var itemMargins = {
-                    vertical: parseInt($container.css("marginTop")) +
-							  parseInt($container.css("marginBottom")),
-                    horizontal: parseInt($container.css("marginLeft")) +
-							  parseInt($container.css("marginRight"))
+                    vertical: Math.max(parseInt($container.css("marginTop")) + parseInt($container.css("marginBottom")),
+                                       parseInt($item.css("marginTop")) + parseInt($item.css("marginBottom"))),
+                    horizontal: Math.max(parseInt($container.css("marginLeft")) + parseInt($container.css("marginRight")),
+                                         parseInt($item.css("marginLeft")) + parseInt($item.css("marginRight")))
                 };
 
                 // Clean up after ourselves and remove the element from the DOM.

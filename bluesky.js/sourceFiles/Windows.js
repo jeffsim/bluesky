@@ -42,17 +42,90 @@ WinJS.Namespace.define("Windows", {
                         }
                     }
                 }
-            },
+            }
         },
 
 
+        // ================================================================
+        //
+        // Windows.UI.StartScreen
+        //
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        //
         StartScreen: {
+
             SecondaryTile: {
                 exists: function () {
                     return false;
+                },
+
+                smallLogo: null,
+
+                requestCreateForSelectionAsync: function (rect) {
+                    return new WinJS.Promise(function (c) { c(false); });
                 }
+            },
+
+            TileOptions: {
+                none: 0,
+                showNameOnLogo: 1,
+                showNameOnWideLogo: 2,
+                copyOnDeployment: 4
             }
         },
+
+
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        Input: {
+            Inking: {
+                InkManager: WinJS.Class.define(function () {
+                }, {
+                    mode: 0,
+                    processPointerDown: function (c) {
+                    },
+                    getStrokes: function () {
+                        return [];
+                    },
+                    deleteSelected: function () {
+                    },
+                    updateRecognitionResults: function () {
+                    },
+                    selectWithLine: function () {
+                    },
+                    copySelectedToClipboard: function () {
+                    },
+                    pasteFromClipboard: function () {
+                    },
+                    recognizeAsync: function () {
+                        return new WinJS.Promise(function (c) { c(); });
+                    },
+                    getRecognizers: function () {
+                        return [];
+                    }
+                }, {
+
+                    InkManipulationMode: {
+                        selecting: 0,
+                        erasing: 1,
+                        inking: 2
+                    }
+                })
+            }
+        },
+
+
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        ColorHelper: {
+            fromArgb: function (a, r, g, b) {
+                return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
+            }
+        }
     },
 
 

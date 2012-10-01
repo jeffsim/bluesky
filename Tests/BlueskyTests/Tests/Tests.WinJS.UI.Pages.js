@@ -35,7 +35,7 @@ testHarness.addTestFile("WinJS.UI.Pages Tests", {
 					test.assert($("#testPageDiv", $(".testFrame")), "Page was loaded but not added to DOM in expected place.");
 
 					// Verify that we added the id'ed DIVs to the global namespace (as is Win8's wont)
-					test.assert(window.testPageDiv.innerHTML == "Foo", "Did not add ID'ed div to global namespace");
+					test.assert(window.testPageDiv && window.testPageDiv.innerHTML == "Foo", "Did not add ID'ed div to global namespace");
 
 				    // Verify that script in the page was executed in document.ready
 				    // NOTE: Win8 does not allow script in the loaded page (except through the *unsafe methods), but we do
@@ -160,9 +160,13 @@ testHarness.addTestFile("WinJS.UI.Pages Tests", {
 				ready: function (targetElement, state) {
 
 					// Sneak into the Pages object to verify the page constructor is now there for the getting
-				    if (WinJS.Application.IsBluesky)
-				        test.assert(WinJS.UI.Pages.registeredPages[testPageName], "Failed to define the page via Pages.get");
+				    if (WinJS.Application.IsBluesky) {
 
+                        // bluesky normalizes uris to include the full url
+				        var normalizedUri = WinJS.UI.Pages._normalizeUrl(testPageName);
+
+				        test.assert(WinJS.UI.Pages.registeredPages[normalizedUri], "Failed to define the page via Pages.get");
+				    }
 					if (numLoadedPages < 2)
 						pageLoaded();
 					else {

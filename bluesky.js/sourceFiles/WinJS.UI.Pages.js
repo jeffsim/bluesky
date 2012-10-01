@@ -295,12 +295,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                 // Add a timestamp to force a clean load
                                 var char = src.indexOf("?") == -1 ? "?" : "&";
                                 src += char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
-                                // console.log("loading script:", src);
 
                                 // track all loaded scripts so that we can unload them on next page navigation
                                 WinJS.UI.Pages._curPageScripts.push(src);
 
                                 script.src = src;
+                                // TODO (CLEANUP): Change to use lazyload
                                 script.onload = function () {
                                     if (--toLoad == 0)
                                         scriptsLoaded();
@@ -339,7 +339,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     // Add a timestamp to force a clean load
                     var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
                     var uniquePage = pageInfo.Uri + char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
-                    console.log("loading page:", uniquePage);
 
                     // Use Ajax to get the page's contents
                     // TODO: Use WinJS.xhr when that's implemented
@@ -373,6 +372,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     if (!pageInfo.element)
                         console.error("WinJS.UI.PageControl._processPage: Undefined or null pageInfo.element specified", pageInfo);
                     /*ENDDEBUG*/
+
+                    // TODO (PERF): Grab $("head") once and make it available in blueskyUtils._$head (or somesuch) for internal use only.
+                    var $head = $("head", document);
 
                     // At this point, pageInfo.element == targetElement and pageInfo.response contains the 
                     // text HTML response obtained from pageUri.
@@ -418,21 +420,21 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         for (var i = 0; i < tempDocument.childNodes.length; i++) {
 
                             var element = tempDocument.childNodes[i];
-
-                            if (element.nodeName == "SCRIPT" && element.src) {
+                            if (element.nodeName == "SCRIPT" && element.attributes && element.attributes.src) {
                                 var scriptSrc = element.attributes.src.value.toLowerCase();
 
                                 // remove any scripts which are already in the document
                                 $existingScripts.each(function (i, script) {
-                                    if (scriptSrc == script.attributes.src.value.toLowerCase())
-                                        nodesToRemove.push(element);
+                                    if (script.attributes.src)
+                                        if (scriptSrc == script.attributes.src.value.toLowerCase())
+                                            nodesToRemove.push(element);
                                 });
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
                                 if (scriptSrc.indexOf("//microsoft.winjs") > -1)
                                     nodesToRemove.push(element);
                             }
-                            if (element.nodeName == "LINK" && element.href) {
+                            if (element.nodeName == "LINK" && element.attributes && element.attributes.href) {
                                 var linkSrc = element.attributes.href.value;
 
                                 // remove any links which are already in the document
@@ -440,6 +442,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     if (linkSrc == existingLink.attributes.src.value.toLowerCase())
                                         nodesToRemove.push(element);
                                 });
+
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
                                 if (linkSrc.indexOf("//microsoft.winjs") > -1)
@@ -476,7 +479,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // Keep track of all link'ed styles; we'll wait until they've loaded
                         $("link", $newPage).each(function (i, style) {
-
                             if (style.readyState != 'complete' && style.readyState != 'loaded') {
 
                                 // Change local paths to absolute path
@@ -491,21 +493,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             }
                         });
 
-                        // Prep the target element to insert the new page.
-                        var $target = $(pageInfo.element);
-                        $target.addClass("pagecontrol");
-
-                        // Do some parsing on the subpage...
-                        // A. Move various tags up to the page's <head> element.  Also move styles
-                        // TODO (PERF): Grab $("head") once and make it available in blueskyUtils._$head (or somesuch) for internal use only.
-                        var $head = $("head", document);
-
-                        // Move styles first so that they're there when we move scripts.  Also; prepend the styles so they appear first
-                        $("meta, title, style", $newPage).prependTo($head);
+                        // move styles, links, and meta/title from the new page into the target element
+                        var $stylePrependPoint = $head;
+                        $("meta, title, link, style", $head).each(function (i, tag) {
+                            $stylePrependPoint = $(tag);
+                        });
+                        $stylePrependPoint.after($("link, style", $newPage));
+                        $("meta, title", $newPage).prependTo($head);
 
                         // B. Remove duplicate styles and meta/charset tags
                         blueskyUtils.removeDuplicateElements("meta", "charset", $head);
-                        blueskyUtils.removeDuplicateElements("style", "href", $head);
                         blueskyUtils.removeDuplicateElements("link", "href", $head);
 
                         // C. Remove duplicate title strings; if the subpage specified one then it's now the first one, so remove all > 1
@@ -513,8 +510,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // move any scripts out of $newPage and into a temporary list so that we can process them independently
                         //    that.$newPageScripts = $("script", $newPage).remove();
-
                         // Add the new page's contents to the element (note: use contents instead of children to get text elements as well)
+                        var $target = $("<div class='pagecontrol'></div>");//$(pageInfo.element);
                         $target.append($newPage.contents());
 
                         // AT THIS POINT: 
@@ -523,17 +520,24 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         //  3. All styles from the loaded page have been moved up to the page's head, but possibly not yet parsed into document.styleSheets
                         //	4. No scripts (local or referenced) within the loaded page have been loaded or executed.
 
-                        // Modern browsers like to add all DOM elements with Ids to the global namespace.  See this link for back-story: http://stackoverflow.com/questions/3434278/ie-chrome-are-dom-tree-elements-global-variables-here
-                        // The *problem* is that Firefox (as of v15) does it at a later point than IE (after the page is fully loaded).  SO: We need
-                        // to go ahead and forcibly inject all id'ed elements into the DOM now so that scripts on the same page don't break due to unexpectedly missing global
-                        // id'ed elements.  Thanks again, IE, for making this necessary! *grimace*
-                        // TODO (CLEANUP): I can constrain to $target since default.html is handled elsewhere
-                        $("[id]").each(function (index, element) {
-                            window[element.id] = element;
-                        });
-
                         // Wait until all of the styles have been loaded...
                         WinJS.Promise.join(stylesToWaitFor).then(function () {
+
+                            // Now that the new pages styles, which we previously moved into the document head, are loaded, append the rest
+                            // of the new page to the document.
+                            $target.appendTo($(pageInfo.element));
+
+                            // Modern browsers like to add all DOM elements with Ids to the global namespace.  See this link for back-story: http://stackoverflow.com/questions/3434278/ie-chrome-are-dom-tree-elements-global-variables-here
+                            // The *problem* is that Firefox (as of v15) does it at a later point than IE (after the page is fully loaded).  SO: We need
+                            // to go ahead and forcibly inject all id'ed elements into the DOM now so that scripts on the same page don't break due to unexpectedly missing global
+                            // id'ed elements.  Thanks again, IE, for making this necessary! *grimace*
+                            // TODO (CLEANUP): I can constrain to $target since default.html is handled elsewhere
+                            $("[id]").each(function (index, element) {
+                                try {
+                                    window[element.id] = element;
+                                } catch (e) {
+                                }
+                            });
 
                             // We *can't quite* call WinJS.UI.processAll on the loaded page, since it has not yet been parented.  So: just return and
                             // wait for the parentedPromise to be fulfilled...

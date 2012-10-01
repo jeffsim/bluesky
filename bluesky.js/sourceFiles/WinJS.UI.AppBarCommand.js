@@ -87,7 +87,7 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
             // Fix temporary bug in blueskyUtils.parseJson...
-            if (options.icon.indexOf("(") != -1 && options.icon.indexOf(")") == -1)
+            if (options.icon && options.icon.indexOf("(") != -1 && options.icon.indexOf(")") == -1)
                 options.icon = options.icon + ")";
 
             this.icon = options.icon || "";
@@ -122,7 +122,7 @@ WinJS.Namespace.define("WinJS.UI", {
             //
             onclick: {
                 get: function () {
-                    return ths._prevOnClick;
+                    return this._prevOnClick;
                 },
 
                 set: function (func) {

@@ -148,7 +148,7 @@ testHarness.addTestFile("Windows.Storage Tests", {
                 var $testDiv = testHarness.addTestDiv("dataA");
                 WinJS.UI.Pages.render('/Tests/supportFiles/storage/msappx.html', $testDiv[0]).then(function () {
 
-                    test.skip("//msappx: and //msappdata: protocols are NYI in bluesky");
+                    test.skip("declarative //msappx: and //msappdata: protocols in HTML are NYI in bluesky");
                     /* TODO: The following code works on Win8, but not in FF.  Not sure what's missing...
                     // Verify that the images contain the bits
                     var img1 = $("#image1")[0];

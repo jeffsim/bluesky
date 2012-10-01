@@ -218,6 +218,51 @@ testHarness.addTestFile("WinJS.Binding Tests", {
 
     // ==========================================================================
     // 
+    // Test WinJS.Binding converter functions
+    //
+    converter: function (test) {
+
+        test.start("Binding converter functions");
+
+        // This is an async test, so it must use test.doAsync and call onTestComplete when done
+        return test.doAsync(function (onTestComplete) {
+
+            // Add UX element to the test working space so that we can test changing it.
+            var $testDiv = testHarness.addTestElement('<div id="test">First Name: <span id="first" data-win-bind=' +
+													  '"innerText: firstName BindingTests.converter.conv1; style.backgroundColor: backColor BindingTests.converter.conv2;style.color:color">John</span></div>');
+
+            // See the dynamicDeclarativeBinding test for an explanation of what we're doing here.
+            var person = { backColor: "#f00", firstName: "Henry", lastName: "Ford", thumbnailImage: null };
+            WinJS.Namespace.define("BindingTests.converter", {
+                conv1: WinJS.Binding.converter(function (val) {
+                    return val + "asdf";
+                }),
+                conv2: WinJS.Binding.converter(function (val) {
+                    return val[0] + val[1] + val[2] + "f";
+                })
+            });
+
+            var bindingSource = WinJS.Binding.as(person);
+            WinJS.Binding.processAll($("#test")[0], bindingSource);
+            bindingSource.firstName = "Thomas";
+            bindingSource.backColor = "#0f0";
+
+            // Changes notification happen asynchronously, so yield
+            WinJS.Promise.timeout().then(function () {
+
+                // Validate test results
+                var firstName = $("#first", $testDiv).text();
+                test.assert(firstName == "Thomasasdf", "Failed to dynamically change first name");
+                var backColor = $("#first", $testDiv).css("backgroundColor");
+                test.assert(backColor == "rgb(0, 255, 255)", "Failed to dynamically change backgroundColor");
+                onTestComplete(test);
+            });
+        });
+    },
+
+
+    // ==========================================================================
+    // 
     // Test multiple data-win-binds to the same field 
     //
     multipleBindsToSameField: function (test) {
