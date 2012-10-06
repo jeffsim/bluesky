@@ -150,3 +150,110 @@ button:disabled .win-commandimage, button:disabled:active .win-commandimage {
     margin-right: -7px;
     margin-top: -7px;
 }
+#blueskyBug
+{
+    width: 124px;
+    height: 60px;
+    background-image: url(images/bsUnlit.png);
+    background-repeat: no-repeat;
+    background-position: 0px 2px;
+    cursor: pointer;
+    position: fixed;
+    bottom: 0px;
+    left: -4px;
+    z-index: 999; /* displays just under the appbar */
+    opacity: .2;
+}
+
+    #blueskyBug.mouseout
+    {
+        opacity: .2;
+    }
+
+    #blueskyBug.mousein
+    {
+        opacity: .4;
+    }
+
+    #blueskyBug.mouseover
+    {
+        background-image: url(images/bsLit.png);
+        opacity: 1;
+    }
+
+#blueskyBar
+{
+    position: fixed;
+    bottom: 0px;
+    height: 60px;
+    background-color: rgba(11,11,11, 0.90);
+    display: none;
+    width: 100%;
+    z-index: 998; /* displays just under the bs bug and appbar*/
+}
+
+#blueskyBugStatic
+{
+    width: 124px;
+    height: 80px;
+    background-image: url(images/bug_with_hosted_by.png);
+    background-repeat: no-repeat;
+    background-position: 0px 12px;
+    position: fixed;
+    bottom: 0px;
+    opacity: .7;
+    left: 0px;
+    z-index: 999; /* displays just under the appbar */
+}
+
+
+.blueskyBarButton
+{
+    background-image: url('/images/bsBarButtons.png');
+    background-repeat: no-repeat;
+    width: 40px;
+    height: 40px;
+    margin-top: 10px;
+    margin-left: 20px;
+    cursor: pointer;
+    float: left;
+    opacity:.7;
+}
+    .blueskyBarButton:hover
+    {
+    opacity:1;
+    }
+
+    .blueskyBarButton#blueskyHomeButton
+    {
+        margin-left: 120px;
+        background-position: 0px -0px;
+    }
+
+    .blueskyBarButton#blueskySearchButton
+    {
+        background-position: -40px -0px;
+    }
+
+    .blueskyBarButton#blueskyLikeButton
+    {
+        background-position: -80px -0px;
+    }
+
+    .blueskyBarButton#blueskySettingsButton
+    {
+        background-position: -120px -0px;
+    }
+
+    .blueskyBarButton#blueskyShareButton
+    {
+        background-position: -160px -0px;
+    }
+
+.blueskySearchFlyout
+{
+    width: 200px;
+    height:120px;
+    color: #000;
+    background-color: #fff;
+}

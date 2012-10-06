@@ -472,7 +472,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 var renderCurX = 0, renderCurY = 0;
 
                 // Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
-                var renderMaxY = this.$rootElement.innerHeight();
+                var renderMaxY = this.$scrollSurface.innerHeight();
 
                 // Keep track of the width of the scrolling surface
                 var surfaceWidth = 0;

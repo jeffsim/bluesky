@@ -452,7 +452,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // Remove nodes that were identified as duplicates or otherwise unwanted
                         nodesToRemove.forEach(function (element) {
-                            tempDocument.removeChild(element);
+                            try {
+                                tempDocument.removeChild(element);
+                            } catch (e) {
+                            }
                         });
 
                         // Pull out all scripts; we'll add them in separately
@@ -479,26 +482,22 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // Keep track of all link'ed styles; we'll wait until they've loaded
                         $("link", $newPage).each(function (i, style) {
-                            if (style.readyState != 'complete' && style.readyState != 'loaded') {
 
-                                // Change local paths to absolute path
-                                var linkSrc = style.attributes.href.value;
-                                if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
-                                    style.href = thisPagePath + linkSrc;
-                                }
-
-                                // Create a promise that we'll wait until the style has been loaded
-                                stylesToWaitFor.push(getStyleLoadedPromise(style));
+                            // Change local paths to absolute path
+                            var linkSrc = style.attributes.href.value;
+                            if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
+                                var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                //var host = document.location.protocol.length + 2 + document.location.host.length;
+                                //thisPagePath = thisPagePath.substr(host);
+                                style.href = thisPagePath + linkSrc;
+                                console.log(style.href);
                             }
-                        });
 
-                        // move styles, links, and meta/title from the new page into the target element
-                        var $stylePrependPoint = $head;
-                        $("meta, title, link, style", $head).each(function (i, tag) {
-                            $stylePrependPoint = $(tag);
+                            // Create a promise that we'll wait until the style has been loaded
+                            stylesToWaitFor.push(getStyleLoadedPromise(style));
                         });
-                        $stylePrependPoint.after($("link, style", $newPage));
+                        $("link", $newPage).remove();
+
                         $("meta, title", $newPage).prependTo($head);
 
                         // B. Remove duplicate styles and meta/charset tags
