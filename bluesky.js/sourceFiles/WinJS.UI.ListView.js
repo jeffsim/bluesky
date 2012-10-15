@@ -233,9 +233,6 @@ WinJS.Namespace.define("WinJS.UI", {
                         that._renderItemTemplate(item);
                     });
 
-                    // TODO: Possible bug in our Promise.join - doesn't work on empty array of Promises.  For now, just add an empty Promise
-                    renderPromises.push(WinJS.Promise.as());
-
                 } else {
 
                     // itemTemplate is a function; create a collection of render promises which we'll wait on below.
@@ -367,7 +364,6 @@ WinJS.Namespace.define("WinJS.UI", {
                     //            FF, so ignoring for R1/R2.
                     if (typeof this.itemTemplate !== "function") {
 
-                        var that = this;
                         $(".win-item", $thisItemContainer).mousedown(function (event) {
                             WinJS.UI.Animation.pointerDown(this);
                             this.setCapture(false);

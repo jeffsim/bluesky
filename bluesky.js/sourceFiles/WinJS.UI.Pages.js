@@ -124,11 +124,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     console.error("WinJS.UI.Pages.PageControl constructor: Undefined or null targetElement specified");
                 /*ENDDEBUG*/
 
-                // this is called when the page should be instantiated and its html realized.  Do so now.
-                var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];   // TODO (CLEANUP): Remove this
-                var that = this;
+                // This is a pagecontrol element; assign it to the targetElement.
                 targetElement.winControl = this;
 
+                var that = this;
                 if (parentedPromise) {
                     // When parenting has completed, trigger the subpage's ready function.  The function that called render()
                     // is responsible for triggering the parented promise that it passed in.
@@ -143,6 +142,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             return WinJS.Promise.join(WinJS.UI.Pages._renderingSubpages);
 
                     }).then(function () {
+
+                        // unload previous pages' styles (if any)
+                        WinJS.UI.Pages._previousPageLinks.forEach(function (href) {
+                            $("link[href^='" + href + "']").remove();
+                        });
+
                         WinJS.UI.Pages._renderingPage = null;
                         if (that.ready)
                             that.ready(targetElement, state);
@@ -153,7 +158,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     });
                 }
 
-                // Create a promise to load the specified Uri into the specifie targetElement
+                // Create a promise to load the specified Uri into the specified targetElement
                 var loadedAndInited = this._loadPage({
                     Uri: pageUri,
                     element: targetElement
@@ -209,6 +214,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             return WinJS.Promise.join(WinJS.UI.Pages._renderingSubpages);
 
                     }).then(function () {
+
+                        // unload previous pages' styles (if any)
+                        WinJS.UI.Pages._previousPageLinks.forEach(function (href) {
+                            $("link[href^='" + href + "']").remove();
+                        });
+
                         WinJS.UI.Pages._renderingPage = null;
                         if (that["ready"])
                             that["ready"](targetElement, state);
@@ -275,7 +286,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // unload previous pages' scripts (if any)
                         // TODO (CLEANUP): Move this elsewhere
                         WinJS.UI.Pages._curPageScripts.forEach(function (src) {
-                            $("script[src='" + src + "']").remove();
+                            $("script[src^='" + src + "']").remove();
                         });
                         WinJS.UI.Pages._curPageScripts = [];
 
@@ -292,12 +303,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     src = thisPagePath + src;
                                 }
 
+                                // track all loaded scripts so that we can unload them on next page navigation
+                                WinJS.UI.Pages._curPageScripts.push(src);
+
                                 // Add a timestamp to force a clean load
                                 var char = src.indexOf("?") == -1 ? "?" : "&";
                                 src += char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
-
-                                // track all loaded scripts so that we can unload them on next page navigation
-                                WinJS.UI.Pages._curPageScripts.push(src);
 
                                 script.src = src;
                                 // TODO (CLEANUP): Change to use lazyload
@@ -411,7 +422,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // get the list of scripts and link that are already in the document; we'll use that list to remove any duplicates from the new page
                         var $existingScripts = $("script", document);
-                        var $existingLinks = $("links", document);
+                        var $existingLinks = $("link", document);
 
                         that.newPageScripts = [];
 
@@ -425,9 +436,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                                 // remove any scripts which are already in the document
                                 $existingScripts.each(function (i, script) {
-                                    if (script.attributes.src)
-                                        if (scriptSrc == script.attributes.src.value.toLowerCase())
+                                    if (script.attributes.src) {
+                                        var existingHref = blueskyUtils.removeBSIDFromUrl(script.attributes.src.value);
+                                        if (scriptSrc == existingHref)
                                             nodesToRemove.push(element);
+                                    }
                                 });
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
@@ -435,14 +448,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     nodesToRemove.push(element);
                             }
                             if (element.nodeName == "LINK" && element.attributes && element.attributes.href) {
-                                var linkSrc = element.attributes.href.value;
+                                var linkSrc = element.attributes.href.value.toLowerCase();
 
                                 // remove any links which are already in the document
                                 $existingLinks.each(function (i, existingLink) {
-                                    if (linkSrc == existingLink.attributes.src.value.toLowerCase())
-                                        nodesToRemove.push(element);
+                                    if (existingLink.attributes.href) {
+                                        var existingHref = blueskyUtils.removeBSIDFromUrl(existingLink.attributes.href.value);
+                                        if (linkSrc == existingHref)
+                                            nodesToRemove.push(element);
+                                    }
                                 });
-
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
                                 if (linkSrc.indexOf("//microsoft.winjs") > -1)
@@ -452,10 +467,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // Remove nodes that were identified as duplicates or otherwise unwanted
                         nodesToRemove.forEach(function (element) {
-                            try {
-                                tempDocument.removeChild(element);
-                            } catch (e) {
-                            }
+                            tempDocument.removeChild(element);
                         });
 
                         // Pull out all scripts; we'll add them in separately
@@ -476,6 +488,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
                         var $newPage = $(tempDocument);
 
+                        // Store the set of links that we loaded for the last page (if any) so that we can remove them after the new styles are loaded.
+                        // Note that we cannot remove them yet, as that would result in an unstyled view of the current page being displayed
+                        WinJS.UI.Pages._previousPageLinks = WinJS.UI.Pages._curPageLinks.slice();
+                        WinJS.UI.Pages._curPageLinks = [];
+
                         // AT THIS POINT: 
                         //	1. The loaded page is ready to be appended to the target element
                         //	2. None of the loaded page's scripts have been executed, nor have its externally referenced scripts or styles been loaded.  
@@ -490,8 +507,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                 //var host = document.location.protocol.length + 2 + document.location.host.length;
                                 //thisPagePath = thisPagePath.substr(host);
                                 style.href = thisPagePath + linkSrc;
-                                console.log(style.href);
                             }
+
+                            WinJS.UI.Pages._curPageLinks.push(linkSrc);
 
                             // Create a promise that we'll wait until the style has been loaded
                             stylesToWaitFor.push(getStyleLoadedPromise(style));
@@ -555,7 +573,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
         pageControl = WinJS.Class.mix(pageControl, members);
 
         // Register the page control constructor for subsequent calls to WinJS.UI.Pages.get and WinJS.UI.Pages.define
-        // TODO: I'm assuming that "helloWorld.html" is the same page as "HelloWORLD.hTML", but should check that Win8 agrees...
         this.registeredPages[pageUri.toLowerCase()] = pageControl;
 
         // Return the new page control constructor
@@ -567,5 +584,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
     // _curPageScripts: The set of scripts on the currently loaded page.
     // TODO: Rationalize this with WinJS.UI.Fragments (Which can also load scripts)
-    _curPageScripts: []
+    _curPageScripts: [],
+    _curPageLinks: [],
+    _previousPageLinks: []
 });

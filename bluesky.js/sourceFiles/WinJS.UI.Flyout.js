@@ -116,7 +116,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		        }
 
 		        $flyout
-                    .remove()
                     .appendTo($("body"))
                     .css({
                         "left": dest.left,
@@ -189,7 +188,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		            WinJS.UI._$flyoutClickEater.hide();
 
 		            // And remove our listener for when we're removed from the DOM
-		            this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+		            if (this.$rootElement)
+		                this.$rootElement.unbind("DOMNodeRemoved", this._unload);
 		        }
 		    },
 

@@ -1,9 +1,8 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this
-* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-// Copyright 2012, Jeff Simon (www.bluesky.io).  Date: 9/8/2012
-// Please contact me at jeffsim@bluesky.io with any questions, ideas, or feedback about bluesky.
+/* Copyright 2012, Bluesky LLC (www.bluesky.io)
+* This Source Code Form is subject to the terms of a commercial license
+* If you have no signed a license with Bluesky LLC for use of this code please contact sales@bluesky.io
+* If you have questions, ideas or feedback please contact info@bluesky.io
+*/
 
 "use strict";
 
@@ -251,9 +250,6 @@ var WinJS = {
 			if (!member)
 				continue;
 
-			// allow the member to show in for..in loops
-			member.enumerable = true;
-
 			// Getters and setters are managed as regular properties
 			if (typeof member === "object" && (typeof member.get === "function" || typeof member.set === "function")) {
 
@@ -431,32 +427,129 @@ WinJS.Namespace.define("WinJS", {
     xhr: function (options) {
 
         var request;
-        var requestType = options && options.type || "GET";
+        var requestType = (options && options.type) || "GET";
+        var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
 
         // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-            var url = options.url.toLowerCase();
+            var url = options.url;
+            var urlLower = url.toLowerCase();
 
             // Determine if the url is local or not
             // TODO: Check if it's same-domain and don't proxy if so
-            var isLocal = url.indexOf("http:") != 0;
+            // starts with http:// and !
+            var isLocal = !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
+
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
             // convert appdata references to filepath
             url = url.replace("ms-appx:///", "/");
-            url = url.toLowerCase().replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
+            url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
 
                 // if format and callback aren't set add each individually
-                if (url.indexOf("format=") == -1)
+                if (urlLower.indexOf("format=") == -1)
                     url = blueskyUtils.appendQueryStringParam(url, "format=json");
-                if (url.indexOf("callback=") == -1 && url.indexOf("jsonp=") == -1)
+                if (urlLower.indexOf("callback=") == -1 && urlLower.indexOf("jsonp=") == -1)
                     url = blueskyUtils.appendQueryStringParam(url, "callback=?");
-                var dataType = "jsonp";
+                dataType = "jsonp";
+            }
+
+            // Determine if we should go through the bluesky proxy
+            var isProxied = !isLocal && !isBypass && Bluesky.Settings.ProxyCrossDomainXhrCalls;
+
+            if (isProxied) {
+
+                // Run the URL through our proxy on the bluesky server, where we can access cross
+                // domain resources with wild abandon.
+                url = "http://bluesky.io:8080/_p?" + encodeURIComponent(url);
+
+                // $.ajax appears to automatically convert any POSTs to GETs when JSONP is involved;
+                // but we need to know on the server side if it's a POST, so send that info up.
+                if (requestType == "POST")
+                    url += "&__post=1";
+                dataType = "jsonp";
+            }
+
+            // TODO: Progress
+            var responseData;
+            $.ajax(url, {
+                data: options.data,
+                dataType: dataType,
+                type: requestType,
+                success: function (data, textStatus, jqXHR) {
+
+                    var response, responseText, responseXML;
+                    // TODO: I haven't tested these since the inclusion of the bluesky proxy.
+                    // TODO (CLEANUP): Ick.
+                    if (data && data.firstChild) {
+                        responseText = "";
+                        responseXML = data;
+                    } else {
+                        responseText = data.status || data;
+                        responseXML = null;
+                    }
+
+                    onComplete({
+                        responseType: "",
+                        responseText: responseText,
+                        responseXML: responseXML,
+                        data: data.data || data,
+                        readyState: jqXHR.readyState,
+                        DONE: 4,
+                        statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
+                        status: jqXHR.status
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // TODO: all return flags.
+                    // TODO: Support other errors
+                    debugger;
+                    if (jqXHR.status == 404)
+                        onError({ number: -2146697211 });	// Win8's 404 error code
+                    else
+                        onError({ number: 1 });	// TODO: What to do here?
+                }
+            });
+        });
+    }
+    /* OLD VERSION
+    xhr: function (options) {
+
+        var request;
+        var requestType = (options && options.type) || "GET";
+        var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
+
+        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        return new WinJS.Promise(function (onComplete, onError, onProgress) {
+
+            var url = options.url;
+            var urlLower = url.toLowerCase();
+
+            // Determine if the url is local or not
+            // TODO: Check if it's same-domain and don't proxy if so
+            var isLocal = urlLower.indexOf("http:") != 0 || urlLower.indexOf("localhost") != 0;
+
+            // test for bypass 
+            var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
+
+            // convert appdata references to filepath
+            url = url.replace("ms-appx:///", "/");
+            url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
+
+            // If this isn't a local request, then run it through the proxy to enable cross-domain
+            if (isBypass) {
+
+                // if format and callback aren't set add each individually
+                if (urlLower.indexOf("format=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "format=json");
+                if (urlLower.indexOf("callback=") == -1 && urlLower.indexOf("jsonp=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "callback=?");
+                dataType = "jsonp";
             }
 
             // Determine if we should go through the YQL proxy
@@ -465,13 +558,16 @@ WinJS.Namespace.define("WinJS", {
                 url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
                               "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(url) +
                               "%22%3B&format=json&callback=?";
-                var dataType = "jsonp";
+                dataType = "jsonp";
             }
+
             // TODO: Progress
+            var responseData;
             $.ajax({
                 url: url,
                 data: options.data,
                 dataType: dataType,
+                type: requestType,
                 success: function (data, textStatus, jqXHR) {
                     if (isYql) {
                         // Since we're using YQL, data contains the XML Document with the result. Extract it
@@ -514,8 +610,9 @@ WinJS.Namespace.define("WinJS", {
                             response = "";
                             responseText = "";
                         } else {
+                            responseData = (data && data.data) || data;
                             response = data;
-                            responseText = data;
+                            responseText = data.status;
                             responseXML = null;
                         }
                     }
@@ -523,8 +620,8 @@ WinJS.Namespace.define("WinJS", {
                     onComplete({
                         responseType: "",
                         responseText: responseText,
-                        response: responseText,
                         responseXML: responseXML,
+                        data: responseData,
                         readyState: 4,
                         DONE: 4,
                         statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
@@ -538,11 +635,10 @@ WinJS.Namespace.define("WinJS", {
                         onError({ number: -2146697211 });	// Win8's 404 error code
                     else
                         onError({ number: 1 });	// TODO: What to do here?
-                },
-                type: requestType
+                }
             });
         });
-    }
+    }*/
 });
 
 
@@ -4446,13 +4542,13 @@ WinJS.Namespace.define("WinJS.Application", {
 //
 WinJS.Namespace.define("WinJS.Navigation", {
 
-	// ================================================================
-	//
-	// private Function: WinJS.Navigation._init
-	//
-	_init: function () {
+    // ================================================================
+    //
+    // private Function: WinJS.Navigation._init
+    //
+    _init: function () {
 
-		/* NYI
+        /* NYI
 		// bind to hash changes so that we can see them
 		window.onhashchange = function (info) {
 
@@ -4460,472 +4556,503 @@ WinJS.Namespace.define("WinJS.Navigation", {
 
 			console.log(info, info.newURL);
 		}*/
-	},
-
-
-	// ================================================================
-	//
-	// public Function: WinJS.Navigation.navigate
-	//
-	//		Navigates to the specified target. For now we don't do anything except notify of the navigate; navigator.js
-	//		is responsible for doing the actual page load.
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229837.aspx
-	//
-	navigate: function (targetPath, options) {
-
-		var that = this;
-		return new WinJS.Promise(function (onNavigationComplete) {
-
-			var beforeNavigateSetPromise = null;
-			var navigatingSetPromise = null;
-			var navigatedSetPromise = null;
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.Navigation.navigate
+    //
+    //		Navigates to the specified target. For now we don't do anything except notify of the navigate; navigator.js
+    //		is responsible for doing the actual page load.
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229837.aspx
+    //
+    navigate: function (targetPath, options) {
+
+
+        var that = this;
+        return new WinJS.Promise(function (onNavigationComplete) {
+
+            // Disallow second-navigations
+            // NOTE: Win8 does not appear to do this; we do because we like crashing less often.
+            if (that.curPageInfo) {
+                if (that.curPageInfo.location == targetPath) {
+                    // second-check: ensure user isn't redirecting going back to same page during 'ready' (et al) with different options
+                    // TODO: This check is failing.
+                    //console.log(targetPath, options, that.curPageInfo.options);
+                    //        if (that.curPageInfo.options == options) {
+                    return onNavigationComplete(false);
+                    //      }
+                }
+            }
+
+            var beforeNavigateSetPromise = null;
+            var navigatingSetPromise = null;
+            var navigatedSetPromise = null;
+
+            var newPageInfo = {
+                location: targetPath,
+                state: options,
+                defaultPrevented: false
+            };
+
+            newPageInfo.setPromise = function (p) { beforeNavigateSetPromise = p; };
+            that._notifyBeforeNavigate(newPageInfo);
+
+            WinJS.Promise.as(beforeNavigateSetPromise).then(function () {
+
+                // did user cancel?
+                if (newPageInfo.defaultPrevented) {
+                    onNavigationComplete(false);
+                }
+
+                // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
 
-			var newPageInfo = {
-				location: targetPath,
-				state: options,
-				defaultPrevented: false
-			};
-
-			newPageInfo.setPromise = function (p) { beforeNavigateSetPromise = p; };
-			that._notifyBeforeNavigate(newPageInfo);
-
-			WinJS.Promise.as(beforeNavigateSetPromise).then(function () {
-
-				// did user cancel?
-				if (newPageInfo.defaultPrevented) {
-					return false;
-				}
-
-			    // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
-
-			    // First; hide any clickeaters
-				WinJS.UI._hideClickEaters();
-				newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
-				that._notifyNavigating(newPageInfo);
-
-			}).then(function () {
-
-				// Wait until the navigating setPromise (set by caller) - if any - is fulfilled
-				return WinJS.Promise.as(navigatingSetPromise);
-
-			}).then(function () {
-
-				// Add the current page (and options) to the backStack.
-				if (that.curPageInfo && that.curPageInfo.location != "")
-					that.backStack.push(that.curPageInfo);
-
-				// Track the new page as the current page
-				that.curPageInfo = newPageInfo;
-
-				newPageInfo.setPromise = function (p) { navigatedSetPromise = p; };
-
-				// Notify listeners of the navigated event
-				that._notifyNavigated(that.curPageInfo);
-				if (navigatedSetPromise)
-					WinJS.Promise.as(navigatedSetPromise).then(function () { onNavigationComplete(); });
-				else
-					onNavigationComplete();
-			});
-		});
-	},
-
-
-	// ================================================================
-	//
-	// public Function: WinJS.Navigation.back
-	//
-	//		Navigates back one page in the backstack.
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229802.aspx
-	//
-	back: function () {
-
-		if (this.backStack.length == 0)
-			return new WinJS.Promise.as(null);
-
-		// TODO: Merge this into the similar code in .navigate() above.
-
-		// Get the url and options of the page to which we're going back.
-		// Don't pop it since the caller could cancel the back
-		var backPage = this.backStack[this.backStack.length - 1];
-		var that = this;
-		return new WinJS.Promise(function (onNavigationComplete) {
-
-			var beforeNavigateSetPromise = null;
-			var navigatingSetPromise = null;
-			var navigatedSetPromise = null;
-
-			var newPageInfo = {
-				location: backPage.location,
-				state: backPage.state,
-				defaultPrevented: false
-			};
-
-			newPageInfo.setPromise = function (p) { beforeNavigateSetPromise = p; };
-			that._notifyBeforeNavigate(newPageInfo);
-			WinJS.Promise.as(beforeNavigateSetPromise).then(function () {
-
-				// did user cancel?
-				if (newPageInfo.defaultPrevented) {
-					return false;
-				}
-
-				// User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
-				newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
-				that._notifyNavigating(newPageInfo);
-
-			}).then(function () {
-
-				// Wait until the navigating setPromise (set by caller) - if any - is fulfilled
-				return WinJS.Promise.as(navigatingSetPromise);
-
-			}).then(function () {
-
-				// Remove the page from the backstack
-				that.backStack.pop();
-
-				// Push the previous current page onto the forward stack
-				that.forwardStack.push(that.curPageInfo);
-
-				// Track the backed-to page as the current page
-				that.curPageInfo = backPage;
-				that.curPageInfo.setPromise = function (p) {
-					navigatedSetPromise = p;
-				};
-				// Notify listeners of the navigated event
-				that._notifyNavigated(that.curPageInfo);
-
-				if (navigatedSetPromise)
-					WinJS.Promise.as(navigatedSetPromise).then(function () { onNavigationComplete(); });
-				else
-					onNavigationComplete();
-			});
-		});
-	},
-
-
-	// ================================================================
-	//
-	// public Function: WinJS.Navigation.forward
-	//
-	//		Navigates forward one page in the backstack.
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229818.aspx
-	//
-	forward: function () {
-
-		if (this.forwardStack.length == 0)
-			return new WinJS.Promise.as(null);
-
-		// TODO: Merge this into the similar code in .navigate() and .back() above.
-
-		// Get the url and options of the page to which we're going.
-		// Don't pop it since the caller could cancel the forward
-		var forwardPage = this.forwardStack[this.forwardStack.length - 1];
-
-		var that = this;
-		return new WinJS.Promise(function (onNavigationComplete) {
-
-			var beforeNavigateSetPromise = null;
-			var navigatingSetPromise = null;
-			var navigatedSetPromise = null;
-
-			var newPageInfo = {
-				location: forwardPage.location,
-				state: forwardPage.state,
-				defaultPrevented: false
-			};
-
-			newPageInfo.setPromise = function (p) { beforeNavigateSetPromise = p; };
-			that._notifyBeforeNavigate(newPageInfo);
-			WinJS.Promise.as(beforeNavigateSetPromise).then(function () {
-
-				// did user cancel?
-				if (newPageInfo.defaultPrevented) {
-					return false;
-				}
-
-				// User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
-				newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
-				that._notifyNavigating(newPageInfo);
-
-			}).then(function () {
-
-				// Wait until the navigating setPromise (set by caller) - if any - is fulfilled
-				return WinJS.Promise.as(navigatingSetPromise);
-
-			}).then(function () {
-
-				// Remove the page from the forwardstack
-				that.forwardStack.pop();
-
-				// Push the previous current page onto the back stack
-				that.backStack.push(that.curPageInfo);
-
-				// Track the backed-to page as the current page
-				that.curPageInfo = forwardPage;
-				that.curPageInfo.setPromise = function (p) {
-					navigatedSetPromise = p;
-				};
-				// Notify listeners of the navigated event
-				that._notifyNavigated(that.curPageInfo);
-
-				if (navigatedSetPromise)
-					WinJS.Promise.as(navigatedSetPromise).then(function () { onNavigationComplete(); });
-				else
-					onNavigationComplete();
-			});
-		});
-	},
-
-
-	// ================================================================
-	//
-	// public property: WinJS.Navigation.canGoBack
-	//
-	//		canGoBack: true if the user can go back
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229804.aspx
-	//
-	canGoBack: {
-		get: function () { return this.backStack.length > 0; }
-	},
-
-
-	// ================================================================
-	//
-	// public property: WinJS.Navigation.canGoForward
-	//
-	//		canGoBack: true if the user can go forward
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229805.aspx
-	//
-	canGoForward: {
-		get: function () { return this.forwardStack.length > 0; }
-	},
-
-	// ================================================================
-	//
-	// private: backStack: The stack of navigable pages/options through which the user can go back
-	//
-	backStack: [],
-
-	// ================================================================
-	//
-	// private: forwardStack: The stack of navigable pages/options through which the user can go forward
-	//
-	forwardStack: [],
-
-	// ================================================================
-	//
-	// private: curPageInfo: the current page to which we are navigated.
-	//
-	curPageInfo: null,
-
-
-	// ================================================================
-	//
-	// public function: WinJS.Navigation.addEventListener
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229800.aspx
-	//
-	addEventListener: function (eventName, listener) {
-
-		// TODO: Can I leverage DOMEventMixin here now?
-		
-		/*DEBUG*/
-		// Parameter validation
-		if (!this._eventListeners[eventName])
-			console.warn("WinJS.Navigation.addEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-		/*ENDDEBUG*/
-
-		// Add the listener to the list of listeners for the specified eventName
-		this._eventListeners[eventName].push(listener);
-	},
-
-
-	// ================================================================
-	//
-	// public function: WinJS.Navigation.removeEventListener
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229849.aspx
-	//
-	removeEventListener: function (eventName, listener) {
-
-		/*DEBUG*/
-		// Parameter validation
-		if (!this._eventListeners[eventName])
-			console.warn("WinJS.Navigation.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
-		/*ENDDEBUG*/
-
-		// Remove the listener from the list of listeners for the specified eventName
-		var listeners = this._eventListeners[eventName];
-		for (var i = 0; i < listeners.length; i++) {
-			if (listener === listeners[i]) {
-				listeners.splice(i, 1);
-				return;
-			}
-		}
-	},
-
-
-	// ================================================================
-	//
-	// private function: WinJS.Navigation._notifyBeforeNavigate
-	//
-	_notifyBeforeNavigate: function (eventData) {
-		var eventInfo = {
-			target: this,
-			type: "beforenavigate",
-			detail: eventData
-		};
-
-		for (var i in this._eventListeners.beforenavigate)
-			this._eventListeners.beforenavigate[i](eventInfo);
-		eventData.defaultPrevented = eventInfo.defaultPrevented;
-	},
-
-	// ================================================================
-	//
-	// private function: WinJS.Navigation._notifyNavigating
-	//
-	_notifyNavigating: function (eventData) {
-		var eventInfo = {
-			target: this,
-			type: "navigating",
-			detail: eventData
-		};
-
-		for (var i in this._eventListeners.navigating)
-			this._eventListeners.navigating[i](eventInfo);
-	},
-
-
-	// ================================================================
-	//
-	// private function: WinJS.Navigation._notifyNavigated
-	//
-	_notifyNavigated: function (eventData) {
-
-		var eventInfo = {
-			target: this,
-			type: "navigated",
-			detail: eventData
-		};
-
-		for (var i in this._eventListeners.navigated)
-			this._eventListeners.navigated[i](eventInfo);
-	},
-
-
-	// ================================================================
-	//
-	// public event: WinJS.Navigation.onbeforenavigate
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229838.aspx
-	//
-	onbeforenavigate: {
-		get: function () { return this._eventListeners["beforenavigate"]; },
-		set: function (callback) { this.addEventListener("beforenavigate", callback); }
-	},
-
-
-	// ================================================================
-	//
-	// public event: WinJS.Navigation.onnavigating
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229843.aspx
-	//
-	onnavigating: {
-		get: function () { return this._eventListeners["navigating"]; },
-		set: function (callback) { this.addEventListener("navigating", callback); }
-	},
-
-
-	// ================================================================
-	//
-	// public event: WinJS.Navigation.onnavigated
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229842.aspx
-	//
-	onnavigated: {
-		get: function () { return this._eventListeners["navigated"]; },
-		set: function (callback) { this.addEventListener("navigated", callback); }
-	},
-
-
-	// ================================================================
-	//
-	// Our event listeners
-	//
-	_eventListeners: {
-		beforenavigate: [],
-		navigating: [],
-		navigated: []
-	},
-
-
-	// ================================================================
-	//
-	// public property: WinJS.Navigation.history
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229830.aspx
-	//
-	history: {
-		get: function () {
-			return {
-				backStack: this.backStack,
-				forwardStack: this.forwardStack,
-				current: this.curPageInfo ? this.curPageInfo.location : "",
-			};
-		},
-
-		set: function (value) {
-			if (!value || value == {}) {
-				this.backStack = [];
-				this.forwardStack = [];
-				this.curPageInfo = null;
-			} else {
-				// if back/forward stack not specified, then use an empty array
-				this.backStack = value.backStack ? value.backStack.slice() : [];
-				this.forwardStack = value.forwardStack ? value.forwardStack.slice() : [];
-				this.curPageInfo.location = value.current && value.current.location ? value.current.location : "";
-			}
-		}
-	},
-
-
-	// ================================================================
-	//
-	// public property: WinJS.Navigation.location
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229835.aspx
-	//
-	location: {
-		get: function () {
-			return this.curPageInfo ? this.curPageInfo.location : null;
-		},
-		set: function (value) {
-			this.curPageInfo.location = value;
-		}
-	},
-
-
-	// ================================================================
-	//
-	// public property: WinJS.Navigation.state
-	//
-	//		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229850.aspx
-	//
-	state: {
-		get: function () {
-			return this.curPageInfo.state;
-		},
-		set: function (value) {
-			this.curPageInfo.state = value;
-		}
-	}
+                // First; hide any clickeaters
+                WinJS.UI._hideClickEaters();
+                newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
+                that._notifyNavigating(newPageInfo);
+
+            }).then(function () {
+
+                // Wait until the navigating setPromise (set by caller) - if any - is fulfilled
+                return WinJS.Promise.as(navigatingSetPromise);
+
+            }).then(function () {
+
+                // Add the current page (and options) to the backStack.
+                if (that.curPageInfo && that.curPageInfo.location != "")
+                    that.backStack.push(that.curPageInfo);
+
+                // Track the new page as the current page
+                that.curPageInfo = newPageInfo;
+                that.curPageInfo.options = options;
+
+                newPageInfo.setPromise = function (p) { navigatedSetPromise = p; };
+
+                // Notify listeners of the navigated event
+                that._notifyNavigated(that.curPageInfo);
+
+
+
+                if (navigatedSetPromise)
+                    WinJS.Promise.as(navigatedSetPromise).then(function () {
+                        onNavigationComplete(true);
+                    });
+                else {
+                    onNavigationComplete(true);
+                }
+            });
+        });
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.Navigation.back
+    //
+    //		Navigates back one page in the backstack.
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229802.aspx
+    //
+    back: function () {
+
+        if (this.backStack.length == 0)
+            return new WinJS.Promise.as(null);
+
+        if (this._navigating)
+            return;
+        this._navigating = true;
+
+        // TODO: Merge this into the similar code in .navigate() above.
+
+        // Get the url and options of the page to which we're going back.
+        // Don't pop it since the caller could cancel the back
+        var backPage = this.backStack[this.backStack.length - 1];
+        var that = this;
+        return new WinJS.Promise(function (onNavigationComplete) {
+
+            var beforeNavigateSetPromise = null;
+            var navigatingSetPromise = null;
+            var navigatedSetPromise = null;
+
+            var newPageInfo = {
+                location: backPage.location,
+                state: backPage.state,
+                defaultPrevented: false
+            };
+
+            newPageInfo.setPromise = function (p) { beforeNavigateSetPromise = p; };
+            that._notifyBeforeNavigate(newPageInfo);
+            WinJS.Promise.as(beforeNavigateSetPromise).then(function () {
+
+                // did user cancel?
+                if (newPageInfo.defaultPrevented) {
+                    that._navigating = false;
+                    return false;
+                }
+
+                // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
+                newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
+                that._notifyNavigating(newPageInfo);
+
+            }).then(function () {
+
+                // Wait until the navigating setPromise (set by caller) - if any - is fulfilled
+                return WinJS.Promise.as(navigatingSetPromise);
+
+            }).then(function () {
+
+                // Remove the page from the backstack
+                that.backStack.pop();
+
+                // Push the previous current page onto the forward stack
+                that.forwardStack.push(that.curPageInfo);
+
+                // Track the backed-to page as the current page
+                that.curPageInfo = backPage;
+                that.curPageInfo.setPromise = function (p) {
+                    navigatedSetPromise = p;
+                };
+                // Notify listeners of the navigated event
+                that._navigating = false;
+                that._notifyNavigated(that.curPageInfo);
+
+                if (navigatedSetPromise)
+                    WinJS.Promise.as(navigatedSetPromise).then(function () { onNavigationComplete(); });
+                else
+                    onNavigationComplete();
+            });
+        });
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.Navigation.forward
+    //
+    //		Navigates forward one page in the backstack.
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229818.aspx
+    //
+    forward: function () {
+
+        if (this.forwardStack.length == 0)
+            return new WinJS.Promise.as(null);
+
+        if (this._navigating)
+            return;
+        this._navigating = true;
+        // TODO: Merge this into the similar code in .navigate() and .back() above.
+
+        // Get the url and options of the page to which we're going.
+        // Don't pop it since the caller could cancel the forward
+        var forwardPage = this.forwardStack[this.forwardStack.length - 1];
+        var that = this;
+        return new WinJS.Promise(function (onNavigationComplete) {
+
+            var beforeNavigateSetPromise = null;
+            var navigatingSetPromise = null;
+            var navigatedSetPromise = null;
+
+            var newPageInfo = {
+                location: forwardPage.location,
+                state: forwardPage.state,
+                defaultPrevented: false
+            };
+
+            newPageInfo.setPromise = function (p) { beforeNavigateSetPromise = p; };
+            that._notifyBeforeNavigate(newPageInfo);
+            WinJS.Promise.as(beforeNavigateSetPromise).then(function () {
+
+                // did user cancel?
+                if (newPageInfo.defaultPrevented) {
+                    that._navigating = false;
+                    return false;
+                }
+
+                // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
+                newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
+                that._notifyNavigating(newPageInfo);
+
+            }).then(function () {
+
+                // Wait until the navigating setPromise (set by caller) - if any - is fulfilled
+                return WinJS.Promise.as(navigatingSetPromise);
+
+            }).then(function () {
+
+                // Remove the page from the forwardstack
+                that.forwardStack.pop();
+
+                // Push the previous current page onto the back stack
+                that.backStack.push(that.curPageInfo);
+
+                // Track the backed-to page as the current page
+                that.curPageInfo = forwardPage;
+                that.curPageInfo.setPromise = function (p) {
+                    navigatedSetPromise = p;
+                };
+                // Notify listeners of the navigated event
+                that._notifyNavigated(that.curPageInfo);
+                that._navigating = false;
+
+                if (navigatedSetPromise)
+                    WinJS.Promise.as(navigatedSetPromise).then(function () { onNavigationComplete(); });
+                else
+                    onNavigationComplete();
+            });
+        });
+    },
+
+
+    // ================================================================
+    //
+    // public property: WinJS.Navigation.canGoBack
+    //
+    //		canGoBack: true if the user can go back
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229804.aspx
+    //
+    canGoBack: {
+        get: function () { return this.backStack.length > 0; }
+    },
+
+
+    // ================================================================
+    //
+    // public property: WinJS.Navigation.canGoForward
+    //
+    //		canGoBack: true if the user can go forward
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229805.aspx
+    //
+    canGoForward: {
+        get: function () { return this.forwardStack.length > 0; }
+    },
+
+    // ================================================================
+    //
+    // private: backStack: The stack of navigable pages/options through which the user can go back
+    //
+    backStack: [],
+
+    // ================================================================
+    //
+    // private: forwardStack: The stack of navigable pages/options through which the user can go forward
+    //
+    forwardStack: [],
+
+    // ================================================================
+    //
+    // private: curPageInfo: the current page to which we are navigated.
+    //
+    curPageInfo: null,
+
+
+    // ================================================================
+    //
+    // public function: WinJS.Navigation.addEventListener
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229800.aspx
+    //
+    addEventListener: function (eventName, listener) {
+
+        // TODO: Can I leverage DOMEventMixin here now?
+
+        /*DEBUG*/
+        // Parameter validation
+        if (!this._eventListeners[eventName])
+            console.warn("WinJS.Navigation.addEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+        /*ENDDEBUG*/
+
+        // Add the listener to the list of listeners for the specified eventName
+        this._eventListeners[eventName].push(listener);
+    },
+
+
+    // ================================================================
+    //
+    // public function: WinJS.Navigation.removeEventListener
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229849.aspx
+    //
+    removeEventListener: function (eventName, listener) {
+
+        /*DEBUG*/
+        // Parameter validation
+        if (!this._eventListeners[eventName])
+            console.warn("WinJS.Navigation.removeEventListener: Unknown event '" + eventName + "' specified.  Listener: ", listener);
+        /*ENDDEBUG*/
+
+        // Remove the listener from the list of listeners for the specified eventName
+        var listeners = this._eventListeners[eventName];
+        for (var i = 0; i < listeners.length; i++) {
+            if (listener === listeners[i]) {
+                listeners.splice(i, 1);
+                return;
+            }
+        }
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.Navigation._notifyBeforeNavigate
+    //
+    _notifyBeforeNavigate: function (eventData) {
+        var eventInfo = {
+            target: this,
+            type: "beforenavigate",
+            detail: eventData
+        };
+
+        for (var i in this._eventListeners.beforenavigate)
+            this._eventListeners.beforenavigate[i](eventInfo);
+        eventData.defaultPrevented = eventInfo.defaultPrevented;
+    },
+
+    // ================================================================
+    //
+    // private function: WinJS.Navigation._notifyNavigating
+    //
+    _notifyNavigating: function (eventData) {
+        var eventInfo = {
+            target: this,
+            type: "navigating",
+            detail: eventData
+        };
+
+        for (var i in this._eventListeners.navigating)
+            this._eventListeners.navigating[i](eventInfo);
+    },
+
+
+    // ================================================================
+    //
+    // private function: WinJS.Navigation._notifyNavigated
+    //
+    _notifyNavigated: function (eventData) {
+
+        var eventInfo = {
+            target: this,
+            type: "navigated",
+            detail: eventData
+        };
+
+        for (var i in this._eventListeners.navigated)
+            this._eventListeners.navigated[i](eventInfo);
+    },
+
+
+    // ================================================================
+    //
+    // public event: WinJS.Navigation.onbeforenavigate
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229838.aspx
+    //
+    onbeforenavigate: {
+        get: function () { return this._eventListeners["beforenavigate"]; },
+        set: function (callback) { this.addEventListener("beforenavigate", callback); }
+    },
+
+
+    // ================================================================
+    //
+    // public event: WinJS.Navigation.onnavigating
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229843.aspx
+    //
+    onnavigating: {
+        get: function () { return this._eventListeners["navigating"]; },
+        set: function (callback) { this.addEventListener("navigating", callback); }
+    },
+
+
+    // ================================================================
+    //
+    // public event: WinJS.Navigation.onnavigated
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229842.aspx
+    //
+    onnavigated: {
+        get: function () { return this._eventListeners["navigated"]; },
+        set: function (callback) { this.addEventListener("navigated", callback); }
+    },
+
+
+    // ================================================================
+    //
+    // Our event listeners
+    //
+    _eventListeners: {
+        beforenavigate: [],
+        navigating: [],
+        navigated: []
+    },
+
+
+    // ================================================================
+    //
+    // public property: WinJS.Navigation.history
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229830.aspx
+    //
+    history: {
+        get: function () {
+            return {
+                backStack: this.backStack,
+                forwardStack: this.forwardStack,
+                current: this.curPageInfo ? this.curPageInfo.location : "",
+            };
+        },
+
+        set: function (value) {
+            if (!value || value == {}) {
+                this.backStack = [];
+                this.forwardStack = [];
+                this.curPageInfo = null;
+            } else {
+                // if back/forward stack not specified, then use an empty array
+                this.backStack = value.backStack ? value.backStack.slice() : [];
+                this.forwardStack = value.forwardStack ? value.forwardStack.slice() : [];
+                this.curPageInfo.location = value.current && value.current.location ? value.current.location : "";
+            }
+        }
+    },
+
+
+    // ================================================================
+    //
+    // public property: WinJS.Navigation.location
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229835.aspx
+    //
+    location: {
+        get: function () {
+            return this.curPageInfo ? this.curPageInfo.location : null;
+        },
+        set: function (value) {
+            this.curPageInfo.location = value;
+        }
+    },
+
+
+    // ================================================================
+    //
+    // public property: WinJS.Navigation.state
+    //
+    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229850.aspx
+    //
+    state: {
+        get: function () {
+            return this.curPageInfo.state;
+        },
+        set: function (value) {
+            this.curPageInfo.state = value;
+        }
+    }
 });
 
 
@@ -10803,11 +10930,10 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     console.error("WinJS.UI.Pages.PageControl constructor: Undefined or null targetElement specified");
                 /*ENDDEBUG*/
 
-                // this is called when the page should be instantiated and its html realized.  Do so now.
-                var page = WinJS.UI.Pages.registeredPages[pageUri.toLowerCase()];   // TODO (CLEANUP): Remove this
-                var that = this;
+                // This is a pagecontrol element; assign it to the targetElement.
                 targetElement.winControl = this;
 
+                var that = this;
                 if (parentedPromise) {
                     // When parenting has completed, trigger the subpage's ready function.  The function that called render()
                     // is responsible for triggering the parented promise that it passed in.
@@ -10822,6 +10948,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             return WinJS.Promise.join(WinJS.UI.Pages._renderingSubpages);
 
                     }).then(function () {
+
+                        // unload previous pages' styles (if any)
+                        WinJS.UI.Pages._previousPageLinks.forEach(function (href) {
+                            $("link[href^='" + href + "']").remove();
+                        });
+
                         WinJS.UI.Pages._renderingPage = null;
                         if (that.ready)
                             that.ready(targetElement, state);
@@ -10832,7 +10964,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     });
                 }
 
-                // Create a promise to load the specified Uri into the specifie targetElement
+                // Create a promise to load the specified Uri into the specified targetElement
                 var loadedAndInited = this._loadPage({
                     Uri: pageUri,
                     element: targetElement
@@ -10888,6 +11020,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             return WinJS.Promise.join(WinJS.UI.Pages._renderingSubpages);
 
                     }).then(function () {
+
+                        // unload previous pages' styles (if any)
+                        WinJS.UI.Pages._previousPageLinks.forEach(function (href) {
+                            $("link[href^='" + href + "']").remove();
+                        });
+
                         WinJS.UI.Pages._renderingPage = null;
                         if (that["ready"])
                             that["ready"](targetElement, state);
@@ -10954,7 +11092,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // unload previous pages' scripts (if any)
                         // TODO (CLEANUP): Move this elsewhere
                         WinJS.UI.Pages._curPageScripts.forEach(function (src) {
-                            $("script[src='" + src + "']").remove();
+                            $("script[src^='" + src + "']").remove();
                         });
                         WinJS.UI.Pages._curPageScripts = [];
 
@@ -10971,12 +11109,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     src = thisPagePath + src;
                                 }
 
+                                // track all loaded scripts so that we can unload them on next page navigation
+                                WinJS.UI.Pages._curPageScripts.push(src);
+
                                 // Add a timestamp to force a clean load
                                 var char = src.indexOf("?") == -1 ? "?" : "&";
                                 src += char + "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
-
-                                // track all loaded scripts so that we can unload them on next page navigation
-                                WinJS.UI.Pages._curPageScripts.push(src);
 
                                 script.src = src;
                                 // TODO (CLEANUP): Change to use lazyload
@@ -11090,7 +11228,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                         // get the list of scripts and link that are already in the document; we'll use that list to remove any duplicates from the new page
                         var $existingScripts = $("script", document);
-                        var $existingLinks = $("links", document);
+                        var $existingLinks = $("link", document);
 
                         that.newPageScripts = [];
 
@@ -11104,9 +11242,11 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                                 // remove any scripts which are already in the document
                                 $existingScripts.each(function (i, script) {
-                                    if (script.attributes.src)
-                                        if (scriptSrc == script.attributes.src.value.toLowerCase())
+                                    if (script.attributes.src) {
+                                        var existingHref = blueskyUtils.removeBSIDFromUrl(script.attributes.src.value);
+                                        if (scriptSrc == existingHref)
                                             nodesToRemove.push(element);
+                                    }
                                 });
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
@@ -11114,14 +11254,16 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     nodesToRemove.push(element);
                             }
                             if (element.nodeName == "LINK" && element.attributes && element.attributes.href) {
-                                var linkSrc = element.attributes.href.value;
+                                var linkSrc = element.attributes.href.value.toLowerCase();
 
                                 // remove any links which are already in the document
                                 $existingLinks.each(function (i, existingLink) {
-                                    if (linkSrc == existingLink.attributes.src.value.toLowerCase())
-                                        nodesToRemove.push(element);
+                                    if (existingLink.attributes.href) {
+                                        var existingHref = blueskyUtils.removeBSIDFromUrl(existingLink.attributes.href.value);
+                                        if (linkSrc == existingHref)
+                                            nodesToRemove.push(element);
+                                    }
                                 });
-
 
                                 // Remove WinJS scripts and styles from the new page.  Technically not necessary, possibly worth pulling out for perf.
                                 if (linkSrc.indexOf("//microsoft.winjs") > -1)
@@ -11152,32 +11294,34 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                         // we actually 'realize' the script (to avoid duplicate scripts from being executed once in the root doc and once again in the loaded page).
                         var $newPage = $(tempDocument);
 
+                        // Store the set of links that we loaded for the last page (if any) so that we can remove them after the new styles are loaded.
+                        // Note that we cannot remove them yet, as that would result in an unstyled view of the current page being displayed
+                        WinJS.UI.Pages._previousPageLinks = WinJS.UI.Pages._curPageLinks.slice();
+                        WinJS.UI.Pages._curPageLinks = [];
+
                         // AT THIS POINT: 
                         //	1. The loaded page is ready to be appended to the target element
                         //	2. None of the loaded page's scripts have been executed, nor have its externally referenced scripts or styles been loaded.  
 
                         // Keep track of all link'ed styles; we'll wait until they've loaded
                         $("link", $newPage).each(function (i, style) {
-                            if (style.readyState != 'complete' && style.readyState != 'loaded') {
 
-                                // Change local paths to absolute path
-                                var linkSrc = style.attributes.href.value;
-                                if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
-                                    style.href = thisPagePath + linkSrc;
-                                }
-
-                                // Create a promise that we'll wait until the style has been loaded
-                                stylesToWaitFor.push(getStyleLoadedPromise(style));
+                            // Change local paths to absolute path
+                            var linkSrc = style.attributes.href.value;
+                            if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
+                                var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
+                                //var host = document.location.protocol.length + 2 + document.location.host.length;
+                                //thisPagePath = thisPagePath.substr(host);
+                                style.href = thisPagePath + linkSrc;
                             }
-                        });
 
-                        // move styles, links, and meta/title from the new page into the target element
-                        var $stylePrependPoint = $head;
-                        $("meta, title, link, style", $head).each(function (i, tag) {
-                            $stylePrependPoint = $(tag);
+                            WinJS.UI.Pages._curPageLinks.push(linkSrc);
+
+                            // Create a promise that we'll wait until the style has been loaded
+                            stylesToWaitFor.push(getStyleLoadedPromise(style));
                         });
-                        $stylePrependPoint.after($("link, style", $newPage));
+                        $("link", $newPage).remove();
+
                         $("meta, title", $newPage).prependTo($head);
 
                         // B. Remove duplicate styles and meta/charset tags
@@ -11235,7 +11379,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
         pageControl = WinJS.Class.mix(pageControl, members);
 
         // Register the page control constructor for subsequent calls to WinJS.UI.Pages.get and WinJS.UI.Pages.define
-        // TODO: I'm assuming that "helloWorld.html" is the same page as "HelloWORLD.hTML", but should check that Win8 agrees...
         this.registeredPages[pageUri.toLowerCase()] = pageControl;
 
         // Return the new page control constructor
@@ -11247,7 +11390,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
     // _curPageScripts: The set of scripts on the currently loaded page.
     // TODO: Rationalize this with WinJS.UI.Fragments (Which can also load scripts)
-    _curPageScripts: []
+    _curPageScripts: [],
+    _curPageLinks: [],
+    _previousPageLinks: []
 });
 
 
@@ -11428,7 +11573,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		        }
 
 		        $flyout
-                    .remove()
                     .appendTo($("body"))
                     .css({
                         "left": dest.left,
@@ -11501,7 +11645,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		            WinJS.UI._$flyoutClickEater.hide();
 
 		            // And remove our listener for when we're removed from the DOM
-		            this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+		            if (this.$rootElement)
+		                this.$rootElement.unbind("DOMNodeRemoved", this._unload);
 		        }
 		    },
 
@@ -13818,9 +13963,6 @@ WinJS.Namespace.define("WinJS.UI", {
                         that._renderItemTemplate(item);
                     });
 
-                    // TODO: Possible bug in our Promise.join - doesn't work on empty array of Promises.  For now, just add an empty Promise
-                    renderPromises.push(WinJS.Promise.as());
-
                 } else {
 
                     // itemTemplate is a function; create a collection of render promises which we'll wait on below.
@@ -13952,7 +14094,6 @@ WinJS.Namespace.define("WinJS.UI", {
                     //            FF, so ignoring for R1/R2.
                     if (typeof this.itemTemplate !== "function") {
 
-                        var that = this;
                         $(".win-item", $thisItemContainer).mousedown(function (event) {
                             WinJS.UI.Animation.pointerDown(this);
                             this.setCapture(false);
@@ -14057,7 +14198,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 var renderCurX = 0, renderCurY = 0;
 
                 // Get the height of the space into which this List must fit.  We'll wrap when an item would go beyond this height.
-                var renderMaxY = this.$rootElement.innerHeight();
+                var renderMaxY = this.$scrollSurface.innerHeight();
 
                 // Keep track of the width of the scrolling surface
                 var surfaceWidth = 0;
@@ -16327,10 +16468,28 @@ var blueskyUtils = {
     getHighestZIndex: function () {
 
         var highestIndex = 0;
-        $("[z-index]").each(function () {
-            highestIndex = Math.max(highestIndex, $(this).attr("z-index"));
+        $("body > *").each(function (n, e) {
+            if ($(e).css("position") != "static")
+                highestIndex = Math.max(highestIndex, parseInt($(this).css("z-index")));
         });
         return highestIndex;
+    },
+
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.removeBSIDFromUrl
+    //
+    //      Removes a bsid parameter from a URL.  bsid must be last parameter in the URL.
+    //
+    removeBSIDFromUrl: function (url) {
+
+        // remove timestamp if present
+        var href = url.toLowerCase();
+        var timeStampIndex = href.indexOf("_bsid");
+        if (timeStampIndex >= 0)
+            href = href.substr(0, timeStampIndex - 1);
+        return href;
     },
 
 
@@ -16486,13 +16645,17 @@ var blueskyUtils = {
 // Determine if shift key is currently pressed
 $(document).keydown(function (e) {
 
-	blueskyUtils.shiftPressed = e.shiftKey;
-	blueskyUtils.controlPressed = e.ctrlKey;
+    // TODO: The collective intellect of the internet is wrong about how to test for shift/control pressed; the below
+    // breaks when the user presses shift, selects and item in a listview, then clicks *out* while shift is still pressed;
+    // shift stays 'on' since we never get the keyup.  Disabling multiselect for now
+
+    // blueskyUtils.shiftPressed = e.shiftKey;
+    // blueskyUtils.controlPressed = e.ctrlKey;
 });
 $(document).keyup(function (e) {
 
-	blueskyUtils.shiftPressed = e.shiftKey;
-	blueskyUtils.controlPressed = e.ctrlKey;
+    // blueskyUtils.shiftPressed = e.shiftKey;
+    // blueskyUtils.controlPressed = e.ctrlKey;
 });
 
 // Add easeOut easing
@@ -16637,7 +16800,6 @@ Windows.Storage._internalInit();
 
 
 
-
 // ================================================
 //
 // https://github.com/rgrove/lazyload
@@ -16662,12 +16824,15 @@ Windows.Storage._internalInit();
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+// BLUESKY NOTE: I have slightly modified the following code to use $styleInsertionPoint.  The original code
+// appended all styles at the end of HEAD, but we want them before scripts
+//
 var LazyLoad = function (k) {
     function p(b, a) { var g = k.createElement(b), c; for (c in a) a.hasOwnProperty(c) && g.setAttribute(c, a[c]); return g } function l(b) { var a = m[b], c, f; if (a) c = a.callback, f = a.urls, f.shift(), h = 0, f.length || (c && c.call(a.context, a.obj), m[b] = null, n[b].length && j(b)) } function w() { var b = navigator.userAgent; c = { async: k.createElement("script").async === !0 }; (c.webkit = /AppleWebKit\//.test(b)) || (c.ie = /MSIE/.test(b)) || (c.opera = /Opera/.test(b)) || (c.gecko = /Gecko\//.test(b)) || (c.unknown = !0) } function j(b, a, g, f, h) {
         var j =
         function () { l(b) }, o = b === "css", q = [], d, i, e, r; c || w(); if (a) if (a = typeof a === "string" ? [a] : a.concat(), o || c.async || c.gecko || c.opera) n[b].push({ urls: a, callback: g, obj: f, context: h }); else { d = 0; for (i = a.length; d < i; ++d) n[b].push({ urls: [a[d]], callback: d === i - 1 ? g : null, obj: f, context: h }) } if (!m[b] && (r = m[b] = n[b].shift())) {
             s || (s = k.head || k.getElementsByTagName("head")[0]); a = r.urls; d = 0; for (i = a.length; d < i; ++d) g = a[d], o ? e = c.gecko ? p("style") : p("link", { href: g, rel: "stylesheet" }) : (e = p("script", { src: g }), e.async = !1), e.className = "lazyload",
-            e.setAttribute("charset", "utf-8"), c.ie && !o ? e.onreadystatechange = function () { if (/loaded|complete/.test(e.readyState)) e.onreadystatechange = null, j() } : o && (c.gecko || c.webkit) ? c.webkit ? (r.urls[d] = e.href, t()) : (e.innerHTML = '@import "' + g + '";', u(e)) : e.onload = e.onerror = j, q.push(e); d = 0; for (i = q.length; d < i; ++d) s.appendChild(q[d])
+            e.setAttribute("charset", "utf-8"), c.ie && !o ? e.onreadystatechange = function () { if (/loaded|complete/.test(e.readyState)) e.onreadystatechange = null, j() } : o && (c.gecko || c.webkit) ? c.webkit ? (r.urls[d] = e.href, t()) : (e.innerHTML = '@import "' + g + '";', u(e)) : e.onload = e.onerror = j, q.push(e); d = 0; for (i = q.length; d < i; ++d) $styleInsertionPoint.after(q[d])
         }
     } function u(b) { var a; try { a = !!b.sheet.cssRules } catch (c) { h += 1; h < 200 ? setTimeout(function () { u(b) }, 50) : a && l("css"); return } l("css") } function t() {
         var b = m.css, a; if (b) {
@@ -16677,19 +16842,32 @@ var LazyLoad = function (k) {
     } var c, s, m = {}, h = 0, n = { css: [], js: [] }, v = k.styleSheets; return { css: function (b, a, c, f) { j("css", b, a, c, f) }, js: function (b, a, c, f) { j("js", b, a, c, f) } }
 }(this.document);
 
-
-// Adapted from: http://www.zachleat.com/web/load-css-dynamically/
 function getStyleLoadedPromise(style) {
 
     return new WinJS.Promise(function (c) {
+        // Insert dynamically loaded styles after the last script in the base page.
+        $styleInsertionPoint = $("script", $("head")).last();
+        LazyLoad.css(style.attributes.href.value + "?_bsid=" + (new Date()).valueOf(), c);
+    });
+}
+var $styleInsertionPoint;
 
-        if ($.browser.webkit) {
-            LazyLoad.css(style.attributes.href.value, function () {
-                c();
-                //WinJS.Promise.timeout(1).then(function () { c(); });
-            });
+function getStyleLoadedPromise2(style) {
+
+    return new WinJS.Promise(function (c) {
+
+        if ($.browser.msie) {
+
+            style.href += "?_bsid=" + (new Date()).valueOf();
+            style.onreadystatechange = function () {
+                if (/loaded|complete/.test(style.readyState)) {
+                    style.onreadystatechange = null;
+                    c();
+                }
+            }
 
         } else {
+
             var id = 'dynamicCss' + (new Date()).valueOf();
             $('<style/>')
                 .attr({ id: id, type: 'text/css' })

@@ -123,11 +123,11 @@ namespace buildBluesky
 
 		private string addLicense()
 		{
-			string output = "/* This Source Code Form is subject to the terms of the Mozilla Public\r\n";
-			output += "* License, v. 2.0. If a copy of the MPL was not distributed with this\r\n";
-			output += "* file, You can obtain one at http://mozilla.org/MPL/2.0/. */\r\n\r\n";
-            output += "// Copyright 2012, Jeff Simon (www.bluesky.io).  Date: 9/8/2012\r\n";
-            output += "// Please contact me at jeffsim@bluesky.io with any questions, ideas, or feedback about bluesky.\r\n\r\n";
+            string output = "/* Copyright 2012, Bluesky LLC (www.bluesky.io)\r\n";
+            output += "* This Source Code Form is subject to the terms of a commercial license\r\n";
+            output += "* If you have no signed a license with Bluesky LLC for use of this code please contact sales@bluesky.io\r\n";
+            output += "* If you have questions, ideas or feedback please contact info@bluesky.io\r\n*/\r\n\r\n";
+
 			return output;
 		}
 

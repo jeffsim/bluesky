@@ -234,9 +234,6 @@ var WinJS = {
 			if (!member)
 				continue;
 
-			// allow the member to show in for..in loops
-			member.enumerable = true;
-
 			// Getters and setters are managed as regular properties
 			if (typeof member === "object" && (typeof member.get === "function" || typeof member.set === "function")) {
 

@@ -13,10 +13,28 @@ var blueskyUtils = {
     getHighestZIndex: function () {
 
         var highestIndex = 0;
-        $("[z-index]").each(function () {
-            highestIndex = Math.max(highestIndex, $(this).attr("z-index"));
+        $("body > *").each(function (n, e) {
+            if ($(e).css("position") != "static")
+                highestIndex = Math.max(highestIndex, parseInt($(this).css("z-index")));
         });
         return highestIndex;
+    },
+
+
+    // ================================================================
+    //
+    // public function: blueskyUtils.removeBSIDFromUrl
+    //
+    //      Removes a bsid parameter from a URL.  bsid must be last parameter in the URL.
+    //
+    removeBSIDFromUrl: function (url) {
+
+        // remove timestamp if present
+        var href = url.toLowerCase();
+        var timeStampIndex = href.indexOf("_bsid");
+        if (timeStampIndex >= 0)
+            href = href.substr(0, timeStampIndex - 1);
+        return href;
     },
 
 
@@ -172,13 +190,17 @@ var blueskyUtils = {
 // Determine if shift key is currently pressed
 $(document).keydown(function (e) {
 
-	blueskyUtils.shiftPressed = e.shiftKey;
-	blueskyUtils.controlPressed = e.ctrlKey;
+    // TODO: The collective intellect of the internet is wrong about how to test for shift/control pressed; the below
+    // breaks when the user presses shift, selects and item in a listview, then clicks *out* while shift is still pressed;
+    // shift stays 'on' since we never get the keyup.  Disabling multiselect for now
+
+    // blueskyUtils.shiftPressed = e.shiftKey;
+    // blueskyUtils.controlPressed = e.ctrlKey;
 });
 $(document).keyup(function (e) {
 
-	blueskyUtils.shiftPressed = e.shiftKey;
-	blueskyUtils.controlPressed = e.ctrlKey;
+    // blueskyUtils.shiftPressed = e.shiftKey;
+    // blueskyUtils.controlPressed = e.ctrlKey;
 });
 
 // Add easeOut easing

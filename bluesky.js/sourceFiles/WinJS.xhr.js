@@ -51,32 +51,129 @@ WinJS.Namespace.define("WinJS", {
     xhr: function (options) {
 
         var request;
-        var requestType = options && options.type || "GET";
+        var requestType = (options && options.type) || "GET";
+        var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
 
         // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
-            var url = options.url.toLowerCase();
+            var url = options.url;
+            var urlLower = url.toLowerCase();
 
             // Determine if the url is local or not
             // TODO: Check if it's same-domain and don't proxy if so
-            var isLocal = url.indexOf("http:") != 0;
+            // starts with http:// and !
+            var isLocal = !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
+
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
             // convert appdata references to filepath
             url = url.replace("ms-appx:///", "/");
-            url = url.toLowerCase().replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
+            url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
 
                 // if format and callback aren't set add each individually
-                if (url.indexOf("format=") == -1)
+                if (urlLower.indexOf("format=") == -1)
                     url = blueskyUtils.appendQueryStringParam(url, "format=json");
-                if (url.indexOf("callback=") == -1 && url.indexOf("jsonp=") == -1)
+                if (urlLower.indexOf("callback=") == -1 && urlLower.indexOf("jsonp=") == -1)
                     url = blueskyUtils.appendQueryStringParam(url, "callback=?");
-                var dataType = "jsonp";
+                dataType = "jsonp";
+            }
+
+            // Determine if we should go through the bluesky proxy
+            var isProxied = !isLocal && !isBypass && Bluesky.Settings.ProxyCrossDomainXhrCalls;
+
+            if (isProxied) {
+
+                // Run the URL through our proxy on the bluesky server, where we can access cross
+                // domain resources with wild abandon.
+                url = "http://bluesky.io:8080/_p?" + encodeURIComponent(url);
+
+                // $.ajax appears to automatically convert any POSTs to GETs when JSONP is involved;
+                // but we need to know on the server side if it's a POST, so send that info up.
+                if (requestType == "POST")
+                    url += "&__post=1";
+                dataType = "jsonp";
+            }
+
+            // TODO: Progress
+            var responseData;
+            $.ajax(url, {
+                data: options.data,
+                dataType: dataType,
+                type: requestType,
+                success: function (data, textStatus, jqXHR) {
+
+                    var response, responseText, responseXML;
+                    // TODO: I haven't tested these since the inclusion of the bluesky proxy.
+                    // TODO (CLEANUP): Ick.
+                    if (data && data.firstChild) {
+                        responseText = "";
+                        responseXML = data;
+                    } else {
+                        responseText = data.status || data;
+                        responseXML = null;
+                    }
+
+                    onComplete({
+                        responseType: "",
+                        responseText: responseText,
+                        responseXML: responseXML,
+                        data: data.data || data,
+                        readyState: jqXHR.readyState,
+                        DONE: 4,
+                        statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
+                        status: jqXHR.status
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // TODO: all return flags.
+                    // TODO: Support other errors
+                    debugger;
+                    if (jqXHR.status == 404)
+                        onError({ number: -2146697211 });	// Win8's 404 error code
+                    else
+                        onError({ number: 1 });	// TODO: What to do here?
+                }
+            });
+        });
+    }
+    /* OLD VERSION
+    xhr: function (options) {
+
+        var request;
+        var requestType = (options && options.type) || "GET";
+        var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
+
+        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        return new WinJS.Promise(function (onComplete, onError, onProgress) {
+
+            var url = options.url;
+            var urlLower = url.toLowerCase();
+
+            // Determine if the url is local or not
+            // TODO: Check if it's same-domain and don't proxy if so
+            var isLocal = urlLower.indexOf("http:") != 0 || urlLower.indexOf("localhost") != 0;
+
+            // test for bypass 
+            var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
+
+            // convert appdata references to filepath
+            url = url.replace("ms-appx:///", "/");
+            url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
+
+            // If this isn't a local request, then run it through the proxy to enable cross-domain
+            if (isBypass) {
+
+                // if format and callback aren't set add each individually
+                if (urlLower.indexOf("format=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "format=json");
+                if (urlLower.indexOf("callback=") == -1 && urlLower.indexOf("jsonp=") == -1)
+                    url = blueskyUtils.appendQueryStringParam(url, "callback=?");
+                dataType = "jsonp";
             }
 
             // Determine if we should go through the YQL proxy
@@ -85,13 +182,16 @@ WinJS.Namespace.define("WinJS", {
                 url = "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fbluesky.io%2Fyqlproxy.xml" +
                               "%22%20as%20yqlproxy%3Bselect%20*%20from%20yqlproxy%20where%20url%3D%22" + encodeURIComponent(url) +
                               "%22%3B&format=json&callback=?";
-                var dataType = "jsonp";
+                dataType = "jsonp";
             }
+
             // TODO: Progress
+            var responseData;
             $.ajax({
                 url: url,
                 data: options.data,
                 dataType: dataType,
+                type: requestType,
                 success: function (data, textStatus, jqXHR) {
                     if (isYql) {
                         // Since we're using YQL, data contains the XML Document with the result. Extract it
@@ -134,8 +234,9 @@ WinJS.Namespace.define("WinJS", {
                             response = "";
                             responseText = "";
                         } else {
+                            responseData = (data && data.data) || data;
                             response = data;
-                            responseText = data;
+                            responseText = data.status;
                             responseXML = null;
                         }
                     }
@@ -143,8 +244,8 @@ WinJS.Namespace.define("WinJS", {
                     onComplete({
                         responseType: "",
                         responseText: responseText,
-                        response: responseText,
                         responseXML: responseXML,
+                        data: responseData,
                         readyState: 4,
                         DONE: 4,
                         statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
@@ -158,11 +259,10 @@ WinJS.Namespace.define("WinJS", {
                         onError({ number: -2146697211 });	// Win8's 404 error code
                     else
                         onError({ number: 1 });	// TODO: What to do here?
-                },
-                type: requestType
+                }
             });
         });
-    }
+    }*/
 });
 
 
