@@ -60,9 +60,14 @@ WinJS.Namespace.define("WinJS", {
             var url = options.url;
             var urlLower = url.toLowerCase();
 
+            // Check if it's same-domain; strip host path if so
+            var sitePath = document.location.protocol + "//" + document.location.host;
+            if (urlLower.indexOf(sitePath) == 0) {
+                url = url.substr(sitePath.length);
+                urlLower = urlLower.substr(sitePath.length);
+            }
+
             // Determine if the url is local or not
-            // TODO: Check if it's same-domain and don't proxy if so
-            // starts with http:// and !
             var isLocal = !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
 
             // test for bypass 
