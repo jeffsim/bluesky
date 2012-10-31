@@ -6,8 +6,7 @@
 //
 //		MSDN: TODO
 //
-WinJS.Namespace.define("WinJS.Resources", function () {
-}, {
+WinJS.Namespace.define("WinJS.Resources", {
 
     // ================================================================
     //
@@ -26,8 +25,9 @@ WinJS.Namespace.define("WinJS.Resources", function () {
     //
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701590.aspx
     //
-    getString: function () {
-        throw "nyi";
+    getString: function (a) {
+        console.warn("WinJS.Resources.getString is NYI");
+        return a;
     },
 
 
@@ -42,6 +42,7 @@ WinJS.Namespace.define("WinJS.Resources", function () {
         set: function (callback) { this.addEventListener("contextchanged", callback); }
     }
 });
+
 
 // TODO: How to mixin to an object (instead of a class)?  
 // WinJS.Class.mix(WinJS.Resources, WinJS.UI.DOMEventMixin);

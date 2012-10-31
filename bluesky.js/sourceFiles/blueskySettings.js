@@ -30,6 +30,25 @@ var Bluesky = {
 
 	Settings: {
 
+	    // ================================================================
+	    //
+	    // Setting value: cacheBustScriptsAndStyles
+	    //
+	    //      By default, we append "_bsid=<random#>" to the end of any scripts and styles.  This is to ensure that
+	    //      a 'fresh' version of the file has been loaded; when browsers overly cache things (IE, I'm looking at you), it
+	    //      makes development painful; and updating apps in production equally so, since you're not gauranteed that you'll
+	    //      get the latest version of a file (and could even in theory get mismatched versions).
+	    //
+	    //      So, cache busting here is a good thing.  So why allow developers to disable it?  Because it can actually make debugging more 
+	    //      painful.  You can't drop breakpoints in scripts and F5, because the ?bdid value makes it a 'different' script each
+	    //      time.  Setting the following to false will stop that from happening, BUT IS VERY VERY DANGEROUS because if a developer
+	    //      forgets about it and releases an update, then their users can be in an indeterminate state with who-knows-what version of each file.
+	    //      
+	    //      TODO: our deployment process should disallow (w/ exceptions granted as needed) publishing with this set to false.
+	    //
+	    cacheBustScriptsAndStyles: true,
+
+
 		// ================================================================
 		//
 		// Setting value: ProxyCrossDomainXhrCalls

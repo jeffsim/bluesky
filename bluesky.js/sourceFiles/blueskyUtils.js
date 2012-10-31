@@ -63,70 +63,202 @@ var blueskyUtils = {
     },
 
 
-	// ================================================================
-	//
-	// public Function: blueskyUtils.convertDeclarativeDataStringToJavascriptObject
-	//
-	// Win8's declarative parameters adopt a quasi-Json format.  This function cleans up a string and returns a string 
-	// that can be eval'ed into a Javascript object.
-	//
-	// Example input: innerText: firstName; style.backgroundColor: backColor
-	// Example output: { 'innerText': 'firstName', 'style.backgroundColor': 'backColor' }
-	//
-	convertDeclarativeDataStringToJavascriptObject: function (dataBindString) {
+    // ================================================================
+    //
+    // public Function: blueskyUtils.convertDeclarativeDataStringToJavascriptObject
+    //
+    // Win8's declarative parameters adopt a quasi-Json format.  This function cleans up a string and returns a string 
+    // that can be eval'ed into a Javascript object.
+    //
+    // Example input: innerText: firstName; style.backgroundColor: backColor
+    // Example output: { "innerText": "firstName", "style.backgroundColor": "backColor" }
+    //
+    // more example inputs:
+    //       {selectionMode : 'none', itemTemplate: select('#featuredTemplate'), oniteminvoked : Telerik.QSF.HTML.Home.exampleSelected}
+    //       src: controlImage
+    //       src: controlImage; alt: controlText
+    //       {
+    //-         startAngle:0,
+    //-         endAngle:180,
+    //-         min:0,
+    //-         max:100,
+    //-         majorUnit:25,
+    //-         ranges:[{from:0,to:25,color:'red'},{from:25,to:100, color:'#595959'}],
+    //-         rangeSize: 2,
+    //-         rangeDistance:-1,
+    //-         value:33.33
+    //-      }
+    convertDeclarativeDataStringToJavascriptObject: function (sourceString) {
+        var dataBindString = sourceString.replace(/\n/g, "").replace(/\n/g, "");    // TODO (CLEANUP): Do this as one.
+        var parseResult = blueskyUtils.recurseInto(dataBindString, 0);
 
-        // TODO: Temp hack
-	    dataBindString = dataBindString.replace("select('#", "").replace(")", "");
+        var result = "";
+        try {
+            var result = JSON.parse('{' + parseResult.json + '}');
+        } catch (ex) {
+            /*DEBUG*/
+            console.warn("Malformed JSON passed to blueskyUtils.convertDeclarativeDataStringToJavascriptObject");
+            console.log(dataBindString);
+            console.log(parseResult);
+            /*ENDDEBUG*/
+        }
+        return result;
+    },
 
-		// 1. Wrap keywords (keys and values) in single quotes
-		// TODO-I'm wrapping number values in quotes; should I?
-		// Note: the regex is trying to match a-z, a-Z, 0-9, -, ., and /      <-- Note that we need to match "." to support compounds like "style.backgroundColor"
-		// TODO: Should the middle / be replaced with \/ or //?  I'm not sure what js's replace does here since "/" seems to delimit the regex, but it seems to be working...
-		// TODO: This doesn't work with string arrays; e.g. "tooltipStrings:['Horrible','Poor','Fair','Good','Excellent','Delete']" borks.
-		dataBindString = dataBindString.replace("\r", "").replace("\n", "").trim();
+    recurseInto: function (dataBindString, startIndex) {
 
-		// Trim trailing semicolons
-		if (dataBindString[dataBindString.length - 1] == ";")
-			dataBindString = dataBindString.substring(0, dataBindString.length - 1);
+        var parserModes = { lookingForKey: 0, lookingForColon: 1, lookingForValue: 2 };
+        // Parse the string. TODO: Convert to "real" parser
+        var parseMode = parserModes.lookingForKey,
+            curCharIndex = startIndex,
+            curKey = null,
+            lastCharIndex = dataBindString.length;
 
-		var output = dataBindString.replace(/([a-zA-z\-0-9\./]+)/g, "'$1'");
+        var isValidKeyChar = function (ch) {
+            // TODO (CLEANUP): e.g. search('[^a-zA-Z_$0-9]')
+            return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '.' || ch == '[' || ch == ']';
+        }
 
-		// 1B. The above regex will blindly add quotes to keyword that already have quotes.  Remove them here.
-		// tbd-cleanup: merge this into the above regex.
-		output = output.replace(/''/g, "'");
+        var json = '';
+        while (curCharIndex < lastCharIndex) {
 
-		// 1C. TODO - label:'view all' gets parsed into 'label':'view' 'all'.  The regex is officially past my ability to regexify, so
-		// I'm hacking it out here.  Note that this won't necessarily work for non-literal strings with > 1 space, but that's okay for now.
-		output = output.replace(/' '/g, " ");
+            switch (parseMode) {
 
-		// 1D. TODO - icon:'url(/image.png)' gets parsed into 'icon':'url'('/image.png')'.  Per above, beyond my regfu, so hacking it away
-		output = output.replace(/'\('/g, "(");
-		output = output.replace(/'\)'/g, ")'");
+                case parserModes.lookingForKey:
 
-		// 2. Wrap in curly braces if not already present
-		// TODO: again, can probably merge into the regex above
-		if (output.trim().indexOf("{") != 0)
-			output = "{ " + output + " }";
+                    switch (dataBindString[curCharIndex]) {
 
-		// 3. replace semicolon with comma
-		output = output.replace(/;/g, ',');
+                        case '\t': case '\r': case ' ': case '\n':  // skip whitespace
+                        case '\'': case '"':                        // Quotes appear to be optional around keys, so ignore them
+                        case ',': case ';':                         // Skip separators because we know we're looking for a key
+                        case '{': case '}':                         // hmm: It looks like you can optionally include { and } around the content.  Not sure if that impacts anything, but ignoring for now
+                            curCharIndex++;
+                            break;
 
-		// 4. JSON prefers double quotes around keys/values
-		output = output.replace(/\'/g, '"');
+                        default:
+                            // Oy: Win8 allows keys like:     this[ 'aria-label' ]: text WinJS.Binding.setAttribute
+                            // So we need to support quotes as valid key values and allow anything within those quotes.  We also need to support whitespace in keys :P
+                            // So for now, just read until colon.  TODO (CLEANUP): check for invalid chars.  Also, trim whitespace from outside of quotes
+                            var startOfKey = curCharIndex++;
+                            while (dataBindString[curCharIndex] != ":")
+                                curCharIndex++;
+                            curKey = dataBindString.substr(startOfKey, curCharIndex - startOfKey);
 
-		// 5. convert the string into a javascript object
-		try {
-			var result = JSON.parse(output);
-		} catch (ex) {
-			// malformed JSON
-			/*DEBUG*/
-			console.warn("Malformed JSON passed to blueskyUtils.convertDeclarativeDataStringToJavascriptObject:  " + dataBindString);
-			/*ENDDEBUG*/
+                            // See above ('oy') example for how win8 can allow whitespace in key names.  Remove all whitespace here.
+                            // TODO: Can this break scenarios?  e.g. is foo["hello world"]  a valid key, with whitespace between quotes?
+                            curKey.replace(/ /g, "");
 
-			var result = "";
-		}
-		return result;
-	},
+                            parseMode = parserModes.lookingForColon;
+                            break;
+                    }
+                    break;
+
+                case parserModes.lookingForColon:
+
+                    switch (dataBindString[curCharIndex]) {
+                        // skip whitespace
+                        case '\t': case '\r': case ' ': case '\n':
+                            curCharIndex++;
+                            break;
+
+                        case ':':
+                            curCharIndex++;
+                            parseMode = parserModes.lookingForValue;
+                            break;
+                        default:
+                            console.warn("Unexpected character encountered in data string, ", dataBindString, " at index ", curCharIndex);
+                            return;
+                    }
+                    break;
+
+                case parserModes.lookingForValue:
+                    // keyValue can be string (in quotes)
+                    // keyValue can be value; eval'ed.  ex; controlImage.  ex; select('#featuredTemplate'), ex; Test.Foo.Bar.function
+                    // keyValue can be object; eval'ed.  ex; { foo:1, bar:2 }
+                    // keyValue can be array; eval'ed
+
+                    switch (dataBindString[curCharIndex]) {
+                        // skip whitespace
+                        case '\t': case '\r': case ' ': case '\n':
+                            curCharIndex++;
+                            break;
+
+                            // string value.  Read until end of string (pushing/popping quote stack)
+                        case '"': case '\'':
+
+                            var quoteType = dataBindString[curCharIndex];
+                            // Read until end of string.  Note: Ignore quotes "inside" the string;  e.g. 'Hello \'World\''
+                            var startOfValue = ++curCharIndex;
+                            while (!(dataBindString[curCharIndex] == quoteType && dataBindString[curCharIndex - 1] != '\\'))
+                                curCharIndex++;
+                            var value = dataBindString.substr(startOfValue, curCharIndex - startOfValue);
+                            if (json.length > 0) json += ", ";
+                            json += '"' + curKey + '":"' + value.trim() + '"';
+                            parseMode = parserModes.lookingForKey;
+                            break;
+
+                            // object.  recurse into it since we need to convert it as well into valid JSON
+                        case '{':
+                            var parseResult = blueskyUtils.recurseInto(dataBindString, curCharIndex);
+                            curCharIndex += parseResult.length;
+                            if (json.length > 0) json += ", ";
+                            json += '"' + curKey + '":{' + parseResult.json + '}';
+                            parseMode = parserModes.lookingForKey;
+                            break;
+
+                            // value.  Read until end of value definition
+                        default:
+
+                            // valid end-of-value chars are:   ,  ;  }   and end-of-string
+                            // Read until end of value.  Note: Ignore end-values "inside" the value;  e.g. { foo: test('}') }
+                            var startOfValue = curCharIndex,
+                                depth = 0,
+                                curQuoteType = null;
+                            while (curCharIndex < lastCharIndex) {
+                                var ch = dataBindString[curCharIndex];
+
+                                // if cur char is start of a quote,  then read until the end of the string and then just keep going.  Note: Ignore quotes "inside" the string;  e.g. 'Hello \'World\''
+                                // TODO (BUG): This will not work on more complex/wacky binding strings...  Need to have a real parser here.
+                                if (ch == '\'' || ch == '"') {
+
+                                    var quoteType = ch;
+                                    while (!(dataBindString[curCharIndex] == quoteType && dataBindString[curCharIndex - 1] != '\\'))
+                                        curCharIndex++;
+                                    // Skip the end quote
+                                    curCharIndex++;
+
+                                } else if (ch == '[') {
+
+                                    var quoteType = ch;
+                                    while (!(dataBindString[curCharIndex] == ']' && dataBindString[curCharIndex - 1] != '\\'))
+                                        curCharIndex++;
+                                    // Skip the end quote
+
+                                } else if (ch == '{') {
+                                    debugger;
+                                    var quoteType = ch;
+                                    while (!(dataBindString[curCharIndex] == '}' && dataBindString[curCharIndex - 1] != '\\'))
+                                        curCharIndex++;
+                                    // Skip the end quote
+
+                                } else if (ch == ',' || ch == ';' || ch == '}') {
+                                    break;
+                                }
+                                else
+                                    curCharIndex++;
+                            }
+                            var value = dataBindString.substr(startOfValue, curCharIndex - startOfValue);
+
+                            if (json.length > 0) json += ", ";
+                            json += '"' + curKey + '":"' + value.trim() + '"';
+                            parseMode = parserModes.lookingForKey;
+                            break;
+                    }
+                    break;
+            }
+        }
+        return { json: json, length: curCharIndex - startIndex };
+    },
 
 
 	// ================================================================
@@ -213,6 +345,9 @@ jQuery.extend(jQuery.easing,
     }
 });
 
+function select(e) {
+    return $(e)[0];
+}
 // Initialize storage now so that appdata.current is initialized (apps may rely on it now).
 // TODO: Build one place where these inits happen
 Windows.Storage._internalInit();

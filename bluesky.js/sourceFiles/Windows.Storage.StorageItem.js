@@ -1,6 +1,6 @@
 // ================================================================
 //
-// Windows.Storage._StorageItem
+// Windows.Storage.StorageItem
 //
 //		MSDN: TODO
 //
@@ -8,13 +8,13 @@ WinJS.Namespace.define("Windows.Storage", {
 
     // ================================================================
     //
-    // private Object: Windows.Storage._StorageItem
+    // private Object: Windows.Storage.StorageItem
     //
-    _StorageItem: WinJS.Class.define(
+    StorageItem: WinJS.Class.define(
 
         // =========================================================
         //
-        // public function: Windows.Storage._StorageItem constructor
+        // public function: Windows.Storage.StorageItem constructor
         //
         function (parentFolder, desiredName) {
 
@@ -37,14 +37,14 @@ WinJS.Namespace.define("Windows.Storage", {
         },
 
 	    // ================================================================
-	    // Windows.Storage._StorageItem members
+	    // Windows.Storage.StorageItem members
 	    // ================================================================
 
         {
 
             // ================================================================
             //
-            // public function: Windows.Storage._StorageItem.isOfType
+            // public function: Windows.Storage.StorageItem.isOfType
             //
             //      MSDN: TODO
             //
@@ -59,7 +59,7 @@ WinJS.Namespace.define("Windows.Storage", {
 
             // =========================================================
             //
-            // public function: Windows.Storage._StorageItem.getBasicPropertiesAsync
+            // public function: Windows.Storage.StorageItem.getBasicPropertiesAsync
             //
             //      MSDN: TODO
             //
@@ -88,7 +88,7 @@ WinJS.Namespace.define("Windows.Storage", {
 
             // =========================================================
             //
-            // public function: Windows.Storage._StorageItem.renameAsync
+            // public function: Windows.Storage.StorageItem.renameAsync
             //
             //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br227227.aspx
             //
@@ -105,7 +105,7 @@ WinJS.Namespace.define("Windows.Storage", {
                     }
 
                     if (collisionOption == Windows.Storage.CreationCollisionOption.generateUniqueName && exists)
-                        desiredName = Windows.Storage._StorageItem._generateUniqueName(that.parentFolder, desiredName);
+                        desiredName = Windows.Storage.StorageItem._generateUniqueName(that.parentFolder, desiredName);
 
                     that.parentFolder._renameInMFT(that, desiredName);
 
@@ -116,7 +116,7 @@ WinJS.Namespace.define("Windows.Storage", {
 
             // =========================================================
             //
-            // public function: Windows.Storage._StorageItem.moveAsync
+            // public function: Windows.Storage.StorageItem.moveAsync
             //
             //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br227218.aspx
             //
@@ -132,7 +132,7 @@ WinJS.Namespace.define("Windows.Storage", {
         },
 
 	    // ================================================================
-	    // Windows.Storage._StorageItem static members
+	    // Windows.Storage.StorageItem static members
 	    // ================================================================
 
         {

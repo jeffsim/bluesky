@@ -110,7 +110,6 @@
 
 
 
-
 // ================================================
 //
 // https://github.com/rgrove/lazyload
@@ -135,15 +134,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-// BLUESKY NOTE: I have slightly modified the following code to use $styleInsertionPoint.  The original code
-// appended all styles at the end of HEAD, but we want them before scripts
-//
 var LazyLoad = function (k) {
     function p(b, a) { var g = k.createElement(b), c; for (c in a) a.hasOwnProperty(c) && g.setAttribute(c, a[c]); return g } function l(b) { var a = m[b], c, f; if (a) c = a.callback, f = a.urls, f.shift(), h = 0, f.length || (c && c.call(a.context, a.obj), m[b] = null, n[b].length && j(b)) } function w() { var b = navigator.userAgent; c = { async: k.createElement("script").async === !0 }; (c.webkit = /AppleWebKit\//.test(b)) || (c.ie = /MSIE/.test(b)) || (c.opera = /Opera/.test(b)) || (c.gecko = /Gecko\//.test(b)) || (c.unknown = !0) } function j(b, a, g, f, h) {
         var j =
         function () { l(b) }, o = b === "css", q = [], d, i, e, r; c || w(); if (a) if (a = typeof a === "string" ? [a] : a.concat(), o || c.async || c.gecko || c.opera) n[b].push({ urls: a, callback: g, obj: f, context: h }); else { d = 0; for (i = a.length; d < i; ++d) n[b].push({ urls: [a[d]], callback: d === i - 1 ? g : null, obj: f, context: h }) } if (!m[b] && (r = m[b] = n[b].shift())) {
             s || (s = k.head || k.getElementsByTagName("head")[0]); a = r.urls; d = 0; for (i = a.length; d < i; ++d) g = a[d], o ? e = c.gecko ? p("style") : p("link", { href: g, rel: "stylesheet" }) : (e = p("script", { src: g }), e.async = !1), e.className = "lazyload",
-            e.setAttribute("charset", "utf-8"), c.ie && !o ? e.onreadystatechange = function () { if (/loaded|complete/.test(e.readyState)) e.onreadystatechange = null, j() } : o && (c.gecko || c.webkit) ? c.webkit ? (r.urls[d] = e.href, t()) : (e.innerHTML = '@import "' + g + '";', u(e)) : e.onload = e.onerror = j, q.push(e); d = 0; for (i = q.length; d < i; ++d) $styleInsertionPoint.after(q[d])
+            e.setAttribute("charset", "utf-8"), c.ie && !o ? e.onreadystatechange = function () { if (/loaded|complete/.test(e.readyState)) e.onreadystatechange = null, j() } : o && (c.gecko || c.webkit) ? c.webkit ? (r.urls[d] = e.href, t()) : (e.innerHTML = '@import "' + g + '";', u(e)) : e.onload = e.onerror = j, q.push(e); d = 0; for (i = q.length; d < i; ++d) s.appendChild(q[d])
         }
     } function u(b) { var a; try { a = !!b.sheet.cssRules } catch (c) { h += 1; h < 200 ? setTimeout(function () { u(b) }, 50) : a && l("css"); return } l("css") } function t() {
         var b = m.css, a; if (b) {
@@ -153,50 +149,30 @@ var LazyLoad = function (k) {
     } var c, s, m = {}, h = 0, n = { css: [], js: [] }, v = k.styleSheets; return { css: function (b, a, c, f) { j("css", b, a, c, f) }, js: function (b, a, c, f) { j("js", b, a, c, f) } }
 }(this.document);
 
+// BLUESKY CODE FOLLOWS
 function getStyleLoadedPromise(style) {
 
     return new WinJS.Promise(function (c) {
+        var uniquePage = style.attributes.href.value.replace("///", "/");
+        if (WinJS.Navigation.cacheBustScriptsAndStyles)
+            uniquePage += "?" + WinJS.Navigation._pageCacheBuster;
+
+        // If the style is already being loaded, then ignore; we only load each one once per page.
+        if (WinJS.Navigation._curPageLoadedExtFiles.indexOf(uniquePage) > -1) {
+            c();
+            return;
+        }
+        WinJS.Navigation._curPageLoadedExtFiles.push(uniquePage);
+
         // Insert dynamically loaded styles after the last script in the base page.
         $styleInsertionPoint = $("script", $("head")).last();
-        LazyLoad.css(style.attributes.href.value + "?_bsid=" + (new Date()).valueOf(), c);
+
+        LazyLoad.css(uniquePage, function () { c(); });
     });
 }
+// TODO (CLEANUP): $styleInsertionPoint is deprecated; remove
 var $styleInsertionPoint;
 
-function getStyleLoadedPromise2(style) {
-
-    return new WinJS.Promise(function (c) {
-
-        if ($.browser.msie) {
-
-            style.href += "?_bsid=" + (new Date()).valueOf();
-            style.onreadystatechange = function () {
-                if (/loaded|complete/.test(style.readyState)) {
-                    style.onreadystatechange = null;
-                    c();
-                }
-            }
-
-        } else {
-
-            var id = 'dynamicCss' + (new Date()).valueOf();
-            $('<style/>')
-                .attr({ id: id, type: 'text/css' })
-                .html('@import url(' + style.attributes.href.value + ')')
-                .appendTo(document.getElementsByTagName('head')[0]);
-
-            var sheets = document.styleSheets;
-            var timer = setInterval(function () {
-                try {
-                    for (var i = 0; i < sheets.length; i++)
-                        if (sheets[i].ownerNode.id == id)
-                            sheets[i].cssRules;
-
-                    // If we got this far, then we successfully 'touched' (good touch) the loaded styles.
-                    clearInterval(timer);
-                    c();
-                } catch (e) { }
-            }, 10);
-        }
-    });
+function select(e) {
+    return $(e)[0];
 }

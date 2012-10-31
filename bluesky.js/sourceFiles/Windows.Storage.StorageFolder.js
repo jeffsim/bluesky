@@ -51,8 +51,8 @@ WinJS.Namespace.define("Windows.Storage", {
 		// ================================================================
 
         {
-            _initMFT: function() {
-                
+            _initMFT: function () {
+
                 // Initialize our MFT; this will load the list of unrealized items as a flat string
                 var mft = localStorage.getItem("mft_" + this.path);
 
@@ -135,9 +135,9 @@ WinJS.Namespace.define("Windows.Storage", {
 
                     } else if (nextFolderName) {
 
-                            // Create folders as we go (TODO: check if win8 does this)
+                        // Create folders as we go (TODO: check if win8 does this)
 
-                            // Child folder does not exist; create it and then recurse into it
+                        // Child folder does not exist; create it and then recurse into it
                         var childFolder = new Windows.Storage.StorageFolder(this, nextFolderName);
 
                         // Add the StorageFolder to our MFT and persist it
@@ -163,7 +163,8 @@ WinJS.Namespace.define("Windows.Storage", {
             createFolderAsync: function (desiredName, collisionOption) {
 
                 // TODO: What's the Win8 default?
-                collisionOption = collisionOption || Windows.Storage.CreationCollisionOption.failIfExists;
+                if (typeof collisionOption === "undefined")
+                    collisionOption = Windows.Storage.CreationCollisionOption.failIfExists;
 
                 var that = this;
                 return new WinJS.Promise(function (onComplete, onError) {
@@ -199,7 +200,8 @@ WinJS.Namespace.define("Windows.Storage", {
             createFileAsync: function (desiredName, collisionOption) {
 
                 // TODO: What's the Win8 default?
-                collisionOption = collisionOption || Windows.Storage.CreationCollisionOption.failIfExists;
+                if (typeof collisionOption === "undefined")
+                    collisionOption = Windows.Storage.CreationCollisionOption.failIfExists;
 
                 var that = this;
                 return new WinJS.Promise(function (onComplete, onError) {
@@ -235,7 +237,8 @@ WinJS.Namespace.define("Windows.Storage", {
             createFolderQuery: function (query) {
 
                 // Ensure we have a valid query
-                query = query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+                if (typeof query === "undefined")
+                    query = Windows.Storage.Search.CommonFolderQuery.defaultQuery;
 
                 return new Windows.Storage.Search.StorageFolderQueryResult(this, query);
             },
@@ -264,7 +267,8 @@ WinJS.Namespace.define("Windows.Storage", {
             getFoldersAsync: function (query) {
 
                 // Ensure we have a valid query
-                query = query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+                if (typeof query === "undefined")
+                    query = Windows.Storage.Search.CommonFolderQuery.defaultQuery;
 
                 return new Windows.Storage.Search.StorageFolderQueryResult(this, query).getFoldersAsync();
             },
@@ -279,7 +283,8 @@ WinJS.Namespace.define("Windows.Storage", {
             getFilesAsync: function (query) {
 
                 // Ensure we have a valid query
-                query = query || Windows.Storage.Search.CommonFolderQuery.defaultQuery;
+                if (typeof query === "undefined")
+                    query = Windows.Storage.Search.CommonFolderQuery.defaultQuery;
 
                 return new Windows.Storage.Search.StorageFolderQueryResult(this, query).getFilesAsync();
             },
@@ -694,13 +699,13 @@ WinJS.Namespace.define("Windows.Storage", {
 
                 } else if (path.indexOf("ms-appdata:///local/") == 0) {
 
-                        // loading from local folder; redirect to it
+                    // loading from local folder; redirect to it
                     var folder = appData.localFolder;
                     path = folder.path + path.substr(19);
 
                 } else if (path.indexOf("ms-appdata:///roaming/") == 0) {
 
-                        // loading from roaming folder; redirect to it
+                    // loading from roaming folder; redirect to it
                     var folder = appData.roamingFolder;
                     path = folder.path + path.substr(21);
 

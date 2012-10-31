@@ -78,6 +78,15 @@ if (!$.browser.msie) {
         }
     }
 
+    if (!Element.currentStyle)
+        Element.prototype.currentStyle = function (el, cssprop) {
+
+            if (document.defaultView && document.defaultView.getComputedStyle) //Firefox
+                return document.defaultView.getComputedStyle(el, "")[cssprop]
+            else //try and get inline style
+                return el.style[cssprop]
+        }
+
     // ================================================================
     //
     // Add onpropertychange handler to DOM elements

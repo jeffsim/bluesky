@@ -79,23 +79,20 @@ WinJS.Namespace.define("WinJS.UI", {
 
         return new WinJS.Promise(function (onComplete) {
 
-            // Process the element
+            // Process the element.  Unlike processAll, this does not handle all child processable elements.
             blueskyUtils.ensureDatasetReady(element);
-            if (element.dataset && element.dataset.winControl)
-                WinJS.UI._processElement(element);
+            if (element.dataset && element.dataset.winControl) {
 
-            // Process any child elements
-            $("[data-win-control]", element).each(function () {
+                // If we are in the process of defining a Page, then ensure that 'this' control is ready before the page indicates that it is ready
+                //                if (WinJS.UI.Pages._definingPage) {
+                var t = WinJS.UI._processElement(element);
+                t.then(onComplete);
 
-                // IE9 doesn't automagically populate dataset for us; fault it in if necessary
-                blueskyUtils.ensureDatasetReady(this);
-
-                // Process the element
-                if (this.dataset && this.dataset.winControl)
-                    WinJS.UI._processElement(this);
-            });
-
-            onComplete(element.winControl);
+                if (WinJS.UI.Pages._renderingPage)
+                    WinJS.UI.Pages._renderingPage._subElementPromises.push(t);
+            }
+            else
+                onComplete();
         });
     },
 
@@ -110,92 +107,86 @@ WinJS.Namespace.define("WinJS.UI", {
     //
     processAll: function (rootElement) {
 
-        // TODO (CLEANUP): This and .process() share an awful lot of similarity...
-
         return new WinJS.Promise(function (onComplete) {
 
             // If the caller didn't specify a root element, then process the entire document.
             if (!rootElement)
-                rootElement = document;
-            else {
-                // Process the element
-                blueskyUtils.ensureDatasetReady(rootElement);
-                if (rootElement.dataset && rootElement.dataset.winControl)
-                    WinJS.UI._processElement(rootElement);
-            }
+                rootElement = document.body;
 
-            // Add winControl objects to all elements tagged as data-win-control
-            $("[data-win-control]", rootElement).each(function () {
+            // Process the element
+            WinJS.UI.process(rootElement).then(function () {
 
-                // IE9 doesn't automagically populate dataset for us; fault it in if necessary
-                blueskyUtils.ensureDatasetReady(this);
+                // Process all processable child elements; i.e. those tagged with data-win-control
+                var renderPromises = [];
+                $("[data-win-control]", rootElement).each(function () {
 
-                // Process the element
-                WinJS.UI._processElement(this);
+                    renderPromises.push(WinJS.UI.process(this));
+                });
+                onComplete();
             });
-
-            onComplete();
         });
     },
 
-
+    _processElementStack: [],
     // ================================================================
     //
     // private Function: WinJS.UI._processElement
     //
     //		Processes a single DOM element; called by WinJS.UI.process and WinJS.UI.processAll
     //
-    _processElement: function (element) {
+    _processElement: function (elementIn) {
 
-        /*DEBUG*/
-        // Parameter validation
-        if (!element)
-            console.error("WinJS.UI._processElement: Undefined or null element specified.");
-        /*ENDDEBUG*/
-
-        // If we've already processed the element in a previous call to process[All], then don't re-process it now.
-        if (element.winControl)
-            return;
-
-        // If data-win-options is specified, then convert Win8's JS-ish data-win-options attribute string 
-        // into a valid JS object before passing to the constructor.
-        var options = element.dataset.winOptions ? blueskyUtils.convertDeclarativeDataStringToJavascriptObject(element.dataset.winOptions) : null;
-
-        // Create the control specified in data-win-control and attach it to the element; pass data-win-options to the object
-
-        // Note: I originally had an eval here (evil, sure, but short and sweet), but the minify borked on it.  Here's the original line:
-        //		element.winControl = eval("new window." + element.dataset.winControl + "(element, options)");
-        // Then I wanted to do this (less evil, prettier than the above):
-        //		element.winControl = new window[element.dataset.winControl](element, options);
-        // ... but that doesn't work if element.dataset.winControl (a string) contains multiple depth (e.g. Test.Foo.Bar), since
-        // window["Test.Foo.Bar"] != window["Test"]["Foo"]["Bar"]
-        //
-        // So I ended up with the following pained but functional approach.
-        //
-        var parts = element.dataset.winControl.split(".");
-        var controlConstructor = window;
-        for (var i = 0; i < parts.length; i++) {
+        var element = elementIn;    // TODO (CLEANUP): Validate closures everywhere
+        return new WinJS.Promise(function (onComplete) {
 
             /*DEBUG*/
-            if (!controlConstructor)
-                break;
+            // Parameter validation
+            if (!element)
+                console.error("WinJS.UI._processElement: Undefined or null element specified.");
             /*ENDDEBUG*/
 
-            controlConstructor = controlConstructor[parts[i]];
-        }
+            // If we've already processed the element in a previous call to process[All], then don't re-process it now.
+            if (element.winControl) {
+                onComplete(element.winControl);
+                return;
+            }
+            // If data-win-options is specified, then convert Win8's JS-ish data-win-options attribute string 
+            // into a valid JS object before passing to the constructor.
+            var options = element.dataset.winOptions ? blueskyUtils.convertDeclarativeDataStringToJavascriptObject(element.dataset.winOptions) : null;
 
-        /*DEBUG*/
-        if (!controlConstructor) {
-            console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
-            return;
-        }
-        /*ENDDEBUG*/
+            // Create the control specified in data-win-control and attach it to the element; pass data-win-options to the object
+            var parts = element.dataset.winControl.split(".");
+            var controlConstructor = window;
+            for (var i = 0; i < parts.length; i++) {
+                /*DEBUG*/
+                if (!controlConstructor)
+                    break;
+                /*ENDDEBUG*/
+                controlConstructor = controlConstructor[parts[i]];
+            }
 
-        // Now that we have a pointer to the actual control constructor, instantiate the wincontrol
-        element.winControl = new controlConstructor(element, options);
+            /*DEBUG*/
+            // 
+            if (!controlConstructor) {
+                console.error("bluesky: Unknown control specified in WinJS.UI._processElement: " + element.dataset.winControl);
+                return;
+            }
+            /*ENDDEBUG*/
+            var completed = function () {
+                onComplete(element.winControl);
+            }
 
-        // Create a reference from the wincontrol back to its source element
-        element.winControl.element = element;
+            // Instantiate the actual winControl.
+            console.log("constructing control", element, options);
+            element.winControl = new controlConstructor(element, options, completed);
+
+            // Create a reference from the wincontrol back to its source element
+            element.winControl.element = element;
+
+            // If the control does not have a completion handler, then completed will never get called; go ahead and call it now.
+            if (controlConstructor.length < 3)
+                completed();
+        });
     },
 
 

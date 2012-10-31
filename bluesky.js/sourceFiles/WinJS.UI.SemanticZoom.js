@@ -139,6 +139,14 @@ WinJS.Namespace.define("WinJS.UI", {
             },
 
 
+            // TODO: Haven't thought this through yet.
+            _doRender: function () {
+                if (this.zoomedOut)
+                    this._zoomedOutView._doRender();
+                else
+                    this._zoomedInView._doRender();
+            },
+
             // ================================================================
             //
             // public event: WinJS.SemanticZoom.onzoomchanged

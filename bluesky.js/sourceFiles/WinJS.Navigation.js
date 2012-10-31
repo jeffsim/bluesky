@@ -24,6 +24,8 @@ WinJS.Namespace.define("WinJS.Navigation", {
 		}*/
     },
 
+    _pageCacheBuster: "",
+    _curPageLoadedExtFiles: [],
 
     // ================================================================
     //
@@ -40,6 +42,14 @@ WinJS.Namespace.define("WinJS.Navigation", {
         var that = this;
         return new WinJS.Promise(function (onNavigationComplete) {
 
+            // Generate a unique cache buster per page.  If a page has multiple subpages that all load the same script or css, then only one of each will get loaded.
+            if (Bluesky.Settings.cacheBustScriptsAndStyles)
+                WinJS.Navigation._pageCacheBuster = "_bsid=" + Date.now() + Math.floor((Math.random() * 1000000));
+
+
+            // Keep track of all styles being loaded during 'this' navigate, and only load each once.  
+            WinJS.Navigation._curPageLoadedExtFiles = [];
+
             // Disallow second-navigations
             // NOTE: Win8 does not appear to do this; we do because we like crashing less often.
             if (that.curPageInfo) {
@@ -48,11 +58,10 @@ WinJS.Namespace.define("WinJS.Navigation", {
                     // TODO: This check is failing.
                     //console.log(targetPath, options, that.curPageInfo.options);
                     //        if (that.curPageInfo.options == options) {
-                    return onNavigationComplete(false);
+                    //           return onNavigationComplete(false);
                     //      }
                 }
             }
-
             var beforeNavigateSetPromise = null;
             var navigatingSetPromise = null;
             var navigatedSetPromise = null;
@@ -75,7 +84,13 @@ WinJS.Namespace.define("WinJS.Navigation", {
 
                 // User didn't cancel; notify them that we're navigating.  They can't cancel from this point forward
 
-                // First; hide any clickeaters
+                // unload previous pages' scripts (if any)
+                WinJS.UI.Pages._curPageScripts.forEach(function (src) {
+                    $("script[src^='" + src + "']").remove();
+                });
+                WinJS.UI.Pages._curPageScripts = [];
+
+                // Hide any clickeaters
                 WinJS.UI._hideClickEaters();
                 newPageInfo.setPromise = function (p) { navigatingSetPromise = p; };
                 that._notifyNavigating(newPageInfo);
@@ -99,8 +114,6 @@ WinJS.Namespace.define("WinJS.Navigation", {
 
                 // Notify listeners of the navigated event
                 that._notifyNavigated(that.curPageInfo);
-
-
 
                 if (navigatedSetPromise)
                     WinJS.Promise.as(navigatedSetPromise).then(function () {

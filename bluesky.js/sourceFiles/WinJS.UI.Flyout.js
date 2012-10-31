@@ -152,7 +152,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.UI.Flyout.scopedSelect
+		    // private function: WinJS.UI.Flyout._hideClickEaters
 		    //
 		    //      Called when the app is navigating to a new page; hide appbar
 		    //

@@ -25,5 +25,9 @@ WinJS.Namespace.define("WinJS.UI", {
 		// Render the page using the specified options. When rendering has completed, call the complete function
 		WinJS.UI.Pages.render(options.uri, element, options)
 			.then(complete);
+	}, {
+
+	    updateLayout: function () {
+	    }
 	})
 });

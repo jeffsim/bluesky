@@ -132,10 +132,10 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="vsixFiles\[Content_Types].xml" />
-    <Content Include="bluesky - For Testing.AddIn" />
     <Content Include="blueskyAddin.AddIn">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="bluesky - For Testing2.AddIn" />
     <EmbeddedResource Include="WebProjectFilesToCopy\WebApp.csproj.user" />
     <EmbeddedResource Include="WebProjectFilesToCopy\WebAppProj.csproj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

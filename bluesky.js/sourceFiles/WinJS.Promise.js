@@ -312,6 +312,11 @@ WinJS.Namespace.define("WinJS", {
 						});
 					}
 				});
+			},
+
+            // TODO: NYI NYI NYI
+			cancel: function () {
+			    console.error("WinJS.Promise.cancel: NYI");
 			}
 		})
 });

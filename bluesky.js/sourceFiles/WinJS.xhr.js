@@ -68,9 +68,14 @@ WinJS.Namespace.define("WinJS", {
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
+            if (!options.dataType && urlLower.indexOf(".xml") >= 0)
+                dataType = "xml";
+
             // convert appdata references to filepath
+            // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
             url = url.replace("ms-appx:///", "/");
             url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
+            url = url.replace("///", "/");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
@@ -99,12 +104,20 @@ WinJS.Namespace.define("WinJS", {
                 dataType = "jsonp";
             }
 
+            // Handle custom request initialize if specified
+            // TODO: We're not using XMLHttpRequest, so we can't really pass it here!  Not sure what to do, short of
+            // refactoring all of this to use XMLHttpRequest :P
+            var fakeHttpRequest = null;
+            if (options.customRequestInitializer)
+                options.customRequestInitializer(fakeHttpRequest);
+
             // TODO: Progress
             var responseData;
             $.ajax(url, {
                 data: options.data,
                 dataType: dataType,
                 type: requestType,
+                headers: options.headers,
                 success: function (data, textStatus, jqXHR) {
 
                     var response, responseText, responseXML;

@@ -48,11 +48,9 @@ var WinJS = {
 			// Perform parameter validation
 			if (!name)
 				console.error("WinJS.Namespace.define: null or undefined 'name' specified.");
-			if (!members)
-				console.error("WinJS.Namespace.define: null or undefined 'members' specified.");
 			/*ENDDEBUG*/
 
-			return this.defineWithParent(window, name, members);
+			return WinJS.Namespace.defineWithParent(window, name, members);
 		},
 
 
@@ -71,8 +69,6 @@ var WinJS = {
 				console.error("WinJS.Namespace.defineWithParent: null or undefined 'parent' specified.");
 			if (!name)
 				console.error("WinJS.Namespace.defineWithParent: null or undefined 'name' specified.");
-			if (!members)
-				console.error("WinJS.Namespace.defineWithParent: null or undefined 'members' specified.");
 			/*ENDDEBUG*/
 
 			var currentNamespace = parent;

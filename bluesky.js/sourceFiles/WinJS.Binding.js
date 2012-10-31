@@ -16,17 +16,59 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
     //
     as: function (data) {
 
-        // If data is an object then wrap it; otherwise just return it as-is
+        // We only wrap objects
         if (typeof data === "object") {
 
-            // Create a bindable wrapper around the data.
-            var BoundClass = WinJS.Binding.define(data);
+            // If we've already wrapped it then return the existing observable wrapper
+            if (data._observable)
+                return data._observable;
+
+            // Create an observable wrapper object around the data.
+            var observableClass = WinJS.Binding.define(data);
 
             // Return the observable object.  Caller can bind to data via the wrapper's .bind() function.
-            return new BoundClass(data);
+            return new observableClass(data);
+
         } else {
+            // We can only wrap objects; entities such as numbers and functions are not observable.
             return data;
         }
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.Binding.bind
+    //
+    //      MSDN: TODO
+    //
+    //      TODO: Not fully implemented or tested
+    //
+    bind: function (source, data) {
+
+        // Ensure the source is observable
+        var bindingSource = WinJS.Binding.as(source);
+
+        // Iterate over all keys in the data, hooking up on-change callback functions and recursing in as needed
+        Object.keys(data).forEach(function (dataKey) {
+
+            // If the current data item is a callback function then bind it to changes on the specified key.
+            // If instead the data item is an object then recurse into it.
+            var bindingData = data[dataKey];
+            if (typeof (bindingData) === "function") {
+
+                // Bind changes to the 'dataKey' member on the surce object to the function 'bindingData'
+                bindingSource.bind(dataKey, bindingData);
+            }
+            else {
+
+                // The item is an object; recurse into it and bind its subobjects.  Also, when the object itself changes we'll rebind here.
+                bindingSource.bind(dataKey, function (bindableObject) {
+                    WinJS.Binding.bind(bindableObject, bindingData);
+                });
+            }
+        });
+        return bindingSource;
     },
 
 
@@ -41,18 +83,19 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
         // Return a function that generates an observable class with the properties in the specified data object
         var newClass = WinJS.Class.define(function (initialState) {
 
-            // Set initial data
-            this.sourceData = initialState || {};
-            for (var key in initialState) {
+            // Store a reference to the original source data
+            this.backingData = initialState;
 
-                try {
-                    // TODO: If the target is a function that only has a getter, then this borks.  What should we do in
-                    // that case - or for functions in general?  try/catching for now.
-                    this.sourceData[key] = initialState[key];
+            // Initialize listeners
+            this.listeners = {};
 
-                } catch (e) {
-                }
-            }
+            // Mix in the initial data values
+            var bindableData = WinJS.Binding.expandProperties(initialState);
+            Object.defineProperties(this, bindableData);
+
+            // Store references to and from the observer
+            initialState._observable = this;
+            this._observable = this;
         },
 
 		// ================================================================
@@ -77,6 +120,9 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 
 		        this.listeners[name].push(action);
 
+		        // Do a one-time upfront change notification on the value
+		        action(this[name]);
+
 		        return this;
 		    },
 
@@ -89,7 +135,7 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 		    //
 		    getProperty: function (name) {
 
-		        return WinJS.Binding.as(this.sourceData[name]);
+		        return WinJS.Binding.as(this.backingData[name]);
 		    },
 
 
@@ -116,7 +162,7 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 		    //
 		    updateProperty: function (name, value) {
 
-		        var oldValue = this.sourceData[name];
+		        var oldValue = this.backingData[name];
 		        var newValue = WinJS.Binding.unwrap(value);
 
 		        // If the value didn't change then we don't fire notifications, but we still need to return a promise
@@ -124,7 +170,7 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 		            return WinJS.Promise.as();
 
 		        // The value changed; update it in the source data
-		        this.sourceData[name] = newValue;
+		        this.backingData[name] = newValue;
 
 		        // Notify any listeners of the change
 		        return this.notify(name, newValue, oldValue);
@@ -158,20 +204,10 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 					    return newValue;
 					});
 		    },
-
-
-		    // Reference to the original source data
-		    sourceData: {},
-
-		    // Listeners
-		    listeners: {},
 		});
 
         // Combine the list of properties from 'data' into the class prototype we created above.
-        WinJS.Class.mix(newClass, WinJS.Binding.expandProperties(data));
-
-        // return the class prototype that we created
-        return newClass;
+        return WinJS.Class.mix(newClass, WinJS.Binding.expandProperties(data));
     },
 
 
@@ -183,8 +219,8 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
     //
     unwrap: function (data) {
 
-        if (data && data.sourceData)
-            return data.sourceData;
+        if (data && data.backingData)
+            return data.backingData;
 
         return data;
     },
@@ -276,7 +312,11 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
                         winBind = parts[0];
                     }
 
-                    WinJS.Binding._bindField(this, targetField, winBind, dataContext, converter);
+                    // Source and target fields can contain... interesting... contents, such as "background.color['green']".  Parse them out here.
+                    var targetFields = WinJS.Binding._parseFields(targetField);
+                    var sourceFields = WinJS.Binding._parseFields(winBind);
+
+                    WinJS.Binding._bindField(this, targetFields, sourceFields, dataContext, converter);
                 }
             });
 
@@ -288,20 +328,66 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
 
     // ================================================================
     //
+    // private Function: WinJS.Binding._parseFields
+    //
+    //      The usual format for source and target binding fields is e.g. "color" or "background.color"; however, they can 
+    //      also contain values such as "color['green']".  This function parses these strings into arrays
+    //
+    _parseFields: function (fieldString) {
+
+        // First, perform the 'usual' parse
+        var fields = fieldString.split('.');
+        var results = [];
+
+        // Now iterate over all of the fields, parsing unusual formats as we go
+        // TODO: This is incomplete and only parsing a few scenarios.  I need to understand the full breadth of what we need to support here, and implement
+        //       that.  Also TODO: can we merge this into the win-option parsing code?
+        fields.forEach(function (field) {
+
+            // Handle special cases
+            if (field.indexOf('[') > -1) {
+                // special case: handle foo['bar']
+                // TODO (CLEANUP): Use regex here.  Also: very special-cased right now.
+                var firstField = field.substr(0, field.indexOf('['));
+                var secondFieldStart = field.substr(firstField.length + 2);
+                var secondField = secondFieldStart.substr(0, secondFieldStart.indexOf(']') - 1);
+                results.push(firstField);
+                results.push(secondField);
+
+            } else {
+
+                // default case
+                results.push(field);
+            }
+        });
+
+        return results;
+    },
+
+
+    // ================================================================
+    //
     // public Function: WinJS.Binding.converter
     //
     //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/br229809.aspx
     //
-    //      TODO: This is only partially implemented, but suffices for common cases.
-    //
     converter: function (doConvert) {
 
-        // Create and return an object that can do conversion on values using the specified function
-        return {
-            convert: function (val) {
-                return doConvert(val);
-            }
-        }
+        // Create and return a default initializer for the specified doConvert function
+        return WinJS.Binding.initializer(function (source, sourceProperty, dest, destProperty) {
+            return doConvert(source[sourceProperty]);
+        });
+    },
+
+
+    // ================================================================
+    //
+    // public Function: WinJS.Binding.initializer
+    //
+    //      MSDN: TODO
+    //
+    initializer: function (converter) {
+        return converter;
     },
 
 
@@ -311,60 +397,52 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
     //
     //  listens for changes on the specified data field and updates the specified DOM element when the field changes
     //
-    _bindField: function (rootElement, targetField, sourceField, dataContext, converter) {
+    _bindField: function (targetElement, targetField, sourceField, dataContext, initializer) {
 
-        // If the dataContext is observable (e.g. was generated by calling WinJS.Binding.as()), then establish a bind contract so that
-        // we can update the UI when the bound object's values change.
-        if (dataContext.bind != undefined) {
-            var thisElement = rootElement;
+        // If an initializer was specified then let it set up the binding
+        if (initializer) {
 
-            dataContext.bind(sourceField, function (newValue, oldValue) {
-                // At this point, the source data to which this element's field is bound has changed; update our UI to reflect the new value
-                WinJS.Binding._updateBoundValue(thisElement, targetField, dataContext[sourceField], converter);
-            });
-        }
+            initializer(dataContext, sourceField, targetElement, targetField);
 
-        // Update bound value immediately (whether the dataContext is observable or not)
-        WinJS.Binding._updateBoundValue(rootElement, targetField, dataContext[sourceField], converter);
-    },
-
-
-    // ================================================================
-    //
-    // private Function: WinJS.Binding._updateBoundValue
-    //
-    //  Immediately updates the specified bound element/field to the new value
-    //
-    _updateBoundValue: function (targetElement, targetField, newValue, converter) {
-
-        if (converter)
-            newValue = converter.convert(newValue);
-
-        /*DEBUG*/
-        // Check for NYI functionality
-        if (targetField.split('.').length > 2)
-            console.warn("WinJS.Binding._updateBoundValue: field '" + targetField + "' is binding too deeply; only up to 2 levels of depth (e.g. 'style' (1 level) or 'style.backgroundColor' (2 levels)) are currently supported in bound field names.");
-        /*ENDDEBUG*/
-
-        // TODO: I fully expect there's a good JS'y way to deref from object["style.backgroundColor"] to object.style.backgroundColor, but I don't 
-        // know what it is yet (and am hoping it doesn't involve a for loop).  Once I figure that out, I can just use that.  For now though, I'm
-        // hard-coding support for 1 and 2 '.'s
-        if (targetField.indexOf(".") >= 0) {
-
-            // Handle binding to "style.backgroundColor" and similar fields.  Per above, I'm hoping to collapse this into the 'else' code, and also
-            // generically extend to support "foo.bar.xyz.abc"
-            var fields = targetField.split('.');
-            targetElement[fields[0]][fields[1]] = newValue;
         } else {
+            // Get an observable wrapper around dataContext and bind to that
+            var observer = WinJS.Binding.as(dataContext);
+            if (observer._observable)
+                observer = observer._observable;
 
-            // "innerText" isn't supported on FireFox, so convert it to the W3C-compliant textContent property.  I suspect there will be 
-            // more of these one-offs as we support more browsers.  Good reference: http://www.quirksmode.org/dom/w3c_html.html#t07See
-            // TODO: Move this to a DOMElement extension?  Or find other way to not add this cost to non-IE browsers...  is there an existing polyfill for it?
-            if (targetField == "innerText")
-                targetField = "textContent";
+            // If the dataContext is observable then establish a bind contract so that we can update the target when the bound object's values change.
+            // Although the previous line set up an observable wrapper, if dataContext isn't observable (e.g. it's a number) then we couldn't wrap it.
+            if (observer) {
 
-            // Set the target element's target field to the source data's corresponding field.  Oh, the joy of javascript...
-            targetElement[targetField] = newValue;
+                var lastProperty = targetField[targetField.length - 1];
+
+                // Source field can be multiple levels deep (e.g. "style.background.color").  If there's only one then bind to it; if there's more than
+                // one then we need to recurse in, binding as we go
+                if (sourceField.length == 1) {
+
+                    // We're at the 'end' of the source field; bind _changes to that field_ (sourceField[0]) on _the observer_ to
+                    // set the _targetElement's targetProperty_ to the updated value.
+                    observer.bind(sourceField[0], function (newValue) { targetElement[lastProperty] = newValue; });
+
+                } else {
+
+                    // We are binding to a complex property.  
+                    var subData = {};
+                    var currentNode = subData;
+
+                    // Iterate over the elements of the source Field, generating an object tree structure that matches it and setting the 'bottom' node
+                    for (var i = 0; i < sourceField.length; i++) {
+                        if (i == sourceField.length - 1)
+                            currentNode[sourceField[i]] = function (newValue) {
+                                targetElement[lastProperty] = newValue;
+                            };
+                        else
+                            currentNode = currentNode[sourceField[i]] = {};
+                    }
+
+                    return WinJS.Binding.bind(observer, subData);
+                }
+            }
         }
     }
 });

@@ -10,6 +10,8 @@ exports.proxy = function (parsedUrl, response) {
 
     // Function to call when request is complete
     var reqDone = function (error, response1, body) {
+        
+        // TODO: What about 302? Other codes?
         if (!error && response1.statusCode == 200) {
             var window = jsdom.jsdom(body).createWindow();
 
@@ -24,8 +26,9 @@ exports.proxy = function (parsedUrl, response) {
                     break;
             }
             response.end();
+            console.log("path: " + decodedUrl);
         } else
-            console.log("ERROR: " + error + ", status: " + response1.statusCode);
+            console.log("\r\n\r\nERROR: " + error + ", status: " + response1.statusCode + ", path: " + decodedUrl + "\r\n\r\n");
     }
 
     // was original request a post?

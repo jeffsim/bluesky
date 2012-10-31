@@ -10,6 +10,7 @@ WinJS.Namespace.define("Windows.Foundation", {
     //
     Uri: WinJS.Class.define(function (uri) {
         this.uri = uri;
+        this.absoluteUri = uri; // TODO
     },
 	{
 	})

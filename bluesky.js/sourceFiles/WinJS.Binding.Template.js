@@ -79,7 +79,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		            blueskyUtils.setDOMElementUniqueId($template[0]);
 
 		            // Populate the data into the cloned template
-		            return WinJS.Binding.processAll($template, data).then(function () {
+		            return WinJS.Binding.processAll($template[0], data).then(function () {
 
 		                // Add the now-populated cloned template to the target container
 		                $container.append($template.children());

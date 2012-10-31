@@ -67,6 +67,8 @@ WinJS.Namespace.define("WinJS.UI", {
                     this.groupDataSource = eval(options.groupDataSource);
                 if (options.groupHeaderTemplate)
                     this.groupHeaderTemplate = document.getElementById(options.groupHeaderTemplate) || eval(options.groupHeaderTemplate);
+                if (options.oniteminvoked)
+                    this.oniteminvoked = eval(options.oniteminvoked);
             }
 
             this._disableAnimation = false;
