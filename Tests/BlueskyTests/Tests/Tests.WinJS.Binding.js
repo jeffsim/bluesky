@@ -148,7 +148,7 @@ testHarness.addTestFile("WinJS.Binding Tests", {
 
             // Add UX element to the test working space so that we can test changing it.
             var $testDiv = testHarness.addTestElement('<div id="test">First Name: <span id="first" data-win-bind="innerText: firstName">Joe</span><br/>' +
-													  'Last Name: <span id="last" data-win-bind="style.backgroundColor: backColor">Smith</span></div>');
+													  'Last Name: <span id="last" style="background-color:Red" data-win-bind="style.backgroundColor: backColor">Smith</span></div>');
 
             var person = { backColor: "#f00", firstName: "Henry", lastName: "Ford", thumbnailImage: null };
 
@@ -159,6 +159,7 @@ testHarness.addTestFile("WinJS.Binding Tests", {
 
             // Tell WinJS.Binding to process all data-win-bind attributes in the contactCard2 HTML element.  Since bindingSource is a
             // bindingSource, processAll() will establish the appropriate field listeners to update the UI when bindingSource's data changes.
+        //    debugger;
             WinJS.Binding.processAll($("#test")[0], bindingSource);
 
             // Now make a change to the binding source's fields.  The binding source will cause the Binding.process to automatically
@@ -173,7 +174,7 @@ testHarness.addTestFile("WinJS.Binding Tests", {
                 var firstName = $("#first", $testDiv).text();
                 test.assert(firstName == "Thomas", "Failed to dynamically change first name");
                 var backColor = $("#last", $testDiv).css("backgroundColor");
-                test.assert(backColor == "rgb(0, 255, 0)", "Failed to dynamically change backgroundColor");
+                test.assert(backColor == "rgb(0, 255, 0)", "Failed to dynamically change backgroundColor (value is '" + backColor + "')");
                 onTestComplete(test);
             });
         });
@@ -373,7 +374,6 @@ testHarness.addTestFile("WinJS.Binding Tests", {
             // Test Binding.define with initial state
             var person1 = new Person({ firstName: "Jeff", lastName: "Simon", backColor: "red" });
             var person2 = new Person({ firstName: "Luke", lastName: "Simon2", backColor: "green" });
-
             // Verify that initial state was set.
             test.assert(person1.firstName == "Jeff", "Failed to set first initial state");
             test.assert(person2.lastName == "Simon2", "Failed to set second initial state");

@@ -10,7 +10,7 @@ WinJS.Namespace.define("Windows.Storage", {
     //
     // public Object: Windows.Storage.StorageFile
     //
-    StorageFile: WinJS.Class.derive(Windows.Storage._StorageItem,
+    StorageFile: WinJS.Class.derive(Windows.Storage.StorageItem,
 
 		// ================================================================
 		//
@@ -21,7 +21,7 @@ WinJS.Namespace.define("Windows.Storage", {
         function (parentFolder, desiredName) {
 
             // Call into our base class' constructor
-            Windows.Storage._StorageItem.call(this, parentFolder, desiredName);
+            Windows.Storage.StorageItem.call(this, parentFolder, desiredName);
 
             // Set our attributes
             this.attributes = Windows.Storage.FileAttributes.archive;
@@ -66,7 +66,7 @@ WinJS.Namespace.define("Windows.Storage", {
                     }
 
                     if (collisionOption == Windows.Storage.NameCollisionOption.generateUniqueName && exists)
-                        desiredName = Windows.Storage._StorageItem._generateUniqueName(folder, desiredName);
+                        desiredName = Windows.Storage.StorageItem._generateUniqueName(folder, desiredName);
 
                     var newFile = that.parentFolder._copyFileInMFT(that, folder, desiredName);
 

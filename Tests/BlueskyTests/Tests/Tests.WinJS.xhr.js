@@ -80,7 +80,7 @@ testHarness.addTestFile("WinJS.xhr Tests", {
             // Test following types: html, text, xml, json, jsonp, binary
             return new WinJS.Promise(function (c) {
                 // Test getting an HTML file
-                WinJS.xhr({
+                return WinJS.xhr({
                     type: "GET",
                     url: "http://www.wanderlinggames.com/blueskyCORSTests/get1.html"
                 }).then(function (result) {
@@ -94,7 +94,7 @@ testHarness.addTestFile("WinJS.xhr Tests", {
                 });
             }).then(function () {
                 // Test getting a text file
-                WinJS.xhr({
+                return WinJS.xhr({
                     type: "GET",
                     url: "http://www.wanderlinggames.com/blueskyCORSTests/get1.txt"
                 }).then(function (result) {
@@ -107,7 +107,7 @@ testHarness.addTestFile("WinJS.xhr Tests", {
                 });
             }).then(function () {
                 // Test getting an xml file
-                WinJS.xhr({
+                return WinJS.xhr({
                     type: "GET",
                     url: "http://www.wanderlinggames.com/blueskyCORSTests/get1.xml"
                 }).then(function (result) {
@@ -125,7 +125,7 @@ testHarness.addTestFile("WinJS.xhr Tests", {
                 });
             }).then(function () {
                 // Test getting a json file
-                WinJS.xhr({
+                return WinJS.xhr({
                     type: "GET",
                     url: "http://www.wanderlinggames.com/blueskyCORSTests/get1.json"
                 }).then(function (result) {
@@ -135,10 +135,12 @@ testHarness.addTestFile("WinJS.xhr Tests", {
                     //        test.assert(result.responseXML == null, "json: ResponseXML != null");
                     test.assert(result.status == 200, "json: Status incorrect");
                     test.assert(result.statusText == "OK", "json: Status text incorrect");
+                }, function (a, b) {
+                    console.log(a, b);
                 });
             }).then(function () {
                 // Test getting a jsonp file
-                WinJS.xhr({
+                return WinJS.xhr({
                     type: "GET",
                     url: "http://www.wanderlinggames.com/blueskyCORSTests/get1b.jsonp"
                 }).then(function (result) {

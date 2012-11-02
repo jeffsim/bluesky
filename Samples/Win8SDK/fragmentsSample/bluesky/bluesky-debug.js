@@ -447,10 +447,20 @@ WinJS.Namespace.define("WinJS", {
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
-            if (!options.dataType && urlLower.indexOf(".xml") >= 0)
-                dataType = "xml";
-            if (!options.dataType && urlLower.indexOf(".html") >= 0)
-                dataType = "html";
+            // If dataType not specified then try to set it ourselves.
+            // TODO (CLEANUP): Do I really need to do this?  
+            if (!options.dataType) {
+                if (urlLower.indexOf(".xml") >= 0)
+                    dataType = "xml";
+                else if (urlLower.indexOf(".html") >= 0)
+                    dataType = "html";
+                else if (urlLower.indexOf(".json") >= 0)
+                    dataType = "json";
+                else if (urlLower.indexOf(".js") >= 0)
+                    dataType = "script";
+                else
+                    dataType = "text";
+            }
 
             // convert appdata references to filepath
             // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
@@ -500,7 +510,6 @@ WinJS.Namespace.define("WinJS", {
                 type: requestType,
                 headers: options.headers,
                 success: function (data, textStatus, jqXHR) {
-
                     var response, responseText, responseXML;
                     // TODO: I haven't tested these since the inclusion of the bluesky proxy.
                     // TODO (CLEANUP): Ick.
@@ -511,15 +520,23 @@ WinJS.Namespace.define("WinJS", {
                         responseText = data.status || data;
                         responseXML = null;
                     }
-                    //if (data)
-                      //  responseText = JSON.stringify(data);
-
+//                    if (!isProxied && data)
+  //                      responseText = JSON.stringify(data);
+                    if (isProxied) {
+                        // Try to convert the response into an XML object
+                        var parser = new DOMParser();
+                        try {
+                            responseXML = parser.parseFromString(data, "application/xml");
+                        } catch (ex) {
+                            responseXML = null;
+                        }
+                    }
                     onComplete({
                         responseType: "",
                         responseText: responseText,
                         responseXML: responseXML,
                         data: data.data || data,
-//                        response: responseText,
+                        response: responseText,
                         readyState: jqXHR.readyState,
                         DONE: 4,
                         statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
@@ -529,8 +546,9 @@ WinJS.Namespace.define("WinJS", {
                 error: function (jqXHR, textStatus, errorThrown) {
                     // TODO: all return flags.
                     // TODO: Support other errors
-                    debugger;
-                    if (jqXHR.status == 404)
+                    if (jqXHR.status == 403) {
+                        onError({ number: 2 });
+                    } else if (jqXHR.status == 404)
                         onError({ number: -2146697211 });	// Win8's 404 error code
                     else
                         onError({ number: 1 });	// TODO: What to do here?
@@ -2234,7 +2252,7 @@ WinJS.Namespace.define("Windows.Storage", {
     //
     // public Object: Windows.Storage.StorageFile
     //
-    StorageFile: WinJS.Class.derive(Windows.Storage._StorageItem,
+    StorageFile: WinJS.Class.derive(Windows.Storage.StorageItem,
 
 		// ================================================================
 		//
@@ -2245,7 +2263,7 @@ WinJS.Namespace.define("Windows.Storage", {
         function (parentFolder, desiredName) {
 
             // Call into our base class' constructor
-            Windows.Storage._StorageItem.call(this, parentFolder, desiredName);
+            Windows.Storage.StorageItem.call(this, parentFolder, desiredName);
 
             // Set our attributes
             this.attributes = Windows.Storage.FileAttributes.archive;
@@ -2290,7 +2308,7 @@ WinJS.Namespace.define("Windows.Storage", {
                     }
 
                     if (collisionOption == Windows.Storage.NameCollisionOption.generateUniqueName && exists)
-                        desiredName = Windows.Storage._StorageItem._generateUniqueName(folder, desiredName);
+                        desiredName = Windows.Storage.StorageItem._generateUniqueName(folder, desiredName);
 
                     var newFile = that.parentFolder._copyFileInMFT(that, folder, desiredName);
 
@@ -2545,7 +2563,7 @@ WinJS.Namespace.define("Windows.Storage", {
     //            "realized items".  An item is faulted in from unrealized to realized state on-demand.
     //      * We store realized items in a map (this.realizedItems[name])
     //
-    StorageFolder: WinJS.Class.derive(Windows.Storage._StorageItem,
+    StorageFolder: WinJS.Class.derive(Windows.Storage.StorageItem,
 
 		// ================================================================
 		//
@@ -2556,7 +2574,7 @@ WinJS.Namespace.define("Windows.Storage", {
         function (parentFolder, desiredName) {
 
             // Call into our base class' constructor
-            Windows.Storage._StorageItem.call(this, parentFolder, desiredName);
+            Windows.Storage.StorageItem.call(this, parentFolder, desiredName);
 
             // Set our attributes
             this.attributes = Windows.Storage.FileAttributes.directory;
@@ -5695,6 +5713,8 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
         // Return a function that generates an observable class with the properties in the specified data object
         var newClass = WinJS.Class.define(function (initialState) {
 
+            initialState = initialState || {};
+
             // Store a reference to the original source data
             this.backingData = initialState;
 
@@ -6011,49 +6031,49 @@ WinJS.Namespace.defineWithParent(WinJS, "Binding", {
     //
     _bindField: function (targetElement, targetField, sourceField, dataContext, initializer) {
 
-        // If an initializer was specified then let it set up the binding
-        if (initializer) {
+        // Get an observable wrapper around dataContext and bind to that
+        var observer = WinJS.Binding.as(dataContext);
+        if (observer._observable)
+            observer = observer._observable;
 
-            initializer(dataContext, sourceField, targetElement, targetField);
+        // If the dataContext is observable then establish a bind contract so that we can update the target when the bound object's values change.
+        // Although the previous line set up an observable wrapper, if dataContext isn't observable (e.g. it's a number) then we couldn't wrap it.
+        if (observer) {
 
-        } else {
-            // Get an observable wrapper around dataContext and bind to that
-            var observer = WinJS.Binding.as(dataContext);
-            if (observer._observable)
-                observer = observer._observable;
+            var lastProperty = targetField[targetField.length - 1];
 
-            // If the dataContext is observable then establish a bind contract so that we can update the target when the bound object's values change.
-            // Although the previous line set up an observable wrapper, if dataContext isn't observable (e.g. it's a number) then we couldn't wrap it.
-            if (observer) {
+            // Source field can be multiple levels deep (e.g. "style.background.color").  If there's only one then bind to it; if there's more than
+            // one then we need to recurse in, binding as we go
+            if (sourceField.length == 1) {
 
-                var lastProperty = targetField[targetField.length - 1];
+                // We're at the 'end' of the source field; bind _changes to that field_ (sourceField[0]) on _the observer_ to
+                // set the _targetElement's targetProperty_ to the updated value.
+                observer.bind(sourceField[0], function (newValue) {
+                    if (initializer)
+                        newValue = initializer(dataContext, sourceField, targetElement, targetField);
+                    var t = targetElement;
+                    for (var i = 0; i < targetField.length - 1; i++)
+                        t = t[targetField[i]];
+                    t[lastProperty] = newValue;
+                });
 
-                // Source field can be multiple levels deep (e.g. "style.background.color").  If there's only one then bind to it; if there's more than
-                // one then we need to recurse in, binding as we go
-                if (sourceField.length == 1) {
+            } else {
 
-                    // We're at the 'end' of the source field; bind _changes to that field_ (sourceField[0]) on _the observer_ to
-                    // set the _targetElement's targetProperty_ to the updated value.
-                    observer.bind(sourceField[0], function (newValue) { targetElement[lastProperty] = newValue; });
+                // We are binding to a complex property.  
+                var subData = {};
+                var currentNode = subData;
 
-                } else {
-
-                    // We are binding to a complex property.  
-                    var subData = {};
-                    var currentNode = subData;
-
-                    // Iterate over the elements of the source Field, generating an object tree structure that matches it and setting the 'bottom' node
-                    for (var i = 0; i < sourceField.length; i++) {
-                        if (i == sourceField.length - 1)
-                            currentNode[sourceField[i]] = function (newValue) {
-                                targetElement[lastProperty] = newValue;
-                            };
-                        else
-                            currentNode = currentNode[sourceField[i]] = {};
-                    }
-
-                    return WinJS.Binding.bind(observer, subData);
+                // Iterate over the elements of the source Field, generating an object tree structure that matches it and setting the 'bottom' node
+                for (var i = 0; i < sourceField.length; i++) {
+                    if (i == sourceField.length - 1)
+                        currentNode[sourceField[i]] = function (newValue) {
+                            targetElement[lastProperty] = newValue;
+                        };
+                    else
+                        currentNode = currentNode[sourceField[i]] = {};
                 }
+
+                return WinJS.Binding.bind(observer, subData);
             }
         }
     }

@@ -23,7 +23,7 @@ WinJS.Namespace.define("Windows.Storage", {
     //            "realized items".  An item is faulted in from unrealized to realized state on-demand.
     //      * We store realized items in a map (this.realizedItems[name])
     //
-    StorageFolder: WinJS.Class.derive(Windows.Storage._StorageItem,
+    StorageFolder: WinJS.Class.derive(Windows.Storage.StorageItem,
 
 		// ================================================================
 		//
@@ -34,7 +34,7 @@ WinJS.Namespace.define("Windows.Storage", {
         function (parentFolder, desiredName) {
 
             // Call into our base class' constructor
-            Windows.Storage._StorageItem.call(this, parentFolder, desiredName);
+            Windows.Storage.StorageItem.call(this, parentFolder, desiredName);
 
             // Set our attributes
             this.attributes = Windows.Storage.FileAttributes.directory;

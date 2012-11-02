@@ -73,10 +73,20 @@ WinJS.Namespace.define("WinJS", {
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
 
-            if (!options.dataType && urlLower.indexOf(".xml") >= 0)
-                dataType = "xml";
-            if (!options.dataType && urlLower.indexOf(".html") >= 0)
-                dataType = "html";
+            // If dataType not specified then try to set it ourselves.
+            // TODO (CLEANUP): Do I really need to do this?  
+            if (!options.dataType) {
+                if (urlLower.indexOf(".xml") >= 0)
+                    dataType = "xml";
+                else if (urlLower.indexOf(".html") >= 0)
+                    dataType = "html";
+                else if (urlLower.indexOf(".json") >= 0)
+                    dataType = "json";
+                else if (urlLower.indexOf(".js") >= 0)
+                    dataType = "script";
+                else
+                    dataType = "text";
+            }
 
             // convert appdata references to filepath
             // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
@@ -126,7 +136,6 @@ WinJS.Namespace.define("WinJS", {
                 type: requestType,
                 headers: options.headers,
                 success: function (data, textStatus, jqXHR) {
-
                     var response, responseText, responseXML;
                     // TODO: I haven't tested these since the inclusion of the bluesky proxy.
                     // TODO (CLEANUP): Ick.
@@ -137,15 +146,23 @@ WinJS.Namespace.define("WinJS", {
                         responseText = data.status || data;
                         responseXML = null;
                     }
-                    //if (data)
-                      //  responseText = JSON.stringify(data);
-
+//                    if (!isProxied && data)
+  //                      responseText = JSON.stringify(data);
+                    if (isProxied) {
+                        // Try to convert the response into an XML object
+                        var parser = new DOMParser();
+                        try {
+                            responseXML = parser.parseFromString(data, "application/xml");
+                        } catch (ex) {
+                            responseXML = null;
+                        }
+                    }
                     onComplete({
                         responseType: "",
                         responseText: responseText,
                         responseXML: responseXML,
                         data: data.data || data,
-//                        response: responseText,
+                        response: responseText,
                         readyState: jqXHR.readyState,
                         DONE: 4,
                         statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
@@ -155,8 +172,9 @@ WinJS.Namespace.define("WinJS", {
                 error: function (jqXHR, textStatus, errorThrown) {
                     // TODO: all return flags.
                     // TODO: Support other errors
-                    debugger;
-                    if (jqXHR.status == 404)
+                    if (jqXHR.status == 403) {
+                        onError({ number: 2 });
+                    } else if (jqXHR.status == 404)
                         onError({ number: -2146697211 });	// Win8's 404 error code
                     else
                         onError({ number: 1 });	// TODO: What to do here?

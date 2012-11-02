@@ -62,24 +62,18 @@ testHarness.addTestFile("BlueskyUtils Tests", {
 
 	    // Test converter assignment
 		testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("innerText: firstName converter1; marginLeft: left  converter2 ");
-		test.assert(testVar.innerText == "firstName" &&
-					testVar.marginLeft == "left", "Failed to handle converters");
+		test.assert(testVar.innerText == "firstName converter1" &&
+					testVar.marginLeft == "left  converter2", "Failed to handle converters");
 
 		// The following tests test direct assignment (vs the above, which are binding-focused)
 
 		// Test string arrays
 		testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("tooltipStrings: ['Horrible', 'Poor', 'Fair', 'Good', 'Excellent']");
-		test.assert(testVar.tooltipStrings &&
-					testVar.tooltipStrings[0] == "Horrible" &&
-					testVar.tooltipString[3] == "Good", "Failed to handle string arrays");
+		test.assert(testVar.tooltipStrings == "['Horrible', 'Poor', 'Fair', 'Good', 'Excellent']", "Failed to handle string arrays");
 
 		// Test numbers
 		testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("value:100, value2:200, value3:9.9");
 		test.assert(testVar.value == 100 &&testVar.value2 == 200 && testVar.value3 == 9.9, "Failed to convert numbers");
-
-		// Test true/false
-		testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("value:true, value2:false");
-		test.assert(testVar.value == true && testVar.value2 == false, "Failed to convert boolean values");
 
 		// TODO: Test special chars (e.g. double quotes in strings, semicolons, etc)
 	},
