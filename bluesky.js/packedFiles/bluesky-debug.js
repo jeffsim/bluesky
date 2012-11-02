@@ -249,6 +249,8 @@ var WinJS = {
 			// Getters and setters are managed as regular properties
 			if (typeof member === "object" && (typeof member.get === "function" || typeof member.set === "function")) {
 
+			    member.enumerable = true;
+
 				// Add the member to the list of properties (which we'll set below)
 				properties[memberKey] = member;
 			} else {
@@ -447,6 +449,8 @@ WinJS.Namespace.define("WinJS", {
 
             if (!options.dataType && urlLower.indexOf(".xml") >= 0)
                 dataType = "xml";
+            if (!options.dataType && urlLower.indexOf(".html") >= 0)
+                dataType = "html";
 
             // convert appdata references to filepath
             // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
@@ -507,12 +511,15 @@ WinJS.Namespace.define("WinJS", {
                         responseText = data.status || data;
                         responseXML = null;
                     }
+                    //if (data)
+                      //  responseText = JSON.stringify(data);
 
                     onComplete({
                         responseType: "",
                         responseText: responseText,
                         responseXML: responseXML,
                         data: data.data || data,
+//                        response: responseText,
                         readyState: jqXHR.readyState,
                         DONE: 4,
                         statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,
@@ -4202,6 +4209,7 @@ WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
             }
         },
 
+        // TODO
         longDate: {
             patterns: {
                 first: function () {
@@ -8159,7 +8167,6 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
             // Instantiate the actual winControl.
-            console.log("constructing control", element, options);
             element.winControl = new controlConstructor(element, options, completed);
 
             // Create a reference from the wincontrol back to its source element
@@ -11450,6 +11457,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             if (element.nodeName == "SCRIPT" && element.attributes && element.attributes.src) {
                                 var scriptSrc = element.attributes.src.value.toLowerCase();
 
+                                // Fixup scripts to remove win8-specific stuff
+                                if (scriptSrc.indexOf("///") == 0) {
+                                    scriptSrc = scriptSrc.substr(2);
+                                    element.attributes.src.value = scriptSrc;
+                                }
+
                                 // remove any scripts which are already in the document
                                 $existingScripts.each(function (i, script) {
                                     if (script.attributes.src) {
@@ -11466,6 +11479,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             }
                             if (element.nodeName == "LINK" && element.attributes && element.attributes.href) {
                                 var linkSrc = element.attributes.href.value.toLowerCase();
+
+                                // Fixup links to remove win8-specific stuff
+                                if (linkSrc.indexOf("///") == 0) {
+                                    linkSrc = linkSrc.substr(2);
+                                    element.attributes.href.value = linkSrc;
+                                }
 
                                 // remove any links which are already in the document
                                 $existingLinks.each(function (i, existingLink) {

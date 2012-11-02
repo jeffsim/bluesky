@@ -233,6 +233,8 @@ var WinJS = {
 			// Getters and setters are managed as regular properties
 			if (typeof member === "object" && (typeof member.get === "function" || typeof member.set === "function")) {
 
+			    member.enumerable = true;
+
 				// Add the member to the list of properties (which we'll set below)
 				properties[memberKey] = member;
 			} else {

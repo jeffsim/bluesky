@@ -75,6 +75,8 @@ WinJS.Namespace.define("WinJS", {
 
             if (!options.dataType && urlLower.indexOf(".xml") >= 0)
                 dataType = "xml";
+            if (!options.dataType && urlLower.indexOf(".html") >= 0)
+                dataType = "html";
 
             // convert appdata references to filepath
             // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
@@ -135,12 +137,15 @@ WinJS.Namespace.define("WinJS", {
                         responseText = data.status || data;
                         responseXML = null;
                     }
+                    //if (data)
+                      //  responseText = JSON.stringify(data);
 
                     onComplete({
                         responseType: "",
                         responseText: responseText,
                         responseXML: responseXML,
                         data: data.data || data,
+//                        response: responseText,
                         readyState: jqXHR.readyState,
                         DONE: 4,
                         statusText: jqXHR.statusText == "success" ? "OK" : jqXHR.statusText,

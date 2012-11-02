@@ -177,7 +177,6 @@ WinJS.Namespace.define("WinJS.UI", {
             }
 
             // Instantiate the actual winControl.
-            console.log("constructing control", element, options);
             element.winControl = new controlConstructor(element, options, completed);
 
             // Create a reference from the wincontrol back to its source element

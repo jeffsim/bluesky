@@ -422,6 +422,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             if (element.nodeName == "SCRIPT" && element.attributes && element.attributes.src) {
                                 var scriptSrc = element.attributes.src.value.toLowerCase();
 
+                                // Fixup scripts to remove win8-specific stuff
+                                if (scriptSrc.indexOf("///") == 0) {
+                                    scriptSrc = scriptSrc.substr(2);
+                                    element.attributes.src.value = scriptSrc;
+                                }
+
                                 // remove any scripts which are already in the document
                                 $existingScripts.each(function (i, script) {
                                     if (script.attributes.src) {
@@ -438,6 +444,12 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                             }
                             if (element.nodeName == "LINK" && element.attributes && element.attributes.href) {
                                 var linkSrc = element.attributes.href.value.toLowerCase();
+
+                                // Fixup links to remove win8-specific stuff
+                                if (linkSrc.indexOf("///") == 0) {
+                                    linkSrc = linkSrc.substr(2);
+                                    element.attributes.href.value = linkSrc;
+                                }
 
                                 // remove any links which are already in the document
                                 $existingLinks.each(function (i, existingLink) {

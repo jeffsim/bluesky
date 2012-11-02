@@ -82,6 +82,7 @@ WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
             }
         },
 
+        // TODO
         longDate: {
             patterns: {
                 first: function () {
