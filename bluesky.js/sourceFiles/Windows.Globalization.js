@@ -68,5 +68,69 @@ WinJS.Namespace.define("Windows.Globalization.DateTimeFormatting", {
         _fullMonths: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
         _abbreviatedMonths: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+    }, {
+        // TODO
+        shortDate: {
+            patterns: {
+                first: function () {
+                    return {
+                        current: {
+                            indexOf: function (a) { return; }
+                        }
+                    }
+                }
+            }
+        },
+
+        longDate: {
+            patterns: {
+                first: function () {
+                    return {
+                        current: {
+                            indexOf: function (a) { return; }
+                        }
+                    }
+                }
+            }
+        },
+
+        // TODO
+        shortTime: {
+            patterns: {
+                first: function () {
+                    return {
+                        current: {
+                            indexOf: function (a) { return; }
+                        }
+                    }
+                }
+            }
+        },
     })
+});
+
+
+
+// ================================================================
+//
+// Windows.Globalization.Calendar
+//
+//		TODO: Stubbed out for test purposes
+//
+//		NYI NYI NYI
+//
+// =========================================================
+//
+// Minimalist implementation of Globalization to unblock stockSample
+//
+WinJS.Namespace.define("Windows.Globalization", {
+
+    Calendar: WinJS.Class.define(function () {
+    }, {
+        setToMin: function () {
+        },
+        setToMax: function () {
+        }
+
+    }),
 });

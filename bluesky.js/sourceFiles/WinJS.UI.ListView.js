@@ -253,12 +253,13 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Place the list items in their correct positions
                     that._positionItems();
 
+                    //that.$viewport.height(that.$scrollSurface.height());
                     // TODO (CLEANUP): Resize events come in in unexpected ways.  I'm setting width/height here because currently we get a resize
                     // event on first render *after* we render, which causes us to reposition items twice.  That's on FF; I believe IE9 comes in with
                     // a different order for firing resize events...  This is marked as a TODO because I'm not 100% sure this won't break apps that
                     // rely on a resize event getting fired; also, I should look into forcibly firing a resize event on FF to normalize across browsers...
-                    that._prevWidth = that.$rootElement.innerWidth();
-                    that._prevHeight = that.$rootElement.innerHeight();
+                    that._prevWidth = that.$rootElement.outerWidth();
+                    that._prevHeight = that.$rootElement.outerHeight();
                 });
             },
 
@@ -503,12 +504,9 @@ WinJS.Namespace.define("WinJS.UI", {
                     var item = this.items[i];
 
                     // Get the dimensions of the item (force to width of list if not horizontal)
-                    //var itemWidth = this.layout.horizontal ? item.$element.innerWidth() : listWidth;
-                    //var itemHeight = item.$element.innerHeight();
                     var itemWidth = this.layout.horizontal ? item.element.offsetWidth : listWidth;
                     var itemHeight = item.element.offsetHeight;
                     var itemContainer = item.element.parentNode;
-
                     // If cellspanning/groupinfo specified, then apply it now
                     if (groupInfo && groupInfo.enableCellSpanning) {
 
@@ -593,7 +591,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         if (this.layout.horizontal) {
                             // If placing this item would extend beyond the maximum Y, then wrap to the next column instead.
                             // So the same if maxRows is specified and we're about to exceed it
-                            if (renderCurY + itemHeight >= renderMaxY ||
+                            if (renderCurY + itemHeight + templateMargins.containerVertical >= renderMaxY ||
                                 this.layout.maxRows && curRow == this.layout.maxRows - 1) {
                                 renderCurY = topY;
                                 renderCurX = surfaceWidth;
@@ -604,14 +602,14 @@ WinJS.Namespace.define("WinJS.UI", {
                     }
                     itemContainer.style.left = renderCurX + "px";
                     itemContainer.style.top = renderCurY + "px";
-                    itemContainer.style.width = itemWidth + "px";
-                    itemContainer.style.height = itemHeight + "px";
+                    itemContainer.style.width = (itemWidth + templateMargins.itemHorizontal) + "px";
+                    itemContainer.style.height = (itemHeight + templateMargins.itemVertical) + "px";
 
                     // Keep track of the width of the scrolling surface
-                    surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.horizontal);
+                    surfaceWidth = Math.max(surfaceWidth, renderCurX + itemWidth + templateMargins.containerHorizontal);
 
                     // Go to the next place to put the next item
-                    renderCurY += itemHeight + templateMargins.vertical;
+                    renderCurY += itemHeight + templateMargins.containerVertical;
 
                     // If item is selected, then add border
                     if (this.selection._containsItemByKey(item.key))
@@ -639,10 +637,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 // Now that we have a matching element in the DOM, get it's margin values.  Since the css is returned as "#px", we need to strip the 'px'
                 // TODO: not 100% sure what the right solution is here; build a test in win8 and see what it does
                 var itemMargins = {
-                    vertical: Math.max(parseInt($container.css("marginTop")) + parseInt($container.css("marginBottom")),
-                                       parseInt($item.css("marginTop")) + parseInt($item.css("marginBottom"))),
-                    horizontal: Math.max(parseInt($container.css("marginLeft")) + parseInt($container.css("marginRight")),
-                                         parseInt($item.css("marginLeft")) + parseInt($item.css("marginRight")))
+                    containerVertical: parseInt($container.css("marginTop")) + parseInt($container.css("marginBottom")),
+                    containerHorizontal: parseInt($container.css("marginLeft")) + parseInt($container.css("marginRight")),
+                    itemVertical: parseInt($item.css("marginTop")) + parseInt($item.css("marginBottom")),
+                    itemHorizontal: parseInt($item.css("marginLeft")) + parseInt($item.css("marginRight"))
                 };
 
                 // Clean up after ourselves and remove the element from the DOM.
@@ -661,10 +659,10 @@ WinJS.Namespace.define("WinJS.UI", {
                 // Get the templatized HTML that we'll populate.  Clone it so that we don't modify the original
                 // template, add the 'win-item' class, remove the data-win-control attribute, and then show it
                 item.element = $(this.itemTemplate)
-					.clone()
-					.addClass("win-item")
+                    .clone()
+                    .addClass("win-item")
                     .removeAttr("data-win-control")
-					.show()[0];
+                    .show()[0];
 
                 // Give the cloned element a unique identifier
                 blueskyUtils.setDOMElementUniqueId(item.element);
@@ -968,7 +966,7 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     } else if (!itemWasSelected && itemIsNowSelected) {
 
-                            // add selection border
+                        // add selection border
                         that._addSelectionBorderToElement(item.element);
                     }
                 });

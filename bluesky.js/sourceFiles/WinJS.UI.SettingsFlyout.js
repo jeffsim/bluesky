@@ -70,14 +70,11 @@ WinJS.Namespace.define("WinJS.UI", {
                     .appendTo($("body"))
 		            .show();
 
-		        // Add Flyout clickeater
-                /*
-		        // TODO: Haven't thought through how this, flyout, and appbar's overlays all interact
-		        if ($(".win-flyoutmenuclickeater", $("body")).length == 0) {
-		            WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>");
-		            WinJS.UI._$flyoutClickEater.appendTo($("body")).show();
-		            WinJS.UI._$flyoutClickEater.click(this._clickEaterFunction.bind(this));
-		        }*/
+		        $(".win-flyoutmenuclickeater").remove();
+		        WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>")
+                                .appendTo($("body"))
+                                .click(WinJS.UI.Flyout._clickEaterFunction)
+		                        .show();
 
 		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
 		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore

@@ -233,6 +233,23 @@ WinJS.Namespace.define("WinJS.UI", {
         }
     },
 
+    executeTransition: function (element, props) {
+        return new WinJS.Promise(function (c) {
+            $(element).css(props.property, props.to);
+            console.log("trans", element, props);
+            c();
+        });
+    },
+
+    /*
+    execAnimation: function (element, props) {
+        return new WinJS.Promise(function (c) {
+            $(element).css(props.property, props.to);
+            console.log("anim", element, props);
+            c();
+        });
+    },*/
+
 
     // ================================================================
     //

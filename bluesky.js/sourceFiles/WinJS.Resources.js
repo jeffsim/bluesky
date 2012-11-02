@@ -26,9 +26,13 @@ WinJS.Namespace.define("WinJS.Resources", {
     //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701590.aspx
     //
     getString: function (a) {
-        console.warn("WinJS.Resources.getString is NYI");
+        if (!WinJS.Resources._warnedGetString) {
+            console.warn("WinJS.Resources.getString is NYI");
+            WinJS.Resources._warnedGetString = true;
+        }
         return a;
     },
+    _warnedGetString: false,
 
 
     // ================================================================

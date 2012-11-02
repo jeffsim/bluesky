@@ -123,12 +123,11 @@ WinJS.Namespace.define("WinJS.UI", {
                         "visibility": "visible"
                     });
 
-		        // Add Flyout clickeater
-		        if ($(".win-flyoutmenuclickeater", $("body")).length == 0) {
-		            WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>");
-		            WinJS.UI._$flyoutClickEater.appendTo($("body")).show();
-		            WinJS.UI._$flyoutClickEater.click(this._clickEaterFunction.bind(this));
-		        }
+		        $(".win-flyoutmenuclickeater").remove();
+		        WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>")
+                                .appendTo($("body"))
+                                .click(WinJS.UI.Flyout._clickEaterFunction)
+		                        .show();
 
 		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
 		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
@@ -140,6 +139,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
+		            WinJS.UI._flyoutClicked = Date.now();
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -165,15 +165,6 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		    // ================================================================
 		    //
-		    // private function: WinJS.UI.Flyout._clickEaterFunction
-		    //
-		    _clickEaterFunction: function () {
-		        this.hide();
-		    },
-
-
-		    // ================================================================
-		    //
 		    // private function: WinJS.UI.Flyout._unload
 		    //
 		    _unload: function (event) {
@@ -184,7 +175,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		            // Remove our click listener from the Flyout click eater
 		            WinJS.UI._$flyoutClickEater.unbind("click", this._clickEaterFunction);
 
-                    // TODO: Same question as in appbar._unload: should we hide? what if there are multiple flyouts visible and only one is unloaded?
+		            // TODO: Same question as in appbar._unload: should we hide? what if there are multiple flyouts visible and only one is unloaded?
 		            WinJS.UI._$flyoutClickEater.hide();
 
 		            // And remove our listener for when we're removed from the DOM
@@ -500,5 +491,17 @@ WinJS.Namespace.define("WinJS.UI", {
                     e.winControl.hide();
                 });
             },
+
+            // ================================================================
+            //
+            // private function: WinJS.UI.Flyout._clickEaterFunction
+            //
+            _clickEaterFunction: function () {
+                console.log("eaten");
+                $(".win-flyout").each(function (i, e) {
+                    e.winControl.hide();
+                });
+            },
+
         })
 });

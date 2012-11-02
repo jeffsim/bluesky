@@ -114,13 +114,39 @@ WinJS.Namespace.define("Windows", {
                         inking: 2
                     }
                 })
+            },
+
+            //		TODO: Stubbed out for test purposes
+            //
+            //		NYI NYI NYI
+            //
+            GestureRecognizer: WinJS.Class.define(function () { }, {
+                addEventListener: function () {
+                },
+                removeEventListener: function () {
+                }
+            }),
+
+            //		TODO: Stubbed out for test purposes
+            //
+            //		NYI NYI NYI
+            //
+            GestureSettings: {
+                manipulationRotate: 1,
+                manipulationTranslateX: 2,
+                manipulationTranslateY: 3,
+                manipulationScale: 4,
+                manipulationRotateInertia: 5,
+                manipulationScaleInertia: 6,
+                manipulationTranslateInertia: 7,
+                tap: 8
             }
         },
-
 
         //		TODO: Stubbed out for test purposes
         //
         //		NYI NYI NYI
+        //
         ColorHelper: {
             fromArgb: function (a, r, g, b) {
                 return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
@@ -150,6 +176,7 @@ WinJS.Namespace.define("Windows", {
             }
         }
     },
+
 
     // ================================================================
     //
