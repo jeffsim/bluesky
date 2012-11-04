@@ -76,13 +76,17 @@
 
 	.testControl .testFileSelector
 	{
-		float: right;
+		position:absolute;
+        top:55px;
+        right: 5px;
 		font-size: 12pt;
 	}
 
 	.testControl .testSelector
 	{
-		float: right;
+		position:absolute;
+        top:105px;
+        right: 5px;
 		margin-top: -10px;
 	}
 

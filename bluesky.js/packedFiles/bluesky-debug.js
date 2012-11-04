@@ -11931,8 +11931,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
+		        WinJS.UI._$flyoutClickEater.hide();
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
-		            WinJS.UI._$flyoutClickEater.hide();
 		            $(that.element).css("visibility", "hidden");
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, false, {});

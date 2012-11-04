@@ -141,7 +141,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                     // Verify centered
                     var anchorHorzCenter = $anchor.offset().left + $anchor.outerWidth() / 2;
                     var flyoutHorzCenter = $flyout.offset().left + $flyout.outerWidth() / 2;
-                    test.assert(anchorHorzCenter == flyoutHorzCenter, "Flyout not horizontally centered (1)");
+                    test.assert(Math.abs(anchorHorzCenter - flyoutHorzCenter) < 1, "Flyout not horizontally centered (1)");
 
                     flyout.removeEventListener("aftershow", afterShow);
                     flyout.hide();
@@ -167,7 +167,7 @@ testHarness.addTestFile("WinJS.UI.Flyout Tests", {
                         // Verify centered
                         var anchorHorzCenter = $anchor.offset().left + $anchor.outerWidth() / 2;
                         var flyoutHorzCenter = $flyout.offset().left + $flyout.outerWidth() / 2;
-                        test.assert(anchorHorzCenter == flyoutHorzCenter, "Flyout not horizontally centered (2)");
+                        test.assert(Math.abs(anchorHorzCenter - flyoutHorzCenter) < 1, "Flyout not horizontally centered (2)");
 
                         flyout.removeEventListener("aftershow", afterShow);
                         flyout.hide();
