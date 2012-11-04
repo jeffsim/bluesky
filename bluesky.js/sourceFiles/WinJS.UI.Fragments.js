@@ -80,8 +80,12 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
                 // Second, Process the loaded page into a document fragment
                 that._processFragment(response).then(function (docFrag) {
 
-                    // Third, Notify listeners that the fragment has been loaded (and processed) into a document fragment
-                    fragmentLoadedCallback(docFrag);
+                    // Third, gaurantee asynchronicity
+                    WinJS.Promise.timeout().then(function () {
+
+                        // And finally, Notify listeners that the fragment has been loaded (and processed) into a document fragment
+                        fragmentLoadedCallback(docFrag);
+                    });
                 });
             });
         });
