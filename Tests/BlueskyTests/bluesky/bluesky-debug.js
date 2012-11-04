@@ -7899,33 +7899,43 @@ WinJS.Namespace.define("WinJS.Binding", {
 		            console.error("WinJS.Binding.Template.render: Undefined or null element dataContext");
 		        /*ENDDEBUG*/
 
-		        // Return a promise that we'll do the binding.
-
 		        // TODO: I'm doing "that = this" all over the place because I don't know the js pattern to get "this" to
 		        // be "this Template" in the Promise below.  I suspect there's some bind (js bind, not winjs bind)-related 
 		        // solution.  Once known, scour the code and remove the "that = this"'s where possible.
 		        var that = this;
 
+		        // We need to grab our place in the target (if defined) so that display order is gauranteed if multiple bindings are happening in parallel.
+		        var $placeholder = $("<div class='win-template'></div>");
+		        if (container)
+		            $(container).append($placeholder);
+
 		        var bindElementToData = function (templateElement, data) {
 
-		            // If the container doesn't exist then create a new div.  Wrap it in jQuery for simplicity as well
-		            var $container = $(container || "<div></div>");
-
-		            // Add the win-template class to the target
-		            $container.addClass("win-template");
-
-		            // Clone this template prior to populating it
+		            // Clone the template prior to populating it
 		            var $template = $(templateElement).clone();
 
 		            // Give the cloned element a unique identifier
 		            blueskyUtils.setDOMElementUniqueId($template[0]);
 
-		            // Populate the data into the cloned template
+		            // Bind the data into the cloned template
 		            return WinJS.Binding.processAll($template[0], data).then(function () {
 
-		                // Add the now-populated cloned template to the target container
-		                $container.append($template.children());
-		                return ($container[0]);
+		                // Add the now-populated cloned template's contents to the target container
+		                if (container) {
+
+		                    // Place the bound template's contents at the placeholder in the target
+		                    var $result = $placeholder.after($template.contents());
+
+		                    // Remove the placeholder since we no longer need it
+		                    $placeholder.remove();
+
+		                    // And return the bound template's contents
+		                    return $result[0];
+		                } else {
+
+		                    // No target element was specified so no placeholder to deal with - just return the bound template's contents
+		                    return $template.contents();
+		                }
 		            });
 		        }
 

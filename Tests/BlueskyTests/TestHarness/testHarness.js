@@ -629,7 +629,7 @@ $(document).ready(function () {
     testHarness._setTestFile(17);
 
     // To select a particular test, call _setTest with the name of the test (as it appears in the 'tests to run' dropdown)
-    testHarness._setTest("externalTemplateHref");
+    testHarness._setTest("renderItem");
 
     // Temp: start the tests now to save me from clicking the button
     $("#startTests").click();

@@ -185,7 +185,7 @@ testHarness.addTestFile("WinJS.Binding.Template Tests", {
                    '</div>')[0];
 			var templateControl = new WinJS.Binding.Template(templateDiv);*/
             var templateControl = new WinJS.Binding.Template(null, { href: '/Tests/supportFiles/externalTemplate1.html' });
-
+            console.log(templateControl);
             // Create an observable class
             var Person = WinJS.Binding.define({ name: "", color: "", birthday: "", petname: "", dessert: "" });
 
