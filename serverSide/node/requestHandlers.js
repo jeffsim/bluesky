@@ -8,27 +8,42 @@ exports.proxy = function (parsedUrl, response) {
     var decodedUrl = decodeURIComponent(parsedUrl.query);
     var callback = querystring.parse(decodedUrl)["callback"] || 'jsonp';
 
+    // strip the callback info
+    var callbackIndex = decodedUrl.indexOf("&callback");
+    if (callbackIndex >= 0)
+        decodedUrl = decodedUrl.substr(0, callbackIndex);
+
     // Function to call when request is complete
     var reqDone = function (error, response1, body) {
-        
         // TODO: What about 302? Other codes?
-        if (!error && response1.statusCode == 200) {
-            var window = jsdom.jsdom(body).createWindow();
-
-            response.writeHead(200, { "Content-Type": "application/json" });
-            var format = 'json'; // TODO: Support other formats
-            switch (format) {
-                case 'text': case 'xml': case 'string':
-                    response.write(callback + "(unescape('" + escape(window.document.innerHTML) + "'))");
-                    break;
-                default:
-                    response.write(callback + '(' + window.document.innerHTML + ')');
-                    break;
+        if (!error) {
+       //     response.writeHead(response1.statusCode, { "Content-Type": response1.headers["content-type"]});//"application/json" });
+            if (response1.statusCode == 200) {
+                var window = jsdom.jsdom(body).createWindow();
+                var format = response1.headers['content-type'];
+        console.log(format);
+                switch (format) {
+                    case 'text/plain': case 'text/html':
+                    case 'text/xml': case 'text/xml; charset=utf-8': case 'string':
+                    console.log(1);
+                        response.write(callback + "(unescape('" + escape(window.document.innerHTML) + "'))");
+                        break;
+                    default: // json
+                        response.write(callback + '(' + window.document.innerHTML + ')');
+// binary test: response.write(callback + '(data=' + JSON.stringify(window.document.innerHTML) + ')');
+                        break;
+                }
+                response.end();
+                console.log("path: " + decodedUrl);
             }
-            response.end();
-            console.log("path: " + decodedUrl);
+            else {
+                console.log("\r\n\r\nERROR: " + error + ", status: " + (response1 && response1.statusCode) +
+             ", path: " + decodedUrl + "\r\n\r\n");
+                response.end();
+            }
         } else
-            console.log("\r\n\r\nERROR: " + error + ", status: " + response1.statusCode + ", path: " + decodedUrl + "\r\n\r\n");
+            console.log("\r\n\r\nERROR: " + error + ", status: " + (response1 && response1.statusCode) +
+             ", path: " + decodedUrl + "\r\n\r\n");
     }
 
     // was original request a post?
@@ -45,7 +60,7 @@ exports.proxy = function (parsedUrl, response) {
             postData = decodedUrl.substr(i + 1);
             decodedUrl = decodedUrl.substr(0, i);
         }
-        // strip trailing '/' if present. TODO (CLEANUP): Really? No better way to do this?
+        // strip trailing '/' ifp resent. TODO (CLEANUP): Really? No better way to do this?
         if (decodedUrl[decodedUrl.length - 1] == '/')
             decodedUrl = decodedUrl.substr(0, decodedUrl.length - 1);
 
