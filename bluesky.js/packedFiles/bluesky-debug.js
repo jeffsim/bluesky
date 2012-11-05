@@ -7884,8 +7884,7 @@ WinJS.Namespace.define("WinJS.Binding", {
 		},
 
 		// WinJS.Binding.Template members
-		{
-		    // ================================================================
+		{// ================================================================
 		    //
 		    // public function: WinJS.Binding.Template.render
 		    //
@@ -7899,33 +7898,43 @@ WinJS.Namespace.define("WinJS.Binding", {
 		            console.error("WinJS.Binding.Template.render: Undefined or null element dataContext");
 		        /*ENDDEBUG*/
 
-		        // Return a promise that we'll do the binding.
-
 		        // TODO: I'm doing "that = this" all over the place because I don't know the js pattern to get "this" to
 		        // be "this Template" in the Promise below.  I suspect there's some bind (js bind, not winjs bind)-related 
 		        // solution.  Once known, scour the code and remove the "that = this"'s where possible.
 		        var that = this;
 
+		        // We need to grab our place in the target (if defined) so that display order is gauranteed if multiple bindings are happening in parallel.
+		        var $placeholder = $("<div class='win-template'></div>");
+		        if (container)
+		            $(container).append($placeholder);
+
 		        var bindElementToData = function (templateElement, data) {
 
-		            // If the container doesn't exist then create a new div.  Wrap it in jQuery for simplicity as well
-		            var $container = $(container || "<div></div>");
-
-		            // Add the win-template class to the target
-		            $container.addClass("win-template");
-
-		            // Clone this template prior to populating it
+		            // Clone the template prior to populating it
 		            var $template = $(templateElement).clone();
 
 		            // Give the cloned element a unique identifier
 		            blueskyUtils.setDOMElementUniqueId($template[0]);
 
-		            // Populate the data into the cloned template
+		            // Bind the data into the cloned template
 		            return WinJS.Binding.processAll($template[0], data).then(function () {
 
-		                // Add the now-populated cloned template to the target container
-		                $container.append($template.children());
-		                return ($container[0]);
+		                // Add the now-populated cloned template's contents to the target container
+		                if (container) {
+
+                            // Place the bound template's contents at the placeholder in the target
+		                    var $result = $placeholder.after($template.contents());
+
+                            // Remove the placeholder since we no longer need it
+		                    $placeholder.remove();
+
+                            // And return the bound template's contents
+		                    return $result[0];
+		                } else {
+
+                            // No target element was specified so no placeholder to deal with - just return the bound template's contents
+		                    return $template.contents();
+		                }
 		            });
 		        }
 
@@ -8915,17 +8924,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		        }
 		    });
 
-		    // Create click eater (once)
-		    // TODO (PERF-MINOR): Check if WinJS.UI._$appBarClickEater exists instead of looking through the DOM.  Doing it this way for now
-		    // since I'm not 100% sure how appbar persistence is expected to work across page navs, and want a 100% working solution...
-		    if ($(".win-appbarclickeater", $("body")).length == 0) {
-		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>");
-		        WinJS.UI._$appBarClickEater.appendTo($("body"));
-		    }
-
-		    // Handle clicks on the appbar click eater
-		    WinJS.UI._$appBarClickEater.bind("click", this._clickEaterFunction.bind(this));
-
 		    // When the AppBar loses focus, hide it
 		    this.$rootElement.focusout(function (event) {
 
@@ -9315,7 +9313,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
 		        //if (event.preventDefault)
 		        //	return;
-		        WinJS.UI._$appBarClickEater.show();
+
+		        $(".win-appbarclickeater").remove();
+		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>")
+                                .appendTo($("body"))
+                                .click(this._clickEaterFunction.bind(this))
+                                .show();
 
 		        // Give the appbar focus
 		        this.element.focus();
@@ -9344,7 +9347,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // TODO: Animate
 		        if (this._disabled)
 		            return;
-		        
+
 		        // TODO: Generalize this oft-repeated pattern.
 		        var event = document.createEvent("CustomEvent");
 		        event.initCustomEvent("beforehide", true, true, {});
@@ -9357,11 +9360,12 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        var that = this;
 		        this._hiding = true;
+		        if (WinJS.UI._$appBarClickEater)
+		            WinJS.UI._$appBarClickEater.hide();
 		        this.$rootElement.fadeOut("fast", function () {
 		            that.$rootElement.css("visibility", "hidden").css("display", "none")
 		            that._hiding = false;
 		            that._hidden = true;
-		            WinJS.UI._$appBarClickEater.hide();
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, true, {});
@@ -9521,7 +9525,7 @@ WinJS.Namespace.define("WinJS.UI", {
     var orig = $.fn.hide;
     $.fn.hide = function () {
         var result = orig.apply(this, arguments);
-        if (this[0] && this[0].winControl && ((this[0].winControl._isBlueskyAppBar && ! this[0].winControl._hiding)|| this[0].winControl._isFlyout)) {
+        if (this[0] && this[0].winControl && ((this[0].winControl._isBlueskyAppBar && !this[0].winControl._hiding) || this[0].winControl._isFlyout)) {
             this[0].winControl.hide();
         }
         return result;
@@ -10829,8 +10833,12 @@ WinJS.Namespace.define("WinJS.UI.Fragments", {
                 // Second, Process the loaded page into a document fragment
                 that._processFragment(response).then(function (docFrag) {
 
-                    // Third, Notify listeners that the fragment has been loaded (and processed) into a document fragment
-                    fragmentLoadedCallback(docFrag);
+                    // Third, gaurantee asynchronicity
+                    WinJS.Promise.timeout().then(function () {
+
+                        // And finally, Notify listeners that the fragment has been loaded (and processed) into a document fragment
+                        fragmentLoadedCallback(docFrag);
+                    });
                 });
             });
         });
@@ -11863,8 +11871,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
-		            WinJS.UI._flyoutClicked = Date.now();
 
+		            // Ensure the flyout is visible and that another flyout didn't close it during the show (e.g. clicking a button in a menu)
+		            WinJS.UI._$flyoutClickEater.show();
+
+		            WinJS.UI._flyoutClicked = Date.now();
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
 		            that.element.dispatchEvent(event);
@@ -12216,17 +12227,18 @@ WinJS.Namespace.define("WinJS.UI", {
                 });
             },
 
+
             // ================================================================
             //
             // private function: WinJS.UI.Flyout._clickEaterFunction
             //
             _clickEaterFunction: function () {
                 console.log("eaten");
-                $(".win-flyout").each(function (i, e) {
+                $(".win-flyout, .win-settingsflyout").each(function (i, e) {
+                    console.log(1);
                     e.winControl.hide();
                 });
-            },
-
+            }
         })
 });
 
@@ -14129,13 +14141,12 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (!this.$rootElement.closest("html").length)
                     return;
 
-                // If size hasn't changed, then nothing to do.
-                var newWidth = this.$rootElement.innerWidth();
+                // Resize only if vert changed
+                // TODO: I *think* this is valid; no broken scenarios come to mind.
                 var newHeight = this.$rootElement.innerHeight();
-                if (this._prevWidth == newWidth && this._prevHeight == newHeight)
+                if (this._prevHeight == newHeight)
                     return;
 
-                this._prevWidth = newWidth;
                 this._prevHeight = newHeight;
 
                 // TODO (PERF): only relayout if size has changed at the listview items' size granularity
@@ -15556,24 +15567,27 @@ WinJS.Namespace.define("WinJS.UI", {
 		        var $flyout = $(this.element)
                     .addClass("win-settingsflyout win-overlay " + this.widthClass)
                     .appendTo($("body"))
+                    .css("visibility", "visible")
 		            .show();
 
-		        $(".win-flyoutmenuclickeater").remove();
-		        WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>")
+		        // NOTE: For some reason, settingsflyout uses the appbar click eater; I'd've thought it would use the same click eater as regular flyout...
+		        $(".win-appbarclickeater").remove();
+		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>")
                                 .appendTo($("body"))
-                                .click(WinJS.UI.Flyout._clickEaterFunction)
+                                .click(this.hide.bind(this))
+                                .contextmenu(this.hide.bind(this))
 		                        .show();
 
-		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
-		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
-		        // the focusout event if it happened very recently.
 		        this.$rootElement.mousedown(function (event) {
 		            WinJS.UI._flyoutClicked = Date.now();
 		        });
 
 		        this._hidden = false;
 		        var that = this;
-		        new WinJS.UI.Animation.showPanel(this.element, [{ left: "240px" }]).then(function () {
+		        new WinJS.UI.Animation.showPopup(this.element, [{ left: "240px" }]).then(function () {
+
+		            // Ensure the flyout is visible and that another flyout didn't close it during the show (e.g. clicking a button in a menu)
+		            WinJS.UI._$appBarClickEater.show();
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -15581,28 +15595,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		        });
 
 		        this.$rootElement.bind("DOMNodeRemoved", this._unload);
-		    },
-
-
-		    // ================================================================
-		    //
-		    // private function: WinJS.UI.SettingsFlyout._hideClickEaters
-		    //
-		    //      Called when the app is navigating to a new page; hide appbar
-		    //
-		    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
-		    //
-		    _hideClickEaters: function () {
-		        $(".win-flyoutmenuclickeater").hide();
-		    },
-
-
-		    // ================================================================
-		    //
-		    // private function: WinJS.UI.SettingsFlyout._clickEaterFunction
-		    //
-		    _clickEaterFunction: function () {
-		        this.hide();
 		    },
 
 
@@ -15650,8 +15642,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
+		        WinJS.UI._$appBarClickEater.hide();
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
-		            WinJS.UI._$flyoutClickEater.hide();
 		            $(that.element).css("visibility", "hidden");
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, false, {});

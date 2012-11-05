@@ -121,13 +121,12 @@ WinJS.Namespace.define("WinJS.UI", {
                 if (!this.$rootElement.closest("html").length)
                     return;
 
-                // If size hasn't changed, then nothing to do.
-                var newWidth = this.$rootElement.innerWidth();
+                // Resize only if vert changed
+                // TODO: I *think* this is valid; no broken scenarios come to mind.
                 var newHeight = this.$rootElement.innerHeight();
-                if (this._prevWidth == newWidth && this._prevHeight == newHeight)
+                if (this._prevHeight == newHeight)
                     return;
 
-                this._prevWidth = newWidth;
                 this._prevHeight = newHeight;
 
                 // TODO (PERF): only relayout if size has changed at the listview items' size granularity

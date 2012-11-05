@@ -139,8 +139,11 @@ WinJS.Namespace.define("WinJS.UI", {
 		        this._hidden = false;
 		        var that = this;
 		        new WinJS.UI.Animation.showPopup(this.element, [{ left: dest.animLeft, top: dest.animTop }]).then(function () {
-		            WinJS.UI._flyoutClicked = Date.now();
 
+		            // Ensure the flyout is visible and that another flyout didn't close it during the show (e.g. clicking a button in a menu)
+		            WinJS.UI._$flyoutClickEater.show();
+
+		            WinJS.UI._flyoutClicked = Date.now();
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
 		            that.element.dispatchEvent(event);
@@ -492,16 +495,17 @@ WinJS.Namespace.define("WinJS.UI", {
                 });
             },
 
+
             // ================================================================
             //
             // private function: WinJS.UI.Flyout._clickEaterFunction
             //
             _clickEaterFunction: function () {
                 console.log("eaten");
-                $(".win-flyout").each(function (i, e) {
+                $(".win-flyout, .win-settingsflyout").each(function (i, e) {
+                    console.log(1);
                     e.winControl.hide();
                 });
-            },
-
+            }
         })
 });

@@ -68,24 +68,27 @@ WinJS.Namespace.define("WinJS.UI", {
 		        var $flyout = $(this.element)
                     .addClass("win-settingsflyout win-overlay " + this.widthClass)
                     .appendTo($("body"))
+                    .css("visibility", "visible")
 		            .show();
 
-		        $(".win-flyoutmenuclickeater").remove();
-		        WinJS.UI._$flyoutClickEater = $("<div class='win-flyoutmenuclickeater'></div>")
+		        // NOTE: For some reason, settingsflyout uses the appbar click eater; I'd've thought it would use the same click eater as regular flyout...
+		        $(".win-appbarclickeater").remove();
+		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>")
                                 .appendTo($("body"))
-                                .click(WinJS.UI.Flyout._clickEaterFunction)
+                                .click(this.hide.bind(this))
+                                .contextmenu(this.hide.bind(this))
 		                        .show();
 
-		        // TODO (CLEANUP): If this flyout is showing from an appbarcommand, then clicking on the flyout should not make the appbar disappear - but since the appbar
-		        // disappears if it loses focus, that's exactly what happens.  So, we track the last mousedown that occurred, and in the appbar focusout handler we ignore
-		        // the focusout event if it happened very recently.
 		        this.$rootElement.mousedown(function (event) {
 		            WinJS.UI._flyoutClicked = Date.now();
 		        });
 
 		        this._hidden = false;
 		        var that = this;
-		        new WinJS.UI.Animation.showPanel(this.element, [{ left: "240px" }]).then(function () {
+		        new WinJS.UI.Animation.showPopup(this.element, [{ left: "240px" }]).then(function () {
+
+		            // Ensure the flyout is visible and that another flyout didn't close it during the show (e.g. clicking a button in a menu)
+		            WinJS.UI._$appBarClickEater.show();
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("aftershow", true, false, {});
@@ -93,28 +96,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		        });
 
 		        this.$rootElement.bind("DOMNodeRemoved", this._unload);
-		    },
-
-
-		    // ================================================================
-		    //
-		    // private function: WinJS.UI.SettingsFlyout._hideClickEaters
-		    //
-		    //      Called when the app is navigating to a new page; hide appbar
-		    //
-		    //      TODO: I'm not 100% sure this is the right place to be doing this; what if app doesn't use WinJS.Navigation?
-		    //
-		    _hideClickEaters: function () {
-		        $(".win-flyoutmenuclickeater").hide();
-		    },
-
-
-		    // ================================================================
-		    //
-		    // private function: WinJS.UI.SettingsFlyout._clickEaterFunction
-		    //
-		    _clickEaterFunction: function () {
-		        this.hide();
 		    },
 
 
@@ -162,8 +143,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // Animate the flyout out. 
 		        this._hidden = true;
 		        var that = this;
+		        WinJS.UI._$appBarClickEater.hide();
 		        new WinJS.UI.Animation.hidePopup(this.element).then(function () {
-		            WinJS.UI._$flyoutClickEater.hide();
 		            $(that.element).css("visibility", "hidden");
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, false, {});

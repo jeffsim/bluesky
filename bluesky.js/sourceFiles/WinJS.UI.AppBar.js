@@ -68,17 +68,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		        }
 		    });
 
-		    // Create click eater (once)
-		    // TODO (PERF-MINOR): Check if WinJS.UI._$appBarClickEater exists instead of looking through the DOM.  Doing it this way for now
-		    // since I'm not 100% sure how appbar persistence is expected to work across page navs, and want a 100% working solution...
-		    if ($(".win-appbarclickeater", $("body")).length == 0) {
-		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>");
-		        WinJS.UI._$appBarClickEater.appendTo($("body"));
-		    }
-
-		    // Handle clicks on the appbar click eater
-		    WinJS.UI._$appBarClickEater.bind("click", this._clickEaterFunction.bind(this));
-
 		    // When the AppBar loses focus, hide it
 		    this.$rootElement.focusout(function (event) {
 
@@ -468,7 +457,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // NOTE: As near as I can tell, Win8 does not support cancelling this action (somewhat surprisingly)
 		        //if (event.preventDefault)
 		        //	return;
-		        WinJS.UI._$appBarClickEater.show();
+
+		        $(".win-appbarclickeater").remove();
+		        WinJS.UI._$appBarClickEater = $("<div class='win-appbarclickeater'></div>")
+                                .appendTo($("body"))
+                                .click(this._clickEaterFunction.bind(this))
+                                .show();
 
 		        // Give the appbar focus
 		        this.element.focus();
@@ -497,7 +491,7 @@ WinJS.Namespace.define("WinJS.UI", {
 		        // TODO: Animate
 		        if (this._disabled)
 		            return;
-		        
+
 		        // TODO: Generalize this oft-repeated pattern.
 		        var event = document.createEvent("CustomEvent");
 		        event.initCustomEvent("beforehide", true, true, {});
@@ -510,11 +504,12 @@ WinJS.Namespace.define("WinJS.UI", {
 
 		        var that = this;
 		        this._hiding = true;
+		        if (WinJS.UI._$appBarClickEater)
+		            WinJS.UI._$appBarClickEater.hide();
 		        this.$rootElement.fadeOut("fast", function () {
 		            that.$rootElement.css("visibility", "hidden").css("display", "none")
 		            that._hiding = false;
 		            that._hidden = true;
-		            WinJS.UI._$appBarClickEater.hide();
 
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("afterhide", true, true, {});
@@ -674,7 +669,7 @@ WinJS.Namespace.define("WinJS.UI", {
     var orig = $.fn.hide;
     $.fn.hide = function () {
         var result = orig.apply(this, arguments);
-        if (this[0] && this[0].winControl && ((this[0].winControl._isBlueskyAppBar && ! this[0].winControl._hiding)|| this[0].winControl._isFlyout)) {
+        if (this[0] && this[0].winControl && ((this[0].winControl._isBlueskyAppBar && !this[0].winControl._hiding) || this[0].winControl._isFlyout)) {
             this[0].winControl.hide();
         }
         return result;
