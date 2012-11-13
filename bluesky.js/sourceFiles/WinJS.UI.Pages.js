@@ -278,7 +278,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                                     src = thisPagePath + src;
                                 }
                                 // Add a timestamp to force a clean load
-                                if (WinJS.Navigation.cacheBustScriptsAndStyles) {
+                                if (Bluesky.Settings.cacheBustScriptsAndStyles) {
                                     var char = src.indexOf("?") == -1 ? "?" : "&";
                                     src += char + WinJS.Navigation._pageCacheBuster;
                                 }
@@ -332,7 +332,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     var uniquePage = pageInfo.Uri;
 
                     // Add a timestamp to force a clean load
-                    if (WinJS.Navigation.cacheBustScriptsAndStyles) {
+                    if (Bluesky.Settings.cacheBustScriptsAndStyles) {
                         var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
                         uniquePage = pageInfo.Uri + char + WinJS.Navigation._pageCacheBuster;
                     }

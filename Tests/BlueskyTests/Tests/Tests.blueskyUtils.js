@@ -24,8 +24,6 @@ testHarness.addTestFile("BlueskyUtils Tests", {
 		if (!WinJS.Application.IsBluesky)
 		    return test.skip("No blueskyUtils on Win8");
 
-		test.resultNote = "This is a known bug.";
-
 		// Test simple conversion
 		var testVar = blueskyUtils.convertDeclarativeDataStringToJavascriptObject("innerText: firstName");
 		test.assert(testVar.innerText == "firstName", "Failed to perform simple conversion");
