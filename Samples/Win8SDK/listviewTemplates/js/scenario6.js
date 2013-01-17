@@ -4,7 +4,6 @@
 //// PARTICULAR PURPOSE.
 ////
 //// Copyright (c) Microsoft Corporation. All rights reserved
-
 function MyInteractiveTemplate(itemPromise) {
     return itemPromise.then(function (currentItem) {
         var result = document.createElement("div");
@@ -61,6 +60,7 @@ function MyInteractiveTemplate(itemPromise) {
         return result;
     });
 }
+WinJS.Utilities.markSupportedForProcessing(MyInteractiveTemplate);
 
 (function () {
     "use strict";

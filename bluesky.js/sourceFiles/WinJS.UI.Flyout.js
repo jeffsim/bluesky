@@ -503,7 +503,6 @@ WinJS.Namespace.define("WinJS.UI", {
             _clickEaterFunction: function () {
                 console.log("eaten");
                 $(".win-flyout, .win-settingsflyout").each(function (i, e) {
-                    console.log(1);
                     e.winControl.hide();
                 });
             }

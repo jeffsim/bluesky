@@ -48,7 +48,6 @@ WinJS.Namespace.define("WinJS.UI", {
 		    $root.addClass("win-appbar");
 		    $root.addClass("win-commandlayout");
 		    $root.attr("role", "menubar");
-		    $root.css("z-index", "1001");
 		    $root.css("visibility", this._hidden ? "hidden" : "visible");
 		    $root.css("display", this._hidden ? "none" : "block");
 		    this.placement = options.placement || "bottom";

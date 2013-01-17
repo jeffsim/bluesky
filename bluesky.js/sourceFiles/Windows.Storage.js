@@ -14,6 +14,20 @@ WinJS.Namespace.define("Windows.Storage", {
     //
     _internalInit: function () {
 
+        // Initialize the store for all persistent data.
+        // NOTE: In some cases, localStorage is giving an access denied error in IE10 see http://stackoverflow.com/questions/13102116/access-denied-for-localstorage-in-ie10
+        // Our workaround: try localStorage - if that doesn't work then fall back to session storage.
+        // TODO: Roll this into a larger downlevel-support module and provide developer with options.
+        Bluesky.dataStore = window.localStorage;
+
+        try {
+            Bluesky.dataStore.getItem('test__bluesky');
+        } catch (ex) {
+            // Failed to call getItem; fallback to session storage
+            console.warn("Bluesky warning: this browser's local storage is not accessible; falling back to session storage instead.");
+            Bluesky.dataStore = window.sessionStorage;
+        }
+
         // Create the known folders
         var appData = Windows.Storage.ApplicationData.current;
 

@@ -619,7 +619,7 @@ WinJS.Namespace.define("WinJS.UI", {
                     // Fire count change
                     // TODO: Does Win8 fire this on datasource change, or just on item changes?
                     if (previousDataSource && newDataSource._list.length != previousDataSource._list.length)
-                        this._notifyDataSourceCountChanged();
+                        this._notifyDataSourceCountChanged(that.element);
                 }
             },
 

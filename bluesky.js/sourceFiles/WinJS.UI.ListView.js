@@ -89,6 +89,26 @@ WinJS.Namespace.define("WinJS.UI", {
 		// ================================================================
 
         {
+            _unloadOnNavigate: function () {
+
+                // Remove our click listener from the appbar click eater
+                if (this.$rootElement) {
+                    this.$rootElement.unbind("resize", this._windowResized);
+                    this.$rootElement.unbind("DOMNodeRemoved", this._unload);
+                }
+
+                if (this._itemDataSource && this._itemDataSource._list) {
+                    this._itemDataSource._list.removeEventListener("itemremoved", this.render);
+                    this._itemDataSource._list.removeEventListener("iteminserted", this.render);
+                    this._itemDataSource._list.removeEventListener("itemchanged", this.render);
+                }
+
+                if (this._groupDataSource && this._groupDataSource._list) {
+                    this._groupDataSource._list.removeEventListener("itemremoved", this.render);
+                    this._groupDataSource._list.removeEventListener("iteminserted", this.render);
+                    this._groupDataSource._list.removeEventListener("itemchanged", this.render);
+                }
+            },
 
             // ================================================================
             //
@@ -99,11 +119,7 @@ WinJS.Namespace.define("WinJS.UI", {
                 // This is called if the ListView OR an element in the ListView is removed; make sure it's the ListView
                 if (event.target == this) {
 
-                    // Remove our click listener from the appbar click eater
-                    if (this.$rootElement) {
-                        this.$rootElement.unbind("resize", this._windowResized);
-                        this.$rootElement.unbind("DOMNodeRemoved", this._unload);
-                    }
+                    this.winControl._unloadOnNavigate();
                 }
             },
 
@@ -751,9 +767,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     // Unbind from previous list (if any)
                     if (this._itemDataSource && this._itemDataSource._list) {
-                        this._itemDataSource._list.removeEventListener("itemremoved", renderMe);
-                        this._itemDataSource._list.removeEventListener("iteminserted", renderMe);
-                        this._itemDataSource._list.removeEventListener("itemchanged", renderMe);
+                        this._itemDataSource._list.removeEventListener("itemremoved", this.render);
+                        this._itemDataSource._list.removeEventListener("iteminserted", this.render);
+                        this._itemDataSource._list.removeEventListener("itemchanged", this.render);
                     }
 
                     // Store a reference to the new data source in our owning ListView
@@ -761,9 +777,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     // Listen to changes to the list.
                     // TODO: Encapsulate all of this in the datasource object as "bindOnAnyChange"
-                    this._itemDataSource._list.addEventListener("itemremoved", renderMe);
-                    this._itemDataSource._list.addEventListener("iteminserted", renderMe);
-                    this._itemDataSource._list.addEventListener("itemchanged", renderMe);
+                    this._itemDataSource._list.addEventListener("itemremoved", this.render);
+                    this._itemDataSource._list.addEventListener("iteminserted", this.render);
+                    this._itemDataSource._list.addEventListener("itemchanged", this.render);
 
                     // Refresh our in-page appearance to show the new datasource's items.
                     this.render();
@@ -795,9 +811,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     // Unbind from previous list (if any)
                     if (this._groupDataSource && this._groupDataSource._list) {
-                        this._groupDataSource._list.removeEventListener("itemremoved", renderMe);
-                        this._groupDataSource._list.removeEventListener("iteminserted", renderMe);
-                        this._groupDataSource._list.removeEventListener("itemchanged", renderMe);
+                        this._groupDataSource._list.removeEventListener("itemremoved", this.render);
+                        this._groupDataSource._list.removeEventListener("iteminserted", this.render);
+                        this._groupDataSource._list.removeEventListener("itemchanged", this.render);
                     }
 
                     var previousGroupDataSource = this._groupDataSource;
@@ -807,9 +823,9 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     if (this._groupDataSource && this._groupDataSource._list) {
                         // Listen to changes to the list.
-                        this._groupDataSource._list.addEventListener("itemremoved", renderMe);
-                        this._groupDataSource._list.addEventListener("iteminserted", renderMe);
-                        this._groupDataSource._list.addEventListener("itemchanged", renderMe);
+                        this._groupDataSource._list.addEventListener("itemremoved", this.render);
+                        this._groupDataSource._list.addEventListener("iteminserted", this.render);
+                        this._groupDataSource._list.addEventListener("itemchanged", this.render);
                     }
 
                     // Refresh our in-page appearance to show the new datasource's items.

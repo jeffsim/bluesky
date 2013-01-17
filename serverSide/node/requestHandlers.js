@@ -17,20 +17,31 @@ exports.proxy = function (parsedUrl, response) {
     var reqDone = function (error, response1, body) {
         // TODO: What about 302? Other codes?
         if (!error) {
-       //     response.writeHead(response1.statusCode, { "Content-Type": response1.headers["content-type"]});//"application/json" });
+            //     response.writeHead(response1.statusCode, { "Content-Type": response1.headers["content-type"]});//"application/json" });
             if (response1.statusCode == 200) {
                 var window = jsdom.jsdom(body).createWindow();
                 var format = response1.headers['content-type'];
-        console.log(format);
+                console.log(format);
                 switch (format) {
                     case 'text/plain': case 'text/html':
                     case 'text/xml': case 'text/xml; charset=utf-8': case 'string':
-                    console.log(1);
-                        response.write(callback + "(unescape('" + escape(window.document.innerHTML) + "'))");
+                        console.log(1);
+                        try {
+                            var t = (window.document && window.document.innerHTML) || response1.body;
+                            response.write(callback + "(unescape('" + escape(t) + "'))");
+                        } catch (err) {
+                            console.log("Exception caught 1:" + format + "." + err);
+                            console.log(response1);
+                        }
                         break;
                     default: // json
-                        response.write(callback + '(' + window.document.innerHTML + ')');
-// binary test: response.write(callback + '(data=' + JSON.stringify(window.document.innerHTML) + ')');
+                        try {
+                            var t = (window.document && window.document.innerHTML) || response1.body;
+                            response.write(callback + '(' + t + ')');
+                        } catch (err) {
+                            console.log("Exception caught 2:" + err);
+                        }
+                        // binary test: response.write(callback + '(data=' + JSON.stringify(window.document.innerHTML) + ')');
                         break;
                 }
                 response.end();

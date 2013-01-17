@@ -78,15 +78,6 @@ if (!$.browser.msie) {
         }
     }
 
-    if (!Element.currentStyle)
-        Element.prototype.currentStyle = function (el, cssprop) {
-
-            if (document.defaultView && document.defaultView.getComputedStyle) //Firefox
-                return document.defaultView.getComputedStyle(el, "")[cssprop]
-            else //try and get inline style
-                return el.style[cssprop]
-        }
-
     // ================================================================
     //
     // Add onpropertychange handler to DOM elements
@@ -256,6 +247,7 @@ if (!window.msIndexedDB) {
     }
 }
 
+
 // ================================================================
 //
 // IE supports a variety of funcitons and members on HTMLElement.style which other browsers do not support.  Add them here..
@@ -313,7 +305,6 @@ if (!CSSStyleDeclaration.posLeft) {
         enumerable: true,
         configurable: true
     });
-
     // polyfill for HTMLElement.style.setAttribute(key,value) here
     CSSStyleDeclaration.prototype.setAttribute = function (key, value) {
         this[key] = value;

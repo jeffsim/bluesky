@@ -54,7 +54,7 @@ WinJS.Namespace.define("Windows.Storage", {
             _initMFT: function () {
 
                 // Initialize our MFT; this will load the list of unrealized items as a flat string
-                var mft = localStorage.getItem("mft_" + this.path);
+                var mft = Bluesky.dataStore.getItem("mft_" + this.path);
 
                 // If the MFT exists for this folder, then parse it into a JSON object now; otherwise initialize it with an empty MFT
                 if (mft) {
@@ -425,9 +425,9 @@ WinJS.Namespace.define("Windows.Storage", {
 
                 // Remove us from the MFT
                 if (childItem.attributes == Windows.Storage.FileAttributes.directory)
-                    localStorage.removeItem("mft_" + childItem.path);
+                    Bluesky.dataStore.removeItem("mft_" + childItem.path);
                 else
-                    localStorage.removeItem(childItem.path);
+                    Bluesky.dataStore.removeItem(childItem.path);
 
                 // Remove the child item from our master file table
                 delete this.masterFileTable[childItem.name.toLowerCase()];
@@ -446,7 +446,7 @@ WinJS.Namespace.define("Windows.Storage", {
 
                         // If the item is a file then just remove it; otherwise, recurse into it
                         if (childItem2.attributes == Windows.Storage.FileAttributes.archive)
-                            localStorage.removeItem(childItem2.path);
+                            Bluesky.dataStore.removeItem(childItem2.path);
                         else
                             childItem._removeChildItem(childItem2);
                     }
@@ -477,8 +477,8 @@ WinJS.Namespace.define("Windows.Storage", {
                 // If childItem is a file, then load its contents so that we can save them back out with the new pathname (which is 
                 // how we reference files in localStorage)
                 if (childItem.attributes == Windows.Storage.FileAttributes.archive) {
-                    var fileContents = localStorage.getItem(childItem.path);
-                    localStorage.removeItem(childItem.path);
+                    var fileContents = Bluesky.dataStore.getItem(childItem.path);
+                    Bluesky.dataStore.removeItem(childItem.path);
                 }
 
                 // Replace the old MFT entry with the new one
@@ -500,7 +500,7 @@ WinJS.Namespace.define("Windows.Storage", {
 
                 // If this was a file then save out its contents with the new pathname
                 if (fileContents)
-                    localStorage.setItem(mftEntry.path, fileContents);
+                    Bluesky.dataStore.setItem(mftEntry.path, fileContents);
             },
 
 
@@ -546,14 +546,14 @@ WinJS.Namespace.define("Windows.Storage", {
                     newMFTEntry.path = destFolder.path + "/" + newName;
                     destFolder._addItemToMFT(newMFTEntry);
 
-                    var fileContents = localStorage.getItem(sourceMFTEntry.path);
+                    var fileContents = Bluesky.dataStore.getItem(sourceMFTEntry.path);
                 }
 
                 // And persist our MFT back to localStorage
                 Windows.Storage.StorageFolder._persistMFT(destFolder.path, destFolder.masterFileTable);
 
                 // copy source file's contents as well
-                localStorage.setItem(newMFTEntry.path, fileContents);
+                Bluesky.dataStore.setItem(newMFTEntry.path, fileContents);
 
                 return destFolder._realizeItem(newMFTEntry);
             },
@@ -745,9 +745,9 @@ WinJS.Namespace.define("Windows.Storage", {
                     var newPath = folder.path + "/" + mftEntry.name;
                     if (newPath != mftEntry.path) {
                         var key = mftEntry.attributes == 16 ? "mft_" : "";
-                        var value = localStorage[key + mftEntry.path];
-                        localStorage.removeItem(key + mftEntry.path);
-                        localStorage.setItem(key + newPath, value);
+                        var value = Bluesky.dataStore[key + mftEntry.path];
+                        Bluesky.dataStore.removeItem(key + mftEntry.path);
+                        Bluesky.dataStore.setItem(key + newPath, value);
                         mftEntry.path = newPath;
                         dirty = true;
                     }
@@ -777,7 +777,7 @@ WinJS.Namespace.define("Windows.Storage", {
                     return val;
                 });
                 // Store our MFT in localStorage
-                localStorage.setItem("mft_" + path, mftString);
+                Bluesky.dataStore.setItem("mft_" + path, mftString);
             }
         })
 });

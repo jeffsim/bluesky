@@ -19,7 +19,8 @@ var testHarness = {
     initialize: function () {
 
         // Start with a clean state
-        localStorage.clear();
+        if (WinJS.Application.IsBluesky)
+            Bluesky.dataStore.clear();
 
         // Start by populating the list of runnable test files.  All available testfiles should
         // have added themselves to testHarness.testFiles by the time we get here.

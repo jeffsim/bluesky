@@ -22,7 +22,7 @@ WinJS.Namespace.define("Windows.Storage", {
                 //      still updates in the cloud correctly).
 
                 // TODO: This is wrong (besides which, setItem is not defined)
-                localStorage.setItem(file.path, contents);
+                Bluesky.dataStore.setItem(file.path, contents);
                 if (file.isRoaming) {
                     Windows.Storage.CachedFileManager.uploadRoamingFile(file, contents);
                 }
@@ -102,7 +102,7 @@ WinJS.Namespace.define("Windows.Storage", {
 
                 // always read from local store, even if file is roaming; the roaming manager will asynchronously keep it up to date
                 // TODO: This is wrong (besides which, getItem is not defined)
-                var contents = localStorage.getItem(file.path);
+                var contents = Bluesky.dataStore.getItem(file.path);
 
                 // if the file isn't found locally and it's a roamable file, then fault it in from the cloud
                 if (contents == null && file.isRoaming) {

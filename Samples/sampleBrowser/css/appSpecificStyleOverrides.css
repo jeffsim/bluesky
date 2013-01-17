@@ -140,3 +140,7 @@ p {
 		margin-top: -110px;
 		margin-left: 120px !important;
 	}
+
+.win-listview .win-container {
+    background-color:#62A3E3
+}

@@ -6,19 +6,19 @@ using Microsoft.Ajax.Utilities;
 
 namespace buildBluesky
 {
-	public partial class Form1 : Form
-	{
-		public Form1()
-		{
-			InitializeComponent();
-			sourceFolderTB.Text = @"..\..\..\..\sourceFiles";
-			destFolderTB.Text = @"..\..\..\..\packedFiles";
-		}
-		string sourceFolder, destFolder;
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+            sourceFolderTB.Text = @"..\..\..\..\sourceFiles";
+            destFolderTB.Text = @"..\..\..\..\packedFiles";
+        }
+        string sourceFolder, destFolder;
 
-		private void button1_Click(object sender, EventArgs e)
-		{
-			string[] filesInOrder = new string[] {
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string[] filesInOrder = new string[] {
                @"\WinJS.js",
                @"\WinJS.UI.DOMEventMixin.js",
                @"\WinJS.xhr.js",
@@ -82,126 +82,122 @@ namespace buildBluesky
 			   @"\WinJS.Utilities.QueryCollection.js",
                @"\blueskySettings.js",
                @"\blueskyUtils.js",
-               @"\externalDependencies.js"
+               @"\externalDependencies.js",
+               @"\bluesky-polyfills.js"
             };
 
-			// Ensure source and dest folders end with a backslash
-			sourceFolder = sourceFolderTB.Text;
-			destFolder = destFolderTB.Text;
-			if(!sourceFolder.EndsWith("\\"))
-				sourceFolder += "\\";
-			if(!destFolder.EndsWith("\\"))
-				destFolder += "\\";
+            // Ensure source and dest folders end with a backslash
+            sourceFolder = sourceFolderTB.Text;
+            destFolder = destFolderTB.Text;
+            if (!sourceFolder.EndsWith("\\"))
+                sourceFolder += "\\";
+            if (!destFolder.EndsWith("\\"))
+                destFolder += "\\";
 
-			// Build the non-minified debug version
-			BuildFile("bluesky-debug.js", false, filesInOrder);
+            string version = "1.0";
 
-			// Build the minified release version (extract DEBUG lines)
-			BuildFile("bluesky-min.js", true, filesInOrder);
+            // Build the non-minified debug version
+            BuildFile("bluesky-" + version + "-debug.js", false, filesInOrder);
 
-			// Copy the debug version into the Test folder
-			string blueskyTestFile = @"..\..\..\..\..\Tests\BlueskyTests\bluesky\bluesky-debug.js";
-			if(File.Exists(blueskyTestFile))
-				File.Delete(blueskyTestFile);
-			File.Copy(destFolder + "bluesky-debug.js", blueskyTestFile);
+            // Build the minified release version (extract DEBUG lines)
+            BuildFile("bluesky-" + version + "-min.js", true, filesInOrder);
 
-			// Copy the minified (release) version into the test folder
-			blueskyTestFile = @"..\..\..\..\..\Tests\BlueskyTests\bluesky\bluesky-min.js";
-			if(File.Exists(blueskyTestFile))
-				File.Delete(blueskyTestFile);
-			File.Copy(destFolder + "bluesky-min.js", blueskyTestFile);
+            // Copy the debug version into the Test folder
+            string blueskyTestFile = @"..\..\..\..\..\Tests\BlueskyTests\bluesky\bluesky-" + version + "-debug.js";
+            if (File.Exists(blueskyTestFile))
+                File.Delete(blueskyTestFile);
+            File.Copy(destFolder + "bluesky-" + version + "-debug.js", blueskyTestFile);
 
-			// Temp, for development purposes - copy into sample folder
-            var navSampleFile = @"..\..\..\..\..\Samples\Win8SDK\fragmentsSample\bluesky\bluesky-debug.js";
-            if (File.Exists(navSampleFile))
-                File.Delete(navSampleFile);
-            File.Copy(destFolder + "bluesky-debug.js", navSampleFile);
-
+            // Copy the minified (release) version into the test folder
+            blueskyTestFile = @"..\..\..\..\..\Tests\BlueskyTests\bluesky\bluesky-" + version + "-min.js";
+            if (File.Exists(blueskyTestFile))
+                File.Delete(blueskyTestFile);
+            File.Copy(destFolder + "bluesky-" + version + "-min.js", blueskyTestFile);
 
             MessageBox.Show("Build complete");
-		}
+        }
 
-		private string addLicense()
-		{
+        private string addLicense()
+        {
             string output = "/* Copyright 2012, Bluesky LLC (www.bluesky.io)\r\n";
             output += "* This Source Code Form is subject to the terms of a commercial license\r\n";
             output += "* If you have no signed a license with Bluesky LLC for use of this code please contact sales@bluesky.io\r\n";
             output += "* If you have questions, ideas or feedback please contact info@bluesky.io\r\n*/\r\n\r\n";
 
-			return output;
-		}
+            return output;
+        }
 
-		private void BuildFile(string outputFileName, bool minifyAndRemoveDebug, string[] filesInOrder)
-		{
-			string output = "";
-			int i = 0;
+        private void BuildFile(string outputFileName, bool minifyAndRemoveDebug, string[] filesInOrder)
+        {
+            string output = "";
+            int i = 0;
 
-			// Add licensing info to file, regardless of minification
-			output += addLicense();
-			// Add use strict to top of file (rather than specifying in each one)
-			output += "\"use strict\";\r\n\r\n";
+            // Add licensing info to file, regardless of minification
+            output += addLicense();
+            // Add use strict to top of file (rather than specifying in each one)
+            output += "\"use strict\";\r\n\r\n";
 
-			foreach(string fileName in filesInOrder)
-			{
-				// Add file header
-				if(i > 0)
-				{
-					output += "\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n";
-				}
-				output += "// ============================================================== //\r\n";
-				output += "// ============================================================== //\r\n";
-				output += "// ==                                                          == //\r\n";
-				output += "//                    File: " + fileName.Substring(1) + "\r\n";
-				output += "// ==                                                          == //\r\n";
-				output += "// ============================================================== //\r\n";
-				output += "// ============================================================== //\r\n";
-				output += "\r\n";
+            foreach (string fileName in filesInOrder)
+            {
+                // Add file header
+                if (i > 0)
+                {
+                    output += "\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n";
+                }
+                output += "// ============================================================== //\r\n";
+                output += "// ============================================================== //\r\n";
+                output += "// ==                                                          == //\r\n";
+                output += "//                    File: " + fileName.Substring(1) + "\r\n";
+                output += "// ==                                                          == //\r\n";
+                output += "// ============================================================== //\r\n";
+                output += "// ============================================================== //\r\n";
+                output += "\r\n";
 
-				string[] sourceLines = File.ReadAllLines(sourceFolder + fileName);
-				bool _inDebugBlock = false;
-				foreach(string sourceLine in sourceLines)
-				{
+                string[] sourceLines = File.ReadAllLines(sourceFolder + fileName);
+                bool _inDebugBlock = false;
+                foreach (string sourceLine in sourceLines)
+                {
 
-					// create a trimmed line for checking (we'll output the original line though)
-					string trimmedLine = sourceLine.Trim();
+                    // create a trimmed line for checking (we'll output the original line though)
+                    string trimmedLine = sourceLine.Trim();
 
-					// skip 'use strict' in case I forgot to remove :P
-					if(trimmedLine.ToLower() == "\"use strict\";")
-						continue;
+                    // skip 'use strict' in case I forgot to remove :P
+                    if (trimmedLine.ToLower() == "\"use strict\";")
+                        continue;
 
-					// if this is a release build and we're in a debug block then look for the end of the block and skip lines until we get to it
-					if(minifyAndRemoveDebug)
-					{
-						if(_inDebugBlock)
-						{
-							if(trimmedLine.Contains("/*ENDDEBUG*/"))
-							{
-								_inDebugBlock = false;
-							}
-							continue;
-						}
-						else if(trimmedLine.Contains("/*DEBUG*/"))
-						{
-							_inDebugBlock = true;
-							continue;
-						}
-					}
+                    // if this is a release build and we're in a debug block then look for the end of the block and skip lines until we get to it
+                    if (minifyAndRemoveDebug)
+                    {
+                        if (_inDebugBlock)
+                        {
+                            if (trimmedLine.Contains("/*ENDDEBUG*/"))
+                            {
+                                _inDebugBlock = false;
+                            }
+                            continue;
+                        }
+                        else if (trimmedLine.Contains("/*DEBUG*/"))
+                        {
+                            _inDebugBlock = true;
+                            continue;
+                        }
+                    }
 
-					// TODO: \n or \r\n? (here and elsewhere in this file)
-					output += sourceLine + "\r\n";
-				}
-				i++;
-			}
+                    // TODO: \n or \r\n? (here and elsewhere in this file)
+                    output += sourceLine + "\r\n";
+                }
+                i++;
+            }
 
-			if(minifyAndRemoveDebug)
-			{
-				var minifier = new Microsoft.Ajax.Utilities.Minifier();
-				output = addLicense() + minifier.MinifyJavaScript(output);
-			}
-			string outputFile = destFolder + outputFileName;
-			File.Delete(outputFile);
-			File.WriteAllText(outputFile, output);
-			Close();
-		}
-	}
+            if (minifyAndRemoveDebug)
+            {
+                var minifier = new Microsoft.Ajax.Utilities.Minifier();
+                output = addLicense() + minifier.MinifyJavaScript(output);
+            }
+            string outputFile = destFolder + outputFileName;
+            File.Delete(outputFile);
+            File.WriteAllText(outputFile, output);
+            Close();
+        }
+    }
 }

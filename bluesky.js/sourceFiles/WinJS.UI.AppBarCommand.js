@@ -164,7 +164,7 @@ WinJS.Namespace.define("WinJS.UI", {
                         // on which is loaded.  I'm not sure what the best way is to tell which (if either) is loaded.
                         var iconImage = "http://bluesky.io/images/icons-dark.png";
                         for (var i = 0; i < document.styleSheets.length; i++) {
-                            if (document.styleSheets[i].href && document.styleSheets[i].href.toLowerCase().indexOf("ui-dark.css") >= 0) {
+                            if (document.styleSheets[i].href && document.styleSheets[i].href.toLowerCase().indexOf("ui-dark") >= 0) {
                                 iconImage = "http://bluesky.io/images/icons.png";
                                 break;
                             }

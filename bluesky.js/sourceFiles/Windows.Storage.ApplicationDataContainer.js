@@ -55,7 +55,7 @@ WinJS.Namespace.define("Windows.Storage", {
                 this.containers[name] = newContainer;
 
                 // Persist in file system
-                localStorage.setItem("adc_" + name, JSON.stringify({"parent": this.name}));
+                Bluesky.dataStore.setItem("adc_" + name, JSON.stringify({ "parent": this.name }));
 
                 // return the newly created container
                 return newContainer;
@@ -71,7 +71,7 @@ WinJS.Namespace.define("Windows.Storage", {
             deleteContainer: function (name) {
                 
                 // Remove from filesystem
-                localStorage.removeItem("adc_" + name);
+                Bluesky.dataStore.removeItem("adc_" + name);
 
                 delete this.containers[name];
             }

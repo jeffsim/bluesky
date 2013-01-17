@@ -42,18 +42,15 @@ testHarness.addTestFile("WinJS.UI.AppBar Tests", {
 				test.assert($appBar.hasClass("win-commandlayout"), "Appbar does not have win-commandlayout class");
 				test.assert($appBar.hasClass("win-bottom"), "Appbar does not have win-bottom class");
 				test.assert($appBar.attr("role") == "menubar", "Appbar role not correct");
-
+				
 				// Verify presence and location of the appbar
 				test.assert($appBar[0], "Appbar not found in expected position");
 
 				// Verify appbar is hidden
 				test.assert($appBar.css("visibility") == "hidden", "Appbar not hidden by default");
 
-				// Check z-index and click-eater
-				var $clickEater = $(">.win-appbarclickeater", $("body"));
-				test.assert($clickEater[0], "Click eater not in expected location");
-				test.assert($appBar.css("z-index") == 1001, "Appbar z-index incorrect");
-				test.assert($clickEater.css("z-index") == 1000, "$clickEater z-index incorrect");
+				// Check z-index
+				test.assert($appBar.css("z-index") == 1002, "Appbar z-index incorrect (" + $appBar.css("z-index") + ")");
 
 				// Verify control
 				test.assert(appBar, "Appbar control not found");
@@ -89,6 +86,11 @@ testHarness.addTestFile("WinJS.UI.AppBar Tests", {
 					appBar.onaftershow = null;
 					// verify appbar is visible
 					test.assert($appBar.css("visibility") == "visible", "Appbar not visible");
+
+				    // Check click-eater
+					var $clickEater = $(">.win-appbarclickeater", $("body"));
+					test.assert($clickEater[0], "Click eater not in expected location");
+					test.assert($clickEater.css("z-index") == 1000, "$clickEater z-index incorrect (" + $clickEater.css("z-index") + ")");
 
 					// Cleanup
 					$appBar.remove();

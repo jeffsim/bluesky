@@ -1,0 +1,814 @@
+/*
+    Bluesky-ui-dark.css
+    Copyright © 2013 Bluesky LLC.  
+    Free for noncommercial use in webapps for web sites.
+    See www.bluesky.io for license details concerning commercial use and use in mobile apps
+*/
+
+/*
+    ==== TODOS ====
+    1.  Integrate this into the minifier; build bluesky-ui-light.min.css which strips comments
+    2.  I'm waffling on defaulting to Segoe UI - that gives better consistency with win8, but worse consistency for
+        Bluesky devs that are targeting multiple platforms.  I'm leaning towards defaulting to Arial and just leaving
+        it at that; but I'll want to ask devs first.
+    3.  Should I add code that looks for ".win-type-ellipsis" and cuts the text off and adds the "..."?  I'm not sure 
+        if WinJS actually *does* add the ellipsis or if it just cuts off the text...
+    4.  Semantic Zoom button image isn't quite right
+*/
+
+
+
+/*
+    HTML
+    
+    width/height:   Fill the screen
+    overflow:       Don't show the scrollbars automatically; the page and it's controls are responsible for that
+                    if they need to scroll.
+*/
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 
+    BODY
+
+    width/height:   Fill the screen
+    background-color: Set background to a dark gray
+    font-family:    For best consistency with Win8, first use Segoe UI if available.  If that isn't, then use
+                    Helvetica which looks closest to Segoe UI on iOS/Mac.  Failing that, fallback on Arial.  NOTE:
+                    See font-related TODO above.
+    font-weight:    Win8 UI tends towards lighter fonts.
+    font-size:      Default font size for all text
+    color:          Default to white text for ui-dark
+    letter-spacing: WinJS tweaks letter spacing slightly; we mimic that.
+    line-height:    WinJS extends line-height; presumably to give things more breathing space.
+    margin:         Remove the default margin that browsers add around body.
+*/
+body {
+    width: 100%;
+    height: 100%;
+    background-color: #1d1d1d;
+    font-family: 'Segoe UI', Helvetica, Arial;
+    font-weight: 200;
+    font-size: 11pt;
+    color: #fff;
+    letter-spacing: 0.02em;
+    line-height: 1.3636;
+    margin: 0px;
+}
+
+
+/***************************************************************************/
+/*                                 Headers
+/***************************************************************************/
+
+/* 
+    H1, H2, H3, ...
+
+    Note that .win-type-large (et al) are also defined here.
+*/
+h1, .win-type-xx-large {
+    font-size: 42pt;
+    font-weight: 200;
+}
+
+h2, .win-type-x-large {
+    font-size: 20pt;
+    font-weight: 200;
+    line-height: 1.2;
+}
+
+h3, .win-type-large {
+    font-size: 11pt;
+    font-weight: 600;
+}
+
+h4, .win-type-medium {
+    font-size: 11pt;
+    font-weight: 400;
+}
+
+h5, .win-type-small, .win-type-x-small {
+    font-size: 11pt;
+    font-weight: 300;
+}
+
+h6 {
+    font-size: 9pt;
+    font-weight: 400;
+    line-height: 1.666;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+/***************************************************************************/
+/*                               Back Button
+/***************************************************************************/
+
+/*
+    Back Button
+
+    height/width:   Make the button 41px on both sides
+    border-radius:  Draw a circle around the "<" image
+    border-width:   Make the circle 2px wide
+    border-color:   Make the circle white
+    border-style:   Get rid of the radiobutton-y default look
+    background:     WinJS uses a character from a font that isn't available on non-Win8 platforms; we instead use a
+                    spritesheet with a "<" image in it.
+    background-size:This is necessary to make background work on iOS
+*/
+.win-backbutton {
+    height: 41px;
+    width: 41px;
+    border-radius: 50%;
+    border-width: 2px;
+    border-color: #fff;
+    border-style: solid;
+    background: url("http://bluesky.io/images/icons.png") no-repeat scroll -40px 0px !important;
+    background-size: 200px 1200px;
+    padding: 0px;
+}
+
+    .win-backbutton:disabled {
+        display: inline-block;
+        visibility: hidden;
+        border: 0px;
+    }
+
+
+/***************************************************************************/
+/*                               ListView
+/***************************************************************************/
+
+/*
+    WinJS Listview container
+
+    overflow:       The listview container (.win-listview) doesn' show scrollbars; that' up to the listview's viewport.
+    -webkit-overflow-scrolling:     Enable inertial scrolling on iPad
+*/
+.win-listview {
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+    /*
+        WinJS Listview's Viewport
+
+        width/height:   Fill the allocated space in the DOM
+        position:       All elements within the viewport are positioned absolutely, relative to the viewport.
+    */
+    .win-listview > .win-viewport {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+        /* 
+            Horizontal Listview Viewport
+
+            overflow-x: Show horizontal scrollbars if the contents of the viewport are larger than the containing .win-listview
+            overflow-y: Never show vertical scrollbars in a horizontally scrolling listview
+        */
+        .win-listview > .win-viewport.win-horizontal {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        /* 
+            Vertical Listview Viewport
+
+            overflow-x: Never show horizontal scrollbars in a vertically scrolling listview
+            overflow-y: Show vertical scrollbars if the contents of the viewport are larger than the containing .win-listview
+        */
+        .win-listview > .win-viewport.win-vertical {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* 
+            Listview Surface.  This div contains the actual elements, and can be reeeeeally long/tall.
+
+            width/height:   By defaul, fill the containing viewport; the ListView control will override this when rendering
+                            elements, so that it is the full px width/height of all rendered elements.
+            position:       The ListView uses the enterContent animation to slide items in; when done, enterContent sets the
+                            surface's position back to what it initially was.  If unspecified, positions is 'static', which
+                            breaks the listview's layout.  So: we explicitly set position to relative here so that enterContent
+                            doesn't break us.  Note: this doesn't make 100% sense to me; it seems like this implies that if
+                            we don't specify position then it defaults to relative, but jQuery's $.css("position") is returning
+                            static if it's undefined.  Hmm.
+        */
+        .win-listview > .win-viewport > .win-surface {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+    /*
+        ListView item container
+
+        Note: I'd prefer to use .win-listview > .win-viewport > .win-surface > .win-container, but since WinJS
+                didn't, and app css may assume it's like WinJS defined it, we can't
+
+        margin:         WinJS defaults to a 5px margin around all elements
+        position:       All items in a listview are positioned absolutely, relative to the containing viewport.  The
+                        ListView control will populate top and left px values when rendering it's items.
+        background-color: WinJS puts a solid background behind items; I'm not a huge fan of it, but I s'pose it helps devs
+        z-index:        ensure container appears underneath the winitem.  This is also part of why position:absolute is requireed
+    */
+    .win-listview .win-container {
+        margin: 5px;
+        background-color: #1d1d1d;
+        position: absolute;
+        z-index: 0;
+    }
+
+        /* 
+            Listview item container hover
+
+            NOTE: I'd prefer to use the more performant form: of ".win-listview > .win-viewport > .win-surface >
+                    .win-container:hover", but that makes it sufficiently granular that it disallows overriding in the same
+                    way you can on WinJS (e.g. settings .win-listview .win-container:first-child:hover).
+
+            outline:            Display an outline around the item when the user hovers over it
+        */
+        .win-listview .win-container:hover {
+            outline: 3px solid rgba(255,255,255,0.3);
+        }
+
+    /*
+        ListView item
+
+        overflow:       If the developer puts content into an item that's larger than the container, then it'll overflow and
+                        look gross.  This is especially annoying if you're just a couple of pixels off, because your item hover
+                        highlight will be slightly too big and you won't know why.  To fix that: win-item's overflow is hidden
+    */
+    .win-listview .win-item {
+        overflow: hidden;
+    }
+
+    /* 
+        Grouped ListView group header
+        
+        NOTE: Can't use .win-listview.win-groups > .win-viewport > .win-surface > .win-groupheader since WinJS didn't and apps
+              may assume it.
+
+        NOTE: I'd like to add "white-space:nowrap" so that group headers don't wrap; but WinJS didn't do that and apps
+                can assume wrapping and mis-use group headers; the Visual Studio Grid app template (groupdetails page)
+                is a good example of this mis-use.
+
+        position:       Group headers are absolutely placed relative to the viewport
+        top:            All group headers are at Y=0; X is calculated in ListView._positionItems
+        line-height:    Group headers layout is a bit more condensed
+        margin-left:    WinJS puts a 70px margin here.
+        overflow:       Don't show scrollbars
+        padding:        Match WinJS's padding
+    */
+    .win-listview .win-groupheader {
+        position: absolute;
+        top: 0;
+        line-height: 1.2;
+        margin-left: 70px;
+        overflow: hidden;
+        padding: 10px 10px 10px 2px;
+    }
+    
+    /*
+        Grouped Listview surface
+
+        margin-left:    WinJS always displays the first group 70px from the edge of the listview container.
+    */
+    .win-listview.win-groups > .win-horizontal > .win-surface {
+        margin-left: -70px;
+    }
+
+/* select background
+        left/right/top/bottom:  Fill the container.
+        z-index:        This is used to ensure that the selection box appears undex the listview item (which has z-index: 1)
+        position:       Without this, the z-index is ignoreed.
+*/
+.win-selectionbackground {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    z-index: 0;
+}
+
+.win-selected .win-selectionbackground {
+    background-color: transparent;
+}
+.win-listview .win-selected {
+    color: #fff;
+}
+.win-selectioncheckmarkbackground {
+    border-color: #4617B4 #4617B4 transparent transparent;
+    border-style: solid;
+    border-width: 20px;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 0;
+    z-index: 3;
+}
+
+.win-selectioncheckmark {
+    background: url("http://bluesky.io/images/icons.png") repeat scroll 0 0 transparent;
+    height: 36px;
+    margin-right: -7px;
+    margin-top: -7px;
+    transform: scale(0.65);
+    -moz-transform: scale(.65);
+    -webkit-transform: scale(.65);
+    width: 36px;
+    position:absolute;
+    top:0px;
+    right:0px;
+    z-index:3;
+}
+
+
+/* ignore click events on listview selection border */
+.win-selectionbordercontainer, .win-selectionbackground, .win-selectioncheckmarkbackground, .win-selectioncheckmark
+{
+    pointer-events: none;
+}
+
+.win-selectionborder {
+    position: absolute;
+    z-index: 2;
+}
+.win-container.win-selected .win-selectionborder 
+{
+    border: 2px solid #4617B4;
+}
+.win-container.win-selected .win-selectionbordertop {
+    height: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+}
+.win-container.win-selected .win-selectionborderright {
+    bottom: 0;
+    right: 0;
+    top: 0;
+    width: 0;
+}
+.win-container.win-selected .win-selectionborderbottom {
+    bottom: 0;
+    height: 0;
+    left: 0;
+    right: 0;
+}
+.win-container.win-selected .win-selectionborderleft {
+    bottom: 0;
+    left: 0;
+    top: 0;
+    width: 0;
+}
+
+
+/***************************************************************************/
+/*                              Semantic Zoom
+/***************************************************************************/
+
+.win-semanticzoom {
+    height: 400px;
+}
+
+.win-semanticzoom-button-location.ltr {
+    right: 4px;
+}
+
+.win-semanticzoom-button {
+    background: url("http://bluesky.io/images/icons-dark.png") no-repeat scroll -9px -1126px rgba(216, 216, 216, 0.33); 
+    /* Following is necessary to make it work on iOS */
+    background-size: 200px 1200px;
+    border-color: transparent;
+    bottom: 24px;
+    height: 25px;
+    min-height: 25px;
+    min-width: 25px;
+    position: absolute;
+    width: 25px;
+    border-style: solid;
+    border-width: 2px;
+    z-index: 100;
+}
+
+.win-semanticzoom-button:hover
+{
+    background-color: #d8d8d8;
+}
+
+
+/***************************************************************************/
+/*                               AppBar
+/***************************************************************************/
+
+/*
+    AppBar
+
+    background-color:   Default to a black background for ui-dark
+    border:             Don't display any border by default
+    bottom:             The appbar appears by default on the bottom of the screen
+    position:           The appbar doesn't move
+    width:              Fill the horz space
+    height:             The contents of the appbar define its height
+    z-index:            This defines where in the render stack the appbar appears.  This is coordinated with flyouts and clickeaters.
+*/
+.win-appbar {
+    background-color: #000;
+    border: 0px;
+    left: 0px;
+    position: fixed;
+    width: 100%;
+    height: auto;
+    z-index: 1002;
+}
+
+/*
+    Command Layout - defines how commands are laid out in an appbar
+
+    min-height:         The contents will define the height, but don't let it be less than 68px
+*/
+.win-commandlayout {
+    min-height: 68px;
+    text-align: right;
+    padding-left: 10px;
+}
+
+
+    .win-commandlayout .win-selection {
+        float: left;
+    }
+/*
+    AppBar button
+    border:         Add the focus border in even if we don't show it, so that when it's visible things don't shift around
+*/
+button.win-command {
+    height: auto;
+    margin: 0px;
+    min-width: 40px;
+    padding: 12px 0px;
+    background-color: transparent;
+    border: 2px solid transparent;
+}
+
+    button.win-command:hover {
+        background-color: transparent;
+    }
+
+    /*
+        Label on an appbar button
+
+        font-size:      Small font for labels
+        overflow:       No scrollbars
+        padding/margin: Tweak layout
+        display:        Make the label appear under the button
+    */
+    button.win-command > .win-label {
+        font-size: 9pt;
+        line-height: 16px;
+        margin: 5px 0px -1px 0px;
+        overflow: hidden;
+        padding: 0px 4px;
+        display: block;
+        color: #fff;
+    }
+
+    button.win-command:focus {
+        border-color: #fff;
+        border-width: 2px;
+        outline: medium none;
+    }
+
+.win-commandimage {
+    height: 40px;
+    width: 40px;
+    display: inline-block;
+}
+
+button .win-commandring {
+    background-color: transparent;
+    border-color: #fff;
+    border-radius: 50%;
+    border: solid 2px #fff;
+}
+
+.win-commandicon {
+    cursor: default;
+    display: inline-block;
+    height: 40px;
+    margin: 0 28px;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    width: 40px; 
+}
+
+hr.win-command {
+    background-color: #7B7B7B;
+    margin: 14px 9px 14px 10px;
+    border: 0px;
+    display: inline-block;
+    height: 40px;
+    padding: 0;
+    vertical-align: top;
+    width: 1px;
+}
+
+/* When the appbar shrinks below 1024px, hide labels and shrink everything */
+@media (max-width: 1023px) {
+    button.win-command .win-label {
+        display: none;
+    }
+
+    button.win-command .win-commandicon {
+        margin: 0 8px;
+    }
+
+    .win-commandlayout {
+        min-height: 68px;
+    }
+
+    hr.win-command {
+        margin-bottom: 14px;
+        margin-top: 14px;
+    }
+}
+
+.win-appbarclickeater {
+    display: none;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    position: fixed;
+    z-index: 1000;
+}
+
+
+/***************************************************************************/
+/*                             FlipView control
+/***************************************************************************/
+
+/* 
+    FlipView WinJS Control
+
+    height:         Default height for FlipView controls is 400px.  App can override.
+    overflow:       Don't show content that exceeds the boundaries of the flipview's div.
+*/
+.win-flipview 
+{
+    height: 400px;
+    overflow: hidden;
+}
+
+/*
+    Flipview navigation button
+
+    background-color:   Button is partially transparent gray
+    color:              The directional character (^, V, <, >) is a slightly translucent black
+    border:             Remove the button's border; we want a flat button
+    font-size:          Font size
+    width/height:       Make the button 40px by 69px
+    position:           We'll absolutely position the button relative to the flipview control
+    z-index:            Make the button appear above the flipview's contents    
+*/
+.win-flipview .win-navbutton {
+    background-color: rgba(213, 213, 213, 0.35);
+    color: rgba(0, 0, 0, 0.6);
+    border: 0px;
+    font-size: 16pt;
+    width: 70px;
+    height: 40px;
+    position: absolute;
+    z-index: 1;
+}
+
+/*
+    Flipview navigation button hover
+
+    background-color:   When the mouse hovers over a navigation button, make it mostly white
+    color:              When the mouse hovers over a navigation button, make the directional character a solid black
+*/
+.win-flipview .win-navbutton:hover 
+{
+    background-color: rgba(215,215,215,0.94);
+    color: #000;
+}
+
+/*
+    Flipview left navigation button
+
+    left:           Position the button on the left side of the flipview
+    margin-top:     In combination with "top:50%", this vertically centers the button in the flipview
+    top:            See above
+*/
+.win-flipview .win-navleft {
+    left: 0;
+    margin-top: -20px;
+    top: 50%;
+}
+
+/*
+    Flipview Up navigation button
+
+    top:            Position the button on the top of the flipview
+    margin-left:    In combination with "left:50%", this horizontally centers the button in the flipview
+    left:           See above
+*/
+.win-flipview .win-navtop {
+    left: 50%;
+    margin-left: -35px;
+    top: 0;
+}
+
+/*
+    Flipview down navigation button
+
+    bottom:         Position the button on the top of the flipview
+    margin-left:    In combination with "left:50%", this horizontally centers the button in the flipview
+    left:           See above
+*/
+.win-flipview .win-navbottom {
+    bottom: 0;
+    margin-left: -35px;
+    left: 50%;
+}
+
+/*
+    Flipview right navigation button
+
+    right:          Position the button on the right side of the flipview
+    margin-top:     In combination with "top:50%", this vertically centers the button in the flipview
+    top:            See above
+*/
+.win-flipview .win-navright {
+    right: 0px;
+    margin-top: -20px;
+    top: 50%;
+}
+
+
+/***************************************************************************/
+/*                             Flyout control
+/***************************************************************************/
+
+/*
+    Flyout control
+*/
+.win-flyout 
+{
+    border: solid 2px #fff;
+    background-color: #000;
+    font-size: 11pt;
+    font-weight: 400;
+    width: auto;
+    height: auto;
+    margin: 5px;
+    overflow: auto;
+    padding: 25px 20px 20px;
+    position: fixed;
+    z-index: 1003;
+}
+
+.win-flyoutmenuclickeater {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: none;
+    opacity: 0;
+    z-index: 1002;
+}
+
+
+/***************************************************************************/
+/*                               Rating control
+/***************************************************************************/
+
+/* No html entity for star.  Using heart instead.  See: http://www.evotech.net/blog/2007/04/named-html-entities-in-numeric-order/  
+	TODO: &#9733;  == star, but (1) I'm not sure if that's websafe, and (2) you can't seem to use that format in css content.
+	TODO: use background-image instead?
+*/
+.win-rating .win-star:before {
+    content: '\2665';
+}
+
+.win-rating .win-star.win-empty {
+    color: rgba(255,255,255, 0.35);
+}
+
+.win-rating .win-star.win-full {
+    color: #fff;
+}
+
+.win-rating .win-full.win-tentative.win-star {
+    color:rgb(114, 65, 228);
+}
+
+.win-rating .win-star {
+    width: 28px;
+    height: 28px;
+    font-size: 34px;
+    line-height: 1;
+    overflow: hidden;
+    padding: 0 6px;
+    cursor: pointer;
+}
+
+
+/***************************************************************************/
+/*                               Miscellaneous
+/***************************************************************************/
+
+/*
+    Ellipses 
+    
+    white-space: Don't wrap; ideally finish with "..." instead.  Note that for now we're just cutting the text off;
+                 See ellipsis-related TODO above about adding "..."
+*/
+.win-type-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Remove focus ring on FF.  See http://stackoverflow.com/questions/71074/how-to-remove-firefoxs-dotted-outline-on-buttons-as-well-as-links/199319#199319 */
+:focus
+{
+    outline: none;
+}
+/* part of above */
+::-moz-focus-inner
+{
+    border: 0;
+}
+
+
+/***************************************************************************/
+/*                             HTML controls
+/***************************************************************************/
+
+
+/* 
+    Select controls
+
+    border-style:       Make the select control look more like Win8
+    font-size:          Use a slightly larger font than the default select size
+    margin:             Give the select control some space.
+*/
+select {
+    border-style: solid;
+    font-size: 11pt;
+    margin: 4px 0;
+}
+
+/*
+    anchors
+
+    color:  WinJS prefers a nice violet for links.
+*/
+a {
+    color: #9C72FF;
+}
+
+input[type="text"] , input[type="password"]
+{
+    padding:0px;
+    width: 276px;
+    border-style: solid;
+    border-width: 2px;
+    font-size: 11pt;
+    font-weight: 400;
+    line-height: 1.3636;
+    margin: 4px 0;
+    min-height: 28px;
+    min-width: 64px;
+}
+
+input[type="range"] {
+    height: auto;
+    padding: 17px 0 32px;
+    width: 280px;
+}
+button, input[type="button"], input[type="submit"] 
+{
+    border: 0px;
+    font-size: 11pt;
+    min-width: 90px;
+    min-height: 32px;
+    line-height: 1.3636;
+    padding: 6px 10px;
+}

@@ -1,0 +1,247 @@
+/*
+    Bluesky-ui-dark.css
+    Copyright © 2013 Bluesky LLC.  
+    Free for noncommercial use in webapps for web sites.
+    See www.bluesky.io for license details concerning commercial use and use in mobile apps
+*/
+
+/*
+    ==== TODOS ====
+    1.  Integrate this into the minifier; build bluesky-ui-light.min.css which strips comments
+    2.  I'm waffling on defaulting to Segoe UI - that gives better consistency with win8, but worse consistency for
+        Bluesky devs that are targeting multiple platforms.  I'm leaning towards defaulting to Arial and just leaving
+        it at that; but I'll want to ask devs first.
+    3.  Should I add code that looks for ".win-type-ellipsis" and cuts the text off and adds the "..."?  I'm not sure 
+        if WinJS actually *does* add the ellipsis or if it just cuts off the text...
+*/
+
+
+
+/*
+    HTML
+    
+    width/height:   Fill the screen
+    overflow:       Don't show the scrollbars automatically; the page and it's controls are responsible for that
+                    if they need to scroll. */
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 
+    BODY
+
+    width/height:   Fill the screen
+    font-family:    For best consistency with Win8, first use Segoe UI if available.  If that isn't, then use
+                    Helvetica which looks closest to Segoe UI on iOS/Mac.  Failing that, fallback on Arial.  NOTE:
+                    See font-related TODO above.
+    font-weight:    Win8 UI tends towards lighter fonts.
+    font-size:      Default font size for all text
+    color:          Default to white text for ui-dark
+    letter-spacing: WinJS tweaks letter spacing slightly; we mimic that.
+    line-height:    WinJS extends line-height; presumably to give things more breathing space.
+    margin:         Remove the default margin that browsers add around body.
+*/
+body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Segoe UI', Helvetica, Arial;
+    font-weight: 200;
+    font-size: 11pt;
+    color: #fff;
+    letter-spacing: 0.02em;
+    line-height: 1.3636;
+    margin: 0px;
+}
+
+/* 
+    H1, H2, H3, ...
+
+    Note that .win-type-large (et al) are also defined here.
+*/
+h1, .win-type-xx-large {
+    font-size: 42pt;
+    font-weight: 200;
+}
+
+h2, .win-type-x-large {
+    font-size: 20pt;
+    line-height: 1.2;
+}
+
+h3, .win-type-large {
+    font-size: 11pt;
+    font-weight: 600;
+}
+
+h4, .win-type-medium {
+    font-size: 11pt;
+    font-weight: 400;
+}
+
+h4, .win-type-medium {
+    font-size: 11pt;
+    font-weight: 400;
+}
+
+h5, .win-type-small, .win-type-x-small {
+    font-size: 11pt;
+    font-weight: 300;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+/*
+    Ellipses 
+    
+    white-space: Don't wrap; ideally finish with "..." instead.  Note that for now we're just cutting the text off;
+                 See ellipsis-related TODO above about adding "..."
+*/
+.win-type-ellipsis {
+    white-space: nowrap;
+}
+
+/*
+    Back Button
+
+    height/width:   Make the button 41px on both sides
+    border-radius:  Draw a circle around the "<" image
+    border-width:   Make the circle 2px wide
+    border-color:   Make the circle white
+    border-style:   Get rid of the radiobutton-y default look
+    background:     WinJS uses a character from a font that isn't available on non-Win8 platforms; we instead use a
+                    spritesheet with a "<" image in it.
+    background-size:This is necessary to make background work on iOS
+*/
+.win-backbutton {
+    height: 41px;
+    width: 41px;
+    border-radius: 50%;
+    border-width: 2px;
+    border-color: #fff;
+    border-style: solid;
+    background: url("http://bluesky.io/images/icons.png") no-repeat scroll -40px 0px !important;
+    background-size: 200px 1200px;
+    padding: 0px;
+}
+
+    .win-backbutton:disabled {
+        display: inline-block;
+        visibility: hidden;
+        border: 0px;
+    }
+
+
+/*
+    WinJS Listview container
+
+    overflow:       The listview container (.win-listview) doesn' show scrollbars; that' up to the listview's viewport.
+*/
+.win-listview {
+    overflow: hidden;
+}
+
+    /*
+        WinJS Listview's Viewport
+
+        width/height:   Fill the allocated space in the DOM
+        position:       All elements within the viewport are positioned absolutely, relative to the viewport.
+    */
+    .win-listview > .win-viewport {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+        /* 
+            Horizontal Listview Viewport
+
+            overflow-x: Show horizontal scrollbars if the contents of the viewport are larger than the containing .win-listview
+            overflow-y: Never show vertical scrollbars in a horizontally scrolling listview
+        */
+        .win-listview > .win-viewport.win-horizontal {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        /* 
+            Vertical Listview Viewport
+
+            overflow-x: Never show horizontal scrollbars in a vertically scrolling listview
+            overflow-y: Show vertical scrollbars if the contents of the viewport are larger than the containing .win-listview
+        */
+        .win-listview > .win-viewport.win-vertical {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* 
+            Listview Surface.  This div contains the actual elements, and can be reeeeeally long/tall.
+
+            width/height:   By defaul, fill the containing viewport; the ListView control will override this when rendering
+                            elements, so that it is the full px width/height of all rendered elements.
+            position:       The ListView uses the enterContent animation to slide items in; when done, enterContent sets the
+                            surface's position back to what it initially was.  If unspecified, positions is 'static', which
+                            breaks the listview's layout.  So: we explicitly set position to relative here so that enterContent
+                            doesn't break us.  Note: this doesn't make 100% sense to me; it seems like this implies that if
+                            we don't specify position then it defaults to relative, but jQuery's $.css("position") is returning
+                            static if it's undefined.  Hmm.
+        */
+        .win-listview > .win-viewport > .win-surface {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+            /*
+                ListView item container
+
+                margin:         WinJS defaults to a 5px margin around all elements
+                position:       All items in a listview are positioned absolutely, relative to the containing viewport.  The
+                                ListView control will populate top and left px values when rendering it's items.
+            */
+            .win-listview > .win-viewport > .win-surface > .win-container {
+                margin: 5px;
+                position: absolute;
+            }
+
+    /* 
+        Listview item container hover
+
+        NOTE: I'd prefer to use the more performant form: of ".win-listview > .win-viewport > .win-surface >
+                .win-container:hover", but that makes it sufficiently granular that it disallows overriding in the same
+                way you can on WinJS (e.g. settings .win-listview .win-container:first-child:hover).
+
+        outline:            Display an outline around the item when the user hovers over it
+        background-color:   In case the item is partially transparent, also display the hover color as the background
+    */
+    .win-listview .win-container:hover {
+        outline: 3px solid rgba(255,255,255,0.3);
+        background-color: rgba(255,255,255,0.3);
+    }
+
+    /* 
+        Grouped ListView group header
+        
+        line-height:    Group headers layout is a bit more condensed
+        overflow:       Don't show scrollbars
+        white-space:    Don't wrap group headers; just cut them off.
+    */
+    .win-listview.win-groups > .win-viewport > .win-surface > .win-groupheader {
+        line-height: 1.2;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    /*
+        Grouped Listview surface
+
+        margin-left:    WinJS always displays the first group 70px from the edge of the listview container.
+    */
+    .win-listview.win-groups > .win-horizontal > .win-surface {
+        margin-left: -70px;
+    }

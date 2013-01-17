@@ -97,6 +97,14 @@ WinJS.Namespace.define("WinJS.Navigation", {
 
             }).then(function () {
 
+                // Unload previous pages' controls
+                // TODO: Need to create test cases in Win8 and see if they do this in .navigate.
+                $("[data-win-control]").each(function () {
+
+                    if (this.winControl && this.winControl._unloadOnNavigate)
+                        this.winControl._unloadOnNavigate();
+                });
+
                 // Wait until the navigating setPromise (set by caller) - if any - is fulfilled
                 return WinJS.Promise.as(navigatingSetPromise);
 
@@ -178,6 +186,14 @@ WinJS.Namespace.define("WinJS.Navigation", {
 
             }).then(function () {
 
+                // Unload previous pages' controls
+                // TODO: Need to create test cases in Win8 and see if they do this in .navigate.
+                $("[data-win-control]").each(function () {
+
+                    if (this.winControl && this.winControl._unloadOnNavigate)
+                        this.winControl._unloadOnNavigate();
+                });
+
                 // Wait until the navigating setPromise (set by caller) - if any - is fulfilled
                 return WinJS.Promise.as(navigatingSetPromise);
 
@@ -256,6 +272,14 @@ WinJS.Namespace.define("WinJS.Navigation", {
                 that._notifyNavigating(newPageInfo);
 
             }).then(function () {
+
+                // Unload previous pages' controls
+                // TODO: Need to create test cases in Win8 and see if they do this in .navigate.
+                $("[data-win-control]").each(function () {
+
+                    if (this.winControl && this.winControl._unloadOnNavigate)
+                        this.winControl._unloadOnNavigate();
+                });
 
                 // Wait until the navigating setPromise (set by caller) - if any - is fulfilled
                 return WinJS.Promise.as(navigatingSetPromise);
