@@ -16,7 +16,7 @@ Check out the samples: http://sampleBrowser.bluesky.io
 Run the tests here: http://tests.bluesky.io/testharness/testharness.html
 
 ## What is bluesky?
-Bluesky is a *BETA* re-implementation of the WinJS API for the Web, enabling WinJS developers to publish your WinJS apps to more marketplaces, 
+Bluesky is a *BETA* re-implementation of the WinJS API for the Web, enabling WinJS developers to publish their WinJS apps to more marketplaces, 
 including Facebook AppCenter, Google WebStore, Firefox Marketplace, or any website at all. We're also working on enabling developers to
 ship their WinJS apps on iOS, Android, and WP8 phones and tablets.
 
