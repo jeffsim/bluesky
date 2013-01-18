@@ -223,8 +223,8 @@ h1, h2, h3, h4, h5, h6 {
     .win-listview .win-container {
         margin: 5px;
         background-color: #1d1d1d;
-        position: absolute;
         z-index: 0;
+        position: absolute;
     }
 
         /* 
@@ -246,9 +246,13 @@ h1, h2, h3, h4, h5, h6 {
         overflow:       If the developer puts content into an item that's larger than the container, then it'll overflow and
                         look gross.  This is especially annoying if you're just a couple of pixels off, because your item hover
                         highlight will be slightly too big and you won't know why.  To fix that: win-item's overflow is hidden
+        z-index:        This is used to ensure that the listview item appears above the selection box (which has z-index:0)
+        position:       Without this, the z-index is ignoreed.
     */
     .win-listview .win-item {
         overflow: hidden;
+        z-index: 1;
+        position: absolute;
     }
 
     /* 
@@ -276,7 +280,7 @@ h1, h2, h3, h4, h5, h6 {
         overflow: hidden;
         padding: 10px 10px 10px 2px;
     }
-    
+
     /*
         Grouped Listview surface
 
@@ -303,9 +307,11 @@ h1, h2, h3, h4, h5, h6 {
 .win-selected .win-selectionbackground {
     background-color: transparent;
 }
+
 .win-listview .win-selected {
     color: #fff;
 }
+
 .win-selectioncheckmarkbackground {
     border-color: #4617B4 #4617B4 transparent transparent;
     border-style: solid;
@@ -329,16 +335,15 @@ h1, h2, h3, h4, h5, h6 {
     -moz-transform: scale(.65);
     -webkit-transform: scale(.65);
     width: 36px;
-    position:absolute;
-    top:0px;
-    right:0px;
-    z-index:3;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 3;
 }
 
 
 /* ignore click events on listview selection border */
-.win-selectionbordercontainer, .win-selectionbackground, .win-selectioncheckmarkbackground, .win-selectioncheckmark
-{
+.win-selectionbordercontainer, .win-selectionbackground, .win-selectioncheckmarkbackground, .win-selectioncheckmark {
     pointer-events: none;
 }
 
@@ -346,28 +351,32 @@ h1, h2, h3, h4, h5, h6 {
     position: absolute;
     z-index: 2;
 }
-.win-container.win-selected .win-selectionborder 
-{
+
+.win-container.win-selected .win-selectionborder {
     border: 2px solid #4617B4;
 }
+
 .win-container.win-selected .win-selectionbordertop {
     height: 0;
     left: 0;
     right: 0;
     top: 0;
 }
+
 .win-container.win-selected .win-selectionborderright {
     bottom: 0;
     right: 0;
     top: 0;
     width: 0;
 }
+
 .win-container.win-selected .win-selectionborderbottom {
     bottom: 0;
     height: 0;
     left: 0;
     right: 0;
 }
+
 .win-container.win-selected .win-selectionborderleft {
     bottom: 0;
     left: 0;
@@ -389,7 +398,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .win-semanticzoom-button {
-    background: url("http://bluesky.io/images/icons-dark.png") no-repeat scroll -9px -1126px rgba(216, 216, 216, 0.33); 
+    background: url("http://bluesky.io/images/icons-dark.png") no-repeat scroll -9px -1126px rgba(216, 216, 216, 0.33);
     /* Following is necessary to make it work on iOS */
     background-size: 200px 1200px;
     border-color: transparent;
@@ -404,10 +413,9 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 100;
 }
 
-.win-semanticzoom-button:hover
-{
-    background-color: #d8d8d8;
-}
+    .win-semanticzoom-button:hover {
+        background-color: #d8d8d8;
+    }
 
 
 /***************************************************************************/
@@ -512,7 +520,7 @@ button .win-commandring {
     min-height: 0;
     min-width: 0;
     padding: 0;
-    width: 40px; 
+    width: 40px;
 }
 
 hr.win-command {
@@ -568,13 +576,12 @@ hr.win-command {
     height:         Default height for FlipView controls is 400px.  App can override.
     overflow:       Don't show content that exceeds the boundaries of the flipview's div.
 */
-.win-flipview 
-{
+.win-flipview {
     height: 400px;
     overflow: hidden;
 }
 
-/*
+    /*
     Flipview navigation button
 
     background-color:   Button is partially transparent gray
@@ -585,80 +592,79 @@ hr.win-command {
     position:           We'll absolutely position the button relative to the flipview control
     z-index:            Make the button appear above the flipview's contents    
 */
-.win-flipview .win-navbutton {
-    background-color: rgba(213, 213, 213, 0.35);
-    color: rgba(0, 0, 0, 0.6);
-    border: 0px;
-    font-size: 16pt;
-    width: 70px;
-    height: 40px;
-    position: absolute;
-    z-index: 1;
-}
+    .win-flipview .win-navbutton {
+        background-color: rgba(213, 213, 213, 0.35);
+        color: rgba(0, 0, 0, 0.6);
+        border: 0px;
+        font-size: 16pt;
+        width: 70px;
+        height: 40px;
+        position: absolute;
+        z-index: 1;
+    }
 
-/*
+        /*
     Flipview navigation button hover
 
     background-color:   When the mouse hovers over a navigation button, make it mostly white
     color:              When the mouse hovers over a navigation button, make the directional character a solid black
 */
-.win-flipview .win-navbutton:hover 
-{
-    background-color: rgba(215,215,215,0.94);
-    color: #000;
-}
+        .win-flipview .win-navbutton:hover {
+            background-color: rgba(215,215,215,0.94);
+            color: #000;
+        }
 
-/*
+    /*
     Flipview left navigation button
 
     left:           Position the button on the left side of the flipview
     margin-top:     In combination with "top:50%", this vertically centers the button in the flipview
     top:            See above
 */
-.win-flipview .win-navleft {
-    left: 0;
-    margin-top: -20px;
-    top: 50%;
-}
+    .win-flipview .win-navleft {
+        left: 0;
+        margin-top: -20px;
+        top: 50%;
+    }
 
-/*
+    /*
     Flipview Up navigation button
 
     top:            Position the button on the top of the flipview
     margin-left:    In combination with "left:50%", this horizontally centers the button in the flipview
     left:           See above
 */
-.win-flipview .win-navtop {
-    left: 50%;
-    margin-left: -35px;
-    top: 0;
-}
+    .win-flipview .win-navtop {
+        left: 50%;
+        margin-left: -35px;
+        top: 0;
+    }
 
-/*
+    /*
     Flipview down navigation button
 
     bottom:         Position the button on the top of the flipview
     margin-left:    In combination with "left:50%", this horizontally centers the button in the flipview
     left:           See above
 */
-.win-flipview .win-navbottom {
-    bottom: 0;
-    margin-left: -35px;
-    left: 50%;
-}
+    .win-flipview .win-navbottom {
+        bottom: 0;
+        margin-left: -35px;
+        left: 50%;
+    }
 
-/*
+    /*
     Flipview right navigation button
 
     right:          Position the button on the right side of the flipview
     margin-top:     In combination with "top:50%", this vertically centers the button in the flipview
     top:            See above
 */
-.win-flipview .win-navright {
-    right: 0px;
-    margin-top: -20px;
-    top: 50%;
-}
+    .win-flipview .win-navright {
+        right: 0px;
+        margin-top: -20px;
+        top: 50%;
+    }
 
 
 /***************************************************************************/
@@ -668,8 +674,7 @@ hr.win-command {
 /*
     Flyout control
 */
-.win-flyout 
-{
+.win-flyout {
     border: solid 2px #fff;
     background-color: #000;
     font-size: 11pt;
@@ -716,7 +721,7 @@ hr.win-command {
 }
 
 .win-rating .win-full.win-tentative.win-star {
-    color:rgb(114, 65, 228);
+    color: rgb(114, 65, 228);
 }
 
 .win-rating .win-star {
@@ -746,13 +751,11 @@ hr.win-command {
 }
 
 /* Remove focus ring on FF.  See http://stackoverflow.com/questions/71074/how-to-remove-firefoxs-dotted-outline-on-buttons-as-well-as-links/199319#199319 */
-:focus
-{
+:focus {
     outline: none;
 }
 /* part of above */
-::-moz-focus-inner
-{
+::-moz-focus-inner {
     border: 0;
 }
 
@@ -784,9 +787,8 @@ a {
     color: #9C72FF;
 }
 
-input[type="text"] , input[type="password"]
-{
-    padding:0px;
+input[type="text"], input[type="password"] {
+    padding: 0px;
     width: 276px;
     border-style: solid;
     border-width: 2px;
@@ -803,8 +805,8 @@ input[type="range"] {
     padding: 17px 0 32px;
     width: 280px;
 }
-button, input[type="button"], input[type="submit"] 
-{
+
+button, input[type="button"], input[type="submit"] {
     border: 0px;
     font-size: 11pt;
     min-height: 32px;
