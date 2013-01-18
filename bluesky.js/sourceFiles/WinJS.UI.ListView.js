@@ -97,16 +97,19 @@ WinJS.Namespace.define("WinJS.UI", {
                     this.$rootElement.unbind("DOMNodeRemoved", this._unload);
                 }
 
+                // NOTE: When adding our event listeners to our _list, we need to use this.render.bind(this) so that 'this' is the context
+                //       in which the event handler is called.  The problem is that you cannot simply call removedEventListener(evtName, this.render.bind(this)
+                //       to remove it.  So we do it this way instead...
                 if (this._itemDataSource && this._itemDataSource._list) {
-                    this._itemDataSource._list.removeEventListener("itemremoved", this.render);
-                    this._itemDataSource._list.removeEventListener("iteminserted", this.render);
-                    this._itemDataSource._list.removeEventListener("itemchanged", this.render);
+                    this._itemDataSource._list.removeEventListener("itemremoved", this._registeredEventCallback_ItemRemoved);
+                    this._itemDataSource._list.removeEventListener("iteminserted", this._registeredEventCallback_ItemInserted);
+                    this._itemDataSource._list.removeEventListener("itemchanged", this._registeredEventCallback_ItemChanged);
                 }
 
                 if (this._groupDataSource && this._groupDataSource._list) {
-                    this._groupDataSource._list.removeEventListener("itemremoved", this.render);
-                    this._groupDataSource._list.removeEventListener("iteminserted", this.render);
-                    this._groupDataSource._list.removeEventListener("itemchanged", this.render);
+                    this._groupDataSource._list.addEventListener("itemremoved", this._registeredEventCallback_GroupItemRemoved);
+                    this._groupDataSource._list.addEventListener("iteminserted", this._registeredEventCallback_GroupItemInserted);
+                    this._groupDataSource._list.addEventListener("itemchanged", this._registeredEventCallback_GroupItemChanged);
                 }
             },
 
@@ -759,33 +762,41 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     var that = this;
 
-                    // This event handler is called when an event that does not change our datasource count has occurred
-                    var renderMe = function () {
-                        // TODO: leaving this wrapper in case I need to send events; if not, then just bind to render.
-                        that.render(false);
-                    };
+                    // NOTE: When adding our event listeners to our _list, we need to use this.render.bind(this) so that 'this' is the context
+                    //       in which the event handler is called.  The problem is that you cannot simply call removedEventListener(evtName, this.render.bind(this)
+                    //       to remove it.  So we do it this way instead.
 
                     // Unbind from previous list (if any)
                     if (this._itemDataSource && this._itemDataSource._list) {
-                        this._itemDataSource._list.removeEventListener("itemremoved", this.render);
-                        this._itemDataSource._list.removeEventListener("iteminserted", this.render);
-                        this._itemDataSource._list.removeEventListener("itemchanged", this.render);
+                        this._itemDataSource._list.removeEventListener("itemremoved", this._registeredEventCallback_ItemRemoved);
+                        this._itemDataSource._list.removeEventListener("iteminserted", this._registeredEventCallback_ItemInserted);
+                        this._itemDataSource._list.removeEventListener("itemchanged", this._registeredEventCallback_ItemChanged);
                     }
 
                     // Store a reference to the new data source in our owning ListView
                     this._itemDataSource = newDataSource;
 
                     // Listen to changes to the list.
-                    // TODO: Encapsulate all of this in the datasource object as "bindOnAnyChange"
-                    this._itemDataSource._list.addEventListener("itemremoved", this.render);
-                    this._itemDataSource._list.addEventListener("iteminserted", this.render);
-                    this._itemDataSource._list.addEventListener("itemchanged", this.render);
+                    this._registeredEventCallback_ItemRemoved = function () { that.render(false); }
+                    this._registeredEventCallback_ItemInserted = function () { that.render(false); }
+                    this._registeredEventCallback_ItemChanged = function () { that.render(false); }
+                    this._itemDataSource._list.addEventListener("itemremoved", this._registeredEventCallback_ItemRemoved);
+                    this._itemDataSource._list.addEventListener("iteminserted", this._registeredEventCallback_ItemInserted);
+                    this._itemDataSource._list.addEventListener("itemchanged", this._registeredEventCallback_ItemChanged);
 
                     // Refresh our in-page appearance to show the new datasource's items.
                     this.render();
                 }
             },
 
+            // The following event callbacks are to workaround the (apparent) inability to bind event listeners to this.render.bind(this).
+            _registeredEventCallback_ItemRemoved: null,
+            _registeredEventCallback_ItemInserted: null,
+            _registeredEventCallback_ItemChanged: null,
+
+            _registeredEventCallback_GroupItemRemoved: null,
+            _registeredEventCallback_GroupItemInserted: null,
+            _registeredEventCallback_GroupItemChanged: null,
 
             // _groupDataSource: If this is non-null, then the ListView renders its items in a grouped UX, grouped by the groups defined in groupDataSource
             _groupDataSource: null,
@@ -803,17 +814,15 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     var that = this;
 
-                    // This event handler is called when an event that does not change our datasource count has occurred
-                    var renderMe = function () {
-                        // TODO: leaving this wrapper in case I need to send events; if not, then just bind to render.
-                        that.render(true);
-                    };
+                    // NOTE: When adding our event listeners to our _list, we need to use this.render.bind(this) so that 'this' is the context
+                    //       in which the event handler is called.  The problem is that you cannot simply call removedEventListener(evtName, this.render.bind(this)
+                    //       to remove it.  So we do it this way instead.
 
                     // Unbind from previous list (if any)
                     if (this._groupDataSource && this._groupDataSource._list) {
-                        this._groupDataSource._list.removeEventListener("itemremoved", this.render);
-                        this._groupDataSource._list.removeEventListener("iteminserted", this.render);
-                        this._groupDataSource._list.removeEventListener("itemchanged", this.render);
+                        this._groupDataSource._list.removeEventListener("itemremoved", this._registeredEventCallback_GroupItemRemoved);
+                        this._groupDataSource._list.removeEventListener("iteminserted", _registeredEventCallback_GroupItemInserted);
+                        this._groupDataSource._list.removeEventListener("itemchanged", _registeredEventCallback_GroupItemChanged);
                     }
 
                     var previousGroupDataSource = this._groupDataSource;
@@ -823,9 +832,12 @@ WinJS.Namespace.define("WinJS.UI", {
 
                     if (this._groupDataSource && this._groupDataSource._list) {
                         // Listen to changes to the list.
-                        this._groupDataSource._list.addEventListener("itemremoved", this.render);
-                        this._groupDataSource._list.addEventListener("iteminserted", this.render);
-                        this._groupDataSource._list.addEventListener("itemchanged", this.render);
+                        this._registeredEventCallback_GroupItemRemoved = function () { that.render(true); }
+                        this._registeredEventCallback_GroupItemInserted = function () { that.render(true); }
+                        this._registeredEventCallback_GroupItemChanged = function () { that.render(true); }
+                        this._groupDataSource._list.addEventListener("itemremoved", this._registeredEventCallback_GroupItemRemoved);
+                        this._groupDataSource._list.addEventListener("iteminserted", this._registeredEventCallback_GroupItemInserted);
+                        this._groupDataSource._list.addEventListener("itemchanged", this._registeredEventCallback_GroupItemChanged);
                     }
 
                     // Refresh our in-page appearance to show the new datasource's items.

@@ -119,6 +119,9 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
         else {
             var pageControl = WinJS.Class.define(function (targetElement, state, completion, parentedPromise) {
 
+                // Set the target element's winControl to this
+                targetElement.winControl = this;
+
                 // Track the page that is currently being defined, so that subcontrols on it can be associated with it, and we can wait for them to be ready
                 // before we fulfill our renderPromise.
                 // TODO: This will break if a Page loads a Page that loads a Page; a seemingly rare case so ignoring for now; but will need to address eventually.

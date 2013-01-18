@@ -170,10 +170,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		            var appBar = this.winControl;
 
 		            // Remove our click listener from the appbar click eater
-		            WinJS.UI._$appBarClickEater.unbind("click", appBar._clickEaterFunction);
+		            if (WinJS.UI._$appBarClickEater)
+		                WinJS.UI._$appBarClickEater.unbind("click", appBar._clickEaterFunction);
 
 		            // TODO: What if there are other appbars visible?
-		            WinJS.UI._$appBarClickEater.hide();
+		            if (WinJS.UI._$appBarClickEater)
+		                WinJS.UI._$appBarClickEater.hide();
 		            var event = document.createEvent("CustomEvent");
 		            event.initCustomEvent("beforehide", true, true, {});
 		            appBar.dispatchEvent(event);
@@ -409,7 +411,8 @@ WinJS.Namespace.define("WinJS.UI", {
 		                // Don't call this.hide() since win8 doesn't fire events when hiding due to disabled = true
 		                // TODO: Animate
 		                this.$rootElement.css("visibility", "hidden");
-		                WinJS.UI._$appBarClickEater.hide();
+		                if (WinJS.UI._$appBarClickEater)
+		                    WinJS.UI._$appBarClickEater.hide();
 		                this._hidden = true;
 		            }
 		        }
@@ -430,10 +433,12 @@ WinJS.Namespace.define("WinJS.UI", {
 		        set: function (value) {
 
 		            this._sticky = value;
-		            if (this._sticky)
-		                WinJS.UI._$appBarClickEater.hide();
-		            else if (!this._hidden)
-		                WinJS.UI._$appBarClickEater.show();
+		            if (WinJS.UI._$appBarClickEater) {
+		                if (this._sticky)
+		                    WinJS.UI._$appBarClickEater.hide();
+		                else if (!this._hidden)
+		                    WinJS.UI._$appBarClickEater.show();
+		            }
 		        }
 		    },
 
