@@ -18,15 +18,17 @@ Run the tests here: http://tests.bluesky.io/testharness/testharness.html
 ## What is bluesky?
 Bluesky is a *BETA* re-implementation of the WinJS API for the Web, enabling WinJS developers to publish their WinJS apps to more marketplaces, 
 including Facebook AppCenter, Google WebStore, Firefox Marketplace, or any website at all. We're also working on enabling developers to
-ship their WinJS apps on iOS, Android, and WP8 phones and tablets.
+ship their WinJS apps on iOS, Android, and WP8 phones and tablets.  Richer Intranet support is on the short-list of features for Enterprise users
+as well.
 
 Read more at http://www.bluesky.io
 
 ## License
-Short version: Bluesky is free for building noncommercial webapps that are for use in websites only.  See the license.txt file that came with this
+Short version: Bluesky is free for building noncommercial webapps that are for use in public websites only.  See the license.txt file that came with this
 readme for details.  If the file isn't present, then you can view the full license at http://bluesky.io/personalLicense.htm.
 
-For more information about licensing options, including a Developer Licenses for building commercial apps and apps for phones and tablets, swing by http://www.bluesky.io
+For more information about licensing options, including licenses for building commercial apps, apps for phones and tablets, and intranet-hosting of Bluesky
+apps, swing by http://www.bluesky.io
 
 ##Contact
 - Email: jeffsim@bluesky.io (Jeff Simon)

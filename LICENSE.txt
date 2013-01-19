@@ -21,7 +21,7 @@ The type of Product Bluesky grants to the Customer is a Personal License
 
 1.2 Type of applications
 
-The types of applications the Customer may use the Product in are noncommercial web applications for web sites.
+The types of applications the Customer may use the Product in are noncommercial web applications for public web sites.
 
 1.3 Number of applications
 
@@ -30,13 +30,16 @@ limitations outlined in this License.
 
 1.4 Limitations of Personal License
 
-The Personal License is strictly permitted for non-commercial development purposes. The Customer may not use the 
+The Personal License is strictly permitted for non-commercial development purposes for public consumption. The Customer may not use the 
 Personal License to build commercial applications, including applications which are purchased by end-users, 
 applications which are monetized through in-app purchases, and applications which are explicitly monetized through 
 surrounding ads on a website.
 
 Personal License is strictly permitted for development of web applications only. The customer may not use the Personal
 License to build stand-alone applications for devices (phones, tablets, etc).
+
+The Customer may not use the Personal License to host apps on an Intranet; the Personal License is for use in webapps hosted on public
+websites only.
 
 2. DESCRIPTION OF OTHER RIGHTS AND LIMITATIONS
 
