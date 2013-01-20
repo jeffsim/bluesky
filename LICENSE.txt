@@ -28,7 +28,12 @@ The types of applications the Customer may use the Product in are noncommercial 
 The Product can be used in any number of applications by the Customer, as long as each application follows the 
 limitations outlined in this License.
 
-1.4 Limitations of Personal License
+1.4 Open-source and closed-source applications built with the Product
+
+The Customer may build open-source applications or closed-source applications with the Product.  If they build an open-source application, then this License
+text must accompany the source code to the application that they publish.
+
+1.5 Limitations of Personal License
 
 The Personal License is strictly permitted for non-commercial development purposes for public consumption. The Customer may not use the 
 Personal License to build commercial applications, including applications which are purchased by end-users, 
