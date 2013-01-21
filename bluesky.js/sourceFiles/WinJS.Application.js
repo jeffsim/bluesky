@@ -21,6 +21,13 @@ WinJS.Namespace.define("WinJS.Application", {
     //
     start: function () {
 
+        // Ensure we're running in a supported environment
+        if (!this._supportedBrowser()) {
+            // TODO: I'd prefer to set document.body.innerHTML directly, but document.body is null at this point the startup 
+            //       flow.  Find the right place to slot this.
+            document.location.href = "http://bluesky.io/unsupportedBrowser.html";
+            return;
+        }
         /* Here's the order things happen in in win8:
 		
 			// Application event handlers
@@ -297,6 +304,39 @@ WinJS.Namespace.define("WinJS.Application", {
     onready: {
         get: function () { return WinJS.Application._eventListeners["ready"]; },
         set: function (callback) { WinJS.Application.addEventListener("ready", callback); }
+    },
+
+
+    // ================================================================
+    //
+    // private function: _supportedBrowser
+    //
+    _supportedBrowser: function () {
+
+        // Support version 9.0 and higher in IE
+        if ($.browser.msie && parseInt($.browser.version) >= 9)
+            return true;
+
+        // Support Version 12.0 and higher in Opera
+        if ($.browser.opera && parseInt($.browser.version) >= 12)
+            return true;
+
+        // Support version 16.0 and higher in Firefox
+        if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+            var ffversion = new Number(RegExp.$1)
+            if (ffversion >= 16)
+                return true;
+        }
+
+        // support version 5 and higher in safari
+        if ($.browser.safari && navigator.userAgent.indexOf("Version/1.") == -1
+                             && navigator.userAgent.indexOf("Version/2.") == -1
+                             && navigator.userAgent.indexOf("Version/3.") == -1
+                             && navigator.userAgent.indexOf("Version/4.") == -1)
+            return true;
+
+        // If here, then we do not recognize the browser.  Sorry!
+        return false;
     },
 
 
