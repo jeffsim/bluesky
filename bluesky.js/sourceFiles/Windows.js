@@ -151,6 +151,28 @@ WinJS.Namespace.define("Windows", {
             fromArgb: function (a, r, g, b) {
                 return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
             }
+        },
+
+
+        // ================================================================
+        //
+        //      Windows.UI.Notifications
+        //
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        //
+        Notifications: {
+            TileUpdateManager: {
+                createTileUpdaterForApplication: function () {
+                    return {
+                        clear: function () {
+                        },
+                        enableNotificationQueue: function () {
+                        }
+                    };
+                }
+            }
         }
     },
 
@@ -175,6 +197,36 @@ WinJS.Namespace.define("Windows", {
                 }
             }
         }
+    },
+
+
+    // ================================================================
+    //
+    // Windows.Networking
+    //
+    //		TODO: Stubbed out for test purposes
+    //
+    //		NYI NYI NYI
+    Networking: {
+
+        Connectivity: {
+            NetworkConnectivityLevel: {
+                none: 0,
+                localAccess: 1,
+                constrainedInternetAccess: 2,
+                internetAccess: 3
+            },
+
+            NetworkInformation: {
+                getInternetConnectionProfile: function () {
+                    return {
+                        getNetworkConnectivityLevel: function () {
+                            return Windows.Networking.Connectivity.NetworkConnectivityLevel.internetAccess;
+                        }
+                    }
+                }
+            }
+        },
     },
 
 

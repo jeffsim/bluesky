@@ -150,16 +150,31 @@ WinJS.Namespace.define("WinJS.Binding", {
 			},
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.List.shift
-			//
-			//		MSDN: TODO
-			//
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.List.shift
+		    //
+		    //		MSDN: TODO
+		    //
 			shift: function () {
 
-				// TODO: Add test for List.shift
-				return this.splice(0, 1)[0];
+			    // TODO: Add test for List.shift
+			    return this.splice(0, 1)[0];
+			},
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.List.unshift
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700814.aspx
+		    //
+			unshift: function (value) {
+
+			    // TODO: Add test for List.unshift
+			    this.splice(0, 0, value);
+
+			    return this.length;
 			},
 
 
