@@ -99,10 +99,8 @@ namespace blueskyAddin
 
             }
 
-      //      Directory.CreateDirectory(_sourceProjectFullPath + "\\css\\webWinJS");
             // Copy web-specific source files project folder
             string[] sourceFiles = {
-                     //               "css/webWinJS/appSpecificStyleOverrides.css",
                                     "web.config",
                                     "WebApp.csproj.user"
                                    };
@@ -233,13 +231,11 @@ namespace blueskyAddin
                                     "    <!-- bluesky Styles -->\r\n" +
                                     "    <!-- NOTE: It's important to include styles before scripts since the scripts can reference them -->\r\n" +
                                     "    <!-- NOTE: switch 'light' to 'dark' if that's what your app uses. -->\r\n" +
-                                    "    <link href='http://bluesky.io/css/ui-light.css' rel='stylesheet'>\r\n" +
-                                    "    <link href='http://bluesky.io/css/webOverrides-light-R1.css' rel='stylesheet'>\r\n" +
+                                    "    <link href='http://bluesky.io/css/bluesky-ui-light-1.0-debug.css' rel='stylesheet'>\r\n" +
                                     "\r\n" +
                                     "    <!-- bluesky scripts -->\r\n" +
                                     "    <script src='http://bluesky.io/js/ext/jquery-1.8.0.js' type='text/javascript'></script>\r\n" +
-                                    "    <script src='http://bluesky.io/js/bluesky-debug-R1.js' type='text/javascript'></script>\r\n" +
-                                    "    <script src='http://bluesky.io/js/bluesky-MiscWinJSPolyfills-R1.js' type='text/javascript'></script>\r\n" +
+                                    "    <script src='http://bluesky.io/js/bluesky-1.0-debug.js' type='text/javascript'></script>\r\n" +
                                     "\r\n";
    
             int headLoc = file.ToLower().IndexOf("<head>") + 6;

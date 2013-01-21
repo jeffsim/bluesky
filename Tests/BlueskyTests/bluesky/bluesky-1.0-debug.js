@@ -396,10 +396,6 @@ WinJS.Namespace.define("WinJS.UI", {
 //			2.  So: This is here primarily as a polyfill to enable developers to quickly get their win8 xhr-using apps up and running.
 //				It probably makes sense for me to throw out a console warning along the lines of "we've polyfilled this,
 //				but you should really rethink this".  TODO: Add warning.
-//			3.  If this does stay, then a few things:
-//				A. I'll likely eventually replace YQL with a bluesky-hosted proxy so that we can mimic win8's whitelist approach
-//				B. I'll make this developer-disable-able (not sure if opt-in or opt-out).  
-//				   NOTE: Done - see Bluesky.Settings.ProxyCrossDomainXhrCalls
 //	
 WinJS.Namespace.define("WinJS", {
 
@@ -408,19 +404,16 @@ WinJS.Namespace.define("WinJS", {
     // public function: WinJS.xhr
     //
     //   ABOUT THIS FUNCTION:
-    //   First, read the explanation above concerning CORS and YQL
+    //   First, read the explanation above concerning CORS and proxying XHR
     //   We have two models for xhr:
     //  	1.  One is the "proper" approach, which mimics Win8's and uses XMLHttpRequest and is all full of goodness,
     //  		except for the fact that it won't work cross-domain, and so a slew of LocalContext win8 apps would fall over.
-    //  	2.  The other is the "fast prototype" approach, which uses jQuery and YQL to allow cross-domain and is all full of goodness,
+    //  	2.  The other is the "fast prototype" approach, which uses jQuery and the Bluesky proxy to allow cross-domain and is all full of goodness,
     //  		except for the fact that it's ugly and pained and introduces additional layers into xhr request.
     //  
     //   At this stage of bluesky, we're more interested in enabling quick win8-->web ports, so we use the second approach as the default
     //   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
     //   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
-    //
-    //   NOTE: YQL has a 1000 requests per app per hour limit.  If that's too limiting for you, then you'll need to enable JSONP on your server and
-    //   bypass the YQL proxy.  In time, we'll replace YQL with our own proxy with more dev-friendly rate limiting.
     //
     xhr: function (options) {
 
@@ -442,7 +435,7 @@ WinJS.Namespace.define("WinJS", {
             }
 
             // Determine if the url is local or not
-            var isLocal = !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
+            var isLocal = Bluesky.IsLocalExecution || !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
 
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
@@ -466,7 +459,12 @@ WinJS.Namespace.define("WinJS", {
             // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
             url = url.replace("ms-appx:///", "/");
             url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
-            url = url.replace("///", "/");
+
+            // Remove '///' from remote urls; remove "file:///" from local urls.
+            if (Bluesky.IsLocalExecution)
+                url = url.replace("file:///", "");
+            else
+                url = url.replace("///", "/");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
@@ -520,8 +518,8 @@ WinJS.Namespace.define("WinJS", {
                         responseText = data.status || data;
                         responseXML = null;
                     }
-//                    if (!isProxied && data)
-  //                      responseText = JSON.stringify(data);
+                    //                    if (!isProxied && data)
+                    //                      responseText = JSON.stringify(data);
                     if (isProxied) {
                         // Try to convert the response into an XML object
                         var parser = new DOMParser();
@@ -563,7 +561,7 @@ WinJS.Namespace.define("WinJS", {
         var requestType = (options && options.type) || "GET";
         var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
 
-        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        // The following code is the second approach described above - proxy calls through Bluesky to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
             var url = options.url;
@@ -4365,6 +4363,17 @@ WinJS.Namespace.define("WinJS.Application", {
     //
     start: function () {
 
+        // Ensure we're running in a supported environment
+        if (!this._supportedBrowser()) {
+            // TODO: I'd prefer to set document.body.innerHTML directly, but document.body is null at this point the startup 
+            //       flow.  Find the right place to slot this.
+            document.location.href = "http://bluesky.io/unsupportedBrowser.html";
+            return;
+        }
+
+        // Initialize bluesky
+        Bluesky.initialize();
+
         /* Here's the order things happen in in win8:
 		
 			// Application event handlers
@@ -4641,6 +4650,39 @@ WinJS.Namespace.define("WinJS.Application", {
     onready: {
         get: function () { return WinJS.Application._eventListeners["ready"]; },
         set: function (callback) { WinJS.Application.addEventListener("ready", callback); }
+    },
+
+
+    // ================================================================
+    //
+    // private function: _supportedBrowser
+    //
+    _supportedBrowser: function () {
+
+        // Support version 9.0 and higher in IE
+        if ($.browser.msie && parseInt($.browser.version) >= 9)
+            return true;
+
+        // Support Version 12.0 and higher in Opera
+        if ($.browser.opera && parseInt($.browser.version) >= 12)
+            return true;
+
+        // Support version 16.0 and higher in Firefox
+        if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+            var ffversion = new Number(RegExp.$1)
+            if (ffversion >= 16)
+                return true;
+        }
+
+        // support version 5 and higher in safari
+        if ($.browser.safari && navigator.userAgent.indexOf("Version/1.") == -1
+                             && navigator.userAgent.indexOf("Version/2.") == -1
+                             && navigator.userAgent.indexOf("Version/3.") == -1
+                             && navigator.userAgent.indexOf("Version/4.") == -1)
+            return true;
+
+        // If here, then we do not recognize the browser.  Sorry!
+        return false;
     },
 
 
@@ -11162,7 +11204,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.get: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
-        pageUri = this._normalizeUrl(pageUri);
+        pageUri = this._normalizeUrl(pageUri).toLowerCase();
 
         // Get the page constructor for the specified Url
         var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri];
@@ -11179,18 +11221,25 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
     //
     // private function: WinJS.UI.Pages._normalizeUrl
     //
-    //		Normalizes the URL to be lowercase and always include host.
+    //		Normalizes the URL to always include host.
     //
     _normalizeUrl: function (pageUri) {
 
-        pageUri = pageUri.toLowerCase();
-
         // Always include host
-        if (pageUri.indexOf("http:") != 0) {
-            var slash = pageUri[0] == "/" ? "" : "/";
-            pageUri = "http://" + document.location.host + slash + pageUri
+        // Local execution (e.g. phonegap) - use file:///
+        // remote execution (e.g. from website) - use http://
+        if (Bluesky.IsLocalExecution) {
+            if (pageUri.indexOf("file:") != 0) {
+                var slash = pageUri[0] == "/" ? "" : "/";
+                pageUri = "file://" + document.location.host + slash + pageUri;
+            }
         }
-
+        else {
+            if (pageUri.indexOf("http:") != 0) {
+                var slash = pageUri[0] == "/" ? "" : "/";
+                pageUri = "http://" + document.location.host + slash + pageUri;
+            }
+        }
         return pageUri;
     },
 
@@ -11214,7 +11263,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.define: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
-        pageUri = this._normalizeUrl(pageUri);
+        pageUri = this._normalizeUrl(pageUri).toLowerCase();
 
         // Check to see if an existing definition (keyed on the pageUrI) already exists, and use it if so.
         var existingDefn = this.registeredPages[pageUri];
@@ -11262,7 +11311,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     return that._appendScripts(pageUri);
 
                 }).then(function pageInit() {
-
                     return that.init && that.init(targetElement, state);
                 });
 
@@ -11299,9 +11347,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 });
 
                 renderingCompleted.then(function pageReady() {
-
                     msSetImmediate(function () {
-                        return that.ready && that.ready(targetElement, state);
+                            return that.ready && that.ready(targetElement, state);
                     });
                 });
 
@@ -11337,7 +11384,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     /*ENDDEBUG*/
 
                     var that = this;
-
                     // Create and return a Promise that we'll load the page.
                     // NOTE: We could merge _getRemotePage into this function as this function is currently doing nothing;
                     //		 however, this two-step process is in preparation for adding support for cached pages later on.
@@ -11380,15 +11426,17 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                                 var src = element.attributes.src.value;
 
-                                // Change local script paths to absolute
-                                if (src[0] != "/" && src.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
-                                    src = thisPagePath + src;
-                                }
-                                // Add a timestamp to force a clean load
-                                if (Bluesky.Settings.cacheBustScriptsAndStyles) {
-                                    var char = src.indexOf("?") == -1 ? "?" : "&";
-                                    src += char + WinJS.Navigation._pageCacheBuster;
+                                if (!Bluesky.IsLocalExecution) {
+                                    // Change local script paths to absolute
+                                    if (src[0] != "/" && src.toLowerCase().indexOf("http:") != 0) {
+                                        var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
+                                        src = thisPagePath + src;
+                                    }
+                                    // Add a timestamp to force a clean load
+                                    if (Bluesky.Settings.cacheBustScriptsAndStyles) {
+                                        var char = src.indexOf("?") == -1 ? "?" : "&";
+                                        src += char + WinJS.Navigation._pageCacheBuster;
+                                    }
                                 }
 
                                 // If the script is already being loaded, then ignore; we only load each one once per page.
@@ -11428,7 +11476,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 //		Internal function to load a page remotely via Ajax.
                 //
                 _getRemotePage: function (pageInfo, pageLoadCompletedCallback) {
-
                     /*DEBUG*/
                     // Parameter validation
                     if (!pageInfo)
@@ -11439,8 +11486,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                     var uniquePage = pageInfo.Uri;
 
-                    // Add a timestamp to force a clean load
-                    if (Bluesky.Settings.cacheBustScriptsAndStyles) {
+                    // If loading the file remotely, then add a timestamp to force a clean load
+                    if (Bluesky.Settings.cacheBustScriptsAndStyles && !Bluesky.IsLocalExecution) {
                         var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
                         uniquePage = pageInfo.Uri + char + WinJS.Navigation._pageCacheBuster;
                     }
@@ -11624,7 +11671,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                             // Change local paths to absolute path
                             var linkSrc = style.attributes.href.value;
-                            if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
+                            if (!Bluesky.IsLocalExecution && linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
                                 var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
                                 //var host = document.location.protocol.length + 2 + document.location.host.length;
                                 //thisPagePath = thisPagePath.substr(host);
@@ -11696,7 +11743,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
         // Register the page control constructor for subsequent calls to WinJS.UI.Pages.get and WinJS.UI.Pages.define
         this.registeredPages[pageUri.toLowerCase()] = pageControl;
-
         // Return the new page control constructor
         return pageControl;
     },
@@ -17062,6 +17108,17 @@ var Bluesky = {
 
     // ================================================================
     //
+    // public funciton: Bluesky.initialize
+    //
+    initialize: function () {
+
+        // Determine if this app is running locally.  This impacts how files are loaded
+        this.IsLocalExecution = window.PhoneGap != null;
+    },
+
+
+    // ================================================================
+    //
     // public object: Bluesky.Application
     //
     Application: {
@@ -18078,9 +18135,18 @@ var LazyLoad = (function (doc) {
 function getStyleLoadedPromise(style) {
 
     return new WinJS.Promise(function (c) {
-        var uniquePage = style.attributes.href.value.replace("///", "/");
-        if (Bluesky.Settings.cacheBustScriptsAndStyles)
-            uniquePage += "?" + WinJS.Navigation._pageCacheBuster;
+
+        var uniquePage = style.attributes.href.value;
+
+        if (Bluesky.IsLocalExecution) {
+            uniquePage = uniquePage.replace("file:///", "/");
+        } else {
+            uniquePage = uniquePage.replace("///", "/");
+
+            // Add a unique timestamp to gaurantee re-load
+            if (Bluesky.Settings.cacheBustScriptsAndStyles)
+                uniquePage += "?" + WinJS.Navigation._pageCacheBuster;
+        }
 
         // If the style is already being loaded, then ignore; we only load each one once per page.
         if (WinJS.Navigation._curPageLoadedExtFiles.indexOf(uniquePage) > -1) {
@@ -18095,6 +18161,7 @@ function getStyleLoadedPromise(style) {
         LazyLoad.css(uniquePage, function () { c(); });
     });
 }
+
 // TODO (CLEANUP): $styleInsertionPoint is deprecated; remove
 var $styleInsertionPoint;
 
