@@ -57,7 +57,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.get: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
-        pageUri = this._normalizeUrl(pageUri);
+        pageUri = this._normalizeUrl(pageUri).toLowerCase();
 
         // Get the page constructor for the specified Url
         var pageConstructor = WinJS.UI.Pages.registeredPages[pageUri];
@@ -74,18 +74,25 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
     //
     // private function: WinJS.UI.Pages._normalizeUrl
     //
-    //		Normalizes the URL to be lowercase and always include host.
+    //		Normalizes the URL to always include host.
     //
     _normalizeUrl: function (pageUri) {
 
-        pageUri = pageUri.toLowerCase();
-
         // Always include host
-        if (pageUri.indexOf("http:") != 0) {
-            var slash = pageUri[0] == "/" ? "" : "/";
-            pageUri = "http://" + document.location.host + slash + pageUri
+        // Local execution (e.g. phonegap) - use file:///
+        // remote execution (e.g. from website) - use http://
+        if (Bluesky.IsLocalExecution) {
+            if (pageUri.indexOf("file:") != 0) {
+                var slash = pageUri[0] == "/" ? "" : "/";
+                pageUri = "file://" + document.location.host + slash + pageUri;
+            }
         }
-
+        else {
+            if (pageUri.indexOf("http:") != 0) {
+                var slash = pageUri[0] == "/" ? "" : "/";
+                pageUri = "http://" + document.location.host + slash + pageUri;
+            }
+        }
         return pageUri;
     },
 
@@ -109,7 +116,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
             console.error("WinJS.UI.Pages.define: Undefined or null pageUri specified");
         /*ENDDEBUG*/
 
-        pageUri = this._normalizeUrl(pageUri);
+        pageUri = this._normalizeUrl(pageUri).toLowerCase();
 
         // Check to see if an existing definition (keyed on the pageUrI) already exists, and use it if so.
         var existingDefn = this.registeredPages[pageUri];
@@ -157,7 +164,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     return that._appendScripts(pageUri);
 
                 }).then(function pageInit() {
-
                     return that.init && that.init(targetElement, state);
                 });
 
@@ -194,9 +200,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 });
 
                 renderingCompleted.then(function pageReady() {
-
                     msSetImmediate(function () {
-                        return that.ready && that.ready(targetElement, state);
+                            return that.ready && that.ready(targetElement, state);
                     });
                 });
 
@@ -232,7 +237,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                     /*ENDDEBUG*/
 
                     var that = this;
-
                     // Create and return a Promise that we'll load the page.
                     // NOTE: We could merge _getRemotePage into this function as this function is currently doing nothing;
                     //		 however, this two-step process is in preparation for adding support for cached pages later on.
@@ -275,15 +279,17 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                                 var src = element.attributes.src.value;
 
-                                // Change local script paths to absolute
-                                if (src[0] != "/" && src.toLowerCase().indexOf("http:") != 0) {
-                                    var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
-                                    src = thisPagePath + src;
-                                }
-                                // Add a timestamp to force a clean load
-                                if (Bluesky.Settings.cacheBustScriptsAndStyles) {
-                                    var char = src.indexOf("?") == -1 ? "?" : "&";
-                                    src += char + WinJS.Navigation._pageCacheBuster;
+                                if (!Bluesky.IsLocalExecution) {
+                                    // Change local script paths to absolute
+                                    if (src[0] != "/" && src.toLowerCase().indexOf("http:") != 0) {
+                                        var thisPagePath = pageUri.substr(0, pageUri.lastIndexOf("/") + 1);
+                                        src = thisPagePath + src;
+                                    }
+                                    // Add a timestamp to force a clean load
+                                    if (Bluesky.Settings.cacheBustScriptsAndStyles) {
+                                        var char = src.indexOf("?") == -1 ? "?" : "&";
+                                        src += char + WinJS.Navigation._pageCacheBuster;
+                                    }
                                 }
 
                                 // If the script is already being loaded, then ignore; we only load each one once per page.
@@ -323,7 +329,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
                 //		Internal function to load a page remotely via Ajax.
                 //
                 _getRemotePage: function (pageInfo, pageLoadCompletedCallback) {
-
                     /*DEBUG*/
                     // Parameter validation
                     if (!pageInfo)
@@ -334,8 +339,8 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                     var uniquePage = pageInfo.Uri;
 
-                    // Add a timestamp to force a clean load
-                    if (Bluesky.Settings.cacheBustScriptsAndStyles) {
+                    // If loading the file remotely, then add a timestamp to force a clean load
+                    if (Bluesky.Settings.cacheBustScriptsAndStyles && !Bluesky.IsLocalExecution) {
                         var char = pageInfo.Uri.indexOf("?") == -1 ? "?" : "&";
                         uniquePage = pageInfo.Uri + char + WinJS.Navigation._pageCacheBuster;
                     }
@@ -519,7 +524,7 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
                             // Change local paths to absolute path
                             var linkSrc = style.attributes.href.value;
-                            if (linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
+                            if (!Bluesky.IsLocalExecution && linkSrc[0] != "/" && linkSrc.toLowerCase().indexOf("http:") != 0) {
                                 var thisPagePath = pageInfo.Uri.substr(0, pageInfo.Uri.lastIndexOf("/") + 1);
                                 //var host = document.location.protocol.length + 2 + document.location.host.length;
                                 //thisPagePath = thisPagePath.substr(host);
@@ -591,7 +596,6 @@ WinJS.Namespace.define("WinJS.UI.Pages", {
 
         // Register the page control constructor for subsequent calls to WinJS.UI.Pages.get and WinJS.UI.Pages.define
         this.registeredPages[pageUri.toLowerCase()] = pageControl;
-
         // Return the new page control constructor
         return pageControl;
     },

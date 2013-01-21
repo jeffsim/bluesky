@@ -28,6 +28,10 @@ WinJS.Namespace.define("WinJS.Application", {
             document.location.href = "http://bluesky.io/unsupportedBrowser.html";
             return;
         }
+
+        // Initialize bluesky
+        Bluesky.initialize();
+
         /* Here's the order things happen in in win8:
 		
 			// Application event handlers

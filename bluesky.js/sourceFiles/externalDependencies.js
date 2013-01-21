@@ -510,9 +510,18 @@ var LazyLoad = (function (doc) {
 function getStyleLoadedPromise(style) {
 
     return new WinJS.Promise(function (c) {
-        var uniquePage = style.attributes.href.value.replace("///", "/");
-        if (Bluesky.Settings.cacheBustScriptsAndStyles)
-            uniquePage += "?" + WinJS.Navigation._pageCacheBuster;
+
+        var uniquePage = style.attributes.href.value;
+
+        if (Bluesky.IsLocalExecution) {
+            uniquePage = uniquePage.replace("file:///", "/");
+        } else {
+            uniquePage = uniquePage.replace("///", "/");
+
+            // Add a unique timestamp to gaurantee re-load
+            if (Bluesky.Settings.cacheBustScriptsAndStyles)
+                uniquePage += "?" + WinJS.Navigation._pageCacheBuster;
+        }
 
         // If the style is already being loaded, then ignore; we only load each one once per page.
         if (WinJS.Navigation._curPageLoadedExtFiles.indexOf(uniquePage) > -1) {
@@ -527,6 +536,7 @@ function getStyleLoadedPromise(style) {
         LazyLoad.css(uniquePage, function () { c(); });
     });
 }
+
 // TODO (CLEANUP): $styleInsertionPoint is deprecated; remove
 var $styleInsertionPoint;
 

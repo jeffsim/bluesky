@@ -6,6 +6,17 @@ var Bluesky = {
 
     // ================================================================
     //
+    // public funciton: Bluesky.initialize
+    //
+    initialize: function () {
+
+        // Determine if this app is running locally.  This impacts how files are loaded
+        this.IsLocalExecution = window.PhoneGap != null;
+    },
+
+
+    // ================================================================
+    //
     // public object: Bluesky.Application
     //
     Application: {

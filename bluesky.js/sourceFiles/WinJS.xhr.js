@@ -47,7 +47,7 @@ WinJS.Namespace.define("WinJS", {
         var requestType = (options && options.type) || "GET";
         var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
 
-        // The following code is the second approach described above - proxy calls through the Bluesky proxy service to enable cross-domain
+        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
             var url = options.url;
@@ -61,7 +61,7 @@ WinJS.Namespace.define("WinJS", {
             }
 
             // Determine if the url is local or not
-            var isLocal = !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
+            var isLocal = Bluesky.IsLocalExecution || !(urlLower.indexOf("http:") == 0 && urlLower.indexOf("localhost") == -1);
 
             // test for bypass 
             var isBypass = Bluesky.Settings.ProxyBypassUrls.contains(url);
@@ -85,7 +85,12 @@ WinJS.Namespace.define("WinJS", {
             // TODO (CLEANUP): Do all of these more generically as they have multiple touchpoints in bluesky
             url = url.replace("ms-appx:///", "/");
             url = url.replace("ms-appx://" + Windows.ApplicationModel.Package.current.id.name.toLowerCase(), "");
-            url = url.replace("///", "/");
+
+            // Remove '///' from remote urls; remove "file:///" from local urls.
+            if (Bluesky.IsLocalExecution)
+                url = url.replace("file:///", "");
+            else
+                url = url.replace("///", "/");
 
             // If this isn't a local request, then run it through the proxy to enable cross-domain
             if (isBypass) {
@@ -139,8 +144,8 @@ WinJS.Namespace.define("WinJS", {
                         responseText = data.status || data;
                         responseXML = null;
                     }
-//                    if (!isProxied && data)
-  //                      responseText = JSON.stringify(data);
+                    //                    if (!isProxied && data)
+                    //                      responseText = JSON.stringify(data);
                     if (isProxied) {
                         // Try to convert the response into an XML object
                         var parser = new DOMParser();
