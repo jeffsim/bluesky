@@ -22,10 +22,6 @@
 //			2.  So: This is here primarily as a polyfill to enable developers to quickly get their win8 xhr-using apps up and running.
 //				It probably makes sense for me to throw out a console warning along the lines of "we've polyfilled this,
 //				but you should really rethink this".  TODO: Add warning.
-//			3.  If this does stay, then a few things:
-//				A. I'll likely eventually replace YQL with a bluesky-hosted proxy so that we can mimic win8's whitelist approach
-//				B. I'll make this developer-disable-able (not sure if opt-in or opt-out).  
-//				   NOTE: Done - see Bluesky.Settings.ProxyCrossDomainXhrCalls
 //	
 WinJS.Namespace.define("WinJS", {
 
@@ -34,19 +30,16 @@ WinJS.Namespace.define("WinJS", {
     // public function: WinJS.xhr
     //
     //   ABOUT THIS FUNCTION:
-    //   First, read the explanation above concerning CORS and YQL
+    //   First, read the explanation above concerning CORS and proxying XHR
     //   We have two models for xhr:
     //  	1.  One is the "proper" approach, which mimics Win8's and uses XMLHttpRequest and is all full of goodness,
     //  		except for the fact that it won't work cross-domain, and so a slew of LocalContext win8 apps would fall over.
-    //  	2.  The other is the "fast prototype" approach, which uses jQuery and YQL to allow cross-domain and is all full of goodness,
+    //  	2.  The other is the "fast prototype" approach, which uses jQuery and the Bluesky proxy to allow cross-domain and is all full of goodness,
     //  		except for the fact that it's ugly and pained and introduces additional layers into xhr request.
     //  
     //   At this stage of bluesky, we're more interested in enabling quick win8-->web ports, so we use the second approach as the default
     //   (with a console warning that it's just a polyfill), and enable developers to opt-in to the "Real" xhr through a Bluesky setting/override.
     //   This (a) allows win8 apps to work without change, and (b) allows developers to use the 'real' model when they're good and ready.
-    //
-    //   NOTE: YQL has a 1000 requests per app per hour limit.  If that's too limiting for you, then you'll need to enable JSONP on your server and
-    //   bypass the YQL proxy.  In time, we'll replace YQL with our own proxy with more dev-friendly rate limiting.
     //
     xhr: function (options) {
 
@@ -54,7 +47,7 @@ WinJS.Namespace.define("WinJS", {
         var requestType = (options && options.type) || "GET";
         var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
 
-        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        // The following code is the second approach described above - proxy calls through the Bluesky proxy service to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
             var url = options.url;
@@ -189,7 +182,7 @@ WinJS.Namespace.define("WinJS", {
         var requestType = (options && options.type) || "GET";
         var dataType = (options && options.dataType) || "json";  // TODO: What's Win8's default?
 
-        // The following code is the second approach described above - proxy calls through YQL to enable cross-domain
+        // The following code is the second approach described above - proxy calls through Bluesky to enable cross-domain
         return new WinJS.Promise(function (onComplete, onError, onProgress) {
 
             var url = options.url;
