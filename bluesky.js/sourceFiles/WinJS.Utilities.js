@@ -6,7 +6,6 @@
 //
 //		TODO: functions to add:
 //			Key enumeration
-//			eventMixin object
 //			strictProcessing property
 //			children function
 //			convertToPixels function
@@ -210,13 +209,13 @@ WinJS.Namespace.define("WinJS.Utilities", {
         //
         addEventListener: function (eventName, listener) {
 
-            if (!WinJS.Utilities._eventListeners)
-                WinJS.Utilities._eventListeners = [];
-            if (!WinJS.Utilities._eventListeners[eventName])
-                WinJS.Utilities._eventListeners[eventName] = [];
+            if (!this._eventListeners)
+                this._eventListeners = [];
+            if (!this._eventListeners[eventName])
+                this._eventListeners[eventName] = [];
 
             // Add the listener to the list of listeners for the specified eventName
-            WinJS.Utilities._eventListeners[eventName].push(listener);
+            this._eventListeners[eventName].push(listener);
         },
 
 
@@ -229,7 +228,7 @@ WinJS.Namespace.define("WinJS.Utilities", {
         removeEventListener: function (eventName, listener) {
 
             // Remove the listener from the list of listeners for the specified eventName
-            var listeners = WinJS.Utilities._eventListeners[eventName];
+            var listeners = this._eventListeners[eventName];
             for (var i = 0; i < listeners.length; i++) {
                 if (listener === listeners[i]) {
                     listeners.splice(i, 1);
@@ -247,12 +246,12 @@ WinJS.Namespace.define("WinJS.Utilities", {
         //
         dispatchEvent: function (eventName, eventProperties) {
 
-            if (!WinJS.Utilities._eventListeners)
+            if (!this._eventListeners)
                 return;
 
             // TODO (CLEANUP): Can I just use the browser's dispatchEvent (etc) here?
             // TODO (CLEANUP): Use this in WinJS.Application, WinJS.Navigation, and other places that need events but don't have elements.
-            var listeners = WinJS.Utilities._eventListeners[eventName];
+            var listeners = this._eventListeners[eventName];
             if (!listeners)
                 return;
 
@@ -275,9 +274,9 @@ WinJS.Namespace.define("WinJS.Utilities", {
 
                 // Stopping/preventing
                 defaultPrevented: false,
-                preventDefault: function () { WinJS.Utilities.defaultPrevented = true; },
+                preventDefault: function () { this.defaultPrevented = true; },
                 _stopImmediately: false,
-                stopImmediatePropagation: function () { WinJS.Utilities._stopImmediately = true; }
+                stopImmediatePropagation: function () { this._stopImmediately = true; }
             };
 
             for (var i = 0; i < listeners.length; i++) {

@@ -105,8 +105,8 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            var buttonStart = 1300 - that.commands.size * 200;
 		            for (var i = 0; i < that.commands.size ; i++) {
 		                var command = that.commands.getAt(i);
-		                var backgroundColor = i == that.defaultCommandIndex ? "rgba(53,206,251,1)" : "#ccc";
-		                var border = i == that.defaultCommandIndex ? "solid 3px #000" : "solid 3px #ccc";
+		                var backgroundColor = i == (that.defaultCommandIndex || 0) ? "rgba(53,206,251,1)" : "#ccc";
+		                var border = i == (that.defaultCommandIndex || 0) ? "solid 3px #000" : "solid 3px #ccc";
 		                var left = buttonStart + i * 200;
 		                var $commandButton = $("<div>" + command.label + "</div>")
                         .css({

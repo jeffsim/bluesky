@@ -18,7 +18,7 @@ WinJS.Namespace.define("Windows.Storage", {
         // public function: Windows.Storage.ApplicationDataContainer constructor
         //
         //      MSDN: TODO
-        //
+        // 
         function (name, disposition) {
 
             this.name = name;
@@ -27,8 +27,20 @@ WinJS.Namespace.define("Windows.Storage", {
 
             // TODO: If this container already exists, then open it instead of initializing with empty values
             //       Need to figure out persistence model first.
-            this.containers = new Windows.Foundation.Collections.IMapView();
-            this.values = new Windows.Storage.ApplicationDataContainerSettings();
+            // TODO: This naming approach won't support redundant names.  Need to move to use the MFT.
+            var existingContainer = Bluesky.dataStore.getItem("adc_" + name);
+            if (!existingContainer) {
+
+                this.containers = new Windows.Foundation.Collections.IMapView();
+                Bluesky.dataStore.setItem("adc_" + name, JSON.stringify({ parent: null }));   // tbd: parent?
+            } else {
+
+                // data container exists - load it
+                // TODO: read all containers that are in tis container (?)
+                this.containers = new Windows.Foundation.Collections.IMapView();
+            }
+
+            this.values = new Windows.Storage.ApplicationDataContainerSettings(this);
         },
 
 	    // ================================================================
@@ -69,7 +81,7 @@ WinJS.Namespace.define("Windows.Storage", {
             //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.applicationdatacontainer.deletecontainer.aspx
             //
             deleteContainer: function (name) {
-                
+
                 // Remove from filesystem
                 Bluesky.dataStore.removeItem("adc_" + name);
 

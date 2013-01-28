@@ -811,4 +811,5 @@ button, input[type="button"], input[type="submit"] {
     min-height: 32px;
     line-height: 1.3636;
     padding: 6px 10px;
+    color: #000;
 }

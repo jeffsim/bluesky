@@ -81,10 +81,10 @@ WinJS.Namespace.define("Windows.Storage", {
             this.roamingFolder._initMFT();
 
             // Create the settings containers
-            this.roamingSettings = new Windows.Storage.ApplicationDataContainer("", Windows.Storage.ApplicationDataCreateDisposition.always);
+            this.roamingSettings = new Windows.Storage.ApplicationDataContainer("_roamingSettings", Windows.Storage.ApplicationDataCreateDisposition.always);
             this.roamingSettings.locality = Windows.Storage.ApplicationDataLocality.roaming;
 
-            this.localSettings = new Windows.Storage.ApplicationDataContainer("", Windows.Storage.ApplicationDataCreateDisposition.always);
+            this.localSettings = new Windows.Storage.ApplicationDataContainer("_localSettings", Windows.Storage.ApplicationDataCreateDisposition.always);
             this.localSettings.locality = Windows.Storage.ApplicationDataLocality.local;
 
             // TODO (LATER): Create a page cache folder for apploader/cached apps.

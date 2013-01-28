@@ -188,11 +188,11 @@ WinJS.Namespace.define("WinJS", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701079.aspx
             //
             done: function (onComplete, onError, onProgress) {
-                /*DEBUG*/
-                // Perform parameter validation
-                if (!onComplete)
-                    console.error("WinJS.Promise.done: null or undefined onComplete function specified.");
-                /*ENDDEBUG*/
+
+                if (!onComplete) {
+                    // TODO: What should happen here if onComplete isn't defined?  What if none of the three callbacks are defined?
+                    return;
+                }
 
                 // TODO: remove this after .done is implemented.
                 if (!blueskyUtils._warnedDoneNYI) {

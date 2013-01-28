@@ -14,3 +14,22 @@ WinJS.Namespace.define("Windows.System.Launcher", {
 		document.location.href = uri.uri;
 	}
 });
+
+// =========================================================
+//
+// Minimalist implementation of Windows.System.UserProfile
+//
+WinJS.Namespace.define("Windows.System.UserProfile", {
+
+    // =========================================================
+    //
+    //		TODO: Stub function
+    //
+    UserInformation: {
+        getDisplayNameAsync: function () {
+            return new WinJS.Promise(function (c) {
+                return c("Player");
+            });
+        }
+    }
+});

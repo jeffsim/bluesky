@@ -48,6 +48,25 @@ WinJS.Namespace.define("Windows", {
 
         // ================================================================
         //
+        // Windows.UI.ApplicationSettings
+        //
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        //
+        ApplicationSettings: {
+            SettingsPane: {
+                getForCurrentView: function () {
+                    return {
+                        oncommandsrequested: null
+                    };
+                }
+            }
+        },
+
+
+        // ================================================================
+        //
         // Windows.UI.StartScreen
         //
         //		TODO: Stubbed out for test purposes
