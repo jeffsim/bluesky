@@ -822,6 +822,25 @@ WinJS.Namespace.define("Windows", {
 
         // ================================================================
         //
+        // Windows.UI.ApplicationSettings
+        //
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        //
+        ApplicationSettings: {
+            SettingsPane: {
+                getForCurrentView: function () {
+                    return {
+                        oncommandsrequested: null
+                    };
+                }
+            }
+        },
+
+
+        // ================================================================
+        //
         // Windows.UI.StartScreen
         //
         //		TODO: Stubbed out for test purposes
@@ -925,6 +944,28 @@ WinJS.Namespace.define("Windows", {
             fromArgb: function (a, r, g, b) {
                 return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
             }
+        },
+
+
+        // ================================================================
+        //
+        //      Windows.UI.Notifications
+        //
+        //		TODO: Stubbed out for test purposes
+        //
+        //		NYI NYI NYI
+        //
+        Notifications: {
+            TileUpdateManager: {
+                createTileUpdaterForApplication: function () {
+                    return {
+                        clear: function () {
+                        },
+                        enableNotificationQueue: function () {
+                        }
+                    };
+                }
+            }
         }
     },
 
@@ -949,6 +990,36 @@ WinJS.Namespace.define("Windows", {
                 }
             }
         }
+    },
+
+
+    // ================================================================
+    //
+    // Windows.Networking
+    //
+    //		TODO: Stubbed out for test purposes
+    //
+    //		NYI NYI NYI
+    Networking: {
+
+        Connectivity: {
+            NetworkConnectivityLevel: {
+                none: 0,
+                localAccess: 1,
+                constrainedInternetAccess: 2,
+                internetAccess: 3
+            },
+
+            NetworkInformation: {
+                getInternetConnectionProfile: function () {
+                    return {
+                        getNetworkConnectivityLevel: function () {
+                            return Windows.Networking.Connectivity.NetworkConnectivityLevel.internetAccess;
+                        }
+                    }
+                }
+            }
+        },
     },
 
 
@@ -1593,10 +1664,10 @@ WinJS.Namespace.define("Windows.Storage", {
             this.roamingFolder._initMFT();
 
             // Create the settings containers
-            this.roamingSettings = new Windows.Storage.ApplicationDataContainer("", Windows.Storage.ApplicationDataCreateDisposition.always);
+            this.roamingSettings = new Windows.Storage.ApplicationDataContainer("_roamingSettings", Windows.Storage.ApplicationDataCreateDisposition.always);
             this.roamingSettings.locality = Windows.Storage.ApplicationDataLocality.roaming;
 
-            this.localSettings = new Windows.Storage.ApplicationDataContainer("", Windows.Storage.ApplicationDataCreateDisposition.always);
+            this.localSettings = new Windows.Storage.ApplicationDataContainer("_localSettings", Windows.Storage.ApplicationDataCreateDisposition.always);
             this.localSettings.locality = Windows.Storage.ApplicationDataLocality.local;
 
             // TODO (LATER): Create a page cache folder for apploader/cached apps.
@@ -1733,7 +1804,7 @@ WinJS.Namespace.define("Windows.Storage", {
         // public function: Windows.Storage.ApplicationDataContainer constructor
         //
         //      MSDN: TODO
-        //
+        // 
         function (name, disposition) {
 
             this.name = name;
@@ -1742,8 +1813,20 @@ WinJS.Namespace.define("Windows.Storage", {
 
             // TODO: If this container already exists, then open it instead of initializing with empty values
             //       Need to figure out persistence model first.
-            this.containers = new Windows.Foundation.Collections.IMapView();
-            this.values = new Windows.Storage.ApplicationDataContainerSettings();
+            // TODO: This naming approach won't support redundant names.  Need to move to use the MFT.
+            var existingContainer = Bluesky.dataStore.getItem("adc_" + name);
+            if (!existingContainer) {
+
+                this.containers = new Windows.Foundation.Collections.IMapView();
+                Bluesky.dataStore.setItem("adc_" + name, JSON.stringify({ parent: null }));   // tbd: parent?
+            } else {
+
+                // data container exists - load it
+                // TODO: read all containers that are in tis container (?)
+                this.containers = new Windows.Foundation.Collections.IMapView();
+            }
+
+            this.values = new Windows.Storage.ApplicationDataContainerSettings(this);
         },
 
 	    // ================================================================
@@ -1784,7 +1867,7 @@ WinJS.Namespace.define("Windows.Storage", {
             //      MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/windows.storage.applicationdatacontainer.deletecontainer.aspx
             //
             deleteContainer: function (name) {
-                
+
                 // Remove from filesystem
                 Bluesky.dataStore.removeItem("adc_" + name);
 
@@ -1829,10 +1912,25 @@ WinJS.Namespace.define("Windows.Storage", {
         //
         // public function: Windows.Storage.ApplicationDataContainerSettings constructor
         //
-        function () {
+        function (parentApplicationDataContainer) {
+
+            this.parentADC = parentApplicationDataContainer;
 
             // TODO: Read our values from store, once persistence model is figured out.
-            //       (NOTE: Read doesn't happen here...)
+            // TODO: This naming approach won't support redundant names.  Need to move to use the MFT.
+            var existingContainerSettings = Bluesky.dataStore.getItem("adcs_" + this.parentADC.name);
+            if (existingContainerSettings) {
+
+                // Settings container exists - load it
+                // TODO (CLEANUP): Better way to do this?
+                var saveData = JSON.parse(existingContainerSettings);
+                for (var i in saveData)
+                    this[i] = saveData[i];
+
+                // NOTE: Read doesn't happen here... (tbd: is that to defer reading ALL settings on startup?)
+            } else {
+                Bluesky.dataStore.setItem("adcs_" + name, JSON.stringify({ "parent": this.parentADC.name, values: null }));
+            }
         },
 
 	    // ================================================================
@@ -1840,6 +1938,15 @@ WinJS.Namespace.define("Windows.Storage", {
 	    // ================================================================
 
         {
+            _blueskyPersist: function () {
+                var saveData = {};
+                for (var i in this)
+                    if (this.hasOwnProperty(i) && i != "parentADC")
+                        saveData[i] = this[i];
+                Bluesky.dataStore.setItem("adcs_" + this.parentADC.name, JSON.stringify(saveData));
+            },
+
+
             remove: function (key) {
                 delete this[key];
             },
@@ -4325,6 +4432,25 @@ WinJS.Namespace.define("Windows.System.Launcher", {
 	}
 });
 
+// =========================================================
+//
+// Minimalist implementation of Windows.System.UserProfile
+//
+WinJS.Namespace.define("Windows.System.UserProfile", {
+
+    // =========================================================
+    //
+    //		TODO: Stub function
+    //
+    UserInformation: {
+        getDisplayNameAsync: function () {
+            return new WinJS.Promise(function (c) {
+                return c("Player");
+            });
+        }
+    }
+});
+
 
 
 
@@ -5560,11 +5686,11 @@ WinJS.Namespace.define("WinJS", {
             //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh701079.aspx
             //
             done: function (onComplete, onError, onProgress) {
-                /*DEBUG*/
-                // Perform parameter validation
-                if (!onComplete)
-                    console.error("WinJS.Promise.done: null or undefined onComplete function specified.");
-                /*ENDDEBUG*/
+
+                if (!onComplete) {
+                    // TODO: What should happen here if onComplete isn't defined?  What if none of the three callbacks are defined?
+                    return;
+                }
 
                 // TODO: remove this after .done is implemented.
                 if (!blueskyUtils._warnedDoneNYI) {
@@ -6869,16 +6995,31 @@ WinJS.Namespace.define("WinJS.Binding", {
 			},
 
 
-			// ================================================================
-			//
-			// public function: WinJS.Binding.List.shift
-			//
-			//		MSDN: TODO
-			//
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.List.shift
+		    //
+		    //		MSDN: TODO
+		    //
 			shift: function () {
 
-				// TODO: Add test for List.shift
-				return this.splice(0, 1)[0];
+			    // TODO: Add test for List.shift
+			    return this.splice(0, 1)[0];
+			},
+
+
+		    // ================================================================
+		    //
+		    // public function: WinJS.Binding.List.unshift
+		    //
+		    //		MSDN: http://msdn.microsoft.com/en-us/library/windows/apps/hh700814.aspx
+		    //
+			unshift: function (value) {
+
+			    // TODO: Add test for List.unshift
+			    this.splice(0, 0, value);
+
+			    return this.length;
 			},
 
 
@@ -16186,8 +16327,8 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            var buttonStart = 1300 - that.commands.size * 200;
 		            for (var i = 0; i < that.commands.size ; i++) {
 		                var command = that.commands.getAt(i);
-		                var backgroundColor = i == that.defaultCommandIndex ? "rgba(53,206,251,1)" : "#ccc";
-		                var border = i == that.defaultCommandIndex ? "solid 3px #000" : "solid 3px #ccc";
+		                var backgroundColor = i == (that.defaultCommandIndex || 0) ? "rgba(53,206,251,1)" : "#ccc";
+		                var border = i == (that.defaultCommandIndex || 0) ? "solid 3px #000" : "solid 3px #ccc";
 		                var left = buttonStart + i * 200;
 		                var $commandButton = $("<div>" + command.label + "</div>")
                         .css({
@@ -16442,7 +16583,6 @@ WinJS.Namespace.define("Windows.UI.WebUI", {
 //
 //		TODO: functions to add:
 //			Key enumeration
-//			eventMixin object
 //			strictProcessing property
 //			children function
 //			convertToPixels function
@@ -16646,13 +16786,13 @@ WinJS.Namespace.define("WinJS.Utilities", {
         //
         addEventListener: function (eventName, listener) {
 
-            if (!WinJS.Utilities._eventListeners)
-                WinJS.Utilities._eventListeners = [];
-            if (!WinJS.Utilities._eventListeners[eventName])
-                WinJS.Utilities._eventListeners[eventName] = [];
+            if (!this._eventListeners)
+                this._eventListeners = [];
+            if (!this._eventListeners[eventName])
+                this._eventListeners[eventName] = [];
 
             // Add the listener to the list of listeners for the specified eventName
-            WinJS.Utilities._eventListeners[eventName].push(listener);
+            this._eventListeners[eventName].push(listener);
         },
 
 
@@ -16665,7 +16805,7 @@ WinJS.Namespace.define("WinJS.Utilities", {
         removeEventListener: function (eventName, listener) {
 
             // Remove the listener from the list of listeners for the specified eventName
-            var listeners = WinJS.Utilities._eventListeners[eventName];
+            var listeners = this._eventListeners[eventName];
             for (var i = 0; i < listeners.length; i++) {
                 if (listener === listeners[i]) {
                     listeners.splice(i, 1);
@@ -16683,12 +16823,12 @@ WinJS.Namespace.define("WinJS.Utilities", {
         //
         dispatchEvent: function (eventName, eventProperties) {
 
-            if (!WinJS.Utilities._eventListeners)
+            if (!this._eventListeners)
                 return;
 
             // TODO (CLEANUP): Can I just use the browser's dispatchEvent (etc) here?
             // TODO (CLEANUP): Use this in WinJS.Application, WinJS.Navigation, and other places that need events but don't have elements.
-            var listeners = WinJS.Utilities._eventListeners[eventName];
+            var listeners = this._eventListeners[eventName];
             if (!listeners)
                 return;
 
@@ -16711,9 +16851,9 @@ WinJS.Namespace.define("WinJS.Utilities", {
 
                 // Stopping/preventing
                 defaultPrevented: false,
-                preventDefault: function () { WinJS.Utilities.defaultPrevented = true; },
+                preventDefault: function () { this.defaultPrevented = true; },
                 _stopImmediately: false,
-                stopImmediatePropagation: function () { WinJS.Utilities._stopImmediately = true; }
+                stopImmediatePropagation: function () { this._stopImmediately = true; }
             };
 
             for (var i = 0; i < listeners.length; i++) {
