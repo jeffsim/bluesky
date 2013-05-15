@@ -1,76 +1,53 @@
-[This license file describes the Bluesky Personal License, which grants the reader the right to use the files in this
-repo to build noncommercial webapps that for use in websites only.  You can read more about licensing options at
-http://www.bluesky.io/pricing.htm]
+[This license file describes the DeveloperPersonal License, which grants the reader the right to use the files in this
+repo to build commercial and noncommercial websites, webapps, and mobile apps.  Developers looking to leverage Bluesky
+for internal business/enterprise use (e.g. on an intranet) will need to purchase an Enterprise License.  You can read more about licensing options at http://www.bluesky.io/pricing.htm]
 
 Personal License Agreement for Bluesky Developers
 
-IMPORTANT - PLEASE READ CAREFULLY: This Personal License Agreement is a legal agreement between Developers and Bluesky,
-LLC. for the Bluesky service, which includes code and services (Product).
+IMPORTANT - PLEASE READ CAREFULLY: This Developer License Agreement is a legal agreement between Developers and Bluesky, LLC. for the Bluesky service, which includes code and services (Product). 
 
-By using the Product, the Customer agrees to be bound by the terms of this Agreement. If the Customer does not agree to
-the terms of this Agreement, do not use the Product. The Product is protected by copyright laws and international 
-copyright treaties, as well as other intellectual property laws and treaties. The Product is licensed, not sold.
+By using the Product, the Customer agrees to be bound by the terms of this Agreement. If the Customer does not agree to the terms of this Agreement, do not use the Product. The Product is protected by copyright laws and international copyright treaties, as well as other intellectual property laws and treaties. The Product is licensed, not sold. 
 
 1. GRANT OF LICENSE
 
-Bluesky grants the Customer the right to use the Product under following conditions.
+Bluesky grants the Customer the right to use the Product under following conditions. 
 
 1.1 Type of Product
 
-The type of Product Bluesky grants to the Customer is a Personal License
+The type of Product Bluesky grants to the Customer is a Developer License. 
 
-1.2 Type of applications
+1.2 Type and number of applications
 
-The types of applications the Customer may use the Product in are noncommercial web applications for public web sites.
+The customer may use the Product in any type and any number of applications, as long as each application follows the terms and conditions outlined in this License. 
 
-1.3 Number of applications
+1.3 Open-source and closed-source applications built with the Product
 
-The Product can be used in any number of applications by the Customer, as long as each application follows the 
-limitations outlined in this License.
+The Customer may build open-source applications or closed-source applications with the Product. If they build an open-source application, then this License text must accompany the source code to the application that they publish. 
 
-1.4 Open-source and closed-source applications built with the Product
+1.4 Limitations of Developer License
 
-The Customer may build open-source applications or closed-source applications with the Product.  If they build an open-source application, then this License
-text must accompany the source code to the application that they publish.
+The Developer License permits the Customer to publish new publicly-accessible applications, for commercial or noncommercial purposes, for so as long as the Customer has an active Developer License. Once an application is published, the Customer is under no obligation to have an active Developer License; they may continue to use the Product, including updates and upgrades, for the lifetime of that application. 
 
-1.5 Limitations of Personal License
-
-The Personal License is strictly permitted for non-commercial development purposes for public consumption. The Customer may not use the 
-Personal License to build commercial applications, including applications which are purchased by end-users, 
-applications which are monetized through in-app purchases, and applications which are explicitly monetized through 
-surrounding ads on a website.
-
-Personal License is strictly permitted for development of web applications only. The customer may not use the Personal
-License to build stand-alone applications for devices (phones, tablets, etc).
-
-The Customer may not use the Personal License to host apps on an Intranet; the Personal License is for use in webapps hosted on public
-websites only.
+Although not required, attribution in your app would be appreciated. 
 
 2. DESCRIPTION OF OTHER RIGHTS AND LIMITATIONS
 
 * The Customer may not sell, rent, or lease resell, or otherwise transfer for value, the Product.
-* Termination. Without prejudice to any other rights, Bluesky may terminate this Agreement if the Customer fails to
-  comply with the terms and conditions of this Agreement.
+* Termination. Without prejudice to any other rights, Bluesky may terminate this Agreement if the Customer fails to comply with the terms and conditions of this Agreement.
 * Bluesky will give the Customer notice and 30 days to correct the above before the contract will be terminated.
 
 3. COPYRIGHT
 
-The Product is protected by copyright and other intellectual property laws and treaties. Bluesky owns the title,
-copyright, and other intellectual property rights in the Product.
+The Product is protected by copyright and other intellectual property laws and treaties. Bluesky owns the title, copyright, and other intellectual property rights in the Product. 
 
 4. LIMITATION OF LIABILITY AND REMEDIES
 
-Notwithstanding any damages that the Customer might incur for any reason whatsoever (including, without limitation,
-all damages referenced above and all direct or general damages), the entire Liability Bluesky under any provision
-of this Agreement and the Customer's exclusive remedy for all of the foregoing shall be limited to none. The
-foregoing limitations, exclusions and disclaimers shall apply to the maximum extent permitted by applicable law,
-even if any remedy fails its essential purpose.
+Notwithstanding any damages that the Customer might incur for any reason whatsoever (including, without limitation, all damages referenced above and all direct or general damages), the entire Liability Bluesky under any provision of this Agreement and the Customer's exclusive remedy for all of the foregoing shall be limited to none. The foregoing limitations, exclusions and disclaimers shall apply to the maximum extent permitted by applicable law, even if any remedy fails its essential purpose. 
 
 5. MISCELLANEOUS
 
-Should the Customer have any questions concerning this Agreement, or if the Customer desire to contact Bluesky for 
-any reason, please send mail to info@bluesky.io.
+Should the Customer have any questions concerning this Agreement, or if the Customer desire to contact Bluesky for any reason, please send mail to info@bluesky.io. 
 
-Bluesky, LLC
-Mail: info@bluesky.io
+Bluesky, LLC 
+Mail: info@bluesky.io 
 Web: http://www.bluesky.io

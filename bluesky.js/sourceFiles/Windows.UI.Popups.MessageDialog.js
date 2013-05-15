@@ -57,8 +57,7 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            $overlay.fadeIn("fast").appendTo("body");
 
 		            // Create the messagebox div
-		            var messageHeight = that.title ? 200 : 160;
-		            var messageTop = ($("html").outerHeight() - messageHeight) / 2;
+		            var messageTop = ($("html").outerHeight() - 200) / 2;
 		            var $message = $("<div></div>")
                         .css({
                             "width": "100%",
@@ -67,21 +66,10 @@ WinJS.Namespace.define("Windows.UI.Popups", {
                             "left": 0,
                             "position": "absolute",
                             "top": messageTop,
-                            "height": messageHeight,
+                            "padding-bottom": "20px",
                             "right": 0
                         });
 		            // TODO: Do the margin trick so that the messagebox stays vertically centered.
-
-		            // TODO: Make sure < in content doesn't break!
-		            var $titleText = $("<div>" + that.content + "</div>")
-                        .css({
-                            "color": "#000",
-                            "font-size": "16pt",
-                            "position": "absolute",
-                            "top": that.title ? 80 : 20,
-                            "left": "400px"
-                        })
-                        .appendTo($message);
 
 		            if (that.title) {
 		                // TODO: Make sure < in title doesn't break!
@@ -89,12 +77,22 @@ WinJS.Namespace.define("Windows.UI.Popups", {
                             .css({
                                 "color": "#000",
                                 "font-size": "30pt",
-                                "position": "absolute",
-                                "top": 20,
-                                "left": "400px"
+                                "padding-top": "20px",
+                                "padding-left": "400px"
                             })
 		                    .appendTo($message);
 		            }
+
+		            // TODO: Make sure < in content doesn't break!
+		            var $titleText = $("<div>" + that.content + "</div>")
+                        .css({
+                            "color": "#000",
+                            "font-size": "16pt",
+                            "padding-top": "20px",
+                            "padding-left": "400px",
+                            "padding-right": "20px"
+                        })
+                        .appendTo($message);
 
 		            // Add commands.  If none specified then use 'Close'
 		            if (that.commands.size == 0) {
@@ -105,8 +103,8 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            var buttonStart = 1300 - that.commands.size * 200;
 		            for (var i = 0; i < that.commands.size ; i++) {
 		                var command = that.commands.getAt(i);
-		                var backgroundColor = i == (that.defaultCommandIndex || 0) ? "rgba(53,206,251,1)" : "#ccc";
-		                var border = i == (that.defaultCommandIndex || 0) ? "solid 3px #000" : "solid 3px #ccc";
+		                var backgroundColor = i == that.defaultCommandIndex ? "rgba(53,206,251,1)" : "#ccc";
+		                var border = i == that.defaultCommandIndex ? "solid 3px #000" : "solid 3px #ccc";
 		                var left = buttonStart + i * 200;
 		                var $commandButton = $("<div>" + command.label + "</div>")
                         .css({
@@ -118,10 +116,10 @@ WinJS.Namespace.define("Windows.UI.Popups", {
                             "padding": "8px 6px",
                             "font-size": "12pt",
                             "font-weight": "600",
-                            "position": "absolute",
                             "text-align": "center",
-                            "top": that.title ? 130 : 80,
-                            "left": left
+                            "float": "right",
+                            "margin-right": "20px",
+                            "margin-top": "20px"
                         })
 		                .appendTo($message);
 		                $commandButton.bind("click", { command: command }, function (event) {
@@ -130,7 +128,7 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		                    that._close(event.data.command);
 		                });
 		            }
-                    // If we created a temporary 'close' command, then remove it now
+		            // If we created a temporary 'close' command, then remove it now
 		            if (closeCommand)
 		                that.commands.clear();
 

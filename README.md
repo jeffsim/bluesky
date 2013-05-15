@@ -24,11 +24,11 @@ as well.
 Read more at http://www.bluesky.io
 
 ## License
-Short version: Bluesky is free for building noncommercial webapps that are for use in public websites only.  See the license.txt file that came with this
-readme for details.  If the file isn't present, then you can view the full license at http://bluesky.io/personalLicense.htm.
+Short version: Bluesky is free for building both commercial and noncommercial web apps, web sites, and mobile sites for public use.  Use of Bluesky
+within an enterprise for internal apps (e.g. on a private intranet) requires an Enterprise License.  See the license.txt file that came with this
+readme for details.  If the file isn't present, then you can view the full license at http://bluesky.io/pricing-licenseDetails.htm.
 
-For more information about licensing options, including licenses for building commercial apps, apps for phones and tablets, and intranet-hosting of Bluesky
-apps, swing by http://www.bluesky.io
+For more information about licensing options, including licenses for intranet-hosting of Bluesky apps, swing by http://www.bluesky.io
 
 ##Contact
 - Email: jeffsim@bluesky.io (Jeff Simon)

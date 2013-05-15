@@ -16279,8 +16279,7 @@ WinJS.Namespace.define("Windows.UI.Popups", {
 		            $overlay.fadeIn("fast").appendTo("body");
 
 		            // Create the messagebox div
-		            var messageHeight = that.title ? 200 : 160;
-		            var messageTop = ($("html").outerHeight() - messageHeight) / 2;
+		            var messageTop = ($("html").outerHeight() - 200) / 2;
 		            var $message = $("<div></div>")
                         .css({
                             "width": "100%",
@@ -16289,7 +16288,7 @@ WinJS.Namespace.define("Windows.UI.Popups", {
                             "left": 0,
                             "position": "absolute",
                             "top": messageTop,
-                            "height": messageHeight,
+                            "padding-bottom": "20px",
                             "right": 0
                         });
 		            // TODO: Do the margin trick so that the messagebox stays vertically centered.
