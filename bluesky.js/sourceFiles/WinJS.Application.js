@@ -321,6 +321,11 @@ WinJS.Namespace.define("WinJS.Application", {
         if ($.browser.msie && parseInt($.browser.version) >= 9)
             return true;
 
+        // Odd: as of 7/1/13, jQuery is reporting the IE11 browser as Mozilla version 11.0.
+        // See here: http://www.neowin.net/news/ie11-to-appear-as-firefox-to-avoid-legacy-ie-css
+        if ($.browser.mozilla && parseInt($.browser.version) == 11)
+            return true;
+
         // Support Version 12.0 and higher in Opera
         if ($.browser.opera && parseInt($.browser.version) >= 12)
             return true;
